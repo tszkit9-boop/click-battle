@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>極限尋路 · 地刺陷阱版</title>
+<title>極限尋路 · 20層爆機版</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
@@ -50,7 +50,7 @@
   <canvas id="game" width="960" height="640"></canvas>
   <div id="hud">
     <div class="left">
-      <div>第 <span id="lv">1</span> 層 <span id="best" style="font-size:12px;opacity:0.6;margin-left:8px"></span></div>
+      <div>第 <span id="lv">1</span> / 20 層 <span id="best" style="font-size:12px;opacity:0.6;margin-left:8px"></span></div>
       <div class="time" id="time">--</div>
     </div>
     <div class="right">
@@ -73,6 +73,7 @@
 
 const TILE = 32;
 const VIEW_W = 960, VIEW_H = 640;
+const MAX_LEVEL = 20; // 設定總關卡數
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -94,7 +95,7 @@ let level = 1;
 let grid, cols, rows;
 let player;
 let timeLeft = 0;
-let state = 'playing';
+let state = 'playing'; // playing, over, clear, win
 let camX = 0, camY = 0;
 let fogOn = false;
 let invuln = 0, shake = 0;
@@ -102,19 +103,16 @@ let particles = [];
 let lastTs = 0;
 const keysDown = {};
 
-// 手機觸控變數
 let isTouching = false;
 let touchX = 0, touchY = 0;
 let touchStartX = 0, touchStartY = 0;
 
-// 最高紀錄
 let maxLevel = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
 updateBestUI();
 function updateBestUI(){
-    elBest.textContent = maxLevel > 0 ? `(最高: ${maxLevel} 層)` : '';
+    elBest.textContent = maxLevel > 0 ? `(最高: 第 ${maxLevel} 層)` : '';
 }
 
-// 迷宮配置
 function config(lv){
   let w = Math.min(11 + (lv-1)*2, 41);
   let h = Math.min(11 + (lv-1)*2, 41);
@@ -122,13 +120,12 @@ function config(lv){
   if(h % 2 === 0) h++;
   return {
     w, h,
-    traps:   lv >= 4 ? Math.min((lv - 3) * 4, 60) : 0, // 第 4 層開始有陷阱，最多 60 個
+    traps:   lv >= 4 ? Math.min((lv - 3) * 4, 60) : 0,
     fog:     lv >= 5,
-    time:    Math.round(32 + Math.min(lv, 10) * 6), // 時間微調加長少少，因為有陷阱
+    time:    Math.round(32 + Math.min(lv, 10) * 6),
   };
 }
 
-// 生成完美迷宮
 function genMaze(w,h){
   const g = Array.from({length:h}, ()=>new Array(w).fill(1));
   g[1][1] = 0;
@@ -174,14 +171,12 @@ function buildLevel(lv){
 
   const dist = bfs(g, 1, 1);
 
-  // 放置出口
   let exit = [w-2,h-2], best = -1;
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
     if(g[y][x]===0 && dist[y][x] > best){ best = dist[y][x]; exit = [x,y]; }
   }
   g[exit[1]][exit[0]] = 4;
 
-  // 放置陷阱 (避開起點、出口、以及起點周圍 3 格)
   const pool = [];
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
     if(g[y][x]===0 && dist[y][x] > 3) pool.push([x,y]);
@@ -190,7 +185,7 @@ function buildLevel(lv){
   let placedTraps = 0;
   for(let i=0; i<pool.length && placedTraps<cfg.traps; i++){
     const [tx,ty] = pool[i];
-    if(g[ty][tx] === 0) { // 確保唔會蓋過出口
+    if(g[ty][tx] === 0) {
       g[ty][tx] = 5;
       placedTraps++;
     }
@@ -286,16 +281,16 @@ function checkTiles(){
   if(cx<0 || cy<0 || cx>=cols || cy>=rows) return;
   const v = grid[cy][cx];
   
-  if(v === 5){ // 踩中陷阱
+  if(v === 5){
     if(invuln <= 0){
-      timeLeft = Math.max(0, timeLeft - 4); // 扣 4 秒
+      timeLeft = Math.max(0, timeLeft - 4);
       invuln = 1.0;
       shake = 0.3;
       burst(player.x, player.y, '#ff4b4b', 15);
       if(timeLeft <= 0) gameOver();
     }
   }
-  else if(v === 4){ // 出口
+  else if(v === 4){
     levelClear();
   }
 }
@@ -309,26 +304,42 @@ function gameOver(){
 }
 
 function levelClear(){
-  state = 'clear';
-  
   if (level > maxLevel) {
     maxLevel = level;
     localStorage.setItem('mazeMaxLevel', maxLevel);
     updateBestUI();
   }
 
-  ovTitle.textContent = '成功逃脫！';
-  ovText.innerHTML =
-    `第 ${level} 層完成，剩餘 <b>${timeLeft.toFixed(1)}s</b>。<br>` +
-    `下一層陷阱會更多，小心！`;
-  ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
+  if (level >= MAX_LEVEL) {
+    // 達成爆機條件
+    state = 'win';
+    ovTitle.textContent = '🎉 恭喜爆機！';
+    ovText.innerHTML = `你成功喺限時內，避開所有地刺同迷霧，<br>突破咗 <b>${MAX_LEVEL}</b> 層極限迷宮！<br><br>你絕對係真正嘅迷宮大師！`;
+    ovBtn.textContent = '重新開始';
+  } else {
+    // 普通過關
+    state = 'clear';
+    ovTitle.textContent = '成功逃脫！';
+    ovText.innerHTML =
+      `第 ${level} / ${MAX_LEVEL} 層完成，剩餘 <b>${timeLeft.toFixed(1)}s</b>。<br>` +
+      `下一層陷阱會更多，小心！`;
+    ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
+  }
+  
   overlay.classList.add('show');
 }
 
 ovBtn.onclick = () => {
   overlay.classList.remove('show');
-  if(state === 'clear') level++;
-  buildLevel(level);
+  if(state === 'win'){
+    level = 1;
+    buildLevel(1);
+  } else if(state === 'clear'){
+    level++;
+    buildLevel(level);
+  } else {
+    buildLevel(level); // 重試本層
+  }
 };
 
 function update(dt){
@@ -347,7 +358,7 @@ function update(dt){
 }
 
 function drawTile(v, px, py, t){
-  if(v === 4){ // 綠色出口
+  if(v === 4){
     const glow = 0.5 + 0.5*Math.sin(t*4);
     ctx.save();
     ctx.shadowColor = '#39d353';
@@ -358,10 +369,10 @@ function drawTile(v, px, py, t){
     ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
     ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
   }
-  else if(v === 5){ // 紅色地刺
-    ctx.fillStyle = '#2a0e12'; // 深紅底色
+  else if(v === 5){
+    ctx.fillStyle = '#2a0e12';
     ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = '#ff4b4b'; // 紅色尖刺
+    ctx.fillStyle = '#ff4b4b';
     for(let i=0;i<3;i++){
       const bx = px+5+i*8;
       ctx.beginPath();
@@ -396,7 +407,6 @@ function render(){
 
   const t = performance.now()/1000;
 
-  // 畫地板同牆
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
       const px = Math.floor(x*TILE - camX);
@@ -416,7 +426,6 @@ function render(){
     }
   }
 
-  // 畫特殊格 (出口、陷阱)
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
       const v = grid[y][x];
@@ -426,7 +435,6 @@ function render(){
     }
   }
 
-  // 畫玩家
   const ppx = player.x - camX, ppy = player.y - camY;
   const blink = invuln > 0 && Math.floor(t*12) % 2 === 0;
   if(!blink){
@@ -444,7 +452,6 @@ function render(){
     ctx.fill();
   }
 
-  // 粒子特效
   for(const p of particles){
     ctx.globalAlpha = p.life / p.max;
     ctx.fillStyle = p.color;
@@ -452,7 +459,6 @@ function render(){
   }
   ctx.globalAlpha = 1;
 
-  // 迷霧
   if(fogOn){
     const fogRadius = Math.max(TILE * 3.5, TILE * 7 - (level-5)*TILE*0.3);
     const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.4, ppx, ppy, fogRadius);
