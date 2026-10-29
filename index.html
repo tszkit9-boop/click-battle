@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>隨機亂數 · 地獄迷宮</title>
+<title>隨機亂數 · 地獄迷宮 (生路版)</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
@@ -172,9 +172,8 @@ btnShowLB.onclick = () => {
     }
 };
 
-/* ================= 遊戲核心 (隨機大小、第10關起霧) ================= */
+/* ================= 遊戲核心 ================= */
 function config(lv){
-  // 每一關隨機大細
   let minSize = Math.min(9 + lv * 2, 33);
   let maxSize = Math.min(15 + lv * 3, 41);
   
@@ -187,11 +186,12 @@ function config(lv){
     w, h,
     traps:   Math.min(4 + lv * 5, 90), 
     fakeExits: Math.min(1 + Math.floor(lv / 2), 4), 
-    fog:     lv >= 10, // 第 10 層才開始有迷霧
+    fog:     lv >= 10, 
     time:    Math.max(30, 45 - lv), 
   };
 }
 
+// 1. 生成完美迷宮
 function genMaze(w,h){
   const g = Array.from({length:h}, ()=>new Array(w).fill(1));
   g[1][1] = 0;
@@ -211,6 +211,25 @@ function genMaze(w,h){
     if(!ok) st.pop();
   }
   return g;
+}
+
+// 2. 新增：打通牆壁，製造生路 (環路)
+function addLoops(g, n){
+  const h = g.length, w = g[0].length;
+  let t = 0;
+  while(n > 0 && t < 1000){
+    t++;
+    // 隨機揀一忽牆
+    const x = ri(1, w-2), y = ri(1, h-2);
+    if(g[y][x] !== 1) continue;
+    
+    // 檢查係咪左右通、上下唔通 (或者相反)
+    const horiz = g[y][x-1]===0 && g[y][x+1]===0 && g[y-1][x]===1 && g[y+1][x]===1;
+    const vert  = g[y-1][x]===0 && g[y+1][x]===0 && g[y][x-1]===1 && g[y][x+1]===1;
+    
+    // 如果符合條件，就打通佢
+    if(horiz || vert){ g[y][x] = 0; n--; }
+  }
 }
 
 function bfs(g, sx, sy){
@@ -233,7 +252,11 @@ function bfs(g, sx, sy){
 function buildLevel(lv){
   const cfg = config(lv);
   const w = cfg.w, h = cfg.h;
-  const g = genMaze(w,h);
+  let g = genMaze(w,h);
+
+  // 打通牆壁！層數越高，打通越多，最多打 15 個窿
+  const loops = Math.min(3 + Math.floor(lv / 2), 15);
+  addLoops(g, loops);
 
   const dist = bfs(g, 1, 1);
 
@@ -257,10 +280,10 @@ function buildLevel(lv){
     if(g[ty][tx] !== 0) continue; 
 
     if (placedFakes < cfg.fakeExits) {
-      g[ty][tx] = 7; // 假出口
+      g[ty][tx] = 7; 
       placedFakes++;
     } else if (placedTraps < cfg.traps) {
-      g[ty][tx] = 5; // 地刺
+      g[ty][tx] = 5; 
       placedTraps++;
     } else {
       break;
@@ -270,7 +293,7 @@ function buildLevel(lv){
   grid = g; cols = w; rows = h;
   player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: 170 };
   timeLeft = cfg.time;
-  fogOn = cfg.fog;
+  fogOn = cfg.fog; 
   state = 'playing';
   camX = camY = 0;
   invuln = 0; shake = 0;
@@ -349,7 +372,7 @@ function checkTiles(){
   if(cx<0 || cy<0 || cx>=cols || cy>=rows) return;
   const v = grid[cy][cx];
   
-  if(v === 5){ // 地刺
+  if(v === 5){ 
     if(invuln <= 0){
       timeLeft = Math.max(0, timeLeft - 4);
       invuln = 1.0; shake = 0.3;
@@ -357,16 +380,16 @@ function checkTiles(){
       if(timeLeft <= 0) gameOver();
     }
   }
-  else if(v === 7){ // 假出口
+  else if(v === 7){ 
     if(invuln <= 0){
       timeLeft = Math.max(0, timeLeft - 10);
       invuln = 1.0; shake = 0.6;
       burst(player.x, player.y, '#ff0000', 30);
-      grid[cy][cx] = 0; // 假出口消失
+      grid[cy][cx] = 0; 
       if(timeLeft <= 0) gameOver();
     }
   }
-  else if(v === 4){ // 真出口
+  else if(v === 4){ 
     levelClear();
   }
 }
@@ -440,7 +463,7 @@ function drawTile(v, px, py, t){
     ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
     ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
     
-    if(v === 7){ // 假出口特徵
+    if(v === 7){ 
       ctx.fillStyle = '#ff0000';
       ctx.fillRect(px+TILE/2-1, py+TILE/2-1, 2, 2);
     }
@@ -525,9 +548,7 @@ function render(){
   }
   ctx.globalAlpha = 1;
 
-  // 第 10 關開始起霧，並且越嚟越濃
   if(fogOn){
-    // 計算基於 level 10 以上的迷霧半徑
     const fogRadius = Math.max(TILE * 2.5, TILE * 6 - (level - 10) * TILE * 0.4);
     const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.3, ppx, ppy, fogRadius);
     g2.addColorStop(0, 'rgba(0,0,0,0)');
