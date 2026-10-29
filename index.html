@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>升級迷宮 · 2D 即時</title>
+<title>升級迷宮 · 無盡模式</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
@@ -49,7 +49,6 @@
     </div>
     <div class="right">
       <div id="status">尋找出口</div>
-      <div id="keys" style="opacity:.75"></div>
     </div>
   </div>
   <div id="overlay">
@@ -60,13 +59,12 @@
     </div>
   </div>
 </div>
-<div id="tip">WASD / 方向鍵移動 · 🔑 開出口 · 🔴 尖刺扣時間 · 🟣 敵人碰到扣時間</div>
+<div id="tip">WASD / 方向鍵移動 · 🟢 綠色出口直接通關 · 🔴 尖刺扣時間 · 🟣 敵人碰到扣時間</div>
 
 <script>
 (() => {
 "use strict";
 
-/* ================= 常數 ================= */
 const TILE = 32;
 const VIEW_W = 960, VIEW_H = 640;
 
@@ -76,25 +74,20 @@ const elLv    = document.getElementById('lv');
 const elBest  = document.getElementById('best');
 const elTime  = document.getElementById('time');
 const elStatus= document.getElementById('status');
-const elKeys  = document.getElementById('keys');
 const overlay = document.getElementById('overlay');
 const ovTitle = document.getElementById('ovTitle');
 const ovText  = document.getElementById('ovText');
 const ovBtn   = document.getElementById('ovBtn');
 
-/* ================= 工具 ================= */
 const rnd = (a,b) => a + Math.random()*(b-a);
 const ri  = (a,b) => Math.floor(rnd(a,b+1));
 const clamp = (v,a,b) => v<a?a:v>b?b:v;
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-/* ================= 狀態 ================= */
 let level = 1;
 let grid, cols, rows;
 let player, enemies, portals;
-let timeLeft = 0, timeLimit = 0;
-let hasKey = false;
-let currentLevelHasKeyLock = false; // 修復 Bug 用嘅變數
+let timeLeft = 0;
 let state = 'playing';
 let camX = 0, camY = 0;
 let portalCd = 0, invuln = 0, shake = 0;
@@ -103,14 +96,14 @@ let particles = [];
 let lastTs = 0;
 const keysDown = {};
 
-/* ================= 最高紀錄 ================= */
+// 最高紀錄
 let maxLevel = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
 updateBestUI();
 function updateBestUI(){
     elBest.textContent = maxLevel > 0 ? `(最高: ${maxLevel} 層)` : '';
 }
 
-/* ================= 迷宮配置 ================= */
+// 迷宮配置 (移除鎖匙機制，加入時間上限)
 function config(lv){
   let w = Math.min(11 + (lv-1)*2, 41);
   let h = Math.min(11 + (lv-1)*2, 41);
@@ -122,14 +115,13 @@ function config(lv){
     rooms:   lv >= 2 ? 1 + Math.floor(lv/2) : 0,
     traps:   lv >= 2 ? Math.min(2 + Math.floor(lv*1.5), 30) : 0,
     enemies: lv >= 3 ? Math.min(Math.floor((lv-1)/2), 10) : 0,
-    keyLock: lv >= 5, // 第 5 層先有鎖匙
     portals: lv >= 8,
     fog:     lv >= 10,
-    time:    Math.round(24 + lv*5.5),
+    // 時間增加到第 15 層封頂 (約 106 秒)
+    time:    Math.round(24 + Math.min(lv, 15) * 5.5),
   };
 }
 
-/* ================= 生成迷宮 ================= */
 function genMaze(w,h){
   const g = Array.from({length:h}, ()=>new Array(w).fill(1));
   g[1][1] = 0;
@@ -193,7 +185,6 @@ function bfs(g, sx, sy){
   return d;
 }
 
-/* ================= 建關 ================= */
 function buildLevel(lv){
   const cfg = config(lv);
   const w = cfg.w, h = cfg.h;
@@ -203,14 +194,12 @@ function buildLevel(lv){
 
   const dist = bfs(g, 1, 1);
 
-  // 出口：最遠可達格
   let exit = [w-2,h-2], best = -1;
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
     if(g[y][x]===0 && dist[y][x] > best){ best = dist[y][x]; exit = [x,y]; }
   }
   g[exit[1]][exit[0]] = 4;
 
-  // 可用格池（按距離排序）
   const pool = [];
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
     if(g[y][x]===0 && dist[y][x] >= 2) pool.push([x,y,dist[y][x]]);
@@ -230,15 +219,7 @@ function buildLevel(lv){
     return null;
   };
 
-  hasKey = false;
-  currentLevelHasKeyLock = cfg.keyLock; // 記錄今層使唔使鎖匙
   portals = [];
-
-  // 鑰匙 + 鎖出口 (只有 keyLock 為 true 先會生成)
-  if(currentLevelHasKeyLock && pool.length > 20){
-    const kc = take(0.15, 0.55);
-    if(kc) g[kc[1]][kc[0]] = 3;
-  }
 
   // 陷阱
   for(let i=0;i<cfg.traps;i++){
@@ -268,7 +249,6 @@ function buildLevel(lv){
 
   grid = g; cols = w; rows = h;
   player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.32, speed: 150 };
-  timeLimit = cfg.time;
   timeLeft = cfg.time;
   fogOn = cfg.fog;
   state = 'playing';
@@ -280,20 +260,10 @@ function buildLevel(lv){
   elLv.textContent = lv;
   elTime.textContent = cfg.time.toFixed(1) + 's';
   elTime.classList.remove('low');
-  
-  // 更新 UI
-  if (currentLevelHasKeyLock) {
-    elKeys.textContent = '🔑 尋找鑰匙';
-    elStatus.textContent = '出口被鎖住';
-  } else {
-    elKeys.textContent = '';
-    elStatus.textContent = '尋找出口';
-  }
-  
+  elStatus.textContent = '尋找出口';
   lastTs = performance.now();
 }
 
-/* ================= 玩家移動 ================= */
 function collide(px, py){
   const r = player.r;
   const c0 = Math.floor((px-r)/TILE), c1 = Math.floor((px+r)/TILE);
@@ -322,7 +292,6 @@ function movePlayer(dt){
   if(!collide(player.x, ny)) player.y = ny;
 }
 
-/* ================= 敵人 ================= */
 function pickEnemyTarget(e){
   const opts = [];
   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
@@ -372,21 +341,13 @@ function hurtPlayer(){
   if(timeLeft <= 0) gameOver();
 }
 
-/* ================= 格事件 ================= */
 function checkTiles(){
   const cx = Math.floor(player.x/TILE);
   const cy = Math.floor(player.y/TILE);
   if(cx<0 || cy<0 || cx>=cols || cy>=rows) return;
   const v = grid[cy][cx];
 
-  if(v === 3){
-    hasKey = true;
-    grid[cy][cx] = 0;
-    elKeys.textContent = '🔑 已取得鑰匙';
-    elStatus.textContent = '出口已解鎖';
-    burst(player.x, player.y, '#ffd23f', 18);
-  }
-  else if(v === 5){
+  if(v === 5){
     if(invuln <= 0){
       timeLeft = Math.max(0, timeLeft - 4);
       invuln = 1.0;
@@ -404,18 +365,11 @@ function checkTiles(){
     burst(player.x, player.y, '#7cc7ff', 20);
   }
   else if(v === 4){
-    // 修復：如果今層唔使鎖匙，或者已經有鎖匙，直接過關
-    if(!currentLevelHasKeyLock || hasKey){
-      levelClear();
-    } else {
-      elStatus.textContent = '需要鑰匙！';
-      clearTimeout(checkTiles._t);
-      checkTiles._t = setTimeout(()=>{ elStatus.textContent = '出口被鎖住'; }, 1500);
-    }
+    // 直接過關，唔洗鎖匙
+    levelClear();
   }
 }
 
-/* ================= 粒子 ================= */
 function burst(x, y, color, n){
   for(let i=0;i<n;i++){
     const a = Math.random()*Math.PI*2;
@@ -437,7 +391,6 @@ function updateParticles(dt){
   }
 }
 
-/* ================= 遊戲流程 ================= */
 function gameOver(){
   state = 'over';
   ovTitle.textContent = '時間到！';
@@ -450,7 +403,6 @@ function levelClear(){
   state = 'clear';
   const bonus = Math.round(timeLeft * 10);
   
-  // 更新最高紀錄
   if (level > maxLevel) {
     maxLevel = level;
     localStorage.setItem('mazeMaxLevel', maxLevel);
@@ -471,7 +423,6 @@ ovBtn.onclick = () => {
   buildLevel(level);
 };
 
-/* ================= 主更新 ================= */
 function update(dt){
   timeLeft -= dt;
   if(timeLeft <= 0){ timeLeft = 0; gameOver(); return; }
@@ -489,47 +440,19 @@ function update(dt){
   elTime.classList.toggle('low', timeLeft < 8);
 }
 
-/* ================= 繪製 ================= */
 function drawTile(v, px, py, t){
-  if(v === 4){ // 出口
-    // 修復：如果無鎖匙機制，或者已經有鎖匙，畫綠色大門
-    if(!currentLevelHasKeyLock || hasKey){
-      const glow = 0.5 + 0.5*Math.sin(t*3);
-      ctx.save();
-      ctx.shadowColor = '#39d353';
-      ctx.shadowBlur = 18 + glow*16;
-      ctx.fillStyle = '#39d353';
-      ctx.fillRect(px+4, py+4, TILE-8, TILE-8);
-      ctx.restore();
-      ctx.fillStyle = 'rgba(255,255,255,' + (0.55 + glow*0.45) + ')';
-      ctx.fillRect(px+11, py+11, TILE-22, TILE-22);
-    } else { // 畫紅色鎖
-      ctx.fillStyle = '#4a1a1a';
-      ctx.fillRect(px+3, py+3, TILE-6, TILE-6);
-      ctx.strokeStyle = '#ff5a5f';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px+3.5, py+3.5, TILE-7, TILE-7);
-      ctx.fillStyle = '#ff5a5f';
-      ctx.fillRect(px+TILE/2-5, py+TILE/2-1, 10, 9);
-      ctx.strokeStyle = '#ff5a5f';
-      ctx.beginPath();
-      ctx.arc(px+TILE/2, py+TILE/2-1, 4, Math.PI, 0);
-      ctx.stroke();
-    }
-  }
-  else if(v === 3){ // 鑰匙
-    const bob = Math.sin(t*4)*2;
+  if(v === 4){ // 永遠係綠色發光出口
+    const glow = 0.5 + 0.5*Math.sin(t*3);
     ctx.save();
-    ctx.translate(px+TILE/2, py+TILE/2+bob);
-    ctx.shadowColor = '#ffd23f';
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = '#ffd23f';
-    ctx.beginPath(); ctx.arc(0,-2,5,0,Math.PI*2); ctx.fill();
-    ctx.fillRect(-1.5, 2, 3, 9);
-    ctx.fillRect(1.5, 7, 4, 3);
+    ctx.shadowColor = '#39d353';
+    ctx.shadowBlur = 18 + glow*16;
+    ctx.fillStyle = '#39d353';
+    ctx.fillRect(px+4, py+4, TILE-8, TILE-8);
     ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.55 + glow*0.45) + ')';
+    ctx.fillRect(px+11, py+11, TILE-22, TILE-22);
   }
-  else if(v === 5){ // 陷阱
+  else if(v === 5){ 
     ctx.fillStyle = '#2a0e12';
     ctx.fillRect(px, py, TILE, TILE);
     ctx.fillStyle = '#ff4b4b';
@@ -542,7 +465,7 @@ function drawTile(v, px, py, t){
       ctx.fill();
     }
   }
-  else if(v === 6){ // 傳送門
+  else if(v === 6){ 
     const rot = t*2;
     ctx.save();
     ctx.translate(px+TILE/2, py+TILE/2);
@@ -580,7 +503,6 @@ function render(){
 
   const t = performance.now()/1000;
 
-  // 地面與牆
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
       const px = Math.floor(x*TILE - camX);
@@ -600,7 +522,6 @@ function render(){
     }
   }
 
-  // 特殊格
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
       const v = grid[y][x];
@@ -609,7 +530,6 @@ function render(){
     }
   }
 
-  // 敵人
   for(const e of enemies){
     const px = e.x - camX, py = e.y - camY;
     ctx.save();
@@ -627,7 +547,6 @@ function render(){
     ctx.fill();
   }
 
-  // 玩家
   const ppx = player.x - camX, ppy = player.y - camY;
   const blink = invuln > 0 && Math.floor(t*12) % 2 === 0;
   if(!blink){
@@ -645,7 +564,6 @@ function render(){
     ctx.fill();
   }
 
-  // 粒子
   for(const p of particles){
     ctx.globalAlpha = p.life / p.max;
     ctx.fillStyle = p.color;
@@ -653,7 +571,6 @@ function render(){
   }
   ctx.globalAlpha = 1;
 
-  // 迷霧（高層）
   if(fogOn){
     const g2 = ctx.createRadialGradient(ppx, ppy, TILE*2, ppx, ppy, TILE*7);
     g2.addColorStop(0, 'rgba(0,0,0,0)');
@@ -665,7 +582,6 @@ function render(){
   ctx.restore();
 }
 
-/* ================= 主循環 ================= */
 function loop(ts){
   if(!lastTs) lastTs = ts;
   let dt = (ts - lastTs) / 1000;
@@ -677,7 +593,6 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 
-/* ================= 輸入 ================= */
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   keysDown[k] = true;
@@ -690,7 +605,6 @@ addEventListener('blur', () => {
   for(const k in keysDown) keysDown[k] = false;
 });
 
-/* ================= 啟動 ================= */
 buildLevel(1);
 requestAnimationFrame(loop);
 
