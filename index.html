@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>升級迷宮 · 無盡模式</title>
+<title>極限尋路 · 2D 迷宮</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
@@ -48,7 +48,7 @@
       <div class="time" id="time">--</div>
     </div>
     <div class="right">
-      <div id="status">尋找出口</div>
+      <div id="status">尋找綠色出口</div>
     </div>
   </div>
   <div id="overlay">
@@ -59,7 +59,7 @@
     </div>
   </div>
 </div>
-<div id="tip">WASD / 方向鍵移動 · 🟢 綠色出口直接通關 · 🔴 尖刺扣時間 · 🟣 敵人碰到扣時間</div>
+<div id="tip">WASD / 方向鍵移動 · 🟢 綠色出口直接通關 · 高層會有迷霧</div>
 
 <script>
 (() => {
@@ -86,13 +86,11 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a
 
 let level = 1;
 let grid, cols, rows;
-let player, enemies, portals;
+let player;
 let timeLeft = 0;
 let state = 'playing';
 let camX = 0, camY = 0;
-let portalCd = 0, invuln = 0, shake = 0;
 let fogOn = false;
-let particles = [];
 let lastTs = 0;
 const keysDown = {};
 
@@ -103,7 +101,7 @@ function updateBestUI(){
     elBest.textContent = maxLevel > 0 ? `(最高: ${maxLevel} 層)` : '';
 }
 
-// 迷宮配置 (移除鎖匙機制，加入時間上限)
+// 迷宮配置
 function config(lv){
   let w = Math.min(11 + (lv-1)*2, 41);
   let h = Math.min(11 + (lv-1)*2, 41);
@@ -111,17 +109,13 @@ function config(lv){
   if(h % 2 === 0) h++;
   return {
     w, h,
-    loops:   Math.floor(lv/3),
-    rooms:   lv >= 2 ? 1 + Math.floor(lv/2) : 0,
-    traps:   lv >= 2 ? Math.min(2 + Math.floor(lv*1.5), 30) : 0,
-    enemies: lv >= 3 ? Math.min(Math.floor((lv-1)/2), 10) : 0,
-    portals: lv >= 8,
-    fog:     lv >= 10,
-    // 時間增加到第 15 層封頂 (約 106 秒)
-    time:    Math.round(24 + Math.min(lv, 15) * 5.5),
+    fog:     lv >= 5, // 第 5 層開始有迷霧
+    // 時間：頭 10 層慢慢加，之後鎖死 90 秒
+    time:    Math.round(30 + Math.min(lv, 10) * 6),
   };
 }
 
+// 生成完美迷宮（無環路，全死胡同，最難行）
 function genMaze(w,h){
   const g = Array.from({length:h}, ()=>new Array(w).fill(1));
   g[1][1] = 0;
@@ -141,31 +135,6 @@ function genMaze(w,h){
     if(!ok) st.pop();
   }
   return g;
-}
-
-function addLoops(g, n){
-  const h = g.length, w = g[0].length;
-  let t = 0;
-  while(n > 0 && t < 800){
-    t++;
-    const x = ri(1, w-2), y = ri(1, h-2);
-    if(g[y][x] !== 1) continue;
-    const horiz = g[y][x-1]===0 && g[y][x+1]===0 && g[y-1][x]===1 && g[y+1][x]===1;
-    const vert  = g[y-1][x]===0 && g[y+1][x]===0 && g[y][x-1]===1 && g[y][x+1]===1;
-    if(horiz || vert){ g[y][x] = 0; n--; }
-  }
-}
-
-function addRooms(g, n){
-  const h = g.length, w = g[0].length;
-  for(let i=0; i<n; i++){
-    const rw = ri(1,2)*2+1, rh = ri(1,2)*2+1;
-    const x = ri(1, Math.max(1, w-rw-2));
-    const y = ri(1, Math.max(1, h-rh-2));
-    for(let yy=y; yy<Math.min(y+rh, h-1); yy++)
-      for(let xx=x; xx<Math.min(x+rw, w-1); xx++)
-        g[yy][xx] = 0;
-  }
 }
 
 function bfs(g, sx, sy){
@@ -189,78 +158,27 @@ function buildLevel(lv){
   const cfg = config(lv);
   const w = cfg.w, h = cfg.h;
   const g = genMaze(w,h);
-  addLoops(g, cfg.loops);
-  addRooms(g, cfg.rooms);
 
   const dist = bfs(g, 1, 1);
 
+  // 將出口放喺距離起點最遠嘅地方
   let exit = [w-2,h-2], best = -1;
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
     if(g[y][x]===0 && dist[y][x] > best){ best = dist[y][x]; exit = [x,y]; }
   }
   g[exit[1]][exit[0]] = 4;
 
-  const pool = [];
-  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
-    if(g[y][x]===0 && dist[y][x] >= 2) pool.push([x,y,dist[y][x]]);
-  }
-  pool.sort((a,b)=>a[2]-b[2]);
-
-  const used = new Set(['1,1', exit[0]+','+exit[1]]);
-  const take = (minF=0.1, maxF=0.95) => {
-    const lo = Math.floor(pool.length * minF);
-    const hi = Math.max(lo+1, Math.floor(pool.length * maxF));
-    for(let t=0;t<60;t++){
-      const c = pool[ri(lo, Math.min(hi, pool.length-1))];
-      if(!c) return null;
-      const k = c[0]+','+c[1];
-      if(!used.has(k)){ used.add(k); return c; }
-    }
-    return null;
-  };
-
-  portals = [];
-
-  // 陷阱
-  for(let i=0;i<cfg.traps;i++){
-    const c = take(0.15, 0.98);
-    if(c) g[c[1]][c[0]] = 5;
-  }
-
-  // 傳送門
-  if(cfg.portals){
-    for(let i=0;i<2;i++){
-      const c = take(0.2, 0.95);
-      if(c){ g[c[1]][c[0]] = 6; portals.push([c[0], c[1]]); }
-    }
-  }
-
-  // 敵人
-  enemies = [];
-  for(let i=0;i<cfg.enemies;i++){
-    const c = take(0.4, 0.98);
-    if(!c) continue;
-    enemies.push({
-      x:(c[0]+0.5)*TILE, y:(c[1]+0.5)*TILE,
-      tx:c[0], ty:c[1],
-      speed: 50 + lv*2,
-    });
-  }
-
   grid = g; cols = w; rows = h;
-  player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.32, speed: 150 };
+  player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: 160 };
   timeLeft = cfg.time;
   fogOn = cfg.fog;
   state = 'playing';
-  portalCd = 0; invuln = 0; shake = 0;
-  particles = [];
   camX = camY = 0;
   for(const k in keysDown) keysDown[k] = false;
 
   elLv.textContent = lv;
   elTime.textContent = cfg.time.toFixed(1) + 's';
   elTime.classList.remove('low');
-  elStatus.textContent = '尋找出口';
   lastTs = performance.now();
 }
 
@@ -292,102 +210,14 @@ function movePlayer(dt){
   if(!collide(player.x, ny)) player.y = ny;
 }
 
-function pickEnemyTarget(e){
-  const opts = [];
-  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-    const nx = e.tx+dx, ny = e.ty+dy;
-    if(nx>=0 && ny>=0 && ny<rows && nx<cols && grid[ny][nx] !== 1){
-      opts.push([nx,ny]);
-    }
-  }
-  if(!opts.length) return;
-  if(Math.random() < 0.7){
-    const pcx = Math.floor(player.x/TILE), pcy = Math.floor(player.y/TILE);
-    opts.sort((a,b) =>
-      (Math.abs(a[0]-pcx)+Math.abs(a[1]-pcy)) -
-      (Math.abs(b[0]-pcx)+Math.abs(b[1]-pcy))
-    );
-    if(Math.random() < 0.6){ e.tx = opts[0][0]; e.ty = opts[0][1]; return; }
-  }
-  const o = opts[ri(0, opts.length-1)];
-  e.tx = o[0]; e.ty = o[1];
-}
-
-function updateEnemies(dt){
-  for(const e of enemies){
-    const tX = (e.tx+0.5)*TILE, tY = (e.ty+0.5)*TILE;
-    const dx = tX - e.x, dy = tY - e.y;
-    const d = Math.hypot(dx, dy);
-    if(d < 2){
-      e.x = tX; e.y = tY;
-      pickEnemyTarget(e);
-    } else {
-      const s = e.speed * dt;
-      e.x += dx/d * Math.min(s, d);
-      e.y += dy/d * Math.min(s, d);
-    }
-    if(Math.hypot(e.x - player.x, e.y - player.y) < TILE*0.6){
-      hurtPlayer();
-    }
-  }
-}
-
-function hurtPlayer(){
-  if(invuln > 0) return;
-  timeLeft = Math.max(0, timeLeft - 5);
-  invuln = 1.5;
-  shake = 0.35;
-  burst(player.x, player.y, '#b46bff', 20);
-  if(timeLeft <= 0) gameOver();
-}
-
 function checkTiles(){
   const cx = Math.floor(player.x/TILE);
   const cy = Math.floor(player.y/TILE);
   if(cx<0 || cy<0 || cx>=cols || cy>=rows) return;
-  const v = grid[cy][cx];
-
-  if(v === 5){
-    if(invuln <= 0){
-      timeLeft = Math.max(0, timeLeft - 4);
-      invuln = 1.0;
-      shake = 0.25;
-      burst(player.x, player.y, '#ff4b4b', 14);
-      if(timeLeft <= 0) gameOver();
-    }
-  }
-  else if(v === 6 && portalCd <= 0 && portals.length === 2){
-    const idx = (portals[0][0]===cx && portals[0][1]===cy) ? 0 : 1;
-    const o = portals[1-idx];
-    player.x = (o[0]+0.5)*TILE;
-    player.y = (o[1]+0.5)*TILE;
-    portalCd = 0.6;
-    burst(player.x, player.y, '#7cc7ff', 20);
-  }
-  else if(v === 4){
-    // 直接過關，唔洗鎖匙
+  
+  // 撞到出口直接過關
+  if(grid[cy][cx] === 4){
     levelClear();
-  }
-}
-
-function burst(x, y, color, n){
-  for(let i=0;i<n;i++){
-    const a = Math.random()*Math.PI*2;
-    const sp = rnd(40, 180);
-    particles.push({
-      x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
-      life: 0.6, max: 0.6, color
-    });
-  }
-}
-
-function updateParticles(dt){
-  for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    p.x += p.vx*dt; p.y += p.vy*dt;
-    p.vx *= 0.94; p.vy *= 0.94;
-    p.life -= dt;
-    if(p.life <= 0) particles.splice(i,1);
   }
 }
 
@@ -401,7 +231,6 @@ function gameOver(){
 
 function levelClear(){
   state = 'clear';
-  const bonus = Math.round(timeLeft * 10);
   
   if (level > maxLevel) {
     maxLevel = level;
@@ -409,10 +238,10 @@ function levelClear(){
     updateBestUI();
   }
 
-  ovTitle.textContent = '通關！';
+  ovTitle.textContent = '成功逃脫！';
   ovText.innerHTML =
-    `第 ${level} 層完成，剩餘 <b>${timeLeft.toFixed(1)}s</b>，獎勵 <b>${bonus}</b> 分。<br>` +
-    `下一層迷宮更大、機關更多。`;
+    `第 ${level} 層完成，剩餘 <b>${timeLeft.toFixed(1)}s</b>。<br>` +
+    `下一層地圖更大，視野更差。`;
   ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
   overlay.classList.add('show');
 }
@@ -427,56 +256,24 @@ function update(dt){
   timeLeft -= dt;
   if(timeLeft <= 0){ timeLeft = 0; gameOver(); return; }
 
-  if(portalCd > 0) portalCd -= dt;
-  if(invuln > 0)   invuln -= dt;
-  if(shake > 0)    shake = Math.max(0, shake - dt*1.5);
-
   movePlayer(dt);
-  updateEnemies(dt);
   checkTiles();
-  updateParticles(dt);
 
   elTime.textContent = timeLeft.toFixed(1) + 's';
   elTime.classList.toggle('low', timeLeft < 8);
 }
 
 function drawTile(v, px, py, t){
-  if(v === 4){ // 永遠係綠色發光出口
-    const glow = 0.5 + 0.5*Math.sin(t*3);
+  if(v === 4){ // 綠色出口
+    const glow = 0.5 + 0.5*Math.sin(t*4);
     ctx.save();
     ctx.shadowColor = '#39d353';
-    ctx.shadowBlur = 18 + glow*16;
+    ctx.shadowBlur = 20 + glow*20;
     ctx.fillStyle = '#39d353';
-    ctx.fillRect(px+4, py+4, TILE-8, TILE-8);
+    ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
     ctx.restore();
-    ctx.fillStyle = 'rgba(255,255,255,' + (0.55 + glow*0.45) + ')';
-    ctx.fillRect(px+11, py+11, TILE-22, TILE-22);
-  }
-  else if(v === 5){ 
-    ctx.fillStyle = '#2a0e12';
-    ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = '#ff4b4b';
-    for(let i=0;i<3;i++){
-      const bx = px+5+i*8;
-      ctx.beginPath();
-      ctx.moveTo(bx, py+TILE-5);
-      ctx.lineTo(bx+4, py+6);
-      ctx.lineTo(bx+8, py+TILE-5);
-      ctx.fill();
-    }
-  }
-  else if(v === 6){ 
-    const rot = t*2;
-    ctx.save();
-    ctx.translate(px+TILE/2, py+TILE/2);
-    ctx.rotate(rot);
-    ctx.shadowColor = '#7cc7ff';
-    ctx.shadowBlur = 18;
-    ctx.strokeStyle = '#7cc7ff';
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*1.4); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0,0,4,Math.PI,Math.PI*2.4); ctx.stroke();
-    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
+    ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
   }
 }
 
@@ -491,11 +288,6 @@ function render(){
   ctx.fillStyle = '#0a0e15';
   ctx.fillRect(0,0,VIEW_W,VIEW_H);
 
-  ctx.save();
-  if(shake > 0.01){
-    ctx.translate(rnd(-8,8)*shake, rnd(-8,8)*shake);
-  }
-
   const c0 = Math.max(0, Math.floor(camX/TILE) - 1);
   const c1 = Math.min(cols-1, Math.floor((camX+VIEW_W)/TILE) + 1);
   const r0 = Math.max(0, Math.floor(camY/TILE) - 1);
@@ -503,6 +295,7 @@ function render(){
 
   const t = performance.now()/1000;
 
+  // 畫牆同地板
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
       const px = Math.floor(x*TILE - camX);
@@ -522,64 +315,40 @@ function render(){
     }
   }
 
+  // 畫出口
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
-      const v = grid[y][x];
-      if(v === 0 || v === 1) continue;
-      drawTile(v, x*TILE - camX, y*TILE - camY, t);
+      if(grid[y][x] === 4) {
+        drawTile(4, x*TILE - camX, y*TILE - camY, t);
+      }
     }
   }
 
-  for(const e of enemies){
-    const px = e.x - camX, py = e.y - camY;
-    ctx.save();
-    ctx.shadowColor = '#b46bff';
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = '#b46bff';
-    ctx.beginPath();
-    ctx.arc(px, py, TILE*0.33, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(px-4, py-2, 2.5, 0, Math.PI*2);
-    ctx.arc(px+4, py-2, 2.5, 0, Math.PI*2);
-    ctx.fill();
-  }
-
+  // 畫玩家
   const ppx = player.x - camX, ppy = player.y - camY;
-  const blink = invuln > 0 && Math.floor(t*12) % 2 === 0;
-  if(!blink){
-    ctx.save();
-    ctx.shadowColor = '#4fd1ff';
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = '#4fd1ff';
-    ctx.beginPath();
-    ctx.arc(ppx, ppy, player.r, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = '#eaf9ff';
-    ctx.beginPath();
-    ctx.arc(ppx, ppy, player.r*0.45, 0, Math.PI*2);
-    ctx.fill();
-  }
+  ctx.save();
+  ctx.shadowColor = '#4fd1ff';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#4fd1ff';
+  ctx.beginPath();
+  ctx.arc(ppx, ppy, player.r, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#eaf9ff';
+  ctx.beginPath();
+  ctx.arc(ppx, ppy, player.r*0.45, 0, Math.PI*2);
+  ctx.fill();
 
-  for(const p of particles){
-    ctx.globalAlpha = p.life / p.max;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - camX - 2, p.y - camY - 2, 4, 4);
-  }
-  ctx.globalAlpha = 1;
-
+  // 畫迷霧（第 5 層開始）
   if(fogOn){
-    const g2 = ctx.createRadialGradient(ppx, ppy, TILE*2, ppx, ppy, TILE*7);
+    // 半徑隨層數縮細，最多縮到 3 格
+    const fogRadius = Math.max(TILE * 3.5, TILE * 7 - (level-5)*TILE*0.3);
+    const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.4, ppx, ppy, fogRadius);
     g2.addColorStop(0, 'rgba(0,0,0,0)');
-    g2.addColorStop(1, 'rgba(2,4,8,0.92)');
+    g2.addColorStop(1, 'rgba(2,4,8,1)'); // 全黑
     ctx.fillStyle = g2;
     ctx.fillRect(0,0,VIEW_W,VIEW_H);
   }
-
-  ctx.restore();
 }
 
 function loop(ts){
