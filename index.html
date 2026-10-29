@@ -44,7 +44,7 @@
   <canvas id="game" width="960" height="640"></canvas>
   <div id="hud">
     <div class="left">
-      <div>第 <span id="lv">1</span> 層</div>
+      <div>第 <span id="lv">1</span> 層 <span id="best" style="font-size:12px;opacity:0.6;margin-left:8px"></span></div>
       <div class="time" id="time">--</div>
     </div>
     <div class="right">
@@ -73,6 +73,7 @@ const VIEW_W = 960, VIEW_H = 640;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const elLv    = document.getElementById('lv');
+const elBest  = document.getElementById('best');
 const elTime  = document.getElementById('time');
 const elStatus= document.getElementById('status');
 const elKeys  = document.getElementById('keys');
@@ -93,7 +94,8 @@ let grid, cols, rows;
 let player, enemies, portals;
 let timeLeft = 0, timeLimit = 0;
 let hasKey = false;
-let state = 'playing';       // playing | over | clear
+let currentLevelHasKeyLock = false; // 修復 Bug 用嘅變數
+let state = 'playing';
 let camX = 0, camY = 0;
 let portalCd = 0, invuln = 0, shake = 0;
 let fogOn = false;
@@ -101,7 +103,14 @@ let particles = [];
 let lastTs = 0;
 const keysDown = {};
 
-/* ================= 迷宮配置（升級核心） ================= */
+/* ================= 最高紀錄 ================= */
+let maxLevel = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
+updateBestUI();
+function updateBestUI(){
+    elBest.textContent = maxLevel > 0 ? `(最高: ${maxLevel} 層)` : '';
+}
+
+/* ================= 迷宮配置 ================= */
 function config(lv){
   let w = Math.min(11 + (lv-1)*2, 41);
   let h = Math.min(11 + (lv-1)*2, 41);
@@ -113,7 +122,7 @@ function config(lv){
     rooms:   lv >= 2 ? 1 + Math.floor(lv/2) : 0,
     traps:   lv >= 2 ? Math.min(2 + Math.floor(lv*1.5), 30) : 0,
     enemies: lv >= 3 ? Math.min(Math.floor((lv-1)/2), 10) : 0,
-    keyLock: lv >= 5,
+    keyLock: lv >= 5, // 第 5 層先有鎖匙
     portals: lv >= 8,
     fog:     lv >= 10,
     time:    Math.round(24 + lv*5.5),
@@ -222,13 +231,13 @@ function buildLevel(lv){
   };
 
   hasKey = false;
+  currentLevelHasKeyLock = cfg.keyLock; // 記錄今層使唔使鎖匙
   portals = [];
 
-  // 鑰匙 + 鎖出口
-  if(cfg.keyLock && pool.length > 20){
+  // 鑰匙 + 鎖出口 (只有 keyLock 為 true 先會生成)
+  if(currentLevelHasKeyLock && pool.length > 20){
     const kc = take(0.15, 0.55);
     if(kc) g[kc[1]][kc[0]] = 3;
-    hasKey = false;
   }
 
   // 陷阱
@@ -271,8 +280,16 @@ function buildLevel(lv){
   elLv.textContent = lv;
   elTime.textContent = cfg.time.toFixed(1) + 's';
   elTime.classList.remove('low');
-  elKeys.textContent = cfg.keyLock ? '🔑 尋找鑰匙' : '';
-  elStatus.textContent = cfg.keyLock ? '出口被鎖住' : '尋找出口';
+  
+  // 更新 UI
+  if (currentLevelHasKeyLock) {
+    elKeys.textContent = '🔑 尋找鑰匙';
+    elStatus.textContent = '出口被鎖住';
+  } else {
+    elKeys.textContent = '';
+    elStatus.textContent = '尋找出口';
+  }
+  
   lastTs = performance.now();
 }
 
@@ -387,7 +404,8 @@ function checkTiles(){
     burst(player.x, player.y, '#7cc7ff', 20);
   }
   else if(v === 4){
-    if(hasKey){
+    // 修復：如果今層唔使鎖匙，或者已經有鎖匙，直接過關
+    if(!currentLevelHasKeyLock || hasKey){
       levelClear();
     } else {
       elStatus.textContent = '需要鑰匙！';
@@ -431,6 +449,14 @@ function gameOver(){
 function levelClear(){
   state = 'clear';
   const bonus = Math.round(timeLeft * 10);
+  
+  // 更新最高紀錄
+  if (level > maxLevel) {
+    maxLevel = level;
+    localStorage.setItem('mazeMaxLevel', maxLevel);
+    updateBestUI();
+  }
+
   ovTitle.textContent = '通關！';
   ovText.innerHTML =
     `第 ${level} 層完成，剩餘 <b>${timeLeft.toFixed(1)}s</b>，獎勵 <b>${bonus}</b> 分。<br>` +
@@ -466,7 +492,8 @@ function update(dt){
 /* ================= 繪製 ================= */
 function drawTile(v, px, py, t){
   if(v === 4){ // 出口
-    if(hasKey){
+    // 修復：如果無鎖匙機制，或者已經有鎖匙，畫綠色大門
+    if(!currentLevelHasKeyLock || hasKey){
       const glow = 0.5 + 0.5*Math.sin(t*3);
       ctx.save();
       ctx.shadowColor = '#39d353';
@@ -476,7 +503,7 @@ function drawTile(v, px, py, t){
       ctx.restore();
       ctx.fillStyle = 'rgba(255,255,255,' + (0.55 + glow*0.45) + ')';
       ctx.fillRect(px+11, py+11, TILE-22, TILE-22);
-    } else {
+    } else { // 畫紅色鎖
       ctx.fillStyle = '#4a1a1a';
       ctx.fillRect(px+3, py+3, TILE-6, TILE-6);
       ctx.strokeStyle = '#ff5a5f';
