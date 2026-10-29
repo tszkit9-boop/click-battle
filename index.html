@@ -172,13 +172,12 @@ btnShowLB.onclick = () => {
     }
 };
 
-/* ================= 遊戲核心 (隨機大小、一開始就難) ================= */
+/* ================= 遊戲核心 (隨機大小、第10關起霧) ================= */
 function config(lv){
-  // 每一關隨機大細，但隨住層數上升，隨機範圍會擴大
+  // 每一關隨機大細
   let minSize = Math.min(9 + lv * 2, 33);
   let maxSize = Math.min(15 + lv * 3, 41);
   
-  // 確保係奇數
   let w = ri(minSize, maxSize);
   let h = ri(minSize, maxSize);
   if(w % 2 === 0) w++;
@@ -186,13 +185,9 @@ function config(lv){
 
   return {
     w, h,
-    // 第 1 層就開始有陷阱
     traps:   Math.min(4 + lv * 5, 90), 
-    // 第 1 層就有假出口
     fakeExits: Math.min(1 + Math.floor(lv / 2), 4), 
-    // 第 1 層就起霧，越後越黑
-    fog:     true, 
-    // 一開始時間就少
+    fog:     lv >= 10, // 第 10 層才開始有迷霧
     time:    Math.max(30, 45 - lv), 
   };
 }
@@ -242,7 +237,6 @@ function buildLevel(lv){
 
   const dist = bfs(g, 1, 1);
 
-  // 尋找最遠點做真出口
   let exit = [w-2,h-2], best = -1;
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
     if(g[y][x]===0 && dist[y][x] > best){ best = dist[y][x]; exit = [x,y]; }
@@ -251,7 +245,6 @@ function buildLevel(lv){
 
   const pool = [];
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
-    // 距離起點至少 3 格才放置物件
     if(g[y][x]===0 && dist[y][x] > 3) pool.push([x,y]);
   }
   shuffle(pool);
@@ -436,7 +429,7 @@ function update(dt){
 }
 
 function drawTile(v, px, py, t){
-  if(v === 4 || v === 7){ // 真出口 / 假出口
+  if(v === 4 || v === 7){ 
     const glow = 0.5 + 0.5*Math.sin(t*4 + (v===7?1:0));
     ctx.save();
     ctx.shadowColor = '#39d353';
@@ -447,8 +440,7 @@ function drawTile(v, px, py, t){
     ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
     ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
     
-    if(v === 7){
-      // 假出口：中間加粒極細嘅紅點
+    if(v === 7){ // 假出口特徵
       ctx.fillStyle = '#ff0000';
       ctx.fillRect(px+TILE/2-1, py+TILE/2-1, 2, 2);
     }
@@ -533,10 +525,10 @@ function render(){
   }
   ctx.globalAlpha = 1;
 
-  // 隨機地獄濃霧 (第 1 層就有)
+  // 第 10 關開始起霧，並且越嚟越濃
   if(fogOn){
-    // 隨住層數上升，視野越嚟越窄
-    const fogRadius = Math.max(TILE * 2.5, TILE * 6 - (level-1)*TILE*0.3);
+    // 計算基於 level 10 以上的迷霧半徑
+    const fogRadius = Math.max(TILE * 2.5, TILE * 6 - (level - 10) * TILE * 0.4);
     const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.3, ppx, ppy, fogRadius);
     g2.addColorStop(0, 'rgba(0,0,0,0)');
     g2.addColorStop(1, 'rgba(0,0,0,1)');
