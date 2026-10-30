@@ -1,42 +1,16 @@
 [
   {
     "id": "1",
-    "title": "Click Battle 點擊對戰",
+    "title": "Click Battle",
     "url": "./click-battle.html",
     "category": "動作",
-    "description": "我原本嘅點擊對戰小遊戲。",
-    "thumbnail": "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500&q=80"
+    "description": "我原本嘅點擊對戰小遊戲"
   },
   {
     "id": "2",
-    "title": "俄羅斯方塊 Tetris",
+    "title": "俄羅斯方塊",
     "url": "https://tetris.com/play-tetris",
     "category": "益智",
-    "description": "全球最經典嘅方塊消除遊戲。",
-    "thumbnail": "https://images.unsplash.com/photo-1605870445919-838d190e8e1b?w=500&q=80"
-  },
-  {
-    "id": "3",
-    "title": "貪食蛇 Snake",
-    "url": "https://playsnake.org/",
-    "category": "休閒",
-    "description": "懷舊網頁遊戲，食生果變長蛇。",
-    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&q=80"
-  },
-  {
-    "id": "4",
-    "title": "2048",
-    "url": "https://play2048.co/",
-    "category": "益智",
-    "description": "將數字方塊合併，挑戰 2048！",
-    "thumbnail": "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=500&q=80"
-  },
-  {
-    "id": "5",
-    "title": "五子棋",
-    "url": "https://www.piskvorky.net/",
-    "category": "多人",
-    "description": "同朋友或者電腦對戰嘅經典棋類。",
-    "thumbnail": "https://images.unsplash.com/photo-1614036417651-efe591298935?w=500&q=80"
+    "description": "經典方塊遊戲"
   }
 ]
