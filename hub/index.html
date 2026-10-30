@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 網頁小遊戲收集站</title>
+    <style>
+        /* 基本設定及深色主題 */
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #e94560;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+
+        /* 頂部導航列 */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px; 
+            flex-wrap: wrap; 
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        .logo { font-size: 24px; font-weight: bold; margin: 0; }
+        
+        /* 搜尋與提交按鈕 */
+        .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
+        .search-box {
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            border: 1px solid #334155; 
+            background: var(--card-bg);
+            color: white;
+            width: 250px; 
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-box:focus { border-color: var(--primary); }
+        .btn-submit { 
+            padding: 10px 20px; 
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-submit:hover { background: #c22f48; }
+
+        /* 分類按鈕 */
+        .categories { 
+            margin-bottom: 30px; 
+            display: flex; 
+            gap: 10px; 
+            flex-wrap: wrap;
+        }
+        .cat-btn { 
+            padding: 8px 18px; 
+            background: var(--card-bg); 
+            border: 1px solid #334155; 
+            color: var(--text-sub); 
+            border-radius: 20px; 
+            cursor: pointer; 
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .cat-btn:hover { border-color: var(--primary); color: white; }
+        .cat-btn.active { 
+            background: var(--primary); 
+            border-color: var(--primary); 
+            color: white; 
+            font-weight: bold;
+        }
+
+        /* 遊戲卡片網格 */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+            gap: 25px; 
+        }
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .card-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #334155;
+        }
+        .card-content { padding: 15px; display: flex; flex-direction: column; flex-grow: 1;}
+        .card-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .card h3 { margin: 0 0 8px 0; font-size: 18px; }
+        .card p { font-size: 13px; color: var(--text-sub); margin: 0 0 20px 0; flex-grow: 1; line-height: 1.5; }
+        .card a.play-btn { 
+            display: block;
+            text-align: center; 
+            background: #334155; 
+            color: white; 
+            padding: 10px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .card a.play-btn:hover { background: var(--primary); }
+
+        /* 狀態提示 */
+        .empty-state { text-align: center; padding: 50px; color: var(--text-sub); font-size: 18px;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 頂部 -->
+        <div class="header">
+            <h1 class="logo">🎮 網頁小遊戲收集站</h1>
+            <div class="controls">
+                <input type="text" id="searchInput" class="search-box" placeholder="🔍 搜尋遊戲名稱..." oninput="filterGames()">
+                <!-- 呢個連結會自動跳去你 GitHub 嘅 Issue 頁面 -->
+                <a href="https://github.com/tszkit9-boop/click-battle/issues/new?title=提交新遊戲&body=【遊戲網址】:%0A【遊戲名稱】:%0A【分類】(動作/益智/休閒/多人):%0A【簡介】:%0A" target="_blank" class="btn-submit">➕ 提交新遊戲</a>
+            </div>
+        </div>
+
+        <!-- 分類列 -->
+        <div class="categories" id="categoryList">
+            <!-- JS 會自動喺度生成按鈕 -->
+        </div>
+
+        <!-- 遊戲展示區 -->
+        <div class="grid" id="gameGrid">
+            <div class="empty-state">載入中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局變數
+        let allGames = [];
+        let currentCategory = '全部';
+
+        // 1. 載入 JSON 資料
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('./games.json')
+                .then(response => {
+                    if (!response.ok) throw new Error('網絡錯誤');
+                    return response.json();
+                })
+                .then(data => {
+                    allGames = data;
+                    initCategories();
+                    renderGames();
+                })
+                .catch(error => {
+                    document.getElementById('gameGrid').innerHTML = '<div class="empty-state">⚠️ 載入遊戲失敗，請確保 games.json 存在且格式正確。</div>';
+                    console.error('Fetch error:', error);
+                });
+        });
+
+        // 2. 初始化分類按鈕
+        function initCategories() {
+            const catContainer = document.getElementById('categoryList');
+            // 自動抽出所有唔同嘅分類，前面加個 '全部'
+            const categories = ['全部', ...new Set(allGames.map(g => g.category))];
+            
+            catContainer.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `cat-btn ${cat === currentCategory ? 'active' : ''}`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    currentCategory = cat;
+                    // 更新按鈕樣式
+                    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderGames();
+                };
+                catContainer.appendChild(btn);
+            });
+        }
+
+        // 3. 搜尋過濾器
+        function filterGames() {
+            renderGames();
+        }
+
+        // 4. 渲染遊戲卡片
+        function renderGames() {
+            const grid = document.getElementById('gameGrid');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            // 進行過濾
+            const filtered = allGames.filter(game => {
+                const matchCategory = currentCategory === '全部' || game.category === currentCategory;
+                const matchSearch = game.title.toLowerCase().includes(searchTerm) || 
+                                    game.description.toLowerCase().includes(searchTerm);
+                return matchCategory && matchSearch;
+            });
+
+            // 顯示結果
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state">😢 搵唔到相關遊戲，試下第二個關鍵字啦！</div>';
+                return;
+            }
+
+            filtered.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // 如果 JSON 入面冇提供縮圖，就用預設圖
+                const imgUrl = game.thumbnail || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&q=80';
+
+                card.innerHTML = `
+                    <span class="card-tag">${game.category}</span>
+                    <img src="${imgUrl}" class="card-img" alt="${game.title}" onerror="this.src='https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&q=80'">
+                    <div class="card-content">
+                        <h3>${game.title}</h3>
+                        <p>${game.description}</p>
+                        <a href="${game.url}" target="_blank" class="play-btn">▶ 開始遊戲</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
