@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "title": "Click Battle",
+    "url": "../click-battle.html",
+    "category": "動作",
+    "description": "我原本嘅點擊對戰小遊戲"
+  },
+  {
+    "id": "2",
+    "title": "俄羅斯方塊",
+    "url": "https://tetris.com/play-tetris",
+    "category": "益智",
+    "description": "經典方塊遊戲"
+  }
+]
