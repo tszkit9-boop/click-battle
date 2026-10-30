@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網頁小遊戲收集站</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: #fff; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
+        input { padding: 10px; border-radius: 5px; border: none; width: 250px; }
+        .btn { padding: 10px 15px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none;}
+        .btn:hover { background: #c22f48; }
+        .categories { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;}
+        .cat-btn { padding: 8px 15px; background: #16213e; border: 1px solid #0f3460; color: #fff; border-radius: 20px; cursor: pointer; }
+        .cat-btn.active { background: #e94560; border-color: #e94560; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: #16213e; border-radius: 10px; padding: 20px; border: 1px solid #0f3460; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-color: #e94560; }
+        .card h3 { margin: 0 0 10px 0; color: #e94560; }
+        .card p { font-size: 14px; color: #aaa; margin: 0 0 15px 0; }
+        .card a { display: inline-block; background: #0f3460; color: #fff; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-size: 14px;}
+        .card a:hover { background: #e94560; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>🎮 網頁小遊戲收集站</h2>
+        <input type="text" id="searchInput" placeholder="搜尋遊戲名稱..." onkeyup="filterGames()">
+        <!-- 提交表單用 GitHub Issue 代替 -->
+        <a href="https://github.com/tszkit9-boop/click-battle/issues/new?title=提交新遊戲&body=請填寫遊戲網址：%0A請填寫遊戲名稱：%0A請選擇分類(動作/益智/休閒/多人)：%0A" target="_blank" class="btn">➕ 提交新遊戲</a>
+    </div>
+
+    <div class="categories" id="categoryList">
+        <button class="cat-btn active" onclick="setCategory('全部', this)">全部</button>
+        <!-- 分類按鈕會由 JS 自動生成 -->
+    </div>
+
+    <div class="grid" id="gameGrid">
+        <!-- 遊戲卡片會由 JS 自動生成 -->
+    </div>
+
+    <script>
+        let allGames = [];
+        let currentCategory = '全部';
+
+        // 1. 讀取 games.json
+        fetch('./games.json')
+            .then(response => response.json())
+            .then(data => {
+                allGames = data;
+                renderCategories();
+                renderGames();
+            })
+            .catch(err => console.error('讀取遊戲失敗:', err));
+
+        // 2. 生成分類按鈕
+        function renderCategories() {
+            const categories = ['全部', ...new Set(allGames.map(g => g.category))];
+            const catContainer = document.getElementById('categoryList');
+            catContainer.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'cat-btn' + (cat === currentCategory ? ' active' : '');
+                btn.innerText = cat;
+                btn.onclick = () => setCategory(cat, btn);
+                catContainer.appendChild(btn);
+            });
+        }
+
+        // 3. 切換分類
+        function setCategory(category, btnElement) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            renderGames();
+        }
+
+        // 4. 顯示遊戲卡片 (包含搜尋同分類過濾)
+        function renderGames() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+
+            const filtered = allGames.filter(game => {
+                const matchCategory = currentCategory === '全部' || game.category === currentCategory;
+                const matchSearch = game.title.toLowerCase().includes(searchTerm) || game.description.toLowerCase().includes(searchTerm);
+                return matchCategory && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p>搵唔到相關遊戲...</p>';
+                return;
+            }
+
+            filtered.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${game.title}</h3>
+                    <p>${game.description}</p>
+                    <a href="${game.url}" target="_blank">開始遊戲</a>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 5. 搜尋功能
+        function filterGames() {
+            renderGames();
+        }
+    </script>
+</body>
+</html>
