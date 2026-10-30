@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>隨機迷宮 </title>
+<title>隨機迷宮 · 神級技能版</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
@@ -27,7 +27,7 @@
   .time{font-size:22px;letter-spacing:.5px}
   .time.low{color:#ff5a5f;animation:pulse .6s infinite alternate}
   @keyframes pulse{to{opacity:.45}}
-  #buffs {font-size: 12px; color: #7ee787; margin-top: 4px; display: flex; gap: 8px;}
+  #buffs {font-size: 13px; color: #ffd23f; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;}
 
   #btnShowLB {
     pointer-events: auto; margin-top: 8px;
@@ -51,24 +51,23 @@
   #lbList li { display: flex; justify-content: space-between; margin-bottom: 8px; }
   .lb-rank { color: #ffd23f; width: 35px; display: inline-block; font-weight: bold;}
 
-  /* 技能升級卡牌 */
-  #upgradeUI { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  /* 技能卡牌 (加大版) */
+  #upgradeUI { display: none; flex-direction: column; gap: 12px; margin-bottom: 20px; width: 100%; max-width: 400px;}
   .upgrade-card {
     background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px; padding: 15px; cursor: pointer; text-align: left;
+    border-radius: 12px; padding: 15px 20px; cursor: pointer; text-align: left;
     transition: all 0.2s; display: flex; align-items: center; gap: 15px;
   }
-  .upgrade-card:hover { background: rgba(255,255,255,0.2); border-color: #39d353; transform: scale(1.02); }
-  .upgrade-icon { font-size: 30px; }
-  .upgrade-info h4 { color: #4fd1ff; margin-bottom: 4px; font-size: 16px; }
-  .upgrade-info p { margin: 0; font-size: 13px; opacity: 0.8; }
+  .upgrade-card:hover { background: rgba(255,255,255,0.2); border-color: #39d353; transform: scale(1.05); }
+  .upgrade-icon { font-size: 36px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.5)); }
+  .upgrade-info h4 { color: #39d353; margin-bottom: 4px; font-size: 18px; }
+  .upgrade-info p { margin: 0; font-size: 14px; opacity: 0.9; line-height: 1.3; }
 
   #overlay button{
     font:inherit;font-weight:700;font-size:16px;padding:12px 28px;border:0;
     border-radius:999px;cursor:pointer;color:#04070c;
     background:linear-gradient(135deg,#7ee787,#39d353);
     box-shadow:0 8px 24px rgba(57,211,83,.35);transition:transform .15s}
-  #overlay button:hover{transform:translateY(-2px)}
   #tip{opacity:.45;font-size:13px;text-align:center}
 </style>
 </head>
@@ -88,7 +87,7 @@
   </div>
   
   <div id="overlay">
-    <div>
+    <div style="display:flex;flex-direction:column;align-items:center;">
       <h1 id="ovTitle">通關！</h1>
       <p id="ovText"></p>
       
@@ -148,21 +147,23 @@ let isTouching = false;
 let touchX = 0, touchY = 0;
 let touchStartX = 0, touchStartY = 0;
 
-// 玩家升級數值
+// 玩家神級技能數值
 let playerStats = {
-    speedBonus: 0,       // 速度加成 (每次 +10%)
-    spikeImmunity: 0,    // 鐵壁次數 (每關開頭)
-    extraTime: 0,        // 額外時間 (每次 +4秒)
-    trueSight: false     // 真視之眼
+    speedMult: 1.0,      // 速度倍率 (每次 +0.3)
+    extraTime: 0,        // 額外時間 (每次 +15秒)
+    shieldCount: 0,      // 每關護盾次數 (每次 +3)
+    removeFakes: false,  // 消除假出口
+    trapReduce: 0        // 每關減少陷阱的百分比 (每次 +0.3)
 };
-let currentSpikeShield = 0; // 今關剩餘擋刺次數
+let currentShield = 0; // 今關剩餘護盾
 
 function updateBuffUI() {
     let b = [];
-    if (playerStats.speedBonus > 0) b.push(`⚡x${playerStats.speedBonus/0.1}`);
-    if (playerStats.spikeImmunity > 0) b.push(`🛡️x${currentSpikeShield}`);
-    if (playerStats.extraTime > 0) b.push(`⏳+${playerStats.extraTime}s`);
-    if (playerStats.trueSight) b.push(`👁️`);
+    if (playerStats.speedMult > 1.0) b.push(`⚡ x${playerStats.speedMult.toFixed(1)}`);
+    if (playerStats.extraTime > 0) b.push(`⏳ +${playerStats.extraTime}s`);
+    if (playerStats.shieldCount > 0) b.push(`🛡️ x${currentShield}`);
+    if (playerStats.removeFakes) b.push(`👁️ 真視`);
+    if (playerStats.trapReduce > 0) b.push(`🧹 -${Math.round(playerStats.trapReduce*100)}%刺`);
     elBuffs.innerHTML = b.join(' | ');
 }
 
@@ -200,12 +201,13 @@ btnShowLB.onclick = () => {
     }
 };
 
-/* ================= 升級系統 ================= */
+/* ================= 神級技能系統 ================= */
 const UPGRADES = [
-    { id: 'speed', icon: '⚡', title: '神速鞋', desc: '移動速度永久 +10%' },
-    { id: 'shield', icon: '🛡️', title: '鐵壁防刺鞋', desc: '每關開頭免疫 1 次地刺' },
-    { id: 'time', icon: '⏳', title: '時間沙漏', desc: '每關初始時間 +4 秒' },
-    { id: 'sight', icon: '👁️', title: '真視之眼', desc: '極易分辨真假出口' }
+    { id: 'speed', icon: '⚡', title: '風火輪', desc: '移動速度永久 +30%' },
+    { id: 'time', icon: '⏳', title: '時光沙漏', desc: '每關初始時間 +15 秒' },
+    { id: 'shield', icon: '🛡️', title: '無敵金鐘罩', desc: '每關開頭免疫 3 次地刺' },
+    { id: 'sight', icon: '👁️', title: '千里眼', desc: '永久消除所有假出口' },
+    { id: 'sweep', icon: '🧹', title: '排雷專家', desc: '全圖地刺數量永久減少 30%' }
 ];
 
 function showUpgrades() {
@@ -228,13 +230,14 @@ function showUpgrades() {
             </div>
         `;
         div.onclick = () => {
-            if (up.id === 'speed') playerStats.speedBonus += 0.1;
-            if (up.id === 'shield') playerStats.spikeImmunity += 1;
-            if (up.id === 'time') playerStats.extraTime += 4;
-            if (up.id === 'sight') playerStats.trueSight = true;
+            if (up.id === 'speed') playerStats.speedMult += 0.3;
+            if (up.id === 'time') playerStats.extraTime += 15;
+            if (up.id === 'shield') playerStats.shieldCount += 3;
+            if (up.id === 'sight') playerStats.removeFakes = true;
+            if (up.id === 'sweep') playerStats.trapReduce = Math.min(playerStats.trapReduce + 0.3, 1.0); // 最多減 100%
             
             upgradeUI.style.display = 'none';
-            ovBtn.style.display = 'block'; // 顯示「進入下一層」
+            ovBtn.style.display = 'block'; 
         };
         upgradeUI.appendChild(div);
     });
@@ -250,10 +253,18 @@ function config(lv){
   if(w % 2 === 0) w++;
   if(h % 2 === 0) h++;
 
+  // 計算基礎陷阱數量
+  let baseTraps = Math.min(2 + Math.floor(lv * 1.5), 35);
+  // 應用排雷專家減免
+  let finalTraps = Math.floor(baseTraps * (1 - playerStats.trapReduce));
+
+  // 假出口 (如果買咗千里眼就變 0)
+  let fakes = playerStats.removeFakes ? 0 : Math.min(1 + Math.floor(lv / 2), 4);
+
   return {
     w, h,
-    traps:   Math.min(2 + Math.floor(lv * 1.5), 35), 
-    fakeExits: Math.min(1 + Math.floor(lv / 2), 4), 
+    traps:   finalTraps, 
+    fakeExits: fakes, 
     fog:     lv >= 10, 
     time:    Math.max(35, 50 - lv) + playerStats.extraTime,
   };
@@ -352,9 +363,9 @@ function buildLevel(lv){
 
   grid = g; cols = w; rows = h;
   
-  // 應用速度升級
+  // 應用速度技能
   const baseSpeed = 170;
-  player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: baseSpeed * (1 + playerStats.speedBonus) };
+  player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: baseSpeed * playerStats.speedMult };
   
   timeLeft = cfg.time;
   fogOn = cfg.fog; 
@@ -363,8 +374,8 @@ function buildLevel(lv){
   invuln = 0; shake = 0;
   particles = [];
   
-  // 初始化鐵壁次數
-  currentSpikeShield = playerStats.spikeImmunity;
+  // 初始化金鐘罩次數
+  currentShield = playerStats.shieldCount;
   updateBuffUI();
 
   isTouching = false;
@@ -442,12 +453,12 @@ function checkTiles(){
   
   if(v === 5){ 
     if(invuln <= 0){
-      // 判斷有無鐵壁防刺鞋
-      if (currentSpikeShield > 0) {
-        currentSpikeShield--;
+      // 判斷有無金鐘罩
+      if (currentShield > 0) {
+        currentShield--;
         updateBuffUI();
-        burst(player.x, player.y, '#4fd1ff', 15); // 藍色特效代表擋住咗
-        invuln = 0.5;
+        burst(player.x, player.y, '#4fd1ff', 20); // 藍色爆盾特效
+        invuln = 0.6;
       } else {
         timeLeft = Math.max(0, timeLeft - 4);
         invuln = 1.0; shake = 0.3;
@@ -478,7 +489,7 @@ function gameOver(){
   upgradeUI.style.display = 'none';
   ovBtn.style.display = 'block';
   saveScore(level, timeLeft);
-  ovBtn.textContent = '重試本層 (保留升級)';
+  ovBtn.textContent = '重試本層 (保留技能)';
   overlay.classList.add('show');
 }
 
@@ -494,11 +505,11 @@ function levelClear(){
     ovBtn.textContent = '重新開始';
   } else {
     state = 'clear';
-    ovTitle.textContent = '成功逃脫！請選擇一項升級';
+    ovTitle.textContent = '🎉 請選擇一項技能強化！';
     ovTitle.style.color = '#39d353';
-    ovText.innerHTML = `第 ${level} / ${MAX_LEVEL} 層完成。<br>剩餘時間：<b>${timeLeft.toFixed(1)}s</b>`;
+    ovText.innerHTML = `第 ${level} / ${MAX_LEVEL} 層完成。`;
     
-    // 顯示升級選項
+    // 顯示技能選項
     showUpgrades();
     ovBtn.style.display = 'none'; // 隱藏按鈕，等玩家揀完卡先出
     
@@ -514,7 +525,7 @@ ovBtn.onclick = () => {
     state = 'playing'; lastTs = performance.now();
   } else if(state === 'win'){
     level = 1; 
-    playerStats = { speedBonus: 0, spikeImmunity: 0, extraTime: 0, trueSight: false }; // 爆機重置技能
+    playerStats = { speedMult: 1.0, extraTime: 0, shieldCount: 0, removeFakes: false, trapReduce: 0 }; // 爆機重置技能
     buildLevel(1);
   } else if(state === 'clear'){
     level++; 
@@ -540,18 +551,8 @@ function update(dt){
 }
 
 function drawTile(v, px, py, t){
-  if(v === 4 || v === 7){ 
-    const isFake = (v === 7);
-    const glow = 0.5 + 0.5*Math.sin(t*4 + (isFake?1:0));
-    
-    // 如果有真視之眼，真出口加光柱，假出口紅點變大
-    if (playerStats.trueSight) {
-        if (!isFake) {
-            ctx.fillStyle = 'rgba(57, 211, 83, 0.2)';
-            ctx.fillRect(px, py-40, TILE, 40); // 光柱
-        }
-    }
-
+  if(v === 4){ 
+    const glow = 0.5 + 0.5*Math.sin(t*4);
     ctx.save();
     ctx.shadowColor = '#39d353';
     ctx.shadowBlur = 20 + glow*20;
@@ -560,12 +561,6 @@ function drawTile(v, px, py, t){
     ctx.restore();
     ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
     ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
-    
-    if(isFake){ 
-      ctx.fillStyle = '#ff0000';
-      const dotSize = playerStats.trueSight ? 8 : 2; // 真視之眼令紅點變大
-      ctx.fillRect(px+TILE/2-dotSize/2, py+TILE/2-dotSize/2, dotSize, dotSize);
-    }
   }
   else if(v === 5){
     ctx.fillStyle = '#2a0e12';
@@ -622,7 +617,7 @@ function render(){
   for(let y=r0;y<=r1;y++){
     for(let x=c0;x<=c1;x++){
       const v = grid[y][x];
-      if(v === 4 || v === 5 || v === 7) {
+      if(v === 4 || v === 5) { // 假出口已消失，只需畫真出口同刺
         drawTile(v, x*TILE - camX, y*TILE - camY, t);
       }
     }
@@ -630,7 +625,17 @@ function render(){
 
   const ppx = player.x - camX, ppy = player.y - camY;
   const blink = invuln > 0 && Math.floor(t*12) % 2 === 0;
+  
+  // 玩家身上如果有金鐘罩，加個藍色光環
   if(!blink){
+    if (currentShield > 0) {
+        ctx.beginPath();
+        ctx.arc(ppx, ppy, player.r + 6 + Math.sin(t*10)*2, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(79, 209, 255, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    
     ctx.save();
     ctx.shadowColor = '#4fd1ff'; ctx.shadowBlur = 20;
     ctx.fillStyle = '#4fd1ff'; ctx.beginPath();
