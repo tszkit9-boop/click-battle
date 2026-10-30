@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>隨機亂數 · 地獄迷宮 (生路版)</title>
+<title>隨機亂數 · 迷宮 (適中版)</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
@@ -184,10 +184,11 @@ function config(lv){
 
   return {
     w, h,
-    traps:   Math.min(4 + lv * 5, 90), 
+    // 陷阱大幅減少：第1層3個，第10層大約17個，最多35個
+    traps:   Math.min(2 + Math.floor(lv * 1.5), 35), 
     fakeExits: Math.min(1 + Math.floor(lv / 2), 4), 
     fog:     lv >= 10, 
-    time:    Math.max(30, 45 - lv), 
+    time:    Math.max(35, 50 - lv), // 時間稍微放寬
   };
 }
 
@@ -213,21 +214,18 @@ function genMaze(w,h){
   return g;
 }
 
-// 2. 新增：打通牆壁，製造生路 (環路)
+// 2. 打通牆壁，製造生路 (環路)
 function addLoops(g, n){
   const h = g.length, w = g[0].length;
   let t = 0;
   while(n > 0 && t < 1000){
     t++;
-    // 隨機揀一忽牆
     const x = ri(1, w-2), y = ri(1, h-2);
     if(g[y][x] !== 1) continue;
     
-    // 檢查係咪左右通、上下唔通 (或者相反)
     const horiz = g[y][x-1]===0 && g[y][x+1]===0 && g[y-1][x]===1 && g[y+1][x]===1;
     const vert  = g[y-1][x]===0 && g[y+1][x]===0 && g[y][x-1]===1 && g[y][x+1]===1;
     
-    // 如果符合條件，就打通佢
     if(horiz || vert){ g[y][x] = 0; n--; }
   }
 }
@@ -254,7 +252,6 @@ function buildLevel(lv){
   const w = cfg.w, h = cfg.h;
   let g = genMaze(w,h);
 
-  // 打通牆壁！層數越高，打通越多，最多打 15 個窿
   const loops = Math.min(3 + Math.floor(lv / 2), 15);
   addLoops(g, loops);
 
@@ -407,9 +404,9 @@ function gameOver(){
 function levelClear(){
   if (level >= MAX_LEVEL) {
     state = 'win';
-    ovTitle.textContent = '🎉 地獄爆機！';
+    ovTitle.textContent = '🎉 爆機！';
     ovTitle.style.color = '#ffd23f';
-    ovText.innerHTML = `你成功喺隨機地獄突破咗 <b>${MAX_LEVEL}</b> 層！<br>你係真正嘅神！`;
+    ovText.innerHTML = `你成功突破咗 <b>${MAX_LEVEL}</b> 層！<br>你係真正嘅迷宮大師！`;
     saveScore(MAX_LEVEL, timeLeft);
     ovBtn.textContent = '重新開始';
   } else {
