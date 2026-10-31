@@ -38,16 +38,16 @@
   #btnPlayerName { color: #4fd1ff; }
   #btnShowLB { color: #ffd23f; }
 
-  /* 共用彈窗樣式 */
+  /* 彈窗共用樣式 */
   #overlay, #nameModal {
     position:absolute;inset:0;display:none;
     background:rgba(6,9,14,.95);backdrop-filter:blur(8px);text-align:center;
     padding: 20px 16px; overflow-y: auto; touch-action: auto;
-    flex-direction: column; align-items: center;
+    flex-direction: column; align-items: center; z-index: 10;
   }
   #overlay.show, #nameModal.show { display: flex; }
   #overlay > div, #nameModal > div { 
-    margin: auto 0; width: 100%; max-width: 480px; /* 放寬少少闊度 */
+    margin: auto 0; width: 100%; max-width: 450px; 
     display: flex; flex-direction: column; align-items: center; 
   }
   #overlay h1, #nameModal h1 {font-size:26px;margin-bottom:6px;color:#ffd23f}
@@ -64,7 +64,6 @@
   .lb-name { flex: 1; text-align: left; margin-left: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; color: #e6edf3;}
   .lb-lvl-time { color: #7ee787; flex-shrink: 0; margin-left: 10px;}
 
-  /* 技能卡牌 (加大版) */
   #upgradeUI { display: none; flex-direction: column; gap: 12px; margin-bottom: 20px; width: 100%; }
   .upgrade-card {
     background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
@@ -101,9 +100,20 @@
 
   #tip{opacity:.45;font-size:13px;text-align:center}
 
-  /* 手機版修正：唔好再縮細技能卡，保持大字 */
-  @media (max-width: 600px) {
-    #tip { font-size: 11px; display: none; }
+  /* 📱 手機版全屏大優化 */
+  @media (max-width: 800px) {
+    body { padding: 0; gap: 0; }
+    #wrap {
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto; /* 移除固定比例 */
+      border-radius: 0;
+      box-shadow: none;
+    }
+    #hud { font-size: 16px; padding: 16px; }
+    .time { font-size: 26px; }
+    #btnPlayerName, #btnShowLB { font-size: 14px; padding: 6px 12px; }
+    #tip { display: none; }
     #overlay h1, #nameModal h1 { font-size: 24px; }
     #overlay p, #nameModal p { font-size: 14px; }
     .upgrade-card { padding: 15px; gap: 12px; }
@@ -182,7 +192,8 @@
   const leaderboardRef = ref(db, 'leaderboard');
 
   const TILE = 32;
-  const VIEW_W = 960, VIEW_H = 640;
+  // 💡 改為 let，容許動態調整視窗大小
+  let VIEW_W = 960, VIEW_H = 640;
 
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -244,6 +255,23 @@
   };
   let currentShield = 0;
 
+  /* ================= 動態調整畫布尺寸 ================= */
+  function handleResize() {
+    if (window.innerWidth <= 800) {
+        // 手機版：全屏尺寸
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    } else {
+        // 電腦版：固定 960x640
+        canvas.width = 960;
+        canvas.height = 640;
+    }
+    VIEW_W = canvas.width;
+    VIEW_H = canvas.height;
+  }
+  window.addEventListener('resize', handleResize);
+  handleResize();
+
   /* ================= 玩家名字系統 ================= */
   let playerName = localStorage.getItem('mazePlayerName') || "無名氏";
   btnPlayerName.textContent = `👤 ${playerName}`;
@@ -255,9 +283,7 @@
       setTimeout(() => nameInput.focus(), 100);
   };
 
-  btnCancelName.onclick = () => {
-      nameModal.classList.remove('show');
-  };
+  btnCancelName.onclick = () => { nameModal.classList.remove('show'); };
 
   btnConfirmName.onclick = () => {
       let newName = nameInput.value.trim();
@@ -727,13 +753,15 @@
 
   function render(){
     const worldW = cols*TILE, worldH = rows*TILE;
+    // 自動調整視角
     if(worldW <= VIEW_W) camX = -(VIEW_W - worldW)/2;
     else camX = clamp(player.x - VIEW_W/2, 0, worldW - VIEW_W);
     if(worldH <= VIEW_H) camY = -(VIEW_H - worldH)/2;
     else camY = clamp(player.y - VIEW_H/2, 0, worldH - VIEW_H);
 
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.fillStyle = '#0a0e15'; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+    ctx.fillStyle = '#0a0e15'; 
+    ctx.fillRect(0,0,VIEW_W,VIEW_H);
 
     ctx.save();
     if(shake > 0.01){ ctx.translate(rnd(-8,8)*shake, rnd(-8,8)*shake); }
