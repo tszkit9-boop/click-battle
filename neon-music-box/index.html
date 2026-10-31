@@ -6,23 +6,19 @@
     <title>Neon Music Box - 霓虹音樂盒</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
-        
         body {
             margin: 0; padding: 0; background-color: #050510; color: #fff;
             font-family: 'Orbitron', 'PingFang HK', sans-serif; overflow: hidden;
             display: flex; flex-direction: column; height: 100dvh; height: 100vh;
             touch-action: none; user-select: none;
         }
-
         #toolbar {
             height: 60px; background: #111; display: flex; align-items: center;
             justify-content: space-between; padding: 0 10px; z-index: 10;
             border-bottom: 2px solid #00d2d3; box-shadow: 0 0 15px rgba(0,210,211,0.3);
-            flex-wrap: wrap; /* 允許換行以容納更多按鈕 */
+            flex-wrap: wrap;
         }
-
         .btn-group { display: flex; gap: 5px; margin: 5px 0; }
-        
         button {
             background: transparent; color: #00d2d3; border: 2px solid #00d2d3;
             padding: 6px 10px; font-family: 'Orbitron', sans-serif; font-weight: bold;
@@ -35,20 +31,17 @@
         button.record.active { background: #ff4757; color: #fff; animation: pulse 1s infinite; }
         button.download { color: #2ed573; border-color: #2ed573; display: none; }
         button.download.active { display: inline-block; background: #2ed573; color: #000; }
-
         @keyframes pulse { 0%, 100% { box-shadow: 0 0 5px #ff4757; } 50% { box-shadow: 0 0 20px #ff4757; } }
-
         #canvas-container { flex: 1; position: relative; }
         canvas { display: block; width: 100%; height: 100%; }
-
         #instructions {
             position: absolute; bottom: 10px; width: 100%; text-align: center;
             color: rgba(255,255,255,0.5); font-size: 12px; pointer-events: none;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
-
     <div id="toolbar">
         <div class="btn-group">
             <button id="btn-play" onclick="togglePlay()">▶ 播放</button>
@@ -60,11 +53,11 @@
             <button onclick="shareTrack()">🔗 分享</button>
         </div>
     </div>
-
     <div id="canvas-container">
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
-            點擊空白處放置鋼片 | 點擊鋼片切換音高 | 長按/右鍵刪除
+            👆 點擊空白處放第一塊鋼片 (自動設定起點)<br>
+            拖曳頂部紅框微調 | 點擊鋼片切換音高 | 長按刪除
         </div>
     </div>
 
@@ -87,12 +80,9 @@
 
         // --- 音頻系統與錄音 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const dest = audioCtx.createMediaStreamDestination(); // 用嚟錄音嘅節點
-        let mediaRecorder;
-        let audioChunks = [];
-        let audioUrl = "";
+        const dest = audioCtx.createMediaStreamDestination();
+        let mediaRecorder, audioChunks = [], audioUrl = "";
         let isRecording = false;
-        let recordStartTime = 0;
 
         const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
         const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6'];
@@ -100,53 +90,49 @@
 
         function playNote(freq, color) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-            
-            // 連接去喇叭出聲
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            // 同時連接去錄音機
-            gain.connect(dest);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-
+            osc.connect(gain); gain.connect(audioCtx.destination); gain.connect(dest);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
             createSparks(ball.x, ball.y, color);
         }
 
         // --- 遊戲物件 ---
         let plates = [];
         let isPlaying = false;
-        let ball = { x: W / 2, y: 50, vy: 0, radius: 8, color: '#fff' };
+        let ball = { x: W / 2, y: 50, vx: 0, vy: 0, radius: 8 };
         let sparks = [];
         
+        // 發射器 (預設喺中間)
+        let emitter = { x: W / 2, y: 30, w: 40, h: 20 };
+        let isDraggingEmitter = false;
+
         const GRAVITY = 0.4;
-        const BOUNCE = 0.75;
         const PLATE_W = 120;
         const PLATE_H = 15;
 
+        // 預設一首歌，確保一開始有嘢聽
         function loadDefault() {
             plates = [];
+            let startY = 120;
             let notes = [0, 0, 4, 4, 5, 5, 4];
-            let startX = W/2 - 200;
             for(let i=0; i<notes.length; i++) {
                 plates.push({
-                    x: startX + i*60,
-                    y: 150 + i*40,
+                    x: W/2 + (i%2 === 0 ? -80 : 20),
+                    y: startY + i*60,
                     w: PLATE_W, h: PLATE_H,
                     noteIndex: notes[i]
                 });
             }
+            // 預設發射器對準第一塊鋼片左邊
+            emitter.x = plates[0].x + 20;
+            ball.x = emitter.x;
+            ball.y = emitter.y + 20;
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -158,7 +144,7 @@
         // --- 互動控制 ---
         let dragPlate = null;
         let pressTimer = null;
-        let isDragging = false;
+        let isDraggingPlate = false;
         let startX, startY, initialX, initialY;
 
         function getPos(e) {
@@ -171,62 +157,91 @@
         function handleDown(e) {
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
+            
+            // 1. 檢查有冇撳中頂部發射器
+            if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
+                isDraggingEmitter = true;
+                return;
+            }
+
+            // 2. 檢查有冇撳中鋼片
             let clickedPlate = null;
             for (let i = plates.length - 1; i >= 0; i--) {
                 let p = plates[i];
                 if (pos.x > p.x - 20 && pos.x < p.x + p.w + 20 && pos.y > p.y - 20 && pos.y < p.y + p.h + 20) {
-                    clickedPlate = p;
-                    break;
+                    clickedPlate = p; break;
                 }
             }
 
             if (clickedPlate) {
+                // 長按刪除邏輯
                 pressTimer = setTimeout(() => {
                     plates = plates.filter(p => p !== clickedPlate);
                     pressTimer = null;
                 }, 800);
-
+                
                 dragPlate = clickedPlate;
-                isDragging = false;
+                isDraggingPlate = false;
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
+                // 3. 點擊空白處：新增鋼片
                 let idx = Math.floor(Math.random() * 7);
-                plates.push({
+                let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
                     w: PLATE_W, h: PLATE_H, noteIndex: idx
-                });
+                };
+                plates.push(newPlate);
                 playPreviewNote(idx);
+
+                // 【核心改動】如果係第一塊鋼片，自動將發射器移去佢上面！
+                if (plates.length === 1) {
+                    emitter.x = newPlate.x + 20; // 預設對準左邊，令佢向右滑
+                    ball.x = emitter.x;
+                    ball.y = emitter.y + 20;
+                }
             }
         }
 
         function handleMove(e) {
-            if (!dragPlate) return;
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
+
+            // 拖動發射器
+            if (isDraggingEmitter) {
+                emitter.x = Math.max(20, Math.min(W - 20, pos.x));
+                if (!isPlaying) { ball.x = emitter.x; ball.y = emitter.y + 20; }
+                return;
+            }
+
+            // 拖動鋼片
+            if (!dragPlate) return;
             let dx = pos.x - startX;
             let dy = pos.y - startY;
             if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                isDragging = true;
-                clearTimeout(pressTimer);
+                isDraggingPlate = true;
+                clearTimeout(pressTimer); // 拖緊就唔算長按
             }
-            if (isDragging) {
+            if (isDraggingPlate) {
                 dragPlate.x = initialX + dx;
                 dragPlate.y = initialY + dy;
             }
         }
 
         function handleUp(e) {
+            if (isDraggingEmitter) { isDraggingEmitter = false; return; }
+            
             if (pressTimer) {
                 clearTimeout(pressTimer);
                 pressTimer = null;
-                if (!isDragging && dragPlate) {
+                // 點擊切換音高
+                if (!isDraggingPlate && dragPlate) {
                     dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 7;
                     playPreviewNote(dragPlate.noteIndex);
                 }
             }
             dragPlate = null;
-            isDragging = false;
+            isDraggingPlate = false;
         }
 
         canvas.addEventListener('mousedown', handleDown);
@@ -238,105 +253,61 @@
 
         function playPreviewNote(idx) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(SCALE_FREQS[idx], audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(SCALE_FREQS[idx], audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        // --- 錄音與下載功能 ---
+        // --- 錄音與功能 ---
         function toggleRecord() {
             if (!isRecording) {
-                // 開始錄音
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                
-                // 重置錄音狀態
-                audioChunks = [];
-                downloadBtn.classList.remove('active');
-                downloadBtn.style.display = 'none';
-                
-                // 啟動 MediaRecorder
+                audioChunks = []; downloadBtn.classList.remove('active'); downloadBtn.style.display = 'none';
                 mediaRecorder = new MediaRecorder(dest.stream);
-                mediaRecorder.ondataavailable = event => {
-                    if (event.data.size > 0) audioChunks.push(event.data);
-                };
+                mediaRecorder.ondataavailable = event => { if (event.data.size > 0) audioChunks.push(event.data); };
                 mediaRecorder.onstop = () => {
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
                     audioUrl = URL.createObjectURL(blob);
-                    downloadBtn.style.display = 'inline-block';
-                    downloadBtn.classList.add('active');
+                    downloadBtn.style.display = 'inline-block'; downloadBtn.classList.add('active');
                 };
-                
-                mediaRecorder.start();
-                isRecording = true;
-                recordBtn.innerText = "⏹ 停止錄音";
-                recordBtn.classList.add('active');
-                recordStartTime = Date.now();
-                
-                // 自動開始播放
+                mediaRecorder.start(); isRecording = true;
+                recordBtn.innerText = "⏹ 停止錄音"; recordBtn.classList.add('active');
                 if (!isPlaying) togglePlay();
-
             } else {
-                // 停止錄音
-                mediaRecorder.stop();
-                isRecording = false;
-                recordBtn.innerText = "🔴 錄製";
-                recordBtn.classList.remove('active');
-                
-                // 停止播放
+                mediaRecorder.stop(); isRecording = false;
+                recordBtn.innerText = "🔴 錄製"; recordBtn.classList.remove('active');
                 if (isPlaying) togglePlay();
             }
         }
 
         function downloadAudio() {
             if (!audioUrl) return;
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = audioUrl;
-            // 存為 webm 檔案 (手機通常支援)
-            a.download = 'neon-music-box.webm'; 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            alert("音軌已下載！請去手機嘅『檔案/下載』搵返個檔案。");
+            const a = document.createElement('a'); a.style.display = 'none';
+            a.href = audioUrl; a.download = 'neon-music-box.webm'; 
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            alert("音軌已下載！請去手機『檔案』搵返。");
         }
 
-        // --- 其他按鈕 ---
-        function clearAll() {
-            if(confirm("確定要清空所有鋼片嗎？")) {
-                plates = [];
-                if(isPlaying) togglePlay();
-            }
-        }
-
+        function clearAll() { if(confirm("確定清空？")) { plates = []; if(isPlaying) togglePlay(); } }
+        
         function shareTrack() {
             if (plates.length === 0) return alert("請先放置鋼片！");
-            let dataStr = JSON.stringify(plates);
-            let encoded = btoa(encodeURIComponent(dataStr));
+            let encoded = btoa(encodeURIComponent(JSON.stringify(plates)));
             let url = window.location.href.split('?')[0] + '?track=' + encoded;
-            
-            navigator.clipboard.writeText(url).then(() => {
-                alert("已複製分享連結！");
-            }).catch(() => {
-                prompt("請手動複製連結：", url);
-            });
+            navigator.clipboard.writeText(url).then(() => alert("已複製分享連結！")).catch(() => prompt("複製連結：", url));
         }
 
         function togglePlay() {
             isPlaying = !isPlaying;
             if (isPlaying) {
-                playBtn.innerText = "⏸ 暫停";
-                playBtn.classList.add('active');
+                playBtn.innerText = "⏸ 暫停"; playBtn.classList.add('active');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                ball.x = W / 2; ball.y = 50; ball.vy = 0;
+                // 重設鐵珠去發射器
+                ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
             } else {
-                playBtn.innerText = "▶ 播放";
-                playBtn.classList.remove('active');
+                playBtn.innerText = "▶ 播放"; playBtn.classList.remove('active');
             }
         }
 
@@ -344,92 +315,108 @@
         function circleLineCollision(cx, cy, r, x1, y1, x2, y2) {
             let closestX = Math.max(x1, Math.min(cx, x2));
             let closestY = Math.max(y1, Math.min(cy, y2));
-            let dx = cx - closestX;
-            let dy = cy - closestY;
+            let dx = cx - closestX; let dy = cy - closestY;
             return (dx * dx + dy * dy) <= (r * r);
         }
 
         function createSparks(x, y, color) {
-            for(let i=0; i<10; i++) {
-                sparks.push({
-                    x: x, y: y,
-                    vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6 - 2,
-                    life: 1, color: color
-                });
-            }
+            for(let i=0; i<10; i++) sparks.push({ x: x, y: y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6 - 2, life: 1, color: color });
         }
 
         function update() {
             for(let i = sparks.length - 1; i >= 0; i--) {
-                let s = sparks[i];
-                s.x += s.vx; s.y += s.vy; s.vy += 0.2; s.life -= 0.05;
+                let s = sparks[i]; s.x += s.vx; s.y += s.vy; s.vy += 0.2; s.life -= 0.05;
                 if(s.life <= 0) sparks.splice(i, 1);
             }
 
             if (!isPlaying) return;
 
+            // 基本物理
             ball.vy += GRAVITY;
+            ball.x += ball.vx;
             ball.y += ball.vy;
-            ball.x += Math.sin(Date.now() / 500) * 0.5; 
+            
+            // 滑行摩擦力 (如果唔係跌落，慢慢減速)
+            if (ball.vx > 0) ball.vx = Math.max(0, ball.vx - 0.1);
+            if (ball.vx < 0) ball.vx = Math.min(0, ball.vx + 0.1);
 
-            if (ball.x < 10) ball.x = 10;
-            if (ball.x > W - 10) ball.x = W - 10;
+            // 邊界反彈
+            if (ball.x < 10) { ball.x = 10; ball.vx *= -1; }
+            if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -1; }
 
+            // 碰撞檢測 (核心邏輯：順住鋼片滑行)
             for (let p of plates) {
                 if (ball.vy > 0 && circleLineCollision(ball.x, ball.y + ball.radius, 0, p.x, p.y, p.x + p.w, p.y)) {
+                    // 計算擊中鋼片嘅比例 (0 = 最左，1 = 最右)
                     let hitRatio = (ball.x - p.x) / p.w;
                     hitRatio = Math.max(0, Math.min(1, hitRatio));
                     
+                    // 將波波貼返上鋼片表面，防止穿模
                     ball.y = p.y - ball.radius;
-                    ball.vy = -ball.vy * BOUNCE;
-                    ball.x += (hitRatio - 0.5) * 4;
+                    
+                    // 如果係由高處大力跌落，先會有少少反彈；否則貼住表面滑
+                    if (ball.vy > 5) {
+                        ball.vy = -ball.vy * 0.2; 
+                    } else {
+                        ball.vy = 0;
+                    }
+                    
+                    // 【滑行魔法】根據擊中位置，強制俾佢一個橫向速度，令佢滑去對面！
+                    if (hitRatio < 0.5) {
+                        // 打中左邊，滑向盡頭右邊
+                        ball.vx = 5; 
+                    } else {
+                        // 打中右邊，滑向盡頭左邊
+                        ball.vx = -5;
+                    }
                     
                     playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                 }
             }
 
+            // 跌落底部，返去發射器
             if (ball.y > H + 50) {
-                ball.x = W / 2;
-                ball.y = 50;
-                ball.vy = 0;
+                ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
             }
         }
 
         function draw() {
-            ctx.fillStyle = '#050510';
-            ctx.fillRect(0, 0, W, H);
-
-            ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)';
-            ctx.lineWidth = 1;
+            ctx.fillStyle = '#050510'; ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)'; ctx.lineWidth = 1;
             for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
             for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
+            // 畫發射器
+            ctx.fillStyle = '#111';
+            ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
+            ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
+            ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
+            
+            // 畫發射輔助線
+            ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)';
+            ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(emitter.x, emitter.y + emitter.h); ctx.lineTo(emitter.x, H); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 畫鋼片
             for (let p of plates) {
                 let color = SCALE_COLORS[p.noteIndex];
-                ctx.shadowBlur = 15; ctx.shadowColor = color;
-                ctx.fillStyle = color;
+                ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fillStyle = color;
                 ctx.fillRect(p.x, p.y, p.w, p.h);
-                
                 ctx.shadowBlur = 0; ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px "Orbitron", sans-serif';
-                ctx.textAlign = 'center';
+                ctx.font = 'bold 12px "Orbitron", sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 12);
             }
-            ctx.shadowBlur = 0;
 
+            // 畫粒子
             for(let s of sparks) {
-                ctx.globalAlpha = s.life;
-                ctx.fillStyle = s.color;
+                ctx.globalAlpha = s.life; ctx.fillStyle = s.color;
                 ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.shadowBlur = 20; ctx.shadowColor = '#fff';
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            // 畫鐵珠
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
         }
 
         function loop() { update(); draw(); requestAnimationFrame(loop); }
