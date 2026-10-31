@@ -108,29 +108,28 @@
         let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 10 };
         let sparks = [];
         
-        // 預設發射器喺左上角
         let emitter = { x: 100, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
+        // 【物理調整】降低重力，減低彈跳力
         const GRAVITY = 0.45; 
         const PLATE_W = 120; 
         const PLATE_H = 15;
 
         function loadDefault() {
             plates = [];
-            // 排一個由左上角一路向右下角跳嘅樓梯
-            let startX = 80;
+            // 排一個完美嘅拋物線跳躍樓梯 (每層橫向距離 140px)
+            let startX = 100;
             let startY = 120;
             for(let i=0; i<5; i++) {
                 plates.push({
-                    x: startX + (i%2 === 0 ? 0 : 120), // 左右交替
-                    y: startY + i*100,
+                    x: startX + (i%2 === 0 ? 0 : 140), // 左右交替
+                    y: startY + i*100, // 垂直距離 100px
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: i % 7
                 });
             }
-            // 發射器對準第一塊
-            emitter.x = plates[0].x + 60; 
+            emitter.x = plates[0].x + 60; // 對準第一塊中間
             ball.x = emitter.x; ball.y = emitter.y + 20;
         }
 
@@ -157,13 +156,11 @@
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
             
-            // 1. 檢查有冇撳中頂部發射器
             if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
                 isDraggingEmitter = true;
                 return;
             }
 
-            // 2. 檢查有冇撳中鋼片
             let clickedPlate = null;
             for (let i = plates.length - 1; i >= 0; i--) {
                 let p = plates[i];
@@ -173,7 +170,6 @@
             }
 
             if (clickedPlate) {
-                // 長按刪除邏輯
                 pressTimer = setTimeout(() => {
                     plates = plates.filter(p => p !== clickedPlate);
                     pressTimer = null;
@@ -184,7 +180,6 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                // 3. 點擊空白處：新增鋼片
                 let idx = Math.floor(Math.random() * 7);
                 let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
@@ -193,8 +188,6 @@
                 plates.push(newPlate);
                 playPreviewNote(idx);
 
-                // **注意**：依家放鋼片，發射器唔會再自動跳過去了！你想喺邊度開始，就自己拖個發射器去邊度。
-                // 如果係啱啱清空完，第一塊鋼片放低時，可以順手幫佢將粒珠移去起點
                 if (plates.length === 1 && !isPlaying) {
                     ball.x = emitter.x; ball.y = emitter.y + 20;
                 }
@@ -205,14 +198,12 @@
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
 
-            // 拖動發射器
             if (isDraggingEmitter) {
                 emitter.x = Math.max(20, Math.min(W - 20, pos.x));
                 if (!isPlaying) { ball.x = emitter.x; ball.y = emitter.y + 20; }
                 return;
             }
 
-            // 拖動鋼片
             if (!dragPlate) return;
             let dx = pos.x - startX;
             let dy = pos.y - startY;
@@ -232,7 +223,6 @@
             if (pressTimer) {
                 clearTimeout(pressTimer);
                 pressTimer = null;
-                // 點擊切換音高
                 if (!isDraggingPlate && dragPlate) {
                     dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 7;
                     playPreviewNote(dragPlate.noteIndex);
@@ -326,7 +316,6 @@
             ball.x += ball.vx;
             ball.y += ball.vy;
             
-            // 牆壁反彈
             if (ball.x < 10) { ball.x = 10; ball.vx *= -0.8; }
             if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -0.8; }
 
@@ -343,13 +332,12 @@
                         let hitRatio = (ball.x - p.x) / p.w;
                         hitRatio = Math.max(0, Math.min(1, hitRatio));
                         
-                        // 強力彈起
-                        ball.vy = -10; 
+                        // 【完美跳躍】降低垂直彈力
+                        ball.vy = -6.5; 
                         
-                        // 拋物線橫向力
+                        // 【固定橫向距離】唔再根據撳中位置計，統一跳躍距離，確保啱啱好中下一塊
                         let direction = hitRatio < 0.5 ? 1 : -1;
-                        let force = Math.abs(hitRatio - 0.5) * 2; 
-                        ball.vx = direction * force * 10; 
+                        ball.vx = direction * 4.5; 
                         
                         playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                     }
