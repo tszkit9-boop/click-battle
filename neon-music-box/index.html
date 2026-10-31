@@ -57,7 +57,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
             👆 點擊空白處放鋼片 | 拖曳頂部紅框決定鐵珠起點<br>
-            點擊鋼片切換 (1-7 或 0停頓) | 長按刪除
+            點擊鋼片切換 (1-8 或 0停頓) | 長按刪除
         </div>
     </div>
 
@@ -84,19 +84,17 @@
         let mediaRecorder, audioChunks = [], audioUrl = "";
         let isRecording = false;
 
-        // 加入 0 的頻率 (0代表唔出聲)
-        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 0];
-        // 加入 0 的顏色 (用灰色代表停頓)
-        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#7f8c8d'];
-        
-        // 加入 0 的字樣
-        const NOTE_NAMES = ['1', '2', '3', '4', '5', '6', '7', '0'];
+        // 【新增 8】高音 Do (頻率係 1 嘅兩倍：523.25)
+        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 0];
+        // 【新增 8】用粉紫色代表高音
+        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#e056fd', '#7f8c8d'];
+        // 【新增 8】數字顯示
+        const NOTE_NAMES = ['1', '2', '3', '4', '5', '6', '7', '8', '0'];
 
         function playNote(freq, color) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             createSparks(ball.x, ball.y, color);
             
-            // 如果係 0 (休止符)，就唔發聲
             if (freq === 0) return; 
 
             const osc = audioCtx.createOscillator();
@@ -127,8 +125,8 @@
             plates = [];
             let startX = 100;
             let startY = 120;
-            // 預設一首有停頓位嘅歌
-            let defaultSong = [0, 0, 4, 4, 5, 5, 4, 7]; 
+            // 預設關卡加入高音 8 同停頓 0
+            let defaultSong = [0, 0, 4, 4, 5, 5, 4, 8]; 
             for(let i=0; i<defaultSong.length; i++) {
                 plates.push({
                     x: startX + (i%2 === 0 ? 0 : 80), 
@@ -188,7 +186,8 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                let idx = Math.floor(Math.random() * 8); // 隨機 0-7
+                // 隨機 0 到 8 (共9個)
+                let idx = Math.floor(Math.random() * 9); 
                 let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
                     w: PLATE_W, h: PLATE_H, noteIndex: idx
@@ -232,8 +231,8 @@
                 clearTimeout(pressTimer);
                 pressTimer = null;
                 if (!isDraggingPlate && dragPlate) {
-                    // 循環 8 次 (0-7)
-                    dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 8;
+                    // 循環 9 次 (0-8)
+                    dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 9;
                     playPreviewNote(dragPlate.noteIndex);
                 }
             }
@@ -250,7 +249,6 @@
 
         function playPreviewNote(idx) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            // 試聽時如果係 0 都唔發聲
             if (SCALE_FREQS[idx] === 0) return; 
 
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
