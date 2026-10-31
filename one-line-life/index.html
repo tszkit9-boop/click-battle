@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一筆定生死 v1.0 - 極致光繪版</title>
+    <title>一筆定生死</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
         
@@ -20,7 +20,6 @@
             width: 100%; height: auto; display: block; box-sizing: border-box;
         }
         
-        /* 頂部 HUD 介面 */
         #hud {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
             width: 80%; max-width: 600px; display: flex; flex-direction: column;
@@ -71,7 +70,6 @@
     <div id="game-container">
         <canvas id="gameCanvas" width="900" height="500"></canvas>
         
-        <!-- 頂部能量條 HUD -->
         <div id="hud">
             <div class="bar-container">
                 <div id="energy-bar"></div>
@@ -81,17 +79,15 @@
 
         <div id="msg">按住起點開始繪畫能量軌跡...</div>
 
-        <!-- 開始畫面 -->
         <div id="start-overlay" class="overlay">
             <h2>一筆定生死</h2>
             <p>按住畫布 <span class="highlight">繪製光繪軌跡</span>。</p>
             <p>放手後，能量球會沿軌跡移動。</p>
             <p>避開紅色能量晶體，進入傳送門。</p>
-            <p>耗費能量越少，評價越高！</p>
+            <p>能量有限，請用最短路徑過關！</p>
             <button onclick="startGame()">開始繪畫</button>
         </div>
 
-        <!-- 結束畫面 -->
         <div id="end-overlay" class="overlay">
             <h2 id="end-title" style="color:#ff4757; text-shadow: 0 0 20px #ff4757;">SYSTEM FAILURE</h2>
             <p id="end-msg"></p>
@@ -112,16 +108,18 @@
         const endMsg = document.getElementById('end-msg');
         const recordMsg = document.getElementById('record-msg');
 
-        // 遊戲常數
-        const MAX_ENERGY = 800;
+        // --- 修正：增加能量上限至 1100 ---
+        const MAX_ENERGY = 1100; 
         const PLAYER_SPEED = 4;
         
         let startPoint = { x: 80, y: 400 };
         let goal = { x: 800, y: 120, width: 60, height: 60 };
+        
+        // --- 修正：微調障礙物，留出合理嘅通關路線 ---
         let obstacles = [
-            { x: 220, y: 250, width: 50, height: 250, points: [] },
-            { x: 400, y: 100, width: 120, height: 50, points: [] },
-            { x: 600, y: 280, width: 60, height: 220, points: [] }
+            { x: 220, y: 280, width: 50, height: 220, points: [] }, // 矮咗少少
+            { x: 400, y: 100, width: 100, height: 50, points: [] }, // 短咗少少
+            { x: 600, y: 300, width: 60, height: 200, points: [] }  // 矮咗少少
         ];
 
         let path = [];
@@ -132,16 +130,14 @@
         let distanceTraveled = 0;
         
         let bestLength = parseInt(localStorage.getItem('oneLineBest') || '9999');
-        let gameState = 'idle'; // idle, drawing, moving, end
+        let gameState = 'idle'; 
         
-        // 視覺效果
         let particles = [];
         let stars = [];
         let shakeTime = 0;
         let goalAngle = 0;
         let trail = [];
 
-        // 初始化星空背景
         for(let i=0; i<50; i++) {
             stars.push({
                 x: Math.random() * canvas.width,
@@ -151,7 +147,6 @@
             });
         }
 
-        // 建立障礙物晶體形狀
         obstacles.forEach(obs => {
             obs.points = [
                 {x: obs.x + obs.width/2, y: obs.y},
@@ -200,7 +195,6 @@
             }
         }
 
-        // 取得滑鼠/觸控座標
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -245,7 +239,6 @@
                 currentEnergyUsed += dist;
                 updateHUD(MAX_ENERGY - currentEnergyUsed);
                 
-                // 畫線時嘅火花
                 if (Math.random() < 0.3) {
                     particles.push({
                         x: pos.x, y: pos.y, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2,
@@ -282,7 +275,6 @@
         canvas.addEventListener('touchmove', handleMove, {passive: false});
         canvas.addEventListener('touchend', handleUp, {passive: false});
 
-        // 點與多邊形碰撞檢測
         function isPointInPolygon(p, polygon) {
             let isInside = false;
             for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -334,36 +326,30 @@
             }
             
             endMsg.innerText = reason;
-            setTimeout(() => { endOverlay.style.display = 'flex'; }, 600); // 延遲顯示令爆炸睇得清楚啲
+            setTimeout(() => { endOverlay.style.display = 'flex'; }, 600);
         }
 
         function update() {
-            // 背景星星
             stars.forEach(s => {
                 s.y += s.speed;
                 if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
             });
 
-            // 終點傳送門旋轉
             goalAngle += 0.05;
 
-            // 畫面震動
             if (shakeTime > 0) shakeTime--;
 
-            // 粒子更新
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx; p.y += p.vy;
-                p.vy += 0.1; // 重力
+                p.vy += 0.1;
                 p.life -= 0.02;
                 if (p.life <= 0) particles.splice(i, 1);
             }
 
-            // 角色移動
             if (gameState === 'moving' && path.length > 1) {
                 distanceTraveled += PLAYER_SPEED;
                 
-                // 拖尾效果
                 if (Math.random() < 0.5) {
                     trail.push({ x: player.x, y: player.y, life: 1 });
                 }
@@ -390,7 +376,6 @@
                     return;
                 }
 
-                // 檢查有冇掂到晶體
                 for (let obs of obstacles) {
                     if (isPointInPolygon(player, obs.points)) {
                         gameOver("你撞擊能量晶體，結構崩潰。", false);
@@ -398,7 +383,6 @@
                     }
                 }
 
-                // 檢查有冇到終點
                 let distToGoal = Math.hypot(player.x - (goal.x + goal.width/2), player.y - (goal.y + goal.height/2));
                 if (distToGoal < 40) {
                     gameOver("成功進入傳送門！", true);
@@ -406,7 +390,6 @@
                 }
             }
             
-            // 拖尾更新
             for (let i = trail.length - 1; i >= 0; i--) {
                 trail[i].life -= 0.05;
                 if (trail[i].life <= 0) trail.splice(i, 1);
@@ -415,17 +398,11 @@
 
         function draw() {
             ctx.save();
-            
-            // 畫面震動
-            if (shakeTime > 0) {
-                ctx.translate((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15);
-            }
+            if (shakeTime > 0) ctx.translate((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15);
 
-            // 清空背景
             ctx.fillStyle = '#0a0a1a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 畫星空
             ctx.fillStyle = '#fff';
             stars.forEach(s => {
                 ctx.globalAlpha = Math.random() * 0.5 + 0.5;
@@ -433,7 +410,6 @@
             });
             ctx.globalAlpha = 1;
 
-            // 畫網格
             ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)';
             ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=60) {
@@ -443,145 +419,83 @@
                 ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
             }
 
-            // 畫終點 (傳送門)
             ctx.save();
             ctx.translate(goal.x + goal.width/2, goal.y + goal.height/2);
             ctx.rotate(goalAngle);
-            
-            // 外圈脈衝
             let pulse = 1 + Math.sin(goalAngle * 3) * 0.1;
             ctx.strokeStyle = '#2ed573';
             ctx.lineWidth = 4;
             ctx.shadowBlur = 20; ctx.shadowColor = '#2ed573';
-            ctx.beginPath();
-            ctx.arc(0, 0, 35 * pulse, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // 內圈多邊形
+            ctx.beginPath(); ctx.arc(0, 0, 35 * pulse, 0, Math.PI * 2); ctx.stroke();
             ctx.beginPath();
             for(let i=0; i<6; i++) {
                 let angle = (i * Math.PI * 2) / 6;
-                let px = Math.cos(angle) * 20;
-                let py = Math.sin(angle) * 20;
-                if(i===0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
+                let px = Math.cos(angle) * 20; let py = Math.sin(angle) * 20;
+                if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
             }
             ctx.closePath();
-            ctx.fillStyle = 'rgba(46, 213, 115, 0.2)';
-            ctx.fill();
-            ctx.stroke();
-            
-            // 中心點
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
-            
+            ctx.fillStyle = 'rgba(46, 213, 115, 0.2)'; ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
             ctx.restore();
             ctx.shadowBlur = 0;
 
-            // 畫障礙物晶體
             obstacles.forEach(obs => {
                 ctx.beginPath();
                 obs.points.forEach((p, i) => {
-                    if (i === 0) ctx.moveTo(p.x, p.y);
-                    else ctx.lineTo(p.x, p.y);
+                    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
                 });
                 ctx.closePath();
-                
-                // 內部半透明填充
-                ctx.fillStyle = 'rgba(255, 71, 87, 0.15)';
-                ctx.fill();
-                
-                // 霓虹邊緣
-                ctx.strokeStyle = '#ff4757';
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 15; ctx.shadowColor = '#ff4757';
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-
-                // 內部裝飾線
-                ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(obs.x + obs.width/2, obs.y);
-                ctx.lineTo(obs.x + obs.width/2, obs.y + obs.height);
-                ctx.stroke();
+                ctx.fillStyle = 'rgba(255, 71, 87, 0.15)'; ctx.fill();
+                ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
+                ctx.shadowBlur = 15; ctx.shadowColor = '#ff4757'; ctx.stroke(); ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(obs.x + obs.width/2, obs.y); ctx.lineTo(obs.x + obs.width/2, obs.y + obs.height); ctx.stroke();
             });
 
-            // 畫起點 (能量源)
             ctx.fillStyle = '#00d2d3';
             ctx.shadowBlur = 20; ctx.shadowColor = '#00d2d3';
             ctx.beginPath(); ctx.arc(startPoint.x, startPoint.y, 12, 0, Math.PI*2); ctx.fill();
-            
-            // 起點外圈
-            ctx.strokeStyle = '#66fcf1';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#66fcf1'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(startPoint.x, startPoint.y, 18 + Math.sin(Date.now()/200)*2, 0, Math.PI*2); ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // 畫玩家畫嘅光繪線
             if (path.length > 1) {
-                // 外層光暈
-                ctx.strokeStyle = 'rgba(0, 210, 211, 0.3)';
-                ctx.lineWidth = 8;
-                ctx.lineJoin = 'round';
-                ctx.beginPath();
-                ctx.moveTo(path[0].x, path[0].y);
-                for (let i=1; i<path.length; i++) ctx.lineTo(path[i].x, path[i].y);
-                ctx.stroke();
+                ctx.strokeStyle = 'rgba(0, 210, 211, 0.3)'; ctx.lineWidth = 8; ctx.lineJoin = 'round';
+                ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+                for (let i=1; i<path.length; i++) ctx.lineTo(path[i].x, path[i].y); ctx.stroke();
 
-                // 內層實線
-                ctx.strokeStyle = '#66fcf1';
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#66fcf1'; ctx.lineWidth = 3;
                 ctx.shadowBlur = 10; ctx.shadowColor = '#66fcf1';
-                ctx.beginPath();
-                ctx.moveTo(path[0].x, path[0].y);
-                for (let i=1; i<path.length; i++) ctx.lineTo(path[i].x, path[i].y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+                for (let i=1; i<path.length; i++) ctx.lineTo(path[i].x, path[i].y); ctx.stroke();
                 ctx.shadowBlur = 0;
             }
 
-            // 畫粒子
             particles.forEach(p => {
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
-            // 畫玩家拖尾
             trail.forEach(t => {
-                ctx.globalAlpha = t.life * 0.5;
-                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = t.life * 0.5; ctx.fillStyle = '#fff';
                 ctx.beginPath(); ctx.arc(t.x, t.y, player.radius * t.life, 0, Math.PI*2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
-            // 畫玩家 (能量球)
             if (gameState === 'moving' || gameState === 'idle' || gameState === 'drawing') {
-                ctx.fillStyle = '#fff';
-                ctx.shadowBlur = 20; ctx.shadowColor = '#66fcf1';
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
-                ctx.fill();
-                
-                // 光球核心
+                ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#66fcf1';
+                ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#00d2d3';
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius * 0.6, 0, Math.PI*2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(player.x, player.y, player.radius * 0.6, 0, Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
             }
 
             ctx.restore();
         }
 
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
         
-        // 啟動
         resetLevel();
         gameLoop();
     </script>
