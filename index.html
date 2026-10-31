@@ -13,7 +13,6 @@
     overflow: hidden; touch-action: none;
   }
   
-  /* 完全填滿螢幕嘅容器 */
   #wrap {
     position: relative; width: 100vw; height: 100vh;
     overflow: hidden; touch-action: none;
@@ -43,7 +42,6 @@
   #btnPlayerName { color: #4fd1ff; }
   #btnShowLB { color: #ffd23f; }
 
-  /* 彈窗共用樣式 */
   #overlay, #nameModal {
     position:absolute;inset:0;display:none;
     background:rgba(6,9,14,.95);backdrop-filter:blur(8px);text-align:center;
@@ -181,7 +179,6 @@
   const leaderboardRef = ref(db, 'leaderboard');
 
   const TILE = 32;
-  // 動態視窗大細，預設值，載入後會自動變成螢幕真實大細
   let VIEW_W = 960, VIEW_H = 640; 
 
   const canvas = document.getElementById('game');
@@ -244,7 +241,6 @@
   };
   let currentShield = 0;
 
-  /* ================= 動態畫面尺寸調整 ================= */
   function resize() {
     VIEW_W = window.innerWidth;
     VIEW_H = window.innerHeight;
@@ -252,9 +248,8 @@
     canvas.height = VIEW_H;
   }
   window.addEventListener('resize', resize);
-  resize(); // 初始化執行一次
+  resize(); 
 
-  /* ================= 玩家名字系統 ================= */
   let playerName = localStorage.getItem('mazePlayerName') || "無名氏";
   btnPlayerName.textContent = `👤 ${playerName}`;
 
@@ -299,7 +294,6 @@
       elBuffs.innerHTML = b.join(' | ');
   }
 
-  /* ================= Firebase 排行榜邏輯 ================= */
   function saveScore(lv, time) {
       if (lv > localMaxLevel) {
           localMaxLevel = lv;
@@ -373,7 +367,6 @@
       }
   };
 
-  /* ================= 神級技能系統 ================= */
   const UPGRADES = [
       { id: 'speed', icon: '⚡', title: '風火輪', desc: '移動速度永久 +30%' },
       { id: 'time', icon: '⏳', title: '時光沙漏', desc: '每關初始時間 +15 秒' },
@@ -417,7 +410,7 @@
       });
   }
 
-  /* ================= 遊戲核心 (無盡模式) ================= */
+  /* ================= 遊戲核心 (頭 10 關減辣版) ================= */
   function config(lv){
     let maxSize = Math.min(13 + lv * 2, 45);
     let w = ri(Math.max(11, maxSize - 4), maxSize);
@@ -425,9 +418,13 @@
     if(w % 2 === 0) w++;
     if(h % 2 === 0) h++;
 
-    let baseTraps = Math.min(3 + Math.floor(lv * 1.5), 80);
+    // 💡 調整 1：頭 3 關完全冇地刺，之後慢慢加
+    let baseTraps = Math.max(0, Math.floor((lv - 3) * 1.2));
+    baseTraps = Math.min(baseTraps, 80); // 上限依然係 80
     let finalTraps = Math.floor(baseTraps * (1 - playerStats.trapReduce));
-    let fakes = playerStats.removeFakes ? 0 : Math.min(2 + Math.floor(lv * 1.5), 45);
+    
+    // 💡 調整 2：假出口稍微減慢前期增長
+    let fakes = playerStats.removeFakes ? 0 : Math.min(1 + Math.floor(lv * 1.0), 45);
 
     return {
       w, h, traps: finalTraps, fakeExits: fakes, 
@@ -736,13 +733,20 @@
   }
 
   function render(){
+    let baseZoom = VIEW_W / (10 * TILE); 
+    let maxFitZoom = Math.min(VIEW_W / (cols * TILE), VIEW_H / (rows * TILE));
+    let zoom = Math.min(Math.max(baseZoom, maxFitZoom), 2.5);
+
+    const vW = VIEW_W / zoom;
+    const vH = VIEW_H / zoom;
+
     const worldW = cols*TILE, worldH = rows*TILE;
     
-    // 直接使用真實螢幕寬高計算，視野最大化
-    if(worldW <= VIEW_W) camX = -(VIEW_W - worldW)/2;
-    else camX = clamp(player.x - VIEW_W/2, 0, worldW - VIEW_W);
-    if(worldH <= VIEW_H) camY = -(VIEW_H - worldH)/2;
-    else camY = clamp(player.y - VIEW_H/2, 0, worldH - VIEW_H);
+    if(worldW <= vW) camX = -(vW - worldW)/2;
+    else camX = clamp(player.x - vW/2, 0, worldW - vW);
+    
+    if(worldH <= vH) camY = -(vH - worldH)/2;
+    else camY = clamp(player.y - vH/2, 0, worldH - vH);
 
     ctx.setTransform(1,0,0,1,0,0);
     ctx.fillStyle = '#0a0e15'; ctx.fillRect(0,0,VIEW_W,VIEW_H);
@@ -750,10 +754,12 @@
     ctx.save();
     if(shake > 0.01){ ctx.translate(rnd(-8,8)*shake, rnd(-8,8)*shake); }
 
+    ctx.scale(zoom, zoom);
+
     const c0 = Math.max(0, Math.floor(camX/TILE) - 1);
-    const c1 = Math.min(cols-1, Math.floor((camX+VIEW_W)/TILE) + 1);
+    const c1 = Math.min(cols-1, Math.floor((camX+vW)/TILE) + 1);
     const r0 = Math.max(0, Math.floor(camY/TILE) - 1);
-    const r1 = Math.min(rows-1, Math.floor((camY+VIEW_H)/TILE) + 1);
+    const r1 = Math.min(rows-1, Math.floor((camY+vH)/TILE) + 1);
     const t = performance.now()/1000;
 
     for(let y=r0;y<=r1;y++){
@@ -804,12 +810,12 @@
       const fogRadius = Math.max(TILE * 2, TILE * 6 - (level - 10) * TILE * 0.4);
       const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.3, ppx, ppy, fogRadius);
       g2.addColorStop(0, 'rgba(0,0,0,0)'); g2.addColorStop(1, 'rgba(0,0,0,1)');
-      ctx.fillStyle = g2; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+      ctx.fillStyle = g2; 
+      ctx.fillRect(0,0,vW,vH);
     }
 
     ctx.restore();
 
-    // 畫虛擬搖桿
     if (joyActive) {
         ctx.beginPath();
         ctx.arc(joyStartX, joyStartY, JOY_RADIUS, 0, Math.PI*2);
