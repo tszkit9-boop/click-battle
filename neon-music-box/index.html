@@ -84,11 +84,8 @@
         let mediaRecorder, audioChunks = [], audioUrl = "";
         let isRecording = false;
 
-        // 【新增 8】高音 Do (頻率係 1 嘅兩倍：523.25)
         const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 0];
-        // 【新增 8】用粉紫色代表高音
         const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#e056fd', '#7f8c8d'];
-        // 【新增 8】數字顯示
         const NOTE_NAMES = ['1', '2', '3', '4', '5', '6', '7', '8', '0'];
 
         function playNote(freq, color) {
@@ -117,7 +114,8 @@
         let emitter = { x: 100, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
-        const GRAVITY = 0.45; 
+        // 【核心改動】重力大幅調低 (由 0.45 降至 0.25)
+        const GRAVITY = 0.25; 
         const PLATE_W = 80; 
         const PLATE_H = 15;
 
@@ -125,12 +123,11 @@
             plates = [];
             let startX = 100;
             let startY = 120;
-            // 預設關卡加入高音 8 同停頓 0
             let defaultSong = [0, 0, 4, 4, 5, 5, 4, 8]; 
             for(let i=0; i<defaultSong.length; i++) {
                 plates.push({
                     x: startX + (i%2 === 0 ? 0 : 80), 
-                    y: startY + i*80, 
+                    y: startY + i*90, // 稍微拉開少少垂直距離，配合慢速
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: defaultSong[i]
                 });
@@ -186,7 +183,6 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                // 隨機 0 到 8 (共9個)
                 let idx = Math.floor(Math.random() * 9); 
                 let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
@@ -231,7 +227,6 @@
                 clearTimeout(pressTimer);
                 pressTimer = null;
                 if (!isDraggingPlate && dragPlate) {
-                    // 循環 9 次 (0-8)
                     dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 9;
                     playPreviewNote(dragPlate.noteIndex);
                 }
@@ -365,12 +360,13 @@
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            let t = 25;
+                            // 【核心改動】飛行時間由 25 加長到 45 幀，令佢慢慢飛過去
+                            let t = 45;
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
                             
                         } else {
-                            ball.vy = -5;
+                            ball.vy = -4;
                             let direction = (ball.x - p.x) < (p.w / 2) ? 1 : -1;
                             ball.vx = direction * 3;
                         }
@@ -381,11 +377,12 @@
             }
 
             if (ball.y > H + 50) {
+                // 【核心改動】等耐啲先重生 (由 500 改做 1000)
                 setTimeout(() => {
                     if(isPlaying) {
                         ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
                     }
-                }, 500);
+                }, 1000);
                 ball.y = H + 100; 
                 ball.vx = 0; ball.vy = 0;
             }
