@@ -111,25 +111,23 @@
         let emitter = { x: 100, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
-        // 【物理調整】降低重力，減低彈跳力
         const GRAVITY = 0.45; 
         const PLATE_W = 120; 
         const PLATE_H = 15;
 
         function loadDefault() {
             plates = [];
-            // 排一個完美嘅拋物線跳躍樓梯 (每層橫向距離 140px)
             let startX = 100;
             let startY = 120;
             for(let i=0; i<5; i++) {
                 plates.push({
-                    x: startX + (i%2 === 0 ? 0 : 140), // 左右交替
-                    y: startY + i*100, // 垂直距離 100px
+                    x: startX + (i%2 === 0 ? 0 : 140), 
+                    y: startY + i*100, 
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: i % 7
                 });
             }
-            emitter.x = plates[0].x + 60; // 對準第一塊中間
+            emitter.x = plates[0].x + 60; 
             ball.x = emitter.x; ball.y = emitter.y + 20;
         }
 
@@ -265,7 +263,7 @@
                 if (!isPlaying) togglePlay();
             } else {
                 mediaRecorder.stop(); isRecording = false;
-                recordBtn.innerText = "🔴 錄製"; recordBtn.classList.remove('active');
+                recordBtn.innerText = "🔴 錄音"; recordBtn.classList.remove('active');
                 if (isPlaying) togglePlay();
             }
         }
@@ -292,6 +290,13 @@
             if (isPlaying) {
                 playBtn.innerText = "⏸ 暫停"; playBtn.classList.add('active');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                // 【開播優化】自動將發射器移到最高嗰塊鋼片正上方！
+                if (plates.length > 0) {
+                    let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
+                    emitter.x = topPlate.x + topPlate.w / 2;
+                }
+                
                 ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
             } else {
                 playBtn.innerText = "▶ 播放"; playBtn.classList.remove('active');
@@ -311,7 +316,6 @@
 
             if (!isPlaying) return;
 
-            // 物理運算
             ball.vy += GRAVITY;
             ball.x += ball.vx;
             ball.y += ball.vy;
@@ -329,15 +333,44 @@
                         
                         ball.y = p.y - ball.radius;
                         
-                        let hitRatio = (ball.x - p.x) / p.w;
-                        hitRatio = Math.max(0, Math.min(1, hitRatio));
+                        // 【完美追蹤魔法】
+                        // 尋找下一塊喺呢塊鋼片下方嘅目標
+                        let nextPlate = null;
+                        let minDy = Infinity;
                         
-                        // 【完美跳躍】降低垂直彈力
-                        ball.vy = -6.5; 
-                        
-                        // 【固定橫向距離】唔再根據撳中位置計，統一跳躍距離，確保啱啱好中下一塊
-                        let direction = hitRatio < 0.5 ? 1 : -1;
-                        ball.vx = direction * 4.5; 
+                        for(let target of plates) {
+                            if (target === p) continue;
+                            // 只考慮喺下方嘅鋼片
+                            if (target.y > p.y) {
+                                let dy = target.y - p.y;
+                                if (dy < minDy) {
+                                    minDy = dy;
+                                    nextPlate = target;
+                                }
+                            }
+                        }
+
+                        if (nextPlate) {
+                            // 如果有下一塊，計出完美拋物線
+                            let targetX = nextPlate.x + nextPlate.w / 2;
+                            let targetY = nextPlate.y;
+                            let dx = targetX - ball.x;
+                            let dy = targetY - ball.y;
+                            
+                            // 給定一個固定嘅飛行時間 (25幀)
+                            let t = 25;
+                            
+                            // 拋物線物理公式: dy = vy * t + 0.5 * G * t^2
+                            // 解得 vy = (dy - 0.5 * G * t^2) / t
+                            ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
+                            ball.vx = dx / t;
+                            
+                        } else {
+                            // 如果冇下一塊，就正常反彈跌落去
+                            ball.vy = -5;
+                            let direction = (ball.x - p.x) < (p.w / 2) ? 1 : -1;
+                            ball.vx = direction * 3;
+                        }
                         
                         playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                     }
@@ -345,7 +378,14 @@
             }
 
             if (ball.y > H + 50) {
-                ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
+                // 跌落底部，等一會再重生 (配合音樂節奏)
+                setTimeout(() => {
+                    if(isPlaying) {
+                        ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
+                    }
+                }, 500);
+                ball.y = H + 100; // 移出畫面外
+                ball.vx = 0; ball.vy = 0;
             }
         }
 
@@ -379,8 +419,10 @@
             }
             ctx.globalAlpha = 1;
 
-            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+            if (ball.y < H) {
+                ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+            }
         }
 
         function loop() { update(); draw(); requestAnimationFrame(loop); }
