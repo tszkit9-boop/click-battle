@@ -29,78 +29,91 @@
   @keyframes pulse{to{opacity:.45}}
   #buffs {font-size: 13px; color: #ffd23f; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;}
 
-  /* 玩家名字按鈕 */
-  #btnPlayerName {
+  #btnPlayerName, #btnShowLB {
     pointer-events: auto;
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-    color: #4fd1ff; padding: 4px 10px; border-radius: 8px;
-    cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;
+    padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;
     margin-bottom: 4px;
   }
-  #btnPlayerName:hover { background: rgba(255,255,255,0.2); }
+  #btnPlayerName { color: #4fd1ff; }
+  #btnShowLB { color: #ffd23f; }
 
-  #btnShowLB {
-    pointer-events: auto;
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-    color: #ffd23f; padding: 6px 12px; border-radius: 8px;
-    cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;
-  }
-  
-  #overlay{position:absolute;inset:0;display:none;
+  /* 共用彈窗樣式 */
+  #overlay, #nameModal {
+    position:absolute;inset:0;display:none;
     background:rgba(6,9,14,.95);backdrop-filter:blur(8px);text-align:center;
     padding: 20px 16px; overflow-y: auto; touch-action: auto;
+    flex-direction: column; align-items: center;
   }
-  #overlay.show{display: flex; flex-direction: column; align-items: center;}
-  #overlay > div { margin: auto 0; width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; }
-  #overlay h1{font-size:28px;margin-bottom:8px;color:#ffd23f}
-  #overlay p{opacity:.85;margin-bottom:16px;line-height:1.5;font-size:15px}
+  #overlay.show, #nameModal.show { display: flex; }
+  #overlay > div, #nameModal > div { 
+    margin: auto 0; width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; 
+  }
+  #overlay h1, #nameModal h1 {font-size:26px;margin-bottom:6px;color:#ffd23f}
+  #overlay p, #nameModal p {opacity:.85;margin-bottom:12px;line-height:1.4;font-size:14px}
   
   #lbContainer {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px; padding: 15px 20px; margin-bottom: 20px;
+    border-radius: 10px; padding: 12px 15px; margin-bottom: 15px;
     text-align: left; width: 100%;
   }
-  #lbList { list-style: none; font-size: 14px; }
-  #lbList li { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .lb-rank { color: #ffd23f; width: 30px; display: inline-block; font-weight: bold; flex-shrink:0;}
+  #lbList { list-style: none; font-size: 13px; }
+  #lbList li { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .lb-rank { color: #ffd23f; width: 25px; display: inline-block; font-weight: bold; flex-shrink:0;}
   .lb-name { flex: 1; text-align: left; margin-left: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; color: #e6edf3;}
   .lb-lvl-time { color: #7ee787; flex-shrink: 0; margin-left: 10px;}
 
-  #upgradeUI { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 100%; }
+  #upgradeUI { display: none; flex-direction: column; gap: 8px; margin-bottom: 15px; width: 100%; }
   .upgrade-card {
     background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px; padding: 12px 15px; cursor: pointer; text-align: left;
-    transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+    border-radius: 10px; padding: 8px 12px; cursor: pointer; text-align: left;
+    transition: all 0.2s; display: flex; align-items: center; gap: 10px;
   }
   .upgrade-card:hover { background: rgba(255,255,255,0.2); border-color: #39d353; }
-  .upgrade-icon { font-size: 30px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.5)); }
-  .upgrade-info h4 { color: #39d353; margin-bottom: 4px; font-size: 16px; }
-  .upgrade-info p { margin: 0; font-size: 13px; opacity: 0.9; line-height: 1.3; }
+  .upgrade-icon { font-size: 24px; filter: drop-shadow(0 0 4px rgba(255,255,255,0.5)); }
+  .upgrade-info h4 { color: #39d353; margin-bottom: 2px; font-size: 15px; }
+  .upgrade-info p { margin: 0; font-size: 12px; opacity: 0.8; line-height: 1.2; }
 
-  .btn-group { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; width: 100%; flex-wrap: wrap;}
+  .btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; flex-wrap: wrap;}
   
-  #overlay button{
-    font:inherit;font-weight:700;font-size:15px;padding:12px 24px;border:0;
+  #overlay button, #nameModal button{
+    font:inherit;font-weight:700;font-size:14px;padding:10px 20px;border:0;
     border-radius:999px;cursor:pointer;color:#04070c;
     background:linear-gradient(135deg,#7ee787,#39d353);
-    box-shadow:0 8px 24px rgba(57,211,83,.35);transition:transform .15s;
+    box-shadow:0 4px 12px rgba(57,211,83,.35);transition:transform .15s;
   }
-  #overlay button:hover{ transform: translateY(-2px); }
+  #overlay button:hover, #nameModal button:hover{ transform: translateY(-2px); }
 
-  #btnQuit {
+  #btnQuit, #btnCancelName {
     background: rgba(255,255,255,0.1); color: #ff5a5f; box-shadow: none;
     border: 1px solid rgba(255,90,95,0.3);
   }
-  #btnQuit:hover { background: rgba(255,90,95,0.2); }
+  #btnQuit:hover, #btnCancelName:hover { background: rgba(255,90,95,0.2); }
+
+  /* 改名輸入框樣式 */
+  #nameInput {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+    outline: none;
+  }
+  #nameInput:focus { border-color: #4fd1ff; box-shadow: 0 0 10px rgba(79, 209, 255, 0.3); }
 
   #tip{opacity:.45;font-size:13px;text-align:center}
 
   @media (max-width: 600px) {
     #tip { font-size: 11px; display: none; }
-    #overlay h1 { font-size: 24px; }
-    .upgrade-card { padding: 10px 12px; gap: 10px; }
-    .upgrade-icon { font-size: 24px; }
-    #overlay button { font-size: 14px; padding: 10px 20px; }
+    #overlay h1, #nameModal h1 { font-size: 22px; }
+    .upgrade-card { padding: 6px 10px; gap: 8px; }
+    .upgrade-icon { font-size: 20px; }
+    .upgrade-info h4 { font-size: 14px; }
+    .upgrade-info p { font-size: 11px; }
   }
 </style>
 </head>
@@ -109,7 +122,7 @@
   <canvas id="game" width="960" height="640"></canvas>
   <div id="hud">
     <div class="left">
-      <div>第 <span id="lv">1</span> / 20 層 <span id="bestRecord" style="font-size:12px;opacity:0.7;color:#ffd23f;margin-left:8px;"></span></div>
+      <div>第 <span id="lv">1</span> 層 <span id="bestRecord" style="font-size:12px;opacity:0.7;color:#ffd23f;margin-left:8px;"></span></div>
       <div class="time" id="time">--</div>
       <div id="buffs"></div>
     </div>
@@ -120,13 +133,14 @@
     </div>
   </div>
   
+  <!-- 主彈窗 (結算/選技能/排行榜) -->
   <div id="overlay">
     <div>
       <h1 id="ovTitle">通關！</h1>
       <p id="ovText"></p>
       <div id="upgradeUI"></div>
       <div id="lbContainer">
-        <h3 style="text-align:center;color:#7ee787;margin-bottom:15px;">🏆 全球最高紀錄 (Top 5)</h3>
+        <h3 style="text-align:center;color:#7ee787;margin-bottom:10px;font-size:14px;">🏆 全球最高紀錄 (Top 5)</h3>
         <ul id="lbList"><li style="justify-content:center;opacity:0.5">載入中...</li></ul>
       </div>
       
@@ -136,8 +150,22 @@
       </div>
     </div>
   </div>
+
+  <!-- 💡 新增：自訂改名彈窗 -->
+  <div id="nameModal">
+    <div>
+      <h1 style="color:#4fd1ff">修改玩家名字</h1>
+      <p>請輸入你的名字（最多10個字）</p>
+      <input type="text" id="nameInput" maxlength="10" autocomplete="off">
+      <div class="btn-group">
+        <button id="btnConfirmName">確定</button>
+        <button id="btnCancelName">取消</button>
+      </div>
+    </div>
+  </div>
+
 </div>
-<div id="tip">WASD / 拖曳移動 · 🟢真出口 · 😈假出口(扣10秒) · 🔴地刺(扣4秒)</div>
+<div id="tip">WASD / 拖曳移動 · 🟢出口 (真假難辨) · 🔴地刺(扣4秒)</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -160,7 +188,6 @@
 
   const TILE = 32;
   const VIEW_W = 960, VIEW_H = 640;
-  const MAX_LEVEL = 20;
 
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -168,6 +195,7 @@
   const elTime  = document.getElementById('time');
   const elBuffs = document.getElementById('buffs');
   const elBest  = document.getElementById('bestRecord');
+  
   const overlay = document.getElementById('overlay');
   const ovTitle = document.getElementById('ovTitle');
   const ovText  = document.getElementById('ovText');
@@ -177,7 +205,13 @@
   const lbContainer = document.getElementById('lbContainer');
   const upgradeUI = document.getElementById('upgradeUI');
   const btnShowLB = document.getElementById('btnShowLB');
+  
+  // 名字相關 DOM
   const btnPlayerName = document.getElementById('btnPlayerName');
+  const nameModal = document.getElementById('nameModal');
+  const nameInput = document.getElementById('nameInput');
+  const btnConfirmName = document.getElementById('btnConfirmName');
+  const btnCancelName = document.getElementById('btnCancelName');
 
   const rnd = (a,b) => a + Math.random()*(b-a);
   const ri  = (a,b) => Math.floor(rnd(a,b+1));
@@ -196,13 +230,16 @@
   let lastTs = 0;
   const keysDown = {};
 
-  // 時間累積系統
-  let carriedTime = 0;   // 過關時儲起嘅剩餘時間
-  let currentCarry = 0;  // 今關開始時實際帶入嘅時間
+  let joyActive = false;
+  let joyId = null;
+  let joyStartX = 0, joyStartY = 0;
+  let joyCurX = 0, joyCurY = 0;
+  const JOY_RADIUS = 35;       
+  const JOY_KNOB_RADIUS = 12;  
+  let joyDX = 0, joyDY = 0; 
 
-  let isTouching = false;
-  let touchX = 0, touchY = 0;
-  let touchStartX = 0, touchStartY = 0;
+  let carriedTime = 0;   
+  let currentCarry = 0;  
 
   let playerStats = {
       speedMult: 1.0,
@@ -213,25 +250,35 @@
   };
   let currentShield = 0;
 
-  /* ================= 玩家名字與最高紀錄 ================= */
-  let playerName = localStorage.getItem('mazePlayerName');
-  if (!playerName) {
-      playerName = prompt("請輸入你的玩家名字（排行榜會顯示）：", "無名氏");
-      if (!playerName || playerName.trim() === "") playerName = "無名氏";
-      playerName = playerName.trim().substring(0, 10); 
-      localStorage.setItem('mazePlayerName', playerName);
-  }
+  /* ================= 玩家名字系統 (改為自訂彈窗) ================= */
+  let playerName = localStorage.getItem('mazePlayerName') || "無名氏";
   btnPlayerName.textContent = `👤 ${playerName}`;
 
   btnPlayerName.onclick = () => {
       if (state !== 'playing') return;
-      let newName = prompt("修改你的名字（最多10個字）：", playerName);
-      if (newName && newName.trim() !== "") {
-          playerName = newName.trim().substring(0, 10);
+      nameInput.value = playerName === "無名氏" ? "" : playerName;
+      nameModal.classList.add('show');
+      setTimeout(() => nameInput.focus(), 100); // 延遲少少等彈窗出咗先 Focus
+  };
+
+  btnCancelName.onclick = () => {
+      nameModal.classList.remove('show');
+  };
+
+  btnConfirmName.onclick = () => {
+      let newName = nameInput.value.trim();
+      if (newName !== "") {
+          playerName = newName.substring(0, 10);
           localStorage.setItem('mazePlayerName', playerName);
           btnPlayerName.textContent = `👤 ${playerName}`;
       }
+      nameModal.classList.remove('show');
   };
+  
+  // 允許喺輸入框撳 Enter 確認
+  nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnConfirmName.click();
+  });
 
   let localMaxLevel = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
   updateBestUI();
@@ -367,21 +414,21 @@
       });
   }
 
-  /* ================= 遊戲核心 ================= */
+  /* ================= 遊戲核心 (無盡模式) ================= */
   function config(lv){
-    let minSize = Math.min(9 + lv * 2, 33);
-    let maxSize = Math.min(15 + lv * 3, 41);
-    let w = ri(minSize, maxSize);
-    let h = ri(minSize, maxSize);
+    let maxSize = Math.min(13 + lv * 2, 45);
+    let w = ri(Math.max(11, maxSize - 4), maxSize);
+    let h = ri(Math.max(11, maxSize - 4), maxSize);
     if(w % 2 === 0) w++;
     if(h % 2 === 0) h++;
 
-    let baseTraps = Math.min(2 + Math.floor(lv * 1.5), 35);
+    let baseTraps = Math.min(3 + Math.floor(lv * 1.5), 80);
     let finalTraps = Math.floor(baseTraps * (1 - playerStats.trapReduce));
-    let fakes = playerStats.removeFakes ? 0 : Math.min(1 + Math.floor(lv / 2), 4);
+    let fakes = playerStats.removeFakes ? 0 : Math.min(2 + Math.floor(lv * 1.5), 45);
 
     return {
-      w, h, traps: finalTraps, fakeExits: fakes, fog: lv >= 10, 
+      w, h, traps: finalTraps, fakeExits: fakes, 
+      fog: lv >= 10, 
       time: Math.max(35, 50 - lv) + playerStats.extraTime,
     };
   }
@@ -442,7 +489,7 @@
     const w = cfg.w, h = cfg.h;
     let g = genMaze(w,h);
 
-    const loops = Math.min(3 + Math.floor(lv / 2), 15);
+    const loops = Math.min(1 + Math.floor(lv / 5), 4);
     addLoops(g, loops);
 
     const dist = bfs(g, 1, 1);
@@ -479,9 +526,8 @@
     const baseSpeed = 170;
     player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: baseSpeed * playerStats.speedMult };
     
-    // 💡 計算帶入嘅時間
     let baseTime = cfg.time;
-    currentCarry = (lv === 1) ? 0 : Math.min(carriedTime, 30); // 最多帶 30 秒
+    currentCarry = (lv === 1) ? 0 : Math.min(carriedTime, 30); 
     timeLeft = baseTime + currentCarry;
 
     fogOn = cfg.fog; 
@@ -493,7 +539,8 @@
     currentShield = playerStats.shieldCount;
     updateBuffUI();
 
-    isTouching = false;
+    joyActive = false;
+    joyDX = 0; joyDY = 0;
     for(const k in keysDown) keysDown[k] = false;
 
     elLv.textContent = lv;
@@ -522,16 +569,17 @@
     if(keysDown['w'] || keysDown['arrowup'])    dy--;
     if(keysDown['s'] || keysDown['arrowdown'])  dy++;
 
-    if (isTouching) {
-      const tdx = touchX - touchStartX;
-      const tdy = touchY - touchStartY;
-      const dist = Math.hypot(tdx, tdy);
-      if (dist > 10) { dx = tdx / dist; dy = tdy / dist; }
+    if (joyActive) {
+      dx += joyDX;
+      dy += joyDY;
     }
 
     if(dx === 0 && dy === 0) return;
+    
     const len = Math.hypot(dx, dy);
-    dx = dx / len; dy = dy / len;
+    if (len > 1) {
+        dx = dx / len; dy = dy / len;
+    }
 
     const s = player.speed * dt;
     const nx = player.x + dx*s;
@@ -584,7 +632,6 @@
         timeLeft = Math.max(0, timeLeft - 10);
         invuln = 1.0; shake = 0.6;
         burst(player.x, player.y, '#ff0000', 30);
-        grid[cy][cx] = 0; 
         if(timeLeft <= 0) gameOver();
       }
     }
@@ -597,7 +644,7 @@
     state = 'over';
     ovTitle.textContent = '時間到！';
     ovTitle.style.color = '#ff5a5f';
-    ovText.textContent = `你停在第 ${level} 層。`;
+    ovText.innerHTML = `你嘅無盡旅程喺第 <b>${level}</b> 層結束。`;
     upgradeUI.style.display = 'none';
     lbContainer.style.display = 'block'; 
     ovBtn.style.display = 'block';
@@ -605,47 +652,29 @@
     saveScore(level, timeLeft);
     ovBtn.textContent = '重試本層 (保留技能及時間)';
     overlay.classList.add('show');
+    joyActive = false; joyDX = 0; joyDY = 0;
   }
 
   function levelClear(){
-    // 將剩餘時間儲存，帶去下一關
     carriedTime = timeLeft; 
-
-    if (level >= MAX_LEVEL) {
-      state = 'win';
-      ovTitle.textContent = '🎉 爆機！';
-      ovTitle.style.color = '#ffd23f';
-      ovText.innerHTML = `你成功突破咗 <b>${MAX_LEVEL}</b> 層！<br>你係真正嘅迷宮大師！`;
-      upgradeUI.style.display = 'none';
-      lbContainer.style.display = 'block';
-      ovBtn.style.display = 'block';
-      btnQuit.style.display = 'none'; 
-      saveScore(MAX_LEVEL, timeLeft);
-      ovBtn.textContent = '重新開始';
-    } else {
-      state = 'clear';
-      ovTitle.textContent = '🎉 請選擇一項技能強化！';
-      ovTitle.style.color = '#39d353';
-      ovText.innerHTML = `第 ${level} / ${MAX_LEVEL} 層完成。<br><span style="color:#7ee787;">已將 ${carriedTime.toFixed(1)}s 剩餘時間帶到下一關！</span>`;
-      
-      showUpgrades();
-      ovBtn.style.display = 'none'; 
-      
-      saveScore(level, timeLeft);
-      ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
-    }
+    state = 'clear';
+    ovTitle.textContent = '🎉 請選擇一項技能強化！';
+    ovTitle.style.color = '#39d353';
+    ovText.innerHTML = `第 ${level} 層完成。<br><span style="color:#7ee787;">已將 ${carriedTime.toFixed(1)}s 剩餘時間帶到下一關！</span>`;
+    
+    showUpgrades();
+    ovBtn.style.display = 'none'; 
+    
+    saveScore(level, timeLeft);
+    ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
     overlay.classList.add('show');
+    joyActive = false; joyDX = 0; joyDY = 0;
   }
 
   ovBtn.onclick = () => {
     overlay.classList.remove('show');
     if(state === 'view_lb'){
       state = 'playing'; lastTs = performance.now();
-    } else if(state === 'win'){
-      level = 1; 
-      playerStats = { speedMult: 1.0, extraTime: 0, shieldCount: 0, removeFakes: false, trapReduce: 0 };
-      carriedTime = 0; // 重新開始清空累積時間
-      buildLevel(1);
     } else if(state === 'clear'){
       level++; 
       buildLevel(level);
@@ -658,7 +687,7 @@
     overlay.classList.remove('show');
     level = 1;
     playerStats = { speedMult: 1.0, extraTime: 0, shieldCount: 0, removeFakes: false, trapReduce: 0 };
-    carriedTime = 0; // 放棄清空累積時間
+    carriedTime = 0; 
     buildLevel(1);
   };
 
@@ -673,7 +702,6 @@
     checkTiles();
     updateParticles(dt);
 
-    // 顯示時間同埋帶入嘅加成
     let timeHtml = timeLeft.toFixed(1) + 's';
     if (currentCarry > 0 && state === 'playing') {
         timeHtml += ` <span style="font-size:12px; color:#7ee787; font-weight:normal; margin-left:4px;">(+${currentCarry.toFixed(1)}s)</span>`;
@@ -683,11 +711,13 @@
   }
 
   function drawTile(v, px, py, t){
-    if(v === 4){ 
+    if(v === 4 || v === 7){ 
       const glow = 0.5 + 0.5*Math.sin(t*4);
       ctx.save();
-      ctx.shadowColor = '#39d353'; ctx.shadowBlur = 20 + glow*20;
-      ctx.fillStyle = '#39d353'; ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
+      ctx.shadowColor = '#39d353';
+      ctx.shadowBlur = 20 + glow*20;
+      ctx.fillStyle = '#39d353';
+      ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
       ctx.restore();
       ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
       ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
@@ -739,7 +769,9 @@
     for(let y=r0;y<=r1;y++){
       for(let x=c0;x<=c1;x++){
         const v = grid[y][x];
-        if(v === 4 || v === 5) { drawTile(v, x*TILE - camX, y*TILE - camY, t); }
+        if(v === 4 || v === 5 || v === 7) { 
+          drawTile(v, x*TILE - camX, y*TILE - camY, t);
+        }
       }
     }
 
@@ -764,11 +796,28 @@
     ctx.globalAlpha = 1;
 
     if(fogOn){
-      const fogRadius = Math.max(TILE * 2.5, TILE * 6 - (level - 10) * TILE * 0.4);
+      const fogRadius = Math.max(TILE * 2, TILE * 6 - (level - 10) * TILE * 0.4);
       const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.3, ppx, ppy, fogRadius);
       g2.addColorStop(0, 'rgba(0,0,0,0)'); g2.addColorStop(1, 'rgba(0,0,0,1)');
       ctx.fillStyle = g2; ctx.fillRect(0,0,VIEW_W,VIEW_H);
     }
+
+    // 畫縮細版虛擬搖桿
+    if (joyActive) {
+        ctx.beginPath();
+        ctx.arc(joyStartX, joyStartY, JOY_RADIUS, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(joyCurX, joyCurY, JOY_KNOB_RADIUS, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(79, 209, 255, 0.8)';
+        ctx.fill();
+    }
+
     ctx.restore();
   }
 
@@ -788,18 +837,80 @@
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   });
   addEventListener('keyup', e => { keysDown[e.key.toLowerCase()] = false; });
-  addEventListener('blur', () => { for(const k in keysDown) keysDown[k] = false; isTouching = false; });
+  addEventListener('blur', () => { for(const k in keysDown) keysDown[k] = false; joyActive = false; });
 
-  canvas.addEventListener('touchstart', e => {
+  function handleTouchStart(e) {
+    if(state !== 'playing') return;
     e.preventDefault();
-    if(e.touches.length > 0){ isTouching = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchX = touchStartX; touchY = touchStartY; }
-  }, {passive: false});
-  canvas.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    if (!t) return;
+
+    if (!joyActive) {
+        joyActive = true;
+        joyId = t.identifier;
+        joyStartX = t.clientX;
+        joyStartY = t.clientY;
+        joyCurX = t.clientX;
+        joyCurY = t.clientY;
+    }
+  }
+
+  function handleTouchMove(e) {
+    if (!joyActive) return;
     e.preventDefault();
-    if(isTouching && e.touches.length > 0){ touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }
-  }, {passive: false});
-  canvas.addEventListener('touchend', e => { e.preventDefault(); isTouching = false; }, {passive: false});
-  canvas.addEventListener('touchcancel', e => { isTouching = false; });
+
+    for (let i = 0; i < e.touches.length; i++) {
+        const t = e.touches[i];
+        if (t.identifier === joyId) {
+            let dx = t.clientX - joyStartX;
+            let dy = t.clientY - joyStartY;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist > JOY_RADIUS) {
+                const angle = Math.atan2(dy, dx);
+                joyCurX = joyStartX + Math.cos(angle) * JOY_RADIUS;
+                joyCurY = joyStartY + Math.sin(angle) * JOY_RADIUS;
+                joyDX = Math.cos(angle);
+                joyDY = Math.sin(angle);
+            } else {
+                joyCurX = t.clientX;
+                joyCurY = t.clientY;
+                if (dist < 5) {
+                    joyDX = 0;
+                    joyDY = 0;
+                } else {
+                    joyDX = dx / dist;
+                    joyDY = dy / dist;
+                }
+            }
+            break;
+        }
+    }
+  }
+
+  function handleTouchEnd(e) {
+    if (!joyActive) return;
+    e.preventDefault();
+    
+    let stillTouching = false;
+    for (let i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].identifier === joyId) {
+            stillTouching = true;
+            break;
+        }
+    }
+
+    if (!stillTouching) {
+        joyActive = false;
+        joyDX = 0;
+        joyDY = 0;
+    }
+  }
+
+  canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+  canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
+  canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+  canvas.addEventListener('touchcancel', handleTouchEnd, {passive: false});
 
   buildLevel(1);
   renderLeaderboard();
