@@ -57,7 +57,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
             👆 點擊空白處放鋼片 | 拖曳頂部紅框決定鐵珠起點<br>
-            點擊鋼片切換音高 | 長按刪除
+            點擊鋼片切換 (1-7 或 0停頓) | 長按刪除
         </div>
     </div>
 
@@ -84,12 +84,21 @@
         let mediaRecorder, audioChunks = [], audioUrl = "";
         let isRecording = false;
 
-        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
-        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6'];
-        const NOTE_NAMES = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti'];
+        // 加入 0 的頻率 (0代表唔出聲)
+        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 0];
+        // 加入 0 的顏色 (用灰色代表停頓)
+        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#7f8c8d'];
+        
+        // 加入 0 的字樣
+        const NOTE_NAMES = ['1', '2', '3', '4', '5', '6', '7', '0'];
 
         function playNote(freq, color) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            createSparks(ball.x, ball.y, color);
+            
+            // 如果係 0 (休止符)，就唔發聲
+            if (freq === 0) return; 
+
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'triangle';
@@ -99,7 +108,6 @@
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
             osc.connect(gain); gain.connect(audioCtx.destination); gain.connect(dest);
             osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-            createSparks(ball.x, ball.y, color);
         }
 
         // --- 遊戲物件 ---
@@ -112,8 +120,6 @@
         let isDraggingEmitter = false;
 
         const GRAVITY = 0.45; 
-        
-        // 【核心改動】將鋼片長度由 120 縮短到 80
         const PLATE_W = 80; 
         const PLATE_H = 15;
 
@@ -121,13 +127,14 @@
             plates = [];
             let startX = 100;
             let startY = 120;
-            for(let i=0; i<5; i++) {
-                // 因為鋼片短咗，左右交替嘅距離改為 100px，視覺上更靚
+            // 預設一首有停頓位嘅歌
+            let defaultSong = [0, 0, 4, 4, 5, 5, 4, 7]; 
+            for(let i=0; i<defaultSong.length; i++) {
                 plates.push({
-                    x: startX + (i%2 === 0 ? 0 : 100), 
-                    y: startY + i*100, 
+                    x: startX + (i%2 === 0 ? 0 : 80), 
+                    y: startY + i*80, 
                     w: PLATE_W, h: PLATE_H, 
-                    noteIndex: i % 7
+                    noteIndex: defaultSong[i]
                 });
             }
             emitter.x = plates[0].x + PLATE_W / 2; 
@@ -181,7 +188,7 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                let idx = Math.floor(Math.random() * 7);
+                let idx = Math.floor(Math.random() * 8); // 隨機 0-7
                 let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
                     w: PLATE_W, h: PLATE_H, noteIndex: idx
@@ -225,7 +232,8 @@
                 clearTimeout(pressTimer);
                 pressTimer = null;
                 if (!isDraggingPlate && dragPlate) {
-                    dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 7;
+                    // 循環 8 次 (0-7)
+                    dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 8;
                     playPreviewNote(dragPlate.noteIndex);
                 }
             }
@@ -242,6 +250,9 @@
 
         function playPreviewNote(idx) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            // 試聽時如果係 0 都唔發聲
+            if (SCALE_FREQS[idx] === 0) return; 
+
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.type = 'sine'; osc.frequency.setValueAtTime(SCALE_FREQS[idx], audioCtx.currentTime);
             gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
@@ -294,7 +305,6 @@
                 playBtn.innerText = "⏸ 暫停"; playBtn.classList.add('active');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 
-                // 開播時自動將發射器移到最高嗰塊鋼片正上方！
                 if (plates.length > 0) {
                     let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
                     emitter.x = topPlate.x + topPlate.w / 2;
@@ -357,7 +367,7 @@
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            let t = 25; // 飛行時間 (幀)
+                            let t = 25;
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
                             
