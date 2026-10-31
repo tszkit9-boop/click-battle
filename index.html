@@ -6,17 +6,22 @@
 <title>隨機迷宮</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{
-    background:radial-gradient(1200px 800px at 50% 0%,#131a26,#080a0f 70%);
-    color:#e6edf3;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    min-height:100vh;gap:10px;padding:16px;
-    touch-action: none; overflow: hidden;
+  html, body {
+    width: 100%; height: 100%;
+    background: #0d1117;
+    color:#e6edf3; font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    overflow: hidden; touch-action: none;
   }
-  #wrap{position:relative;width:min(960px,100%);aspect-ratio:3/2;
-    border-radius:14px;overflow:hidden; touch-action: none;
-    box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06)}
-  canvas{display:block;width:100%;height:100%;background:#0d1117; touch-action: none;}
+  
+  /* 完全填滿螢幕嘅容器 */
+  #wrap {
+    position: relative; width: 100vw; height: 100vh;
+    overflow: hidden; touch-action: none;
+  }
+  canvas {
+    display: block; width: 100%; height: 100%;
+    background: #0d1117; touch-action: none;
+  }
   
   #hud{position:absolute;inset:0;padding:12px 16px;pointer-events:none;
     display:flex;justify-content:space-between;align-items:flex-start;
@@ -47,7 +52,7 @@
   }
   #overlay.show, #nameModal.show { display: flex; }
   #overlay > div, #nameModal > div { 
-    margin: auto 0; width: 100%; max-width: 450px; 
+    margin: auto 0; width: 100%; max-width: 480px;
     display: flex; flex-direction: column; align-items: center; 
   }
   #overlay h1, #nameModal h1 {font-size:26px;margin-bottom:6px;color:#ffd23f}
@@ -98,25 +103,10 @@
   }
   #nameInput:focus { border-color: #4fd1ff; box-shadow: 0 0 10px rgba(79, 209, 255, 0.3); }
 
-  #tip{opacity:.45;font-size:13px;text-align:center}
-
-  /* 📱 手機版全屏大優化 */
-  @media (max-width: 800px) {
-    body { padding: 0; gap: 0; }
-    #wrap {
-      width: 100vw;
-      height: 100vh;
-      aspect-ratio: auto; /* 移除固定比例 */
-      border-radius: 0;
-      box-shadow: none;
-    }
-    #hud { font-size: 16px; padding: 16px; }
-    .time { font-size: 26px; }
-    #btnPlayerName, #btnShowLB { font-size: 14px; padding: 6px 12px; }
-    #tip { display: none; }
+  @media (max-width: 600px) {
     #overlay h1, #nameModal h1 { font-size: 24px; }
     #overlay p, #nameModal p { font-size: 14px; }
-    .upgrade-card { padding: 15px; gap: 12px; }
+    .upgrade-card { padding: 12px 15px; gap: 12px; }
     .upgrade-icon { font-size: 28px; }
     .upgrade-info h4 { font-size: 17px; }
     .upgrade-info p { font-size: 13px; }
@@ -126,7 +116,7 @@
 </head>
 <body>
 <div id="wrap">
-  <canvas id="game" width="960" height="640"></canvas>
+  <canvas id="game"></canvas>
   <div id="hud">
     <div class="left">
       <div>第 <span id="lv">1</span> 層 <span id="bestRecord" style="font-size:12px;opacity:0.7;color:#ffd23f;margin-left:8px;"></span></div>
@@ -170,7 +160,6 @@
   </div>
 
 </div>
-<div id="tip">WASD / 拖曳移動 · 🟢出口 (真假難辨) · 🔴地刺(扣4秒)</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -192,8 +181,8 @@
   const leaderboardRef = ref(db, 'leaderboard');
 
   const TILE = 32;
-  // 💡 改為 let，容許動態調整視窗大小
-  let VIEW_W = 960, VIEW_H = 640;
+  // 動態視窗大細，預設值，載入後會自動變成螢幕真實大細
+  let VIEW_W = 960, VIEW_H = 640; 
 
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -255,22 +244,15 @@
   };
   let currentShield = 0;
 
-  /* ================= 動態調整畫布尺寸 ================= */
-  function handleResize() {
-    if (window.innerWidth <= 800) {
-        // 手機版：全屏尺寸
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    } else {
-        // 電腦版：固定 960x640
-        canvas.width = 960;
-        canvas.height = 640;
-    }
-    VIEW_W = canvas.width;
-    VIEW_H = canvas.height;
+  /* ================= 動態畫面尺寸調整 ================= */
+  function resize() {
+    VIEW_W = window.innerWidth;
+    VIEW_H = window.innerHeight;
+    canvas.width = VIEW_W;
+    canvas.height = VIEW_H;
   }
-  window.addEventListener('resize', handleResize);
-  handleResize();
+  window.addEventListener('resize', resize);
+  resize(); // 初始化執行一次
 
   /* ================= 玩家名字系統 ================= */
   let playerName = localStorage.getItem('mazePlayerName') || "無名氏";
@@ -283,7 +265,9 @@
       setTimeout(() => nameInput.focus(), 100);
   };
 
-  btnCancelName.onclick = () => { nameModal.classList.remove('show'); };
+  btnCancelName.onclick = () => {
+      nameModal.classList.remove('show');
+  };
 
   btnConfirmName.onclick = () => {
       let newName = nameInput.value.trim();
@@ -753,15 +737,15 @@
 
   function render(){
     const worldW = cols*TILE, worldH = rows*TILE;
-    // 自動調整視角
+    
+    // 直接使用真實螢幕寬高計算，視野最大化
     if(worldW <= VIEW_W) camX = -(VIEW_W - worldW)/2;
     else camX = clamp(player.x - VIEW_W/2, 0, worldW - VIEW_W);
     if(worldH <= VIEW_H) camY = -(VIEW_H - worldH)/2;
     else camY = clamp(player.y - VIEW_H/2, 0, worldH - VIEW_H);
 
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.fillStyle = '#0a0e15'; 
-    ctx.fillRect(0,0,VIEW_W,VIEW_H);
+    ctx.fillStyle = '#0a0e15'; ctx.fillRect(0,0,VIEW_W,VIEW_H);
 
     ctx.save();
     if(shake > 0.01){ ctx.translate(rnd(-8,8)*shake, rnd(-8,8)*shake); }
@@ -823,6 +807,9 @@
       ctx.fillStyle = g2; ctx.fillRect(0,0,VIEW_W,VIEW_H);
     }
 
+    ctx.restore();
+
+    // 畫虛擬搖桿
     if (joyActive) {
         ctx.beginPath();
         ctx.arc(joyStartX, joyStartY, JOY_RADIUS, 0, Math.PI*2);
@@ -837,8 +824,6 @@
         ctx.fillStyle = 'rgba(79, 209, 255, 0.8)';
         ctx.fill();
     }
-
-    ctx.restore();
   }
 
   function loop(ts){
