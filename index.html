@@ -65,13 +65,24 @@
   .upgrade-info h4 { color: #39d353; margin-bottom: 4px; font-size: 16px; }
   .upgrade-info p { margin: 0; font-size: 13px; opacity: 0.9; line-height: 1.3; }
 
+  /* 按鈕群組 */
+  .btn-group { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; width: 100%; flex-wrap: wrap;}
+  
   #overlay button{
-    font:inherit;font-weight:700;font-size:16px;padding:12px 28px;border:0;
+    font:inherit;font-weight:700;font-size:15px;padding:12px 24px;border:0;
     border-radius:999px;cursor:pointer;color:#04070c;
     background:linear-gradient(135deg,#7ee787,#39d353);
     box-shadow:0 8px 24px rgba(57,211,83,.35);transition:transform .15s;
-    margin-bottom: 20px;
   }
+  #overlay button:hover{ transform: translateY(-2px); }
+
+  /* 放棄重玩按鈕 (暗色系) */
+  #btnQuit {
+    background: rgba(255,255,255,0.1); color: #ff5a5f; box-shadow: none;
+    border: 1px solid rgba(255,90,95,0.3);
+  }
+  #btnQuit:hover { background: rgba(255,90,95,0.2); }
+
   #tip{opacity:.45;font-size:13px;text-align:center}
 
   @media (max-width: 600px) {
@@ -79,6 +90,7 @@
     #overlay h1 { font-size: 24px; }
     .upgrade-card { padding: 10px 12px; gap: 10px; }
     .upgrade-icon { font-size: 24px; }
+    #overlay button { font-size: 14px; padding: 10px 20px; }
   }
 </style>
 </head>
@@ -106,7 +118,12 @@
         <h3 style="text-align:center;color:#7ee787;margin-bottom:10px;">🏆 全球最高紀錄 (Top 5)</h3>
         <ul id="lbList"><li style="justify-content:center;opacity:0.5">載入中...</li></ul>
       </div>
-      <button id="ovBtn">進入下一層</button>
+      
+      <!-- 按鈕區 -->
+      <div class="btn-group">
+        <button id="ovBtn">進入下一層</button>
+        <button id="btnQuit">放棄並重玩</button>
+      </div>
     </div>
   </div>
 </div>
@@ -117,7 +134,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // ⚠️ 呢度已經寫入咗你專屬嘅 Firebase 設定 ⚠️
   const firebaseConfig = {
     apiKey: "AIzaSyCWnZhZ0jDnabSTa8L1jkPXfJE6yGhxeqw",
     authDomain: "maze-leaderboard.firebaseapp.com",
@@ -145,6 +161,7 @@
   const ovTitle = document.getElementById('ovTitle');
   const ovText  = document.getElementById('ovText');
   const ovBtn   = document.getElementById('ovBtn');
+  const btnQuit = document.getElementById('btnQuit');
   const lbList  = document.getElementById('lbList');
   const lbContainer = document.getElementById('lbContainer');
   const upgradeUI = document.getElementById('upgradeUI');
@@ -238,6 +255,7 @@
           upgradeUI.style.display = 'none';
           lbContainer.style.display = 'block';
           ovBtn.textContent = '關閉';
+          btnQuit.style.display = 'none'; // 睇排行榜時隱藏放棄掣
           overlay.classList.add('show');
       }
   };
@@ -255,6 +273,7 @@
       upgradeUI.innerHTML = '';
       upgradeUI.style.display = 'flex';
       lbContainer.style.display = 'none'; 
+      btnQuit.style.display = 'none'; // 揀技能時隱藏放棄掣
       
       let pool = [...UPGRADES];
       shuffle(pool);
@@ -279,6 +298,7 @@
               
               upgradeUI.style.display = 'none';
               ovBtn.style.display = 'block'; 
+              btnQuit.style.display = 'block'; // 揀完技能後顯示放棄掣
           };
           upgradeUI.appendChild(div);
       });
@@ -514,6 +534,7 @@
     upgradeUI.style.display = 'none';
     lbContainer.style.display = 'block'; 
     ovBtn.style.display = 'block';
+    btnQuit.style.display = 'block'; // 顯示放棄掣
     saveScore(level, timeLeft);
     ovBtn.textContent = '重試本層 (保留技能)';
     overlay.classList.add('show');
@@ -528,8 +549,10 @@
       upgradeUI.style.display = 'none';
       lbContainer.style.display = 'block';
       ovBtn.style.display = 'block';
+      btnQuit.style.display = 'block'; // 顯示放棄掣
       saveScore(MAX_LEVEL, timeLeft);
       ovBtn.textContent = '重新開始';
+      btnQuit.style.display = 'none'; // 爆機時唔需要放棄掣，因為可以重新開始
     } else {
       state = 'clear';
       ovTitle.textContent = '🎉 請選擇一項技能強化！';
@@ -545,6 +568,7 @@
     overlay.classList.add('show');
   }
 
+  // 繼續/重試按鈕
   ovBtn.onclick = () => {
     overlay.classList.remove('show');
     if(state === 'view_lb'){
@@ -559,6 +583,14 @@
     } else if(state === 'over') {
       buildLevel(level); 
     }
+  };
+
+  // ✨ 新增：放棄並重玩按鈕
+  btnQuit.onclick = () => {
+    overlay.classList.remove('show');
+    level = 1;
+    playerStats = { speedMult: 1.0, extraTime: 0, shieldCount: 0, removeFakes: false, trapReduce: 0 };
+    buildLevel(1);
   };
 
   function update(dt){
