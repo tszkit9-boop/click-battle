@@ -36,19 +36,12 @@
     cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;
   }
   
-  /* 彈窗支援滾動 */
   #overlay{position:absolute;inset:0;display:none;
     background:rgba(6,9,14,.95);backdrop-filter:blur(8px);text-align:center;
-    padding: 20px 16px;
-    overflow-y: auto; /* 允許垂直滾動 */
-    touch-action: auto; /* 覆蓋外層，允許手指滑動 */
+    padding: 20px 16px; overflow-y: auto; touch-action: auto;
   }
   #overlay.show{display: flex; flex-direction: column; align-items: center;}
-  #overlay > div {
-    margin: auto 0; /* 內容少時居中，內容多時由頂部開始 */
-    width: 100%; max-width: 450px;
-    display: flex; flex-direction: column; align-items: center;
-  }
+  #overlay > div { margin: auto 0; width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; }
   #overlay h1{font-size:28px;margin-bottom:8px;color:#ffd23f}
   #overlay p{opacity:.85;margin-bottom:16px;line-height:1.5;font-size:15px}
   
@@ -61,7 +54,6 @@
   #lbList li { display: flex; justify-content: space-between; margin-bottom: 8px; }
   .lb-rank { color: #ffd23f; width: 35px; display: inline-block; font-weight: bold;}
 
-  /* 技能卡牌 (縮細少少就位) */
   #upgradeUI { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 100%; }
   .upgrade-card {
     background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
@@ -82,9 +74,8 @@
   }
   #tip{opacity:.45;font-size:13px;text-align:center}
 
-  /* 手機版專用優化 */
   @media (max-width: 600px) {
-    #tip { font-size: 11px; display: none; /* 手機隱藏底部提示，防遮擋 */ }
+    #tip { font-size: 11px; display: none; }
     #overlay h1 { font-size: 24px; }
     .upgrade-card { padding: 10px 12px; gap: 10px; }
     .upgrade-icon { font-size: 24px; }
@@ -110,618 +101,603 @@
     <div>
       <h1 id="ovTitle">通關！</h1>
       <p id="ovText"></p>
-      
-      <!-- 技能升級選項 -->
       <div id="upgradeUI"></div>
-
       <div id="lbContainer">
-        <h3 style="text-align:center;color:#7ee787;margin-bottom:10px;">🏆 歷史最高紀錄 (Top 5)</h3>
-        <ul id="lbList"></ul>
+        <h3 style="text-align:center;color:#7ee787;margin-bottom:10px;">🏆 全球最高紀錄 (Top 5)</h3>
+        <ul id="lbList"><li style="justify-content:center;opacity:0.5">載入中...</li></ul>
       </div>
-
       <button id="ovBtn">進入下一層</button>
     </div>
   </div>
 </div>
 <div id="tip">WASD / 拖曳移動 · 🟢真出口 · 😈假出口(扣10秒) · 🔴地刺(扣4秒)</div>
 
-<script>
-(() => {
-"use strict";
+<!-- 引入 Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-const TILE = 32;
-const VIEW_W = 960, VIEW_H = 640;
-const MAX_LEVEL = 20;
-
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const elLv    = document.getElementById('lv');
-const elTime  = document.getElementById('time');
-const elBuffs = document.getElementById('buffs');
-const overlay = document.getElementById('overlay');
-const ovTitle = document.getElementById('ovTitle');
-const ovText  = document.getElementById('ovText');
-const ovBtn   = document.getElementById('ovBtn');
-const lbList  = document.getElementById('lbList');
-const lbContainer = document.getElementById('lbContainer');
-const upgradeUI = document.getElementById('upgradeUI');
-const btnShowLB = document.getElementById('btnShowLB');
-
-const rnd = (a,b) => a + Math.random()*(b-a);
-const ri  = (a,b) => Math.floor(rnd(a,b+1));
-const clamp = (v,a,b) => v<a?a:v>b?b:v;
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
-
-let level = 1;
-let grid, cols, rows;
-let player;
-let timeLeft = 0;
-let state = 'playing'; 
-let camX = 0, camY = 0;
-let fogOn = false;
-let invuln = 0, shake = 0;
-let particles = [];
-let lastTs = 0;
-const keysDown = {};
-
-let isTouching = false;
-let touchX = 0, touchY = 0;
-let touchStartX = 0, touchStartY = 0;
-
-let playerStats = {
-    speedMult: 1.0,
-    extraTime: 0,
-    shieldCount: 0,
-    removeFakes: false,
-    trapReduce: 0
-};
-let currentShield = 0;
-
-function updateBuffUI() {
-    let b = [];
-    if (playerStats.speedMult > 1.0) b.push(`⚡ x${playerStats.speedMult.toFixed(1)}`);
-    if (playerStats.extraTime > 0) b.push(`⏳ +${playerStats.extraTime}s`);
-    if (playerStats.shieldCount > 0) b.push(`🛡️ x${currentShield}`);
-    if (playerStats.removeFakes) b.push(`👁️ 真視`);
-    if (playerStats.trapReduce > 0) b.push(`🧹 -${Math.round(playerStats.trapReduce*100)}%刺`);
-    elBuffs.innerHTML = b.join(' | ');
-}
-
-/* ================= 排行榜 ================= */
-function getLeaderboard() { return JSON.parse(localStorage.getItem('mazeLeaderboard')) || []; }
-function saveScore(lv, time) {
-    let lb = getLeaderboard();
-    lb.push({ level: lv, time: parseFloat(time.toFixed(1)), date: new Date().getTime() });
-    lb.sort((a, b) => b.level - a.level || b.time - a.time);
-    lb = lb.slice(0, 5);
-    localStorage.setItem('mazeLeaderboard', JSON.stringify(lb));
-    renderLeaderboard();
-}
-function renderLeaderboard() {
-    const lb = getLeaderboard();
-    lbList.innerHTML = '';
-    if (lb.length === 0) { lbList.innerHTML = '<li style="justify-content:center;opacity:0.5">暫無紀錄</li>'; return; }
-    lb.forEach((item, index) => {
-        const li = document.createElement('li');
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-        li.innerHTML = `<span class="lb-rank">${medal}</span><span style="flex:1;text-align:left;margin-left:10px;">第 ${item.level} 層</span><span style="color:#4fd1ff">${item.time}s</span>`;
-        lbList.appendChild(li);
-    });
-}
-btnShowLB.onclick = () => {
-    if (state === 'playing') {
-        state = 'view_lb';
-        renderLeaderboard();
-        ovTitle.textContent = '🏆 排行榜';
-        ovTitle.style.color = '#ffd23f';
-        ovText.innerHTML = '睇完撳「關閉」繼續遊戲';
-        upgradeUI.style.display = 'none';
-        lbContainer.style.display = 'block'; // 確保顯示
-        ovBtn.textContent = '關閉';
-        overlay.classList.add('show');
-    }
-};
-
-/* ================= 神級技能系統 ================= */
-const UPGRADES = [
-    { id: 'speed', icon: '⚡', title: '風火輪', desc: '移動速度永久 +30%' },
-    { id: 'time', icon: '⏳', title: '時光沙漏', desc: '每關初始時間 +15 秒' },
-    { id: 'shield', icon: '🛡️', title: '無敵金鐘罩', desc: '每關開頭免疫 3 次地刺' },
-    { id: 'sight', icon: '👁️', title: '千里眼', desc: '永久消除所有假出口' },
-    { id: 'sweep', icon: '🧹', title: '排雷專家', desc: '全圖地刺數量永久減少 30%' }
-];
-
-function showUpgrades() {
-    upgradeUI.innerHTML = '';
-    upgradeUI.style.display = 'flex';
-    lbContainer.style.display = 'none'; // 選技能時隱藏排行榜，防止手機畫面太逼
-    
-    let pool = [...UPGRADES];
-    shuffle(pool);
-    const choices = pool.slice(0, 3);
-
-    choices.forEach(up => {
-        const div = document.createElement('div');
-        div.className = 'upgrade-card';
-        div.innerHTML = `
-            <div class="upgrade-icon">${up.icon}</div>
-            <div class="upgrade-info">
-                <h4>${up.title}</h4>
-                <p>${up.desc}</p>
-            </div>
-        `;
-        div.onclick = () => {
-            if (up.id === 'speed') playerStats.speedMult += 0.3;
-            if (up.id === 'time') playerStats.extraTime += 15;
-            if (up.id === 'shield') playerStats.shieldCount += 3;
-            if (up.id === 'sight') playerStats.removeFakes = true;
-            if (up.id === 'sweep') playerStats.trapReduce = Math.min(playerStats.trapReduce + 0.3, 1.0);
-            
-            upgradeUI.style.display = 'none';
-            ovBtn.style.display = 'block'; 
-        };
-        upgradeUI.appendChild(div);
-    });
-}
-
-/* ================= 遊戲核心 ================= */
-function config(lv){
-  let minSize = Math.min(9 + lv * 2, 33);
-  let maxSize = Math.min(15 + lv * 3, 41);
-  
-  let w = ri(minSize, maxSize);
-  let h = ri(minSize, maxSize);
-  if(w % 2 === 0) w++;
-  if(h % 2 === 0) h++;
-
-  let baseTraps = Math.min(2 + Math.floor(lv * 1.5), 35);
-  let finalTraps = Math.floor(baseTraps * (1 - playerStats.trapReduce));
-  let fakes = playerStats.removeFakes ? 0 : Math.min(1 + Math.floor(lv / 2), 4);
-
-  return {
-    w, h,
-    traps:   finalTraps, 
-    fakeExits: fakes, 
-    fog:     lv >= 10, 
-    time:    Math.max(35, 50 - lv) + playerStats.extraTime,
+  // ⚠️ 呢度已經寫入咗你專屬嘅 Firebase 設定 ⚠️
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWnZhZ0jDnabSTa8L1jkPXfJE6yGhxeqw",
+    authDomain: "maze-leaderboard.firebaseapp.com",
+    projectId: "maze-leaderboard",
+    storageBucket: "maze-leaderboard.firebasestorage.app",
+    messagingSenderId: "190428470547",
+    appId: "1:190428470547:web:4504389a73ef7190f0ee6",
+    measurementId: "G-TV593P37E"
   };
-}
 
-function genMaze(w,h){
-  const g = Array.from({length:h}, ()=>new Array(w).fill(1));
-  g[1][1] = 0;
-  const st = [[1,1]];
-  while(st.length){
-    const [x,y] = st[st.length-1];
-    const dirs = shuffle([[0,-2],[0,2],[-2,0],[2,0]]);
-    let ok = false;
-    for(const [dx,dy] of dirs){
-      const nx = x+dx, ny = y+dy;
-      if(nx>0 && ny>0 && nx<w-1 && ny<h-1 && g[ny][nx] === 1){
-        g[y+dy/2][x+dx/2] = 0;
-        g[ny][nx] = 0;
-        st.push([nx,ny]); ok = true; break;
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const leaderboardRef = ref(db, 'leaderboard');
+
+  const TILE = 32;
+  const VIEW_W = 960, VIEW_H = 640;
+  const MAX_LEVEL = 20;
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const elLv    = document.getElementById('lv');
+  const elTime  = document.getElementById('time');
+  const elBuffs = document.getElementById('buffs');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovText  = document.getElementById('ovText');
+  const ovBtn   = document.getElementById('ovBtn');
+  const lbList  = document.getElementById('lbList');
+  const lbContainer = document.getElementById('lbContainer');
+  const upgradeUI = document.getElementById('upgradeUI');
+  const btnShowLB = document.getElementById('btnShowLB');
+
+  const rnd = (a,b) => a + Math.random()*(b-a);
+  const ri  = (a,b) => Math.floor(rnd(a,b+1));
+  const clamp = (v,a,b) => v<a?a:v>b?b:v;
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  let level = 1;
+  let grid, cols, rows;
+  let player;
+  let timeLeft = 0;
+  let state = 'playing'; 
+  let camX = 0, camY = 0;
+  let fogOn = false;
+  let invuln = 0, shake = 0;
+  let particles = [];
+  let lastTs = 0;
+  const keysDown = {};
+
+  let isTouching = false;
+  let touchX = 0, touchY = 0;
+  let touchStartX = 0, touchStartY = 0;
+
+  let playerStats = {
+      speedMult: 1.0,
+      extraTime: 0,
+      shieldCount: 0,
+      removeFakes: false,
+      trapReduce: 0
+  };
+  let currentShield = 0;
+
+  function updateBuffUI() {
+      let b = [];
+      if (playerStats.speedMult > 1.0) b.push(`⚡ x${playerStats.speedMult.toFixed(1)}`);
+      if (playerStats.extraTime > 0) b.push(`⏳ +${playerStats.extraTime}s`);
+      if (playerStats.shieldCount > 0) b.push(`🛡️ x${currentShield}`);
+      if (playerStats.removeFakes) b.push(`👁️ 真視`);
+      if (playerStats.trapReduce > 0) b.push(`🧹 -${Math.round(playerStats.trapReduce*100)}%刺`);
+      elBuffs.innerHTML = b.join(' | ');
+  }
+
+  /* ================= Firebase 排行榜邏輯 ================= */
+  function saveScore(lv, time) {
+      push(leaderboardRef, {
+          level: lv,
+          time: parseFloat(time.toFixed(1)),
+          timestamp: Date.now()
+      }).catch(error => console.error("無法儲存分數:", error));
+  }
+
+  function renderLeaderboard() {
+      const topScoresQuery = query(leaderboardRef, orderByChild('level'), limitToLast(5));
+      
+      onValue(topScoresQuery, (snapshot) => {
+          lbList.innerHTML = '';
+          const scores = [];
+          snapshot.forEach((childSnapshot) => {
+              scores.push(childSnapshot.val());
+          });
+
+          scores.sort((a, b) => b.level - a.level || b.time - a.time);
+
+          if (scores.length === 0) {
+              lbList.innerHTML = '<li style="justify-content:center;opacity:0.5">暫無紀錄</li>';
+              return;
+          }
+
+          scores.forEach((item, index) => {
+              const li = document.createElement('li');
+              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+              li.innerHTML = `<span class="lb-rank">${medal}</span><span style="flex:1;text-align:left;margin-left:10px;">第 ${item.level} 層</span><span style="color:#4fd1ff">${item.time}s</span>`;
+              lbList.appendChild(li);
+          });
+      }, (error) => {
+          console.error("讀取排行榜失敗:", error);
+          lbList.innerHTML = '<li style="justify-content:center;opacity:0.5;color:red">無法連線排行榜</li>';
+      });
+  }
+  
+  btnShowLB.onclick = () => {
+      if (state === 'playing') {
+          state = 'view_lb';
+          renderLeaderboard();
+          ovTitle.textContent = '🏆 全球排行榜';
+          ovTitle.style.color = '#ffd23f';
+          ovText.innerHTML = '睇完撳「關閉」繼續遊戲';
+          upgradeUI.style.display = 'none';
+          lbContainer.style.display = 'block';
+          ovBtn.textContent = '關閉';
+          overlay.classList.add('show');
+      }
+  };
+
+  /* ================= 神級技能系統 ================= */
+  const UPGRADES = [
+      { id: 'speed', icon: '⚡', title: '風火輪', desc: '移動速度永久 +30%' },
+      { id: 'time', icon: '⏳', title: '時光沙漏', desc: '每關初始時間 +15 秒' },
+      { id: 'shield', icon: '🛡️', title: '無敵金鐘罩', desc: '每關開頭免疫 3 次地刺' },
+      { id: 'sight', icon: '👁️', title: '千里眼', desc: '永久消除所有假出口' },
+      { id: 'sweep', icon: '🧹', title: '排雷專家', desc: '全圖地刺數量永久減少 30%' }
+  ];
+
+  function showUpgrades() {
+      upgradeUI.innerHTML = '';
+      upgradeUI.style.display = 'flex';
+      lbContainer.style.display = 'none'; 
+      
+      let pool = [...UPGRADES];
+      shuffle(pool);
+      const choices = pool.slice(0, 3);
+
+      choices.forEach(up => {
+          const div = document.createElement('div');
+          div.className = 'upgrade-card';
+          div.innerHTML = `
+              <div class="upgrade-icon">${up.icon}</div>
+              <div class="upgrade-info">
+                  <h4>${up.title}</h4>
+                  <p>${up.desc}</p>
+              </div>
+          `;
+          div.onclick = () => {
+              if (up.id === 'speed') playerStats.speedMult += 0.3;
+              if (up.id === 'time') playerStats.extraTime += 15;
+              if (up.id === 'shield') playerStats.shieldCount += 3;
+              if (up.id === 'sight') playerStats.removeFakes = true;
+              if (up.id === 'sweep') playerStats.trapReduce = Math.min(playerStats.trapReduce + 0.3, 1.0);
+              
+              upgradeUI.style.display = 'none';
+              ovBtn.style.display = 'block'; 
+          };
+          upgradeUI.appendChild(div);
+      });
+  }
+
+  /* ================= 遊戲核心 ================= */
+  function config(lv){
+    let minSize = Math.min(9 + lv * 2, 33);
+    let maxSize = Math.min(15 + lv * 3, 41);
+    let w = ri(minSize, maxSize);
+    let h = ri(minSize, maxSize);
+    if(w % 2 === 0) w++;
+    if(h % 2 === 0) h++;
+
+    let baseTraps = Math.min(2 + Math.floor(lv * 1.5), 35);
+    let finalTraps = Math.floor(baseTraps * (1 - playerStats.trapReduce));
+    let fakes = playerStats.removeFakes ? 0 : Math.min(1 + Math.floor(lv / 2), 4);
+
+    return {
+      w, h, traps: finalTraps, fakeExits: fakes, fog: lv >= 10, 
+      time: Math.max(35, 50 - lv) + playerStats.extraTime,
+    };
+  }
+
+  function genMaze(w,h){
+    const g = Array.from({length:h}, ()=>new Array(w).fill(1));
+    g[1][1] = 0;
+    const st = [[1,1]];
+    while(st.length){
+      const [x,y] = st[st.length-1];
+      const dirs = shuffle([[0,-2],[0,2],[-2,0],[2,0]]);
+      let ok = false;
+      for(const [dx,dy] of dirs){
+        const nx = x+dx, ny = y+dy;
+        if(nx>0 && ny>0 && nx<w-1 && ny<h-1 && g[ny][nx] === 1){
+          g[y+dy/2][x+dx/2] = 0;
+          g[ny][nx] = 0;
+          st.push([nx,ny]); ok = true; break;
+        }
+      }
+      if(!ok) st.pop();
+    }
+    return g;
+  }
+
+  function addLoops(g, n){
+    const h = g.length, w = g[0].length;
+    let t = 0;
+    while(n > 0 && t < 1000){
+      t++;
+      const x = ri(1, w-2), y = ri(1, h-2);
+      if(g[y][x] !== 1) continue;
+      const horiz = g[y][x-1]===0 && g[y][x+1]===0 && g[y-1][x]===1 && g[y+1][x]===1;
+      const vert  = g[y-1][x]===0 && g[y+1][x]===0 && g[y][x-1]===1 && g[y][x+1]===1;
+      if(horiz || vert){ g[y][x] = 0; n--; }
+    }
+  }
+
+  function bfs(g, sx, sy){
+    const h = g.length, w = g[0].length;
+    const d = Array.from({length:h}, ()=>new Array(w).fill(-1));
+    d[sy][sx] = 0;
+    const q = [[sx,sy]];
+    for(let i=0; i<q.length; i++){
+      const [x,y] = q[i];
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const nx=x+dx, ny=y+dy;
+        if(nx>=0 && ny>=0 && nx<w && ny<h && g[ny][nx]===0 && d[ny][nx]===-1){
+          d[ny][nx] = d[y][x]+1; q.push([nx,ny]);
+        }
       }
     }
-    if(!ok) st.pop();
+    return d;
   }
-  return g;
-}
 
-function addLoops(g, n){
-  const h = g.length, w = g[0].length;
-  let t = 0;
-  while(n > 0 && t < 1000){
-    t++;
-    const x = ri(1, w-2), y = ri(1, h-2);
-    if(g[y][x] !== 1) continue;
-    const horiz = g[y][x-1]===0 && g[y][x+1]===0 && g[y-1][x]===1 && g[y+1][x]===1;
-    const vert  = g[y-1][x]===0 && g[y+1][x]===0 && g[y][x-1]===1 && g[y][x+1]===1;
-    if(horiz || vert){ g[y][x] = 0; n--; }
-  }
-}
+  function buildLevel(lv){
+    const cfg = config(lv);
+    const w = cfg.w, h = cfg.h;
+    let g = genMaze(w,h);
 
-function bfs(g, sx, sy){
-  const h = g.length, w = g[0].length;
-  const d = Array.from({length:h}, ()=>new Array(w).fill(-1));
-  d[sy][sx] = 0;
-  const q = [[sx,sy]];
-  for(let i=0; i<q.length; i++){
-    const [x,y] = q[i];
-    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-      const nx=x+dx, ny=y+dy;
-      if(nx>=0 && ny>=0 && nx<w && ny<h && g[ny][nx]===0 && d[ny][nx]===-1){
-        d[ny][nx] = d[y][x]+1; q.push([nx,ny]);
-      }
+    const loops = Math.min(3 + Math.floor(lv / 2), 15);
+    addLoops(g, loops);
+
+    const dist = bfs(g, 1, 1);
+
+    let exit = [w-2,h-2], best = -1;
+    for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+      if(g[y][x]===0 && dist[y][x] > best){ best = dist[y][x]; exit = [x,y]; }
     }
-  }
-  return d;
-}
+    g[exit[1]][exit[0]] = 4;
 
-function buildLevel(lv){
-  const cfg = config(lv);
-  const w = cfg.w, h = cfg.h;
-  let g = genMaze(w,h);
-
-  const loops = Math.min(3 + Math.floor(lv / 2), 15);
-  addLoops(g, loops);
-
-  const dist = bfs(g, 1, 1);
-
-  let exit = [w-2,h-2], best = -1;
-  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
-    if(g[y][x]===0 && dist[y][x] > best){ best = dist[y][x]; exit = [x,y]; }
-  }
-  g[exit[1]][exit[0]] = 4;
-
-  const pool = [];
-  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
-    if(g[y][x]===0 && dist[y][x] > 3) pool.push([x,y]);
-  }
-  shuffle(pool);
-  
-  let placedTraps = 0;
-  let placedFakes = 0;
-
-  for(let i=0; i<pool.length; i++){
-    const [tx,ty] = pool[i];
-    if(g[ty][tx] !== 0) continue; 
-
-    if (placedFakes < cfg.fakeExits) {
-      g[ty][tx] = 7; 
-      placedFakes++;
-    } else if (placedTraps < cfg.traps) {
-      g[ty][tx] = 5; 
-      placedTraps++;
-    } else {
-      break;
+    const pool = [];
+    for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+      if(g[y][x]===0 && dist[y][x] > 3) pool.push([x,y]);
     }
-  }
+    shuffle(pool);
+    
+    let placedTraps = 0;
+    let placedFakes = 0;
 
-  grid = g; cols = w; rows = h;
-  
-  const baseSpeed = 170;
-  player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: baseSpeed * playerStats.speedMult };
-  
-  timeLeft = cfg.time;
-  fogOn = cfg.fog; 
-  state = 'playing';
-  camX = camY = 0;
-  invuln = 0; shake = 0;
-  particles = [];
-  
-  currentShield = playerStats.shieldCount;
-  updateBuffUI();
+    for(let i=0; i<pool.length; i++){
+      const [tx,ty] = pool[i];
+      if(g[ty][tx] !== 0) continue; 
 
-  isTouching = false;
-  for(const k in keysDown) keysDown[k] = false;
-
-  elLv.textContent = lv;
-  elTime.textContent = cfg.time.toFixed(1) + 's';
-  elTime.classList.remove('low');
-  lastTs = performance.now();
-}
-
-function collide(px, py){
-  const r = player.r;
-  const c0 = Math.floor((px-r)/TILE), c1 = Math.floor((px+r)/TILE);
-  const r0 = Math.floor((py-r)/TILE), r1 = Math.floor((py+r)/TILE);
-  for(let y=r0;y<=r1;y++){
-    for(let x=c0;x<=c1;x++){
-      if(x<0 || y<0 || y>=rows || x>=cols) return true;
-      if(grid[y][x] === 1) return true;
-    }
-  }
-  return false;
-}
-
-function movePlayer(dt){
-  let dx = 0, dy = 0;
-
-  if(keysDown['a'] || keysDown['arrowleft'])  dx--;
-  if(keysDown['d'] || keysDown['arrowright']) dx++;
-  if(keysDown['w'] || keysDown['arrowup'])    dy--;
-  if(keysDown['s'] || keysDown['arrowdown'])  dy++;
-
-  if (isTouching) {
-    const tdx = touchX - touchStartX;
-    const tdy = touchY - touchStartY;
-    const dist = Math.hypot(tdx, tdy);
-    if (dist > 10) { dx = tdx / dist; dy = tdy / dist; }
-  }
-
-  if(dx === 0 && dy === 0) return;
-
-  const len = Math.hypot(dx, dy);
-  dx = dx / len; dy = dy / len;
-
-  const s = player.speed * dt;
-  const nx = player.x + dx*s;
-  if(!collide(nx, player.y)) player.x = nx;
-  const ny = player.y + dy*s;
-  if(!collide(player.x, ny)) player.y = ny;
-}
-
-function burst(x, y, color, n){
-  for(let i=0;i<n;i++){
-    const a = Math.random()*Math.PI*2;
-    const sp = rnd(40, 180);
-    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.6, max: 0.6, color });
-  }
-}
-
-function updateParticles(dt){
-  for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    p.x += p.vx*dt; p.y += p.vy*dt;
-    p.vx *= 0.94; p.vy *= 0.94;
-    p.life -= dt;
-    if(p.life <= 0) particles.splice(i,1);
-  }
-}
-
-function checkTiles(){
-  const cx = Math.floor(player.x/TILE);
-  const cy = Math.floor(player.y/TILE);
-  if(cx<0 || cy<0 || cx>=cols || cy>=rows) return;
-  const v = grid[cy][cx];
-  
-  if(v === 5){ 
-    if(invuln <= 0){
-      if (currentShield > 0) {
-        currentShield--;
-        updateBuffUI();
-        burst(player.x, player.y, '#4fd1ff', 20);
-        invuln = 0.6;
+      if (placedFakes < cfg.fakeExits) {
+        g[ty][tx] = 7; placedFakes++;
+      } else if (placedTraps < cfg.traps) {
+        g[ty][tx] = 5; placedTraps++;
       } else {
-        timeLeft = Math.max(0, timeLeft - 4);
-        invuln = 1.0; shake = 0.3;
-        burst(player.x, player.y, '#ff4b4b', 15);
+        break;
+      }
+    }
+
+    grid = g; cols = w; rows = h;
+    const baseSpeed = 170;
+    player = { x:1.5*TILE, y:1.5*TILE, r: TILE*0.35, speed: baseSpeed * playerStats.speedMult };
+    
+    timeLeft = cfg.time;
+    fogOn = cfg.fog; 
+    state = 'playing';
+    camX = camY = 0;
+    invuln = 0; shake = 0;
+    particles = [];
+    
+    currentShield = playerStats.shieldCount;
+    updateBuffUI();
+
+    isTouching = false;
+    for(const k in keysDown) keysDown[k] = false;
+
+    elLv.textContent = lv;
+    elTime.textContent = cfg.time.toFixed(1) + 's';
+    elTime.classList.remove('low');
+    lastTs = performance.now();
+  }
+
+  function collide(px, py){
+    const r = player.r;
+    const c0 = Math.floor((px-r)/TILE), c1 = Math.floor((px+r)/TILE);
+    const r0 = Math.floor((py-r)/TILE), r1 = Math.floor((py+r)/TILE);
+    for(let y=r0;y<=r1;y++){
+      for(let x=c0;x<=c1;x++){
+        if(x<0 || y<0 || y>=rows || x>=cols) return true;
+        if(grid[y][x] === 1) return true;
+      }
+    }
+    return false;
+  }
+
+  function movePlayer(dt){
+    let dx = 0, dy = 0;
+    if(keysDown['a'] || keysDown['arrowleft'])  dx--;
+    if(keysDown['d'] || keysDown['arrowright']) dx++;
+    if(keysDown['w'] || keysDown['arrowup'])    dy--;
+    if(keysDown['s'] || keysDown['arrowdown'])  dy++;
+
+    if (isTouching) {
+      const tdx = touchX - touchStartX;
+      const tdy = touchY - touchStartY;
+      const dist = Math.hypot(tdx, tdy);
+      if (dist > 10) { dx = tdx / dist; dy = tdy / dist; }
+    }
+
+    if(dx === 0 && dy === 0) return;
+    const len = Math.hypot(dx, dy);
+    dx = dx / len; dy = dy / len;
+
+    const s = player.speed * dt;
+    const nx = player.x + dx*s;
+    if(!collide(nx, player.y)) player.x = nx;
+    const ny = player.y + dy*s;
+    if(!collide(player.x, ny)) player.y = ny;
+  }
+
+  function burst(x, y, color, n){
+    for(let i=0;i<n;i++){
+      const a = Math.random()*Math.PI*2;
+      const sp = rnd(40, 180);
+      particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.6, max: 0.6, color });
+    }
+  }
+
+  function updateParticles(dt){
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      p.vx *= 0.94; p.vy *= 0.94;
+      p.life -= dt;
+      if(p.life <= 0) particles.splice(i,1);
+    }
+  }
+
+  function checkTiles(){
+    const cx = Math.floor(player.x/TILE);
+    const cy = Math.floor(player.y/TILE);
+    if(cx<0 || cy<0 || cx>=cols || cy>=rows) return;
+    const v = grid[cy][cx];
+    
+    if(v === 5){ 
+      if(invuln <= 0){
+        if (currentShield > 0) {
+          currentShield--;
+          updateBuffUI();
+          burst(player.x, player.y, '#4fd1ff', 20);
+          invuln = 0.6;
+        } else {
+          timeLeft = Math.max(0, timeLeft - 4);
+          invuln = 1.0; shake = 0.3;
+          burst(player.x, player.y, '#ff4b4b', 15);
+          if(timeLeft <= 0) gameOver();
+        }
+      }
+    }
+    else if(v === 7){ 
+      if(invuln <= 0){
+        timeLeft = Math.max(0, timeLeft - 10);
+        invuln = 1.0; shake = 0.6;
+        burst(player.x, player.y, '#ff0000', 30);
+        grid[cy][cx] = 0; 
         if(timeLeft <= 0) gameOver();
       }
     }
-  }
-  else if(v === 7){ 
-    if(invuln <= 0){
-      timeLeft = Math.max(0, timeLeft - 10);
-      invuln = 1.0; shake = 0.6;
-      burst(player.x, player.y, '#ff0000', 30);
-      grid[cy][cx] = 0; 
-      if(timeLeft <= 0) gameOver();
+    else if(v === 4){ 
+      levelClear();
     }
   }
-  else if(v === 4){ 
-    levelClear();
-  }
-}
 
-function gameOver(){
-  state = 'over';
-  ovTitle.textContent = '時間到！';
-  ovTitle.style.color = '#ff5a5f';
-  ovText.textContent = `你停在第 ${level} 層。`;
-  upgradeUI.style.display = 'none';
-  lbContainer.style.display = 'block'; // 顯示排行榜
-  ovBtn.style.display = 'block';
-  saveScore(level, timeLeft);
-  ovBtn.textContent = '重試本層 (保留技能)';
-  overlay.classList.add('show');
-}
-
-function levelClear(){
-  if (level >= MAX_LEVEL) {
-    state = 'win';
-    ovTitle.textContent = '🎉 爆機！';
-    ovTitle.style.color = '#ffd23f';
-    ovText.innerHTML = `你成功突破咗 <b>${MAX_LEVEL}</b> 層！<br>你係真正嘅迷宮大師！`;
+  function gameOver(){
+    state = 'over';
+    ovTitle.textContent = '時間到！';
+    ovTitle.style.color = '#ff5a5f';
+    ovText.textContent = `你停在第 ${level} 層。`;
     upgradeUI.style.display = 'none';
-    lbContainer.style.display = 'block'; // 顯示排行榜
+    lbContainer.style.display = 'block'; 
     ovBtn.style.display = 'block';
-    saveScore(MAX_LEVEL, timeLeft);
-    ovBtn.textContent = '重新開始';
-  } else {
-    state = 'clear';
-    ovTitle.textContent = '🎉 請選擇一項技能強化！';
-    ovTitle.style.color = '#39d353';
-    ovText.innerHTML = `第 ${level} / ${MAX_LEVEL} 層完成。`;
-    
-    showUpgrades();
-    ovBtn.style.display = 'none'; 
-    
     saveScore(level, timeLeft);
-    ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
+    ovBtn.textContent = '重試本層 (保留技能)';
+    overlay.classList.add('show');
   }
-  overlay.classList.add('show');
-}
 
-ovBtn.onclick = () => {
-  overlay.classList.remove('show');
-  if(state === 'view_lb'){
-    state = 'playing'; lastTs = performance.now();
-  } else if(state === 'win'){
-    level = 1; 
-    playerStats = { speedMult: 1.0, extraTime: 0, shieldCount: 0, removeFakes: false, trapReduce: 0 };
-    buildLevel(1);
-  } else if(state === 'clear'){
-    level++; 
-    buildLevel(level);
-  } else if(state === 'over') {
-    buildLevel(level); 
-  }
-};
-
-function update(dt){
-  timeLeft -= dt;
-  if(timeLeft <= 0){ timeLeft = 0; gameOver(); return; }
-
-  if(invuln > 0)   invuln -= dt;
-  if(shake > 0)    shake = Math.max(0, shake - dt*1.5);
-
-  movePlayer(dt);
-  checkTiles();
-  updateParticles(dt);
-
-  elTime.textContent = timeLeft.toFixed(1) + 's';
-  elTime.classList.toggle('low', timeLeft < 8);
-}
-
-function drawTile(v, px, py, t){
-  if(v === 4){ 
-    const glow = 0.5 + 0.5*Math.sin(t*4);
-    ctx.save();
-    ctx.shadowColor = '#39d353';
-    ctx.shadowBlur = 20 + glow*20;
-    ctx.fillStyle = '#39d353';
-    ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
-    ctx.restore();
-    ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
-    ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
-  }
-  else if(v === 5){
-    ctx.fillStyle = '#2a0e12';
-    ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = '#ff4b4b';
-    for(let i=0;i<3;i++){
-      const bx = px+5+i*8;
-      ctx.beginPath();
-      ctx.moveTo(bx, py+TILE-5);
-      ctx.lineTo(bx+4, py+6);
-      ctx.lineTo(bx+8, py+TILE-5);
-      ctx.fill();
+  function levelClear(){
+    if (level >= MAX_LEVEL) {
+      state = 'win';
+      ovTitle.textContent = '🎉 爆機！';
+      ovTitle.style.color = '#ffd23f';
+      ovText.innerHTML = `你成功突破咗 <b>${MAX_LEVEL}</b> 層！<br>你係真正嘅迷宮大師！`;
+      upgradeUI.style.display = 'none';
+      lbContainer.style.display = 'block';
+      ovBtn.style.display = 'block';
+      saveScore(MAX_LEVEL, timeLeft);
+      ovBtn.textContent = '重新開始';
+    } else {
+      state = 'clear';
+      ovTitle.textContent = '🎉 請選擇一項技能強化！';
+      ovTitle.style.color = '#39d353';
+      ovText.innerHTML = `第 ${level} / ${MAX_LEVEL} 層完成。`;
+      
+      showUpgrades();
+      ovBtn.style.display = 'none'; 
+      
+      saveScore(level, timeLeft);
+      ovBtn.textContent = '進入第 ' + (level+1) + ' 層';
     }
+    overlay.classList.add('show');
   }
-}
 
-function render(){
-  const worldW = cols*TILE, worldH = rows*TILE;
-  if(worldW <= VIEW_W) camX = -(VIEW_W - worldW)/2;
-  else camX = clamp(player.x - VIEW_W/2, 0, worldW - VIEW_W);
-  if(worldH <= VIEW_H) camY = -(VIEW_H - worldH)/2;
-  else camY = clamp(player.y - VIEW_H/2, 0, worldH - VIEW_H);
+  ovBtn.onclick = () => {
+    overlay.classList.remove('show');
+    if(state === 'view_lb'){
+      state = 'playing'; lastTs = performance.now();
+    } else if(state === 'win'){
+      level = 1; 
+      playerStats = { speedMult: 1.0, extraTime: 0, shieldCount: 0, removeFakes: false, trapReduce: 0 };
+      buildLevel(1);
+    } else if(state === 'clear'){
+      level++; 
+      buildLevel(level);
+    } else if(state === 'over') {
+      buildLevel(level); 
+    }
+  };
 
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.fillStyle = '#0a0e15';
-  ctx.fillRect(0,0,VIEW_W,VIEW_H);
+  function update(dt){
+    timeLeft -= dt;
+    if(timeLeft <= 0){ timeLeft = 0; gameOver(); return; }
 
-  ctx.save();
-  if(shake > 0.01){ ctx.translate(rnd(-8,8)*shake, rnd(-8,8)*shake); }
+    if(invuln > 0)   invuln -= dt;
+    if(shake > 0)    shake = Math.max(0, shake - dt*1.5);
 
-  const c0 = Math.max(0, Math.floor(camX/TILE) - 1);
-  const c1 = Math.min(cols-1, Math.floor((camX+VIEW_W)/TILE) + 1);
-  const r0 = Math.max(0, Math.floor(camY/TILE) - 1);
-  const r1 = Math.min(rows-1, Math.floor((camY+VIEW_H)/TILE) + 1);
+    movePlayer(dt);
+    checkTiles();
+    updateParticles(dt);
 
-  const t = performance.now()/1000;
+    elTime.textContent = timeLeft.toFixed(1) + 's';
+    elTime.classList.toggle('low', timeLeft < 8);
+  }
 
-  for(let y=r0;y<=r1;y++){
-    for(let x=c0;x<=c1;x++){
-      const px = Math.floor(x*TILE - camX);
-      const py = Math.floor(y*TILE - camY);
-      const v = grid[y][x];
-      if(v === 1){
-        ctx.fillStyle = '#1c2536'; ctx.fillRect(px, py, TILE, TILE);
-        ctx.fillStyle = '#26314a'; ctx.fillRect(px, py, TILE, 3);
-        ctx.fillStyle = '#141b28'; ctx.fillRect(px, py+TILE-2, TILE, 2);
-      } else {
-        ctx.fillStyle = ((x+y) & 1) ? '#101620' : '#0e131b';
-        ctx.fillRect(px, py, TILE, TILE);
+  function drawTile(v, px, py, t){
+    if(v === 4){ 
+      const glow = 0.5 + 0.5*Math.sin(t*4);
+      ctx.save();
+      ctx.shadowColor = '#39d353'; ctx.shadowBlur = 20 + glow*20;
+      ctx.fillStyle = '#39d353'; ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + glow*0.4) + ')';
+      ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
+    }
+    else if(v === 5){
+      ctx.fillStyle = '#2a0e12'; ctx.fillRect(px, py, TILE, TILE);
+      ctx.fillStyle = '#ff4b4b';
+      for(let i=0;i<3;i++){
+        const bx = px+5+i*8;
+        ctx.beginPath(); ctx.moveTo(bx, py+TILE-5); ctx.lineTo(bx+4, py+6); ctx.lineTo(bx+8, py+TILE-5); ctx.fill();
       }
     }
   }
 
-  for(let y=r0;y<=r1;y++){
-    for(let x=c0;x<=c1;x++){
-      const v = grid[y][x];
-      if(v === 4 || v === 5) { 
-        drawTile(v, x*TILE - camX, y*TILE - camY, t);
+  function render(){
+    const worldW = cols*TILE, worldH = rows*TILE;
+    if(worldW <= VIEW_W) camX = -(VIEW_W - worldW)/2;
+    else camX = clamp(player.x - VIEW_W/2, 0, worldW - VIEW_W);
+    if(worldH <= VIEW_H) camY = -(VIEW_H - worldH)/2;
+    else camY = clamp(player.y - VIEW_H/2, 0, worldH - VIEW_H);
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.fillStyle = '#0a0e15'; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+
+    ctx.save();
+    if(shake > 0.01){ ctx.translate(rnd(-8,8)*shake, rnd(-8,8)*shake); }
+
+    const c0 = Math.max(0, Math.floor(camX/TILE) - 1);
+    const c1 = Math.min(cols-1, Math.floor((camX+VIEW_W)/TILE) + 1);
+    const r0 = Math.max(0, Math.floor(camY/TILE) - 1);
+    const r1 = Math.min(rows-1, Math.floor((camY+VIEW_H)/TILE) + 1);
+    const t = performance.now()/1000;
+
+    for(let y=r0;y<=r1;y++){
+      for(let x=c0;x<=c1;x++){
+        const px = Math.floor(x*TILE - camX);
+        const py = Math.floor(y*TILE - camY);
+        const v = grid[y][x];
+        if(v === 1){
+          ctx.fillStyle = '#1c2536'; ctx.fillRect(px, py, TILE, TILE);
+          ctx.fillStyle = '#26314a'; ctx.fillRect(px, py, TILE, 3);
+          ctx.fillStyle = '#141b28'; ctx.fillRect(px, py+TILE-2, TILE, 2);
+        } else {
+          ctx.fillStyle = ((x+y) & 1) ? '#101620' : '#0e131b'; ctx.fillRect(px, py, TILE, TILE);
+        }
       }
     }
-  }
 
-  const ppx = player.x - camX, ppy = player.y - camY;
-  const blink = invuln > 0 && Math.floor(t*12) % 2 === 0;
-  
-  if(!blink){
-    if (currentShield > 0) {
-        ctx.beginPath();
-        ctx.arc(ppx, ppy, player.r + 6 + Math.sin(t*10)*2, 0, Math.PI*2);
-        ctx.strokeStyle = 'rgba(79, 209, 255, 0.8)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+    for(let y=r0;y<=r1;y++){
+      for(let x=c0;x<=c1;x++){
+        const v = grid[y][x];
+        if(v === 4 || v === 5) { drawTile(v, x*TILE - camX, y*TILE - camY, t); }
+      }
     }
-    
-    ctx.save();
-    ctx.shadowColor = '#4fd1ff'; ctx.shadowBlur = 20;
-    ctx.fillStyle = '#4fd1ff'; ctx.beginPath();
-    ctx.arc(ppx, ppy, player.r, 0, Math.PI*2); ctx.fill();
+
+    const ppx = player.x - camX, ppy = player.y - camY;
+    const blink = invuln > 0 && Math.floor(t*12) % 2 === 0;
+    if(!blink){
+      if (currentShield > 0) {
+          ctx.beginPath(); ctx.arc(ppx, ppy, player.r + 6 + Math.sin(t*10)*2, 0, Math.PI*2);
+          ctx.strokeStyle = 'rgba(79, 209, 255, 0.8)'; ctx.lineWidth = 2; ctx.stroke();
+      }
+      ctx.save();
+      ctx.shadowColor = '#4fd1ff'; ctx.shadowBlur = 20;
+      ctx.fillStyle = '#4fd1ff'; ctx.beginPath(); ctx.arc(ppx, ppy, player.r, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#eaf9ff'; ctx.beginPath(); ctx.arc(ppx, ppy, player.r*0.45, 0, Math.PI*2); ctx.fill();
+    }
+
+    for(const p of particles){
+      ctx.globalAlpha = p.life / p.max;
+      ctx.fillStyle = p.color; ctx.fillRect(p.x - camX - 2, p.y - camY - 2, 4, 4);
+    }
+    ctx.globalAlpha = 1;
+
+    if(fogOn){
+      const fogRadius = Math.max(TILE * 2.5, TILE * 6 - (level - 10) * TILE * 0.4);
+      const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.3, ppx, ppy, fogRadius);
+      g2.addColorStop(0, 'rgba(0,0,0,0)'); g2.addColorStop(1, 'rgba(0,0,0,1)');
+      ctx.fillStyle = g2; ctx.fillRect(0,0,VIEW_W,VIEW_H);
+    }
     ctx.restore();
-    ctx.fillStyle = '#eaf9ff'; ctx.beginPath();
-    ctx.arc(ppx, ppy, player.r*0.45, 0, Math.PI*2); ctx.fill();
   }
 
-  for(const p of particles){
-    ctx.globalAlpha = p.life / p.max;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - camX - 2, p.y - camY - 2, 4, 4);
-  }
-  ctx.globalAlpha = 1;
+  function loop(ts){
+    if(!lastTs) lastTs = ts;
+    let dt = (ts - lastTs) / 1000;
+    lastTs = ts;
+    if(dt > 0.05) dt = 0.05;
 
-  if(fogOn){
-    const fogRadius = Math.max(TILE * 2.5, TILE * 6 - (level - 10) * TILE * 0.4);
-    const g2 = ctx.createRadialGradient(ppx, ppy, fogRadius*0.3, ppx, ppy, fogRadius);
-    g2.addColorStop(0, 'rgba(0,0,0,0)');
-    g2.addColorStop(1, 'rgba(0,0,0,1)');
-    ctx.fillStyle = g2;
-    ctx.fillRect(0,0,VIEW_W,VIEW_H);
+    if(state === 'playing') update(dt);
+    render();
+    requestAnimationFrame(loop);
   }
 
-  ctx.restore();
-}
+  addEventListener('keydown', e => {
+    const k = e.key.toLowerCase(); keysDown[k] = true;
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  });
+  addEventListener('keyup', e => { keysDown[e.key.toLowerCase()] = false; });
+  addEventListener('blur', () => { for(const k in keysDown) keysDown[k] = false; isTouching = false; });
 
-function loop(ts){
-  if(!lastTs) lastTs = ts;
-  let dt = (ts - lastTs) / 1000;
-  lastTs = ts;
-  if(dt > 0.05) dt = 0.05;
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if(e.touches.length > 0){ isTouching = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchX = touchStartX; touchY = touchStartY; }
+  }, {passive: false});
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if(isTouching && e.touches.length > 0){ touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }
+  }, {passive: false});
+  canvas.addEventListener('touchend', e => { e.preventDefault(); isTouching = false; }, {passive: false});
+  canvas.addEventListener('touchcancel', e => { isTouching = false; });
 
-  if(state === 'playing') update(dt);
-  render();
+  buildLevel(1);
+  renderLeaderboard();
   requestAnimationFrame(loop);
-}
-
-addEventListener('keydown', e => {
-  const k = e.key.toLowerCase();
-  keysDown[k] = true;
-  if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
-});
-addEventListener('keyup', e => { keysDown[e.key.toLowerCase()] = false; });
-addEventListener('blur', () => {
-  for(const k in keysDown) keysDown[k] = false;
-  isTouching = false;
-});
-
-canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
-  if(e.touches.length > 0){
-    isTouching = true; touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
-    touchX = touchStartX; touchY = touchStartY;
-  }
-}, {passive: false});
-
-canvas.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if(isTouching && e.touches.length > 0){
-    touchX = e.touches[0].clientX; touchY = e.touches[0].clientY;
-  }
-}, {passive: false});
-
-canvas.addEventListener('touchend', e => { e.preventDefault(); isTouching = false; }, {passive: false});
-canvas.addEventListener('touchcancel', e => { isTouching = false; });
-
-buildLevel(1);
-renderLeaderboard();
-requestAnimationFrame(loop);
-})();
 </script>
 </body>
 </html>
