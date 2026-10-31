@@ -112,7 +112,9 @@
         let isDraggingEmitter = false;
 
         const GRAVITY = 0.45; 
-        const PLATE_W = 120; 
+        
+        // 【核心改動】將鋼片長度由 120 縮短到 80
+        const PLATE_W = 80; 
         const PLATE_H = 15;
 
         function loadDefault() {
@@ -120,14 +122,15 @@
             let startX = 100;
             let startY = 120;
             for(let i=0; i<5; i++) {
+                // 因為鋼片短咗，左右交替嘅距離改為 100px，視覺上更靚
                 plates.push({
-                    x: startX + (i%2 === 0 ? 0 : 140), 
+                    x: startX + (i%2 === 0 ? 0 : 100), 
                     y: startY + i*100, 
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: i % 7
                 });
             }
-            emitter.x = plates[0].x + 60; 
+            emitter.x = plates[0].x + PLATE_W / 2; 
             ball.x = emitter.x; ball.y = emitter.y + 20;
         }
 
@@ -263,7 +266,7 @@
                 if (!isPlaying) togglePlay();
             } else {
                 mediaRecorder.stop(); isRecording = false;
-                recordBtn.innerText = "🔴 錄音"; recordBtn.classList.remove('active');
+                recordBtn.innerText = "🔴 錄製"; recordBtn.classList.remove('active');
                 if (isPlaying) togglePlay();
             }
         }
@@ -291,7 +294,7 @@
                 playBtn.innerText = "⏸ 暫停"; playBtn.classList.add('active');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 
-                // 【開播優化】自動將發射器移到最高嗰塊鋼片正上方！
+                // 開播時自動將發射器移到最高嗰塊鋼片正上方！
                 if (plates.length > 0) {
                     let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
                     emitter.x = topPlate.x + topPlate.w / 2;
@@ -334,13 +337,11 @@
                         ball.y = p.y - ball.radius;
                         
                         // 【完美追蹤魔法】
-                        // 尋找下一塊喺呢塊鋼片下方嘅目標
                         let nextPlate = null;
                         let minDy = Infinity;
                         
                         for(let target of plates) {
                             if (target === p) continue;
-                            // 只考慮喺下方嘅鋼片
                             if (target.y > p.y) {
                                 let dy = target.y - p.y;
                                 if (dy < minDy) {
@@ -351,22 +352,16 @@
                         }
 
                         if (nextPlate) {
-                            // 如果有下一塊，計出完美拋物線
                             let targetX = nextPlate.x + nextPlate.w / 2;
                             let targetY = nextPlate.y;
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            // 給定一個固定嘅飛行時間 (25幀)
-                            let t = 25;
-                            
-                            // 拋物線物理公式: dy = vy * t + 0.5 * G * t^2
-                            // 解得 vy = (dy - 0.5 * G * t^2) / t
+                            let t = 25; // 飛行時間 (幀)
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
                             
                         } else {
-                            // 如果冇下一塊，就正常反彈跌落去
                             ball.vy = -5;
                             let direction = (ball.x - p.x) < (p.w / 2) ? 1 : -1;
                             ball.vx = direction * 3;
@@ -378,13 +373,12 @@
             }
 
             if (ball.y > H + 50) {
-                // 跌落底部，等一會再重生 (配合音樂節奏)
                 setTimeout(() => {
                     if(isPlaying) {
                         ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
                     }
                 }, 500);
-                ball.y = H + 100; // 移出畫面外
+                ball.y = H + 100; 
                 ball.vx = 0; ball.vy = 0;
             }
         }
