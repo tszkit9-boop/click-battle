@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Music Box - 霓虹音樂盒</title>
+    <title>霓虹音樂盒</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
         body {
@@ -108,13 +108,13 @@
         // --- 遊戲物件 ---
         let plates = [];
         let isPlaying = false;
-        let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 10 };
+        // 【核心改動】加入 lastHitPlate 記錄啱啱撞過邊塊板
+        let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 10, lastHitPlate: null };
         let sparks = [];
         
         let emitter = { x: 100, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
-        // 【核心改動】重力大幅調低 (由 0.45 降至 0.25)
         const GRAVITY = 0.25; 
         const PLATE_W = 80; 
         const PLATE_H = 15;
@@ -127,13 +127,14 @@
             for(let i=0; i<defaultSong.length; i++) {
                 plates.push({
                     x: startX + (i%2 === 0 ? 0 : 80), 
-                    y: startY + i*90, // 稍微拉開少少垂直距離，配合慢速
+                    y: startY + i*90, 
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: defaultSong[i]
                 });
             }
             emitter.x = plates[0].x + PLATE_W / 2; 
             ball.x = emitter.x; ball.y = emitter.y + 20;
+            ball.lastHitPlate = null;
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -304,6 +305,7 @@
                 }
                 
                 ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
+                ball.lastHitPlate = null; // 重設
             } else {
                 playBtn.innerText = "▶ 播放"; playBtn.classList.remove('active');
             }
@@ -331,6 +333,9 @@
 
             // 鋼片碰撞檢測
             for (let p of plates) {
+                // 【核心改動】如果呢塊板係啱啱撞過嗰塊，直接跳過，防止連環彈跳
+                if (p === ball.lastHitPlate) continue; 
+
                 if (ball.vy > 0 && 
                     ball.y + ball.radius >= p.y && 
                     ball.y - ball.radius <= p.y + p.h) {
@@ -338,6 +343,8 @@
                     if (ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.w) {
                         
                         ball.y = p.y - ball.radius;
+                        // 【核心改動】記錄呢塊板做 lastHitPlate
+                        ball.lastHitPlate = p; 
                         
                         // 【完美追蹤魔法】
                         let nextPlate = null;
@@ -360,7 +367,7 @@
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            // 【核心改動】飛行時間由 25 加長到 45 幀，令佢慢慢飛過去
+                            // 慢速飛行 (t = 45幀)
                             let t = 45;
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
@@ -377,10 +384,10 @@
             }
 
             if (ball.y > H + 50) {
-                // 【核心改動】等耐啲先重生 (由 500 改做 1000)
                 setTimeout(() => {
                     if(isPlaying) {
                         ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
+                        ball.lastHitPlate = null; // 重生時清空記錄
                     }
                 }, 1000);
                 ball.y = H + 100; 
