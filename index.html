@@ -97,7 +97,7 @@
   <canvas id="game" width="960" height="640"></canvas>
   <div id="hud">
     <div class="left">
-      <div>第 <span id="lv">1</span> / 20 層</div>
+      <div>第 <span id="lv">1</span> / 20 層 <span id="bestRecord" style="font-size:12px;opacity:0.7;color:#ffd23f;margin-left:8px;"></span></div>
       <div class="time" id="time">--</div>
       <div id="buffs"></div>
     </div>
@@ -130,11 +130,10 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // 你專屬嘅 Firebase 設定
   const firebaseConfig = {
     apiKey: "AIzaSyCWnZhZ0jDnabSTa8L1jkPXfJE6yGhxeqw",
     authDomain: "maze-leaderboard.firebaseapp.com",
-    databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app", // 確保呢句存在
+    databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "maze-leaderboard",
     storageBucket: "maze-leaderboard.firebasestorage.app",
     messagingSenderId: "190428470547",
@@ -155,6 +154,7 @@
   const elLv    = document.getElementById('lv');
   const elTime  = document.getElementById('time');
   const elBuffs = document.getElementById('buffs');
+  const elBest  = document.getElementById('bestRecord');
   const overlay = document.getElementById('overlay');
   const ovTitle = document.getElementById('ovTitle');
   const ovText  = document.getElementById('ovText');
@@ -195,6 +195,14 @@
   };
   let currentShield = 0;
 
+  // 讀取本地最高紀錄
+  let localMaxLevel = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
+  updateBestUI();
+  
+  function updateBestUI() {
+      elBest.textContent = localMaxLevel > 0 ? `(最高: 第 ${localMaxLevel} 層)` : '';
+  }
+
   function updateBuffUI() {
       let b = [];
       if (playerStats.speedMult > 1.0) b.push(`⚡ x${playerStats.speedMult.toFixed(1)}`);
@@ -205,27 +213,33 @@
       elBuffs.innerHTML = b.join(' | ');
   }
 
-  /* ================= Firebase 排行榜邏輯 (加咗超時機制) ================= */
+  /* ================= Firebase 排行榜邏輯 ================= */
   function saveScore(lv, time) {
-      push(leaderboardRef, {
-          level: lv,
-          time: parseFloat(time.toFixed(1)),
-          timestamp: Date.now()
-      }).catch(error => console.error("無法儲存分數:", error));
+      // 只有打破自己紀錄，或者第一次玩，才上傳到全球
+      if (lv > localMaxLevel) {
+          localMaxLevel = lv;
+          localStorage.setItem('mazeMaxLevel', localMaxLevel);
+          updateBestUI();
+          
+          push(leaderboardRef, {
+              level: lv,
+              time: parseFloat(time.toFixed(1)),
+              timestamp: Date.now()
+          }).catch(error => console.error("無法儲存分數:", error));
+      }
   }
 
   function renderLeaderboard() {
       lbList.innerHTML = '<li style="justify-content:center;opacity:0.5">載入中...</li>';
       
-      // 設定 5 秒超時
       const timeoutId = setTimeout(() => {
-          lbList.innerHTML = '<li style="justify-content:center;color:red">連線逾時，請檢查 Firebase 設定</li>';
-      }, 5000);
+          lbList.innerHTML = '<li style="justify-content:center;color:red;font-size:12px;">連線逾時，請檢查網絡或規則</li>';
+      }, 6000);
 
       const topScoresQuery = query(leaderboardRef, orderByChild('level'), limitToLast(5));
       
       onValue(topScoresQuery, (snapshot) => {
-          clearTimeout(timeoutId); // 成功連線，取消超時
+          clearTimeout(timeoutId); 
           
           lbList.innerHTML = '';
           const scores = [];
@@ -249,7 +263,7 @@
       }, (error) => {
           clearTimeout(timeoutId);
           console.error("讀取排行榜失敗:", error);
-          lbList.innerHTML = '<li style="justify-content:center;opacity:0.5;color:red">無法連線排行榜</li>';
+          lbList.innerHTML = `<li style="justify-content:center;color:red;font-size:12px;">錯誤: ${error.code}</li>`;
       });
   }
   
