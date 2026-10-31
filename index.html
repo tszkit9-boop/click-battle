@@ -29,8 +29,18 @@
   @keyframes pulse{to{opacity:.45}}
   #buffs {font-size: 13px; color: #ffd23f; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;}
 
+  /* 玩家名字按鈕 */
+  #btnPlayerName {
+    pointer-events: auto;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: #4fd1ff; padding: 4px 10px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;
+    margin-bottom: 4px;
+  }
+  #btnPlayerName:hover { background: rgba(255,255,255,0.2); }
+
   #btnShowLB {
-    pointer-events: auto; margin-top: 8px;
+    pointer-events: auto;
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
     color: #ffd23f; padding: 6px 12px; border-radius: 8px;
     cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;
@@ -47,12 +57,14 @@
   
   #lbContainer {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px; padding: 15px 25px; margin-bottom: 20px;
+    border-radius: 10px; padding: 15px 20px; margin-bottom: 20px;
     text-align: left; width: 100%;
   }
   #lbList { list-style: none; font-size: 14px; }
-  #lbList li { display: flex; justify-content: space-between; margin-bottom: 8px; }
-  .lb-rank { color: #ffd23f; width: 35px; display: inline-block; font-weight: bold;}
+  #lbList li { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .lb-rank { color: #ffd23f; width: 30px; display: inline-block; font-weight: bold; flex-shrink:0;}
+  .lb-name { flex: 1; text-align: left; margin-left: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; color: #e6edf3;}
+  .lb-lvl-time { color: #7ee787; flex-shrink: 0; margin-left: 10px;}
 
   #upgradeUI { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 100%; }
   .upgrade-card {
@@ -103,6 +115,7 @@
     </div>
     <div class="right">
       <div id="status">尋找出口</div>
+      <button id="btnPlayerName">👤 玩家名字</button>
       <button id="btnShowLB">🏆 排行榜</button>
     </div>
   </div>
@@ -113,7 +126,7 @@
       <p id="ovText"></p>
       <div id="upgradeUI"></div>
       <div id="lbContainer">
-        <h3 style="text-align:center;color:#7ee787;margin-bottom:10px;">🏆 全球最高紀錄 (Top 5)</h3>
+        <h3 style="text-align:center;color:#7ee787;margin-bottom:15px;">🏆 全球最高紀錄 (Top 5)</h3>
         <ul id="lbList"><li style="justify-content:center;opacity:0.5">載入中...</li></ul>
       </div>
       
@@ -164,6 +177,7 @@
   const lbContainer = document.getElementById('lbContainer');
   const upgradeUI = document.getElementById('upgradeUI');
   const btnShowLB = document.getElementById('btnShowLB');
+  const btnPlayerName = document.getElementById('btnPlayerName');
 
   const rnd = (a,b) => a + Math.random()*(b-a);
   const ri  = (a,b) => Math.floor(rnd(a,b+1));
@@ -195,10 +209,29 @@
   };
   let currentShield = 0;
 
-  // 讀取本地最高紀錄
+  /* ================= 玩家名字與最高紀錄 ================= */
+  let playerName = localStorage.getItem('mazePlayerName');
+  if (!playerName) {
+      playerName = prompt("請輸入你的玩家名字（排行榜會顯示）：", "無名氏");
+      if (!playerName || playerName.trim() === "") playerName = "無名氏";
+      playerName = playerName.trim().substring(0, 10); // 限制 10 個字
+      localStorage.setItem('mazePlayerName', playerName);
+  }
+  btnPlayerName.textContent = `👤 ${playerName}`;
+
+  // 點擊改名
+  btnPlayerName.onclick = () => {
+      if (state !== 'playing') return;
+      let newName = prompt("修改你的名字（最多10個字）：", playerName);
+      if (newName && newName.trim() !== "") {
+          playerName = newName.trim().substring(0, 10);
+          localStorage.setItem('mazePlayerName', playerName);
+          btnPlayerName.textContent = `👤 ${playerName}`;
+      }
+  };
+
   let localMaxLevel = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
   updateBestUI();
-  
   function updateBestUI() {
       elBest.textContent = localMaxLevel > 0 ? `(最高: 第 ${localMaxLevel} 層)` : '';
   }
@@ -222,6 +255,7 @@
           updateBestUI();
           
           push(leaderboardRef, {
+              name: playerName,
               level: lv,
               time: parseFloat(time.toFixed(1)),
               timestamp: Date.now()
@@ -257,7 +291,15 @@
           scores.forEach((item, index) => {
               const li = document.createElement('li');
               const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-              li.innerHTML = `<span class="lb-rank">${medal}</span><span style="flex:1;text-align:left;margin-left:10px;">第 ${item.level} 層</span><span style="color:#4fd1ff">${item.time}s</span>`;
+              
+              // 如果有名字就顯示名字，冇就顯示「神秘玩家」
+              const displayName = item.name ? item.name : '神秘玩家';
+              
+              li.innerHTML = `
+                <span class="lb-rank">${medal}</span>
+                <span class="lb-name">${displayName}</span>
+                <span class="lb-lvl-time">第${item.level}層 (${item.time}s)</span>
+              `;
               lbList.appendChild(li);
           });
       }, (error) => {
