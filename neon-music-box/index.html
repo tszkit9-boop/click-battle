@@ -105,29 +105,32 @@
         // --- 遊戲物件 ---
         let plates = [];
         let isPlaying = false;
-        let ball = { x: W / 2, y: 50, vx: 0, vy: 0, radius: 8 };
+        let ball = { x: W / 2, y: 50, vx: 0, vy: 0, radius: 10 }; // 稍微加大粒珠
         let sparks = [];
         
         let emitter = { x: W / 2, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
-        const GRAVITY = 0.4;
-        const PLATE_W = 120;
+        // 【物理調整】減慢重力，加入終端速度
+        const GRAVITY = 0.25; 
+        const MAX_VY = 6; // 唔會跌得快過 6
+        const PLATE_W = 140; // 加闊少少鋼片，容易接啲
         const PLATE_H = 15;
 
         function loadDefault() {
             plates = [];
-            // 預設一首向下的樓梯歌，確保一撳就彈到
-            plates.push({ x: W/2 - 100, y: 120, w: PLATE_W, h: PLATE_H, noteIndex: 0 });
-            plates.push({ x: W/2 + 20, y: 180, w: PLATE_W, h: PLATE_H, noteIndex: 2 });
-            plates.push({ x: W/2 - 120, y: 240, w: PLATE_W, h: PLATE_H, noteIndex: 4 });
-            plates.push({ x: W/2 + 40, y: 300, w: PLATE_W, h: PLATE_H, noteIndex: 5 });
-            plates.push({ x: W/2 - 80, y: 360, w: PLATE_W, h: PLATE_H, noteIndex: 4 });
-            plates.push({ x: W/2 + 10, y: 420, w: PLATE_W, h: PLATE_H, noteIndex: 2 });
-            plates.push({ x: W/2 - 60, y: 480, w: PLATE_W, h: PLATE_H, noteIndex: 0 });
-            
-            // 發射器對準第一塊鋼片左邊，令佢向右滑
-            emitter.x = plates[0].x + 20;
+            // 排一個完美嘅交錯樓梯，確保粒珠可以一路滑落去
+            let startX = W/2 - 180;
+            let startY = 100;
+            for(let i=0; i<6; i++) {
+                plates.push({
+                    x: startX + (i%2 === 0 ? 0 : 100), // 左右交替
+                    y: startY + i*70,
+                    w: PLATE_W, h: PLATE_H, 
+                    noteIndex: i % 7
+                });
+            }
+            emitter.x = plates[0].x + 30; // 對準第一塊左邊，令佢向右滑
             ball.x = emitter.x; ball.y = emitter.y + 20;
         }
 
@@ -186,11 +189,9 @@
                 plates.push(newPlate);
                 playPreviewNote(idx);
 
-                // 【關鍵】如果係第一塊，發射器自動對準佢
                 if (plates.length === 1) {
-                    emitter.x = newPlate.x + 20; 
-                    ball.x = emitter.x;
-                    ball.y = emitter.y + 20;
+                    emitter.x = newPlate.x + 30; 
+                    ball.x = emitter.x; ball.y = emitter.y + 20;
                 }
             }
         }
@@ -312,42 +313,42 @@
 
             if (!isPlaying) return;
 
+            // 物理運算
             ball.vy += GRAVITY;
+            if (ball.vy > MAX_VY) ball.vy = MAX_VY; // 限制最高跌落速度
+            
             ball.x += ball.vx;
             ball.y += ball.vy;
             
-            // 空氣摩擦力（橫向慢慢減速）
-            if (ball.vx > 0) ball.vx = Math.max(0, ball.vx - 0.1);
-            if (ball.vx < 0) ball.vx = Math.min(0, ball.vx + 0.1);
+            // 橫向空氣阻力
+            if (ball.vx > 0) ball.vx = Math.max(0, ball.vx - 0.08);
+            if (ball.vx < 0) ball.vx = Math.min(0, ball.vx + 0.08);
 
-            if (ball.x < 10) { ball.x = 10; ball.vx *= -1; }
-            if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -1; }
+            // 左右牆壁反彈
+            if (ball.x < 10) { ball.x = 10; ball.vx *= -0.8; }
+            if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -0.8; }
 
-            // 【核心修正】更寬鬆嘅碰撞檢測，防止穿模！
+            // 鋼片碰撞檢測
             for (let p of plates) {
-                // 判斷波波有冇掂到鋼片嘅頂部 (Y軸重疊，且正在向下)
+                // 判斷波波底部有冇掂到鋼片頂部
                 if (ball.vy > 0 && 
                     ball.y + ball.radius >= p.y && 
                     ball.y - ball.radius <= p.y + p.h) {
                     
-                    // 判斷波波嘅 X 座標有冇喺鋼片範圍內
                     if (ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.w) {
                         
-                        // 將波波強制拉返去鋼片頂部
+                        // 貼實表面，防穿模
                         ball.y = p.y - ball.radius;
                         
                         let hitRatio = (ball.x - p.x) / p.w;
                         hitRatio = Math.max(0, Math.min(1, hitRatio));
                         
-                        // 【強制滑行】打中左邊就俾佢向右彈，打中右邊就向左彈
-                        if (hitRatio < 0.5) {
-                            ball.vx = 6; 
-                        } else {
-                            ball.vx = -6; 
-                        }
+                        // 【平滑反彈】根據擊中嘅位置計出橫向速度 (-4 到 +4 之間)
+                        // 打中左邊(0)，會向右飛(+4)；打中右邊(1)，會向左飛(-4)
+                        ball.vx = (hitRatio - 0.5) * 8;
                         
-                        // 俾個微小反彈力，等佢唔好卡死
-                        ball.vy = -2;
+                        // 輕微向上彈起，然後再受重力落下
+                        ball.vy = -1.5;
                         
                         playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                     }
