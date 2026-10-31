@@ -56,8 +56,8 @@
     <div id="canvas-container">
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
-            👆 點擊空白處放第一塊鋼片 (自動設定起點)<br>
-            拖曳頂部紅框微調 | 點擊鋼片切換音高 | 長按刪除
+            👆 點擊空白處放鋼片 | 拖曳頂部紅框決定鐵珠起點<br>
+            點擊鋼片切換音高 | 長按刪除
         </div>
     </div>
 
@@ -105,32 +105,32 @@
         // --- 遊戲物件 ---
         let plates = [];
         let isPlaying = false;
-        let ball = { x: W / 2, y: 50, vx: 0, vy: 0, radius: 10 }; // 稍微加大粒珠
+        let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 10 };
         let sparks = [];
         
-        let emitter = { x: W / 2, y: 30, w: 40, h: 20 };
+        // 預設發射器喺左上角
+        let emitter = { x: 100, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
-        // 【物理調整】減慢重力，加入終端速度
-        const GRAVITY = 0.25; 
-        const MAX_VY = 6; // 唔會跌得快過 6
-        const PLATE_W = 140; // 加闊少少鋼片，容易接啲
+        const GRAVITY = 0.45; 
+        const PLATE_W = 120; 
         const PLATE_H = 15;
 
         function loadDefault() {
             plates = [];
-            // 排一個完美嘅交錯樓梯，確保粒珠可以一路滑落去
-            let startX = W/2 - 180;
-            let startY = 100;
-            for(let i=0; i<6; i++) {
+            // 排一個由左上角一路向右下角跳嘅樓梯
+            let startX = 80;
+            let startY = 120;
+            for(let i=0; i<5; i++) {
                 plates.push({
-                    x: startX + (i%2 === 0 ? 0 : 100), // 左右交替
-                    y: startY + i*70,
+                    x: startX + (i%2 === 0 ? 0 : 120), // 左右交替
+                    y: startY + i*100,
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: i % 7
                 });
             }
-            emitter.x = plates[0].x + 30; // 對準第一塊左邊，令佢向右滑
+            // 發射器對準第一塊
+            emitter.x = plates[0].x + 60; 
             ball.x = emitter.x; ball.y = emitter.y + 20;
         }
 
@@ -157,11 +157,13 @@
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
             
+            // 1. 檢查有冇撳中頂部發射器
             if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
                 isDraggingEmitter = true;
                 return;
             }
 
+            // 2. 檢查有冇撳中鋼片
             let clickedPlate = null;
             for (let i = plates.length - 1; i >= 0; i--) {
                 let p = plates[i];
@@ -171,6 +173,7 @@
             }
 
             if (clickedPlate) {
+                // 長按刪除邏輯
                 pressTimer = setTimeout(() => {
                     plates = plates.filter(p => p !== clickedPlate);
                     pressTimer = null;
@@ -181,6 +184,7 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
+                // 3. 點擊空白處：新增鋼片
                 let idx = Math.floor(Math.random() * 7);
                 let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
@@ -189,8 +193,9 @@
                 plates.push(newPlate);
                 playPreviewNote(idx);
 
-                if (plates.length === 1) {
-                    emitter.x = newPlate.x + 30; 
+                // **注意**：依家放鋼片，發射器唔會再自動跳過去了！你想喺邊度開始，就自己拖個發射器去邊度。
+                // 如果係啱啱清空完，第一塊鋼片放低時，可以順手幫佢將粒珠移去起點
+                if (plates.length === 1 && !isPlaying) {
                     ball.x = emitter.x; ball.y = emitter.y + 20;
                 }
             }
@@ -200,12 +205,14 @@
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
 
+            // 拖動發射器
             if (isDraggingEmitter) {
                 emitter.x = Math.max(20, Math.min(W - 20, pos.x));
                 if (!isPlaying) { ball.x = emitter.x; ball.y = emitter.y + 20; }
                 return;
             }
 
+            // 拖動鋼片
             if (!dragPlate) return;
             let dx = pos.x - startX;
             let dy = pos.y - startY;
@@ -225,6 +232,7 @@
             if (pressTimer) {
                 clearTimeout(pressTimer);
                 pressTimer = null;
+                // 點擊切換音高
                 if (!isDraggingPlate && dragPlate) {
                     dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 7;
                     playPreviewNote(dragPlate.noteIndex);
@@ -315,40 +323,33 @@
 
             // 物理運算
             ball.vy += GRAVITY;
-            if (ball.vy > MAX_VY) ball.vy = MAX_VY; // 限制最高跌落速度
-            
             ball.x += ball.vx;
             ball.y += ball.vy;
             
-            // 橫向空氣阻力
-            if (ball.vx > 0) ball.vx = Math.max(0, ball.vx - 0.08);
-            if (ball.vx < 0) ball.vx = Math.min(0, ball.vx + 0.08);
-
-            // 左右牆壁反彈
+            // 牆壁反彈
             if (ball.x < 10) { ball.x = 10; ball.vx *= -0.8; }
             if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -0.8; }
 
             // 鋼片碰撞檢測
             for (let p of plates) {
-                // 判斷波波底部有冇掂到鋼片頂部
                 if (ball.vy > 0 && 
                     ball.y + ball.radius >= p.y && 
                     ball.y - ball.radius <= p.y + p.h) {
                     
                     if (ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.w) {
                         
-                        // 貼實表面，防穿模
                         ball.y = p.y - ball.radius;
                         
                         let hitRatio = (ball.x - p.x) / p.w;
                         hitRatio = Math.max(0, Math.min(1, hitRatio));
                         
-                        // 【平滑反彈】根據擊中嘅位置計出橫向速度 (-4 到 +4 之間)
-                        // 打中左邊(0)，會向右飛(+4)；打中右邊(1)，會向左飛(-4)
-                        ball.vx = (hitRatio - 0.5) * 8;
+                        // 強力彈起
+                        ball.vy = -10; 
                         
-                        // 輕微向上彈起，然後再受重力落下
-                        ball.vy = -1.5;
+                        // 拋物線橫向力
+                        let direction = hitRatio < 0.5 ? 1 : -1;
+                        let force = Math.abs(hitRatio - 0.5) * 2; 
+                        ball.vx = direction * force * 10; 
                         
                         playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                     }
