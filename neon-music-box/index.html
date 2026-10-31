@@ -108,7 +108,6 @@
         let ball = { x: W / 2, y: 50, vx: 0, vy: 0, radius: 8 };
         let sparks = [];
         
-        // 發射器 (預設喺中間)
         let emitter = { x: W / 2, y: 30, w: 40, h: 20 };
         let isDraggingEmitter = false;
 
@@ -116,23 +115,20 @@
         const PLATE_W = 120;
         const PLATE_H = 15;
 
-        // 預設一首歌，確保一開始有嘢聽
         function loadDefault() {
             plates = [];
-            let startY = 120;
-            let notes = [0, 0, 4, 4, 5, 5, 4];
-            for(let i=0; i<notes.length; i++) {
-                plates.push({
-                    x: W/2 + (i%2 === 0 ? -80 : 20),
-                    y: startY + i*60,
-                    w: PLATE_W, h: PLATE_H,
-                    noteIndex: notes[i]
-                });
-            }
-            // 預設發射器對準第一塊鋼片左邊
+            // 預設一首向下的樓梯歌，確保一撳就彈到
+            plates.push({ x: W/2 - 100, y: 120, w: PLATE_W, h: PLATE_H, noteIndex: 0 });
+            plates.push({ x: W/2 + 20, y: 180, w: PLATE_W, h: PLATE_H, noteIndex: 2 });
+            plates.push({ x: W/2 - 120, y: 240, w: PLATE_W, h: PLATE_H, noteIndex: 4 });
+            plates.push({ x: W/2 + 40, y: 300, w: PLATE_W, h: PLATE_H, noteIndex: 5 });
+            plates.push({ x: W/2 - 80, y: 360, w: PLATE_W, h: PLATE_H, noteIndex: 4 });
+            plates.push({ x: W/2 + 10, y: 420, w: PLATE_W, h: PLATE_H, noteIndex: 2 });
+            plates.push({ x: W/2 - 60, y: 480, w: PLATE_W, h: PLATE_H, noteIndex: 0 });
+            
+            // 發射器對準第一塊鋼片左邊，令佢向右滑
             emitter.x = plates[0].x + 20;
-            ball.x = emitter.x;
-            ball.y = emitter.y + 20;
+            ball.x = emitter.x; ball.y = emitter.y + 20;
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -158,13 +154,11 @@
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
             
-            // 1. 檢查有冇撳中頂部發射器
             if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
                 isDraggingEmitter = true;
                 return;
             }
 
-            // 2. 檢查有冇撳中鋼片
             let clickedPlate = null;
             for (let i = plates.length - 1; i >= 0; i--) {
                 let p = plates[i];
@@ -174,7 +168,6 @@
             }
 
             if (clickedPlate) {
-                // 長按刪除邏輯
                 pressTimer = setTimeout(() => {
                     plates = plates.filter(p => p !== clickedPlate);
                     pressTimer = null;
@@ -185,7 +178,6 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                // 3. 點擊空白處：新增鋼片
                 let idx = Math.floor(Math.random() * 7);
                 let newPlate = {
                     x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
@@ -194,9 +186,9 @@
                 plates.push(newPlate);
                 playPreviewNote(idx);
 
-                // 【核心改動】如果係第一塊鋼片，自動將發射器移去佢上面！
+                // 【關鍵】如果係第一塊，發射器自動對準佢
                 if (plates.length === 1) {
-                    emitter.x = newPlate.x + 20; // 預設對準左邊，令佢向右滑
+                    emitter.x = newPlate.x + 20; 
                     ball.x = emitter.x;
                     ball.y = emitter.y + 20;
                 }
@@ -207,20 +199,18 @@
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
 
-            // 拖動發射器
             if (isDraggingEmitter) {
                 emitter.x = Math.max(20, Math.min(W - 20, pos.x));
                 if (!isPlaying) { ball.x = emitter.x; ball.y = emitter.y + 20; }
                 return;
             }
 
-            // 拖動鋼片
             if (!dragPlate) return;
             let dx = pos.x - startX;
             let dy = pos.y - startY;
             if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
                 isDraggingPlate = true;
-                clearTimeout(pressTimer); // 拖緊就唔算長按
+                clearTimeout(pressTimer);
             }
             if (isDraggingPlate) {
                 dragPlate.x = initialX + dx;
@@ -234,7 +224,6 @@
             if (pressTimer) {
                 clearTimeout(pressTimer);
                 pressTimer = null;
-                // 點擊切換音高
                 if (!isDraggingPlate && dragPlate) {
                     dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 7;
                     playPreviewNote(dragPlate.noteIndex);
@@ -304,7 +293,6 @@
             if (isPlaying) {
                 playBtn.innerText = "⏸ 暫停"; playBtn.classList.add('active');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                // 重設鐵珠去發射器
                 ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
             } else {
                 playBtn.innerText = "▶ 播放"; playBtn.classList.remove('active');
@@ -312,13 +300,6 @@
         }
 
         // --- 物理與碰撞 ---
-        function circleLineCollision(cx, cy, r, x1, y1, x2, y2) {
-            let closestX = Math.max(x1, Math.min(cx, x2));
-            let closestY = Math.max(y1, Math.min(cy, y2));
-            let dx = cx - closestX; let dy = cy - closestY;
-            return (dx * dx + dy * dy) <= (r * r);
-        }
-
         function createSparks(x, y, color) {
             for(let i=0; i<10; i++) sparks.push({ x: x, y: y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6 - 2, life: 1, color: color });
         }
@@ -331,50 +312,48 @@
 
             if (!isPlaying) return;
 
-            // 基本物理
             ball.vy += GRAVITY;
             ball.x += ball.vx;
             ball.y += ball.vy;
             
-            // 滑行摩擦力 (如果唔係跌落，慢慢減速)
+            // 空氣摩擦力（橫向慢慢減速）
             if (ball.vx > 0) ball.vx = Math.max(0, ball.vx - 0.1);
             if (ball.vx < 0) ball.vx = Math.min(0, ball.vx + 0.1);
 
-            // 邊界反彈
             if (ball.x < 10) { ball.x = 10; ball.vx *= -1; }
             if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -1; }
 
-            // 碰撞檢測 (核心邏輯：順住鋼片滑行)
+            // 【核心修正】更寬鬆嘅碰撞檢測，防止穿模！
             for (let p of plates) {
-                if (ball.vy > 0 && circleLineCollision(ball.x, ball.y + ball.radius, 0, p.x, p.y, p.x + p.w, p.y)) {
-                    // 計算擊中鋼片嘅比例 (0 = 最左，1 = 最右)
-                    let hitRatio = (ball.x - p.x) / p.w;
-                    hitRatio = Math.max(0, Math.min(1, hitRatio));
+                // 判斷波波有冇掂到鋼片嘅頂部 (Y軸重疊，且正在向下)
+                if (ball.vy > 0 && 
+                    ball.y + ball.radius >= p.y && 
+                    ball.y - ball.radius <= p.y + p.h) {
                     
-                    // 將波波貼返上鋼片表面，防止穿模
-                    ball.y = p.y - ball.radius;
-                    
-                    // 如果係由高處大力跌落，先會有少少反彈；否則貼住表面滑
-                    if (ball.vy > 5) {
-                        ball.vy = -ball.vy * 0.2; 
-                    } else {
-                        ball.vy = 0;
+                    // 判斷波波嘅 X 座標有冇喺鋼片範圍內
+                    if (ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.w) {
+                        
+                        // 將波波強制拉返去鋼片頂部
+                        ball.y = p.y - ball.radius;
+                        
+                        let hitRatio = (ball.x - p.x) / p.w;
+                        hitRatio = Math.max(0, Math.min(1, hitRatio));
+                        
+                        // 【強制滑行】打中左邊就俾佢向右彈，打中右邊就向左彈
+                        if (hitRatio < 0.5) {
+                            ball.vx = 6; 
+                        } else {
+                            ball.vx = -6; 
+                        }
+                        
+                        // 俾個微小反彈力，等佢唔好卡死
+                        ball.vy = -2;
+                        
+                        playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                     }
-                    
-                    // 【滑行魔法】根據擊中位置，強制俾佢一個橫向速度，令佢滑去對面！
-                    if (hitRatio < 0.5) {
-                        // 打中左邊，滑向盡頭右邊
-                        ball.vx = 5; 
-                    } else {
-                        // 打中右邊，滑向盡頭左邊
-                        ball.vx = -5;
-                    }
-                    
-                    playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
                 }
             }
 
-            // 跌落底部，返去發射器
             if (ball.y > H + 50) {
                 ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
             }
@@ -386,18 +365,15 @@
             for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
             for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
-            // 畫發射器
             ctx.fillStyle = '#111';
             ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
             ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             
-            // 畫發射輔助線
             ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)';
             ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(emitter.x, emitter.y + emitter.h); ctx.lineTo(emitter.x, H); ctx.stroke();
             ctx.setLineDash([]);
 
-            // 畫鋼片
             for (let p of plates) {
                 let color = SCALE_COLORS[p.noteIndex];
                 ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fillStyle = color;
@@ -407,14 +383,12 @@
                 ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 12);
             }
 
-            // 畫粒子
             for(let s of sparks) {
                 ctx.globalAlpha = s.life; ctx.fillStyle = s.color;
                 ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
-            // 畫鐵珠
             ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
             ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
         }
