@@ -2,56 +2,108 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <title>會記仇嘅遊戲 v2.0 - 變態地獄版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>會記仇嘅遊戲 v2.1 - 全平台變態版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
         body {
             margin: 0; padding: 0; background-color: #050505; color: #c5c6c7;
             font-family: 'Press Start 2P', monospace; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; height: 100vh; overflow: hidden;
+            align-items: center; justify-content: center; height: 100dvh; height: 100vh; overflow: hidden;
+            touch-action: none; /* 防止手機滑動/縮放 */
         }
-        #game-container { position: relative; }
+        
+        /* 遊戲容器，設定最大闊度並置中 */
+        #game-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 900px; 
+        }
+        
+        /* Canvas 自動縮放 */
         canvas {
             background-color: #111; border: 4px solid #ff4757;
             box-shadow: 0 0 30px rgba(255, 71, 87, 0.6);
+            width: 100%; height: auto; display: block; box-sizing: border-box;
         }
+        
         /* 彈窗通用樣式 */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10, 0, 0, 0.95); display: flex; flex-direction: column;
             align-items: center; justify-content: center; color: #fff; text-align: center; z-index: 10;
-            padding: 20px; box-sizing: border-box;
+            padding: 10px; box-sizing: border-box;
         }
-        /* 隱藏結束畫面的初始狀態 */
         #end-overlay { display: none; }
         
-        .overlay h2 { text-shadow: 0 0 20px #ff4757; margin-bottom: 20px; font-size: 24px; color: #ff4757; }
-        .overlay p { margin: 8px 0; font-size: 10px; line-height: 1.6; color: #c5c6c7;}
+        .overlay h2 { text-shadow: 0 0 20px #ff4757; margin-bottom: 10px; font-size: 20px; color: #ff4757; }
+        .overlay p { margin: 5px 0; font-size: 10px; line-height: 1.5; color: #c5c6c7; }
         .overlay .highlight { color: #ffd32a; }
         .overlay .danger { color: #ff4757; }
         
         button {
-            margin-top: 20px; padding: 15px 25px; background: #ff4757; color: #000;
+            margin-top: 15px; padding: 12px 20px; background: #ff4757; color: #000;
             border: none; font-family: 'Press Start 2P', monospace; cursor: pointer;
             font-size: 12px; box-shadow: 0 0 15px #ff4757; font-weight: bold;
+            touch-action: manipulation;
         }
         button:hover { background: #ff6b81; }
         
-        #ui { margin-top: 15px; text-align: center; font-size: 12px; }
-        #system-msg { margin-top: 10px; font-size: 14px; min-height: 20px; color: #fff; }
+        #ui { margin-top: 10px; text-align: center; font-size: 12px; }
+        #system-msg { margin-top: 5px; font-size: 12px; min-height: 20px; color: #fff; }
+
+        /* --- 手機虛擬按鍵 --- */
+        #mobile-controls {
+            position: absolute; bottom: 10px; left: 0; width: 100%;
+            display: flex; justify-content: space-between; padding: 0 15px;
+            box-sizing: border-box; pointer-events: none; z-index: 5;
+        }
+        .touch-btn {
+            pointer-events: auto; width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 24px; color: rgba(255, 255, 255, 0.8);
+            user-select: none; -webkit-user-select: none; touch-action: none;
+        }
+        .touch-btn:active { background: rgba(255, 255, 255, 0.4); }
+        #btn-left { float: left; }
+        #btn-right { float: left; margin-left: 15px; }
+        #btn-jump { float: right; width: 75px; height: 75px; font-size: 18px; }
+
+        /* 針對手機屏幕嘅字體縮放 */
+        @media (max-width: 600px) {
+            .overlay h2 { font-size: 16px; }
+            .overlay p { font-size: 8px; }
+            button { padding: 10px 15px; font-size: 10px; }
+            #ui { font-size: 10px; }
+            #system-msg { font-size: 10px; }
+            #btn-left, #btn-right { width: 50px; height: 50px; font-size: 18px; }
+            #btn-jump { width: 65px; height: 65px; font-size: 14px; }
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas" width="900" height="450"></canvas>
         
+        <!-- 手機虛擬按鍵 (放喺 Canvas 上面) -->
+        <div id="mobile-controls">
+            <div>
+                <div id="btn-left" class="touch-btn">◀</div>
+                <div id="btn-right" class="touch-btn">▶</div>
+            </div>
+            <div id="btn-jump" class="touch-btn">跳</div>
+        </div>
+
         <!-- 開始說明彈窗 -->
         <div id="start-overlay" class="overlay">
             <h2>系統已啟動</h2>
-            <p style="color: #66fcf1; font-size: 12px; margin-bottom: 15px;">《會記仇嘅遊戲 v2.0 變態版》</p>
-            <p><span class="highlight">[←][→]</span> 移動 &nbsp;|&nbsp; <span class="highlight">[Space]</span> 跳躍</p>
-            <p style="margin-top: 15px;">目標：收集 <span class="highlight">3 把黃色鎖匙</span>，解鎖右側大門逃生。</p>
-            <p class="danger" style="margin-top: 15px;">警告：你只有 1 滴血。</p>
+            <p style="color: #66fcf1; font-size: 10px; margin-bottom: 10px;">《會記仇嘅遊戲 v2.1》</p>
+            <p class="hide-mobile"><span class="highlight">[←][→]</span> 移動 | <span class="highlight">[Space]</span> 跳躍</p>
+            <p class="show-mobile" style="display:none;">點按下方按鍵移動及跳躍</p>
+            <p style="margin-top: 10px;">目標：收集 <span class="highlight">3 把黃色鎖匙</span>，解鎖右側大門逃生。</p>
+            <p class="danger" style="margin-top: 10px;">警告：你只有 1 滴血。</p>
             <p class="danger">碰到地刺、雷射、死神紅眼，<br>即刻死亡。</p>
             <button onclick="startGame()">我準備好受死</button>
         </div>
@@ -70,6 +122,12 @@
     </div>
 
     <script>
+        // 判斷係咪手機，切換說明文字
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            document.querySelector('.hide-mobile').style.display = 'none';
+            document.querySelector('.show-mobile').style.display = 'block';
+        }
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const systemMsg = document.getElementById('system-msg');
@@ -128,8 +186,6 @@
         function initGame() {
             player = { x: 50, y: floorY - 36, width: 24, height: 36, vy: 0, speed: 6, jumpPower: -12, isGrounded: true, facingRight: true, walkTimer: 0 };
             obstacles = []; particles = []; keys = []; lasers = [];
-            
-            // 死神
             chaser = { x: -100, y: 200, speed: 2.5, radius: 20 };
             
             score = 0; timeAlive = 0; shakeTime = 0; isGameOver = false;
@@ -137,7 +193,6 @@
             laserTimer = 0;
             highScore = parseInt(localStorage.getItem('grudgeHighScore') || '0');
             
-            // 生成 3 條鎖匙
             for(let i=0; i<totalKeys; i++) {
                 keys.push({
                     x: 200 + Math.random() * (canvas.width - 400),
@@ -154,9 +209,10 @@
             initGame();
         }
 
-        window.addEventListener('keydown', (e) => {
+        // --- 鍵盤與觸控共通邏輯 ---
+        function handleJump() {
             if (!gameStarted || isGameOver) return;
-            if ((e.code === 'Space' || e.code === 'ArrowUp') && player.isGrounded) {
+            if (player.isGrounded) {
                 player.vy = player.jumpPower;
                 player.isGrounded = false;
                 playSound('jump');
@@ -167,6 +223,12 @@
                     systemMsg.innerHTML = `系統：我知你想跳去邊。`;
                 }
             }
+        }
+
+        // 鍵盤監聽
+        window.addEventListener('keydown', (e) => {
+            if (!gameStarted || isGameOver) return;
+            if (e.code === 'Space' || e.code === 'ArrowUp') handleJump();
             if (e.code === 'ArrowLeft') { keysInput.left = true; player.facingRight = false; }
             if (e.code === 'ArrowRight') { keysInput.right = true; player.facingRight = true; }
         });
@@ -175,6 +237,31 @@
             if (e.code === 'ArrowLeft') keysInput.left = false;
             if (e.code === 'ArrowRight') keysInput.right = false;
         });
+
+        // 觸控監聽 (支援 touch 同 mouse)
+        const bindBtn = (id, downFn, upFn) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); downFn(); }, {passive: false});
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); if(upFn) upFn(); }, {passive: false});
+            btn.addEventListener('touchcancel', (e) => { e.preventDefault(); if(upFn) upFn(); }, {passive: false});
+            btn.addEventListener('mousedown', (e) => { e.preventDefault(); downFn(); });
+            btn.addEventListener('mouseup', (e) => { e.preventDefault(); if(upFn) upFn(); });
+            btn.addEventListener('mouseleave', (e) => { e.preventDefault(); if(upFn) upFn(); });
+        };
+
+        bindBtn('btn-left', 
+            () => { if(gameStarted && !isGameOver) { keysInput.left = true; player.facingRight = false; } },
+            () => { keysInput.left = false; }
+        );
+        bindBtn('btn-right', 
+            () => { if(gameStarted && !isGameOver) { keysInput.right = true; player.facingRight = true; } },
+            () => { keysInput.right = false; }
+        );
+        bindBtn('btn-jump', 
+            () => { handleJump(); },
+            null
+        );
+
 
         function createParticles(x, y, color, count) {
             for(let i=0; i<count; i++) {
@@ -189,7 +276,7 @@
             playSound('hit');
             createParticles(player.x + player.width/2, player.y + player.height/2, '#ff4757', 40); 
             
-            reportText.innerHTML = `你生存咗 ${(timeAlive/60).toFixed(1)} 秒。<br>死因：<span style="color:#ff4757">${reason}</span>`;
+            reportText.innerHTML = `生存時間：${(timeAlive/60).toFixed(1)} 秒<br>死因：<span style="color:#ff4757">${reason}</span>`;
             
             if (Math.floor(score) > highScore) {
                 highScore = Math.floor(score);
@@ -213,7 +300,6 @@
             score += 0.5;
             if (shakeTime > 0) shakeTime--;
 
-            // --- 玩家移動 ---
             if (keysInput.left) player.x -= player.speed;
             if (keysInput.right) player.x += player.speed;
             if (keysInput.left || keysInput.right) player.walkTimer += 0.2;
@@ -230,17 +316,15 @@
                 player.isGrounded = true;
             }
 
-            // --- 死神追擊 ---
+            // 死神
             chaser.x += (player.x - chaser.x) * 0.01 * chaser.speed;
             chaser.y += (player.y - chaser.y) * 0.01 * chaser.speed;
             chaser.speed += 0.001;
 
             let dist = Math.hypot((player.x+player.width/2) - chaser.x, (player.y+player.height/2) - chaser.y);
-            if (dist < chaser.radius + 15) {
-                takeDamage("被系統嘅紅眼吞噬。");
-            }
+            if (dist < chaser.radius + 15) takeDamage("被死神紅眼吞噬。");
 
-            // --- 雷射系統 ---
+            // 雷射
             laserTimer++;
             if (laserTimer > 120) {
                 let lx = Math.random() * (canvas.width - 40) + 20;
@@ -253,27 +337,22 @@
                 let l = lasers[i];
                 l.timer--;
                 if (l.state === 'warning' && l.timer <= 0) {
-                    l.state = 'firing';
-                    l.timer = 15;
-                    shakeTime = 10;
+                    l.state = 'firing'; l.timer = 15; shakeTime = 10;
                 } else if (l.state === 'firing' && l.timer <= 0) {
                     lasers.splice(i, 1);
                 }
                 
                 if (l.state === 'firing') {
-                    if (player.x + player.width > l.x - 15 && player.x < l.x + 15) {
-                        takeDamage("被高溫雷射蒸發。");
-                    }
+                    if (player.x + player.width > l.x - 15 && player.x < l.x + 15) takeDamage("被高溫雷射蒸發。");
                 }
             }
 
-            // --- 鎖匙檢測 ---
+            // 鎖匙
             keys.forEach(k => {
                 if (!k.collected) {
                     if (player.x < k.x + k.width && player.x + player.width > k.x &&
                         player.y < k.y + k.height && player.y + player.height > k.y) {
-                        k.collected = true;
-                        keysCollected++;
+                        k.collected = true; keysCollected++;
                         playSound('pickup');
                         createParticles(k.x + 10, k.y + 10, '#ffd32a', 15);
                         systemMsg.innerHTML = `系統：執到鎖匙？你以為走得甩咩？ (${keysCollected}/3)`;
@@ -281,15 +360,15 @@
                 }
             });
 
-            // --- 陷阱碰撞 ---
-            obstacles.forEach((obs, index) => {
+            // 陷阱
+            obstacles.forEach((obs) => {
                 if (player.x < obs.x + obs.width && player.x + player.width > obs.x &&
                     player.y < obs.y + obs.height && player.y + player.height > obs.y) {
                     takeDamage("踩中咗系統預判你走位嘅地刺。");
                 }
             });
 
-            // --- 過關條件 ---
+            // 過關
             if (player.x >= goalX) {
                 if (keysCollected >= totalKeys) {
                     systemMsg.innerHTML = `系統：可惡...你竟然贏咗...`;
@@ -303,7 +382,6 @@
                 }
             }
 
-            // 粒子更新
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.03;
                 if (p.life <= 0) particles.splice(i, 1);
@@ -390,7 +468,6 @@
             ctx.restore();
         }
 
-        // 初始設定
         gameStarted = false;
         initGame(); 
         function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
