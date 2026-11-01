@@ -83,6 +83,10 @@
         .card-monopoly:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
         .card-monopoly h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
 
+        /* 👇 新增：深淵礦工專屬銅色 */
+        .card-miner:hover { border-color: #b87333; box-shadow: 0 0 30px rgba(184, 115, 51, 0.6); transform: translateY(-10px); }
+        .card-miner h2 { color: #b87333; text-shadow: 0 0 10px #b87333; }
+
         /* 發光掃描特效 */
         .game-card::before {
             content: ''; position: absolute; top: -50%; left: -50%;
@@ -135,6 +139,12 @@
         <a href="./snowball-game/" class="game-card card-monopoly">
             <h2>香港大富翁</h2>
             <p>擲骰買地，體驗香港版大富翁</p>
+        </a>
+
+        <!-- 遊戲 6 (新增：深淵礦工) -->
+        <a href="./deep-miner/" class="game-card card-miner">
+            <h2>深淵礦工</h2>
+            <p>貪婪與恐懼的極限考驗，掘得越深越危險！</p>
         </a>
     </div>
 
