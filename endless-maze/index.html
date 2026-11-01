@@ -33,6 +33,19 @@
   @keyframes pulse{to{opacity:.45}}
   #buffs {font-size: 13px; color: #ffd23f; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap;}
 
+  /* 返回大廳按鈕 (融入原版 UI 風格) */
+  .back-btn {
+    position: absolute; top: 12px; left: 12px; z-index: 999;
+    padding: 6px 12px; background: rgba(255,255,255,0.1); 
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+    color: #4fd1ff; font-size: 13px; font-weight: bold; 
+    text-decoration: none; pointer-events: auto; 
+    transition: background 0.2s; backdrop-filter: blur(8px);
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.2); }
+  /* 將原本嘅左邊 HUD 向下移，避免被返回掣擋住 */
+  #hud .left { margin-top: 35px; }
+
   #btnPlayerName, #btnShowLB {
     pointer-events: auto;
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
@@ -114,19 +127,12 @@
 </head>
 <body>
 
-    <!-- 返回大廳按鈕 -->
-    <a href="../" ...>
-        ⬅ 返回大廳
-    </a>
-
-    <!-- 下面係你原本嘅遊戲代碼 -->
-    <canvas id="gameCanvas"></canvas>
-    <script>
-        // ...
-    </script>
-</body>
 <div id="wrap">
+  <!-- 完美置入嘅返回大廳按鈕 -->
+  <a href="../" class="back-btn">⬅ 返回大廳</a>
+
   <canvas id="game"></canvas>
+  
   <div id="hud">
     <div class="left">
       <div>第 <span id="lv">1</span> 層 <span id="bestRecord" style="font-size:12px;opacity:0.7;color:#ffd23f;margin-left:8px;"></span></div>
@@ -422,7 +428,7 @@
       });
   }
 
-  /* ================= 遊戲核心 (頭 10 關減辣版) ================= */
+  /* ================= 遊戲核心 ================= */
   function config(lv){
     let maxSize = Math.min(13 + lv * 2, 45);
     let w = ri(Math.max(11, maxSize - 4), maxSize);
@@ -430,12 +436,9 @@
     if(w % 2 === 0) w++;
     if(h % 2 === 0) h++;
 
-    // 💡 調整 1：頭 3 關完全冇地刺，之後慢慢加
     let baseTraps = Math.max(0, Math.floor((lv - 3) * 1.2));
-    baseTraps = Math.min(baseTraps, 80); // 上限依然係 80
+    baseTraps = Math.min(baseTraps, 80); 
     let finalTraps = Math.floor(baseTraps * (1 - playerStats.trapReduce));
-    
-    // 💡 調整 2：假出口稍微減慢前期增長
     let fakes = playerStats.removeFakes ? 0 : Math.min(1 + Math.floor(lv * 1.0), 45);
 
     return {
