@@ -32,9 +32,9 @@
         font-size: 11px; font-weight: bold; align-items: center;
     }
     #hud div { display: flex; align-items: center; gap: 4px; flex-direction: column; }
-    .bar-bg { width: 50px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 2px; }
-    .hp-fill { height: 100%; background: #ff4757; width: 100%; transition: width 0.2s; }
-    .en-fill { height: 100%; background: #00d2d3; width: 100%; transition: width 0.2s; }
+    .bar-bg { width: 50px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 2px; border: 1px solid #000; }
+    .hp-fill { height: 100%; background: linear-gradient(90deg, #ff4757, #ff6b81); width: 100%; transition: width 0.2s; }
+    .en-fill { height: 100%; background: linear-gradient(90deg, #00d2d3, #66fcf1); width: 100%; transition: width 0.2s; }
     #depth-text { color: #ffd32a; font-size: 16px; text-shadow: 0 0 10px #ffd32a; }
     #record-text { font-size: 9px; color: #888; }
     
@@ -52,11 +52,12 @@
         flex: 1; padding: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333;
         border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: bold;
         font-size: 13px; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center;
+        text-shadow: 0 1px 2px #000;
     }
     .control-btn:active { background: #333; transform: scale(0.95); }
-    .control-btn.action { background: #2ed573; color: #000; border-color: #2ed573; }
-    .control-btn.danger { background: #ff4757; color: #fff; border-color: #ff4757; }
-    .control-btn.bomb { background: #e67e22; color: #fff; border-color: #e67e22; }
+    .control-btn.action { background: linear-gradient(to bottom, #2ed573, #25b863); color: #000; border-color: #2ed573; text-shadow: none; }
+    .control-btn.danger { background: linear-gradient(to bottom, #ff4757, #d63447); color: #fff; border-color: #ff4757; }
+    .control-btn.bomb { background: linear-gradient(to bottom, #e67e22, #d35400); color: #fff; border-color: #e67e22; }
     
     /* 商店/結算彈窗 */
     .modal {
@@ -69,20 +70,22 @@
     .modal p { color: #aaa; margin-bottom: 15px; font-size: 12px; line-height: 1.4; }
     .shop-item {
         display: flex; justify-content: space-between; align-items: center;
-        width: 100%; max-width: 380px; background: #111; padding: 10px 12px;
-        margin-bottom: 6px; border-radius: 8px; border: 1px solid #333;
+        width: 100%; max-width: 380px; background: linear-gradient(to bottom, #1a1a1a, #111); padding: 10px 12px;
+        margin-bottom: 6px; border-radius: 8px; border: 1px solid #333; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
     .shop-item-info { text-align: left; }
-    .shop-item-info b { font-size: 13px; }
+    .shop-item-info b { font-size: 13px; color: #eee; }
     .shop-item-info small { color: #888; font-size: 10px; }
     .shop-btn {
-        padding: 6px 12px; background: #ffd32a; color: #000; border: none;
+        padding: 6px 12px; background: linear-gradient(to bottom, #ffd32a, #e6b800); color: #000; border: none;
         border-radius: 5px; font-weight: bold; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 12px; min-width: 70px;
+        box-shadow: 0 2px 0 #b38f00;
     }
-    .shop-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .shop-btn:active { transform: translateY(2px); box-shadow: none; }
+    .shop-btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; transform: none; }
     
     /* 狂熱狀態提示 */
-    #frenzy-text { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); color: #ff4757; font-size: 24px; font-weight: 900; text-shadow: 0 0 20px #ff4757; display: none; animation: pulse 0.5s infinite alternate; z-index: 10; pointer-events: none; }
+    #frenzy-text { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); color: #ff4757; font-size: 24px; font-weight: 900; text-shadow: 0 0 20px #ff4757, 0 0 40px #ff0000; display: none; animation: pulse 0.5s infinite alternate; z-index: 10; pointer-events: none; }
     @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
 </style>
 </head>
@@ -179,7 +182,7 @@
     const btnBomb = document.getElementById('btn-bomb');
     const frenzyText = document.getElementById('frenzy-text');
 
-    // --- 自動存檔系統 (localStorage) ---
+    // --- 存檔系統 ---
     let saveData = JSON.parse(localStorage.getItem('deepMinerSave') || '{}');
     let coins = saveData.coins || 0;
     let maxHp = saveData.maxHp || 100; 
@@ -215,16 +218,17 @@
     let COLS = 8;
     let VISIBLE_ROWS = 12;
     
+    // 加入逼真嘅材質顏色
     const TILES = {
-        dirt: { color: '#4a3320', value: 0, enCost: 5 },
-        stone: { color: '#444', value: 0, enCost: 10 },
-        copper: { color: '#b87333', value: 15, enCost: 8 },
-        iron: { color: '#a8a8a8', value: 40, enCost: 12 },
-        gold: { color: '#ffd700', value: 120, enCost: 15 },
-        diamond: { color: '#00ffff', value: 600, enCost: 20 },
-        chest: { color: '#e67e22', value: 0, enCost: 15 },
-        monster: { color: '#ff4757', value: 0, enCost: 0 },
-        lava: { color: '#ff3300', value: 0, enCost: 0 }
+        dirt: { color: '#5c4033', color2: '#4a3320', value: 0, enCost: 5 },
+        stone: { color: '#555', color2: '#333', value: 0, enCost: 10 },
+        copper: { color: '#b87333', color2: '#8c5a25', value: 15, enCost: 8 },
+        iron: { color: '#a8a8a8', color2: '#777', value: 40, enCost: 12 },
+        gold: { color: '#ffd700', color2: '#ccac00', value: 120, enCost: 15 },
+        diamond: { color: '#00ffff', color2: '#00b3b3', value: 600, enCost: 20 },
+        chest: { color: '#e67e22', color2: '#b85e15', value: 0, enCost: 15 },
+        monster: { color: '#ff4757', color2: '#b82e3a', value: 0, enCost: 0 },
+        lava: { color: '#ff3300', color2: '#cc2900', value: 0, enCost: 0 }
     };
 
     // 音效系統
@@ -330,7 +334,7 @@
         if (player.y > maxDepthRecord) {
             maxDepthRecord = player.y;
             recordText.innerText = `最深: ${maxDepthRecord}m`;
-            saveGame(); // 破紀錄即刻存檔
+            saveGame();
         }
     }
 
@@ -380,7 +384,7 @@
             } else if (tileType === 'chest') {
                 let loot = Math.floor(Math.random() * 300) + 200;
                 coins += loot;
-                saveGame(); // 執到寶箱即刻存檔
+                saveGame();
                 delete map[tileKey];
                 addParticles(nx, ny, '#ffd700', 30);
                 playSound('coin');
@@ -389,7 +393,6 @@
                 let actualEnCost = Math.max(1, tData.enCost - (pickaxeLvl * 2));
                 if (!isFrenzy) energy -= actualEnCost;
                 
-                // 隨機觸發狂熱
                 if (Math.random() < 0.02 && !isFrenzy) {
                     isFrenzy = true;
                     frenzyTimer = 10;
@@ -457,7 +460,7 @@
         isFrenzy = false; frenzyText.style.display = 'none';
         gameState = 'surface';
         
-        saveGame(); // 返回地面賣嘢，自動存檔
+        saveGame();
         updateHUD();
         document.getElementById('shop-modal').classList.add('active');
         updateShopButtons();
@@ -531,7 +534,7 @@
         else if (type === 'pickaxe') pickaxeLvl++;
         else if (type === 'sword') swordLvl++;
         
-        saveGame(); // 買完嘢自動存檔
+        saveGame();
         updateHUD(); updateShopButtons();
     }
 
@@ -548,6 +551,60 @@
     }
 
     function triggerShake() { shakeTime = 15; }
+
+    // 畫逼真立體方塊嘅專用函數
+    function drawTile(tileType, screenX, screenY) {
+        let tData = TILES[tileType];
+        
+        // 基礎顏色漸變 (模擬立體感)
+        let grad = ctx.createLinearGradient(screenX, screenY, screenX + TILE_SIZE, screenY + TILE_SIZE);
+        grad.addColorStop(0, tData.color);
+        grad.addColorStop(1, tData.color2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+
+        // 加上高光同陰影邊緣 (令佢睇落似磚塊)
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(screenX, screenY, TILE_SIZE, 2); // 上高光
+        ctx.fillRect(screenX, screenY, 2, TILE_SIZE); // 左高光
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(screenX, screenY + TILE_SIZE - 2, TILE_SIZE, 2); // 下陰影
+        ctx.fillRect(screenX + TILE_SIZE - 2, screenY, 2, TILE_SIZE); // 右陰影
+
+        // 特殊材質細節
+        if (['copper', 'iron', 'gold', 'diamond'].includes(tileType)) {
+            // 礦物閃亮結晶效果
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath(); ctx.arc(screenX + 10, screenY + 12, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(screenX + 28, screenY + 15, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(screenX + 18, screenY + 28, 4, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1;
+        } else if (tileType === 'monster') {
+            // 怪物恐怖紅眼
+            ctx.fillStyle = '#300';
+            ctx.beginPath(); ctx.arc(screenX + 14, screenY + 16, 5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(screenX + 26, screenY + 16, 5, 0, Math.PI*2); ctx.fill();
+            
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowBlur = 10; ctx.shadowColor = '#ff0000';
+            ctx.beginPath(); ctx.arc(screenX + 14, screenY + 16, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(screenX + 26, screenY + 16, 2, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+        } else if (tileType === 'chest') {
+            // 寶箱金屬邊
+            ctx.fillStyle = '#333'; ctx.fillRect(screenX + 4, screenY + 15, 32, 20);
+            ctx.fillStyle = '#888'; ctx.fillRect(screenX + 4, screenY + 15, 32, 2);
+            ctx.fillStyle = '#ffd700'; ctx.fillRect(screenX + 16, screenY + 16, 8, 12); // 鎖
+        } else if (tileType === 'lava') {
+            // 熔岩冒泡特效
+            let bubbleY = screenY + 20 + Math.sin(Date.now()/150 + screenX) * 5;
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+            ctx.beginPath(); ctx.arc(screenX + 20, bubbleY, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.beginPath(); ctx.arc(screenX + 12, screenY + 28 - Math.cos(Date.now()/200) * 5, 4, 0, Math.PI*2); ctx.fill();
+        }
+    }
 
     function draw() {
         ctx.fillStyle = '#000';
@@ -570,28 +627,12 @@
                 let screenX = x * TILE_SIZE;
                 let screenY = y * TILE_SIZE - cameraY;
 
-                ctx.strokeStyle = '#151515';
+                // 畫黑暗背景格線
+                ctx.strokeStyle = '#111';
                 ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
 
                 if (tileType) {
-                    let tData = TILES[tileType];
-                    ctx.fillStyle = tData.color;
-                    ctx.fillRect(screenX + 1, screenY + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-
-                    if (['copper', 'iron', 'gold', 'diamond'].includes(tileType)) {
-                        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.6;
-                        ctx.beginPath(); ctx.arc(screenX + TILE_SIZE/2, screenY + TILE_SIZE/2, 6, 0, Math.PI*2); ctx.fill();
-                        ctx.globalAlpha = 1;
-                    } else if (tileType === 'monster') {
-                        ctx.fillStyle = '#fff'; ctx.fillRect(screenX + 10, screenY + 12, 6, 6); ctx.fillRect(screenX + 24, screenY + 12, 6, 6);
-                        ctx.fillStyle = '#000'; ctx.fillRect(screenX + 12, screenY + 14, 3, 3); ctx.fillRect(screenX + 26, screenY + 14, 3, 3);
-                    } else if (tileType === 'chest') {
-                        ctx.fillStyle = '#333'; ctx.fillRect(screenX + 8, screenY + 20, 24, 15);
-                        ctx.fillStyle = '#ffd700'; ctx.fillRect(screenX + 18, screenY + 22, 4, 6);
-                    } else if (tileType === 'lava') {
-                        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
-                        ctx.beginPath(); ctx.arc(screenX + TILE_SIZE/2 + Math.sin(Date.now()/200 + x)*5, screenY + TILE_SIZE/2, 8, 0, Math.PI*2); ctx.fill();
-                    }
+                    drawTile(tileType, screenX, screenY);
                 }
             }
         }
@@ -600,18 +641,36 @@
         let py = player.y * TILE_SIZE - cameraY;
         
         if (gameState !== 'surface' || player.y > 0) {
+            // 真實光影 (溫暖嘅頭燈)
             let lightRadius = TILE_SIZE * (2 + flashlightLvl * 0.8);
-            let glow = ctx.createRadialGradient(px+TILE_SIZE/2, py+TILE_SIZE/2, 5, px+TILE_SIZE/2, py+TILE_SIZE/2, lightRadius);
-            glow.addColorStop(0, 'rgba(255, 211, 42, 0.5)');
+            let glow = ctx.createRadialGradient(px+TILE_SIZE/2, py+TILE_SIZE/2, 10, px+TILE_SIZE/2, py+TILE_SIZE/2, lightRadius);
+            glow.addColorStop(0, 'rgba(255, 240, 150, 0.6)'); // 中心最光
+            glow.addColorStop(0.5, 'rgba(255, 211, 42, 0.2)'); // 邊緣變暗
             glow.addColorStop(1, 'rgba(255, 211, 42, 0)');
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, lightRadius, 0, Math.PI*2); ctx.fill();
 
+            // 畫礦工 (安全帽 + 身體)
+            // 身體
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(px + 10, py + 16, 20, 18);
+            // 安全帽
+            ctx.fillStyle = '#f1c40f';
+            ctx.beginPath();
+            ctx.arc(px + 20, py + 16, 12, Math.PI, 0);
+            ctx.fill();
+            // 帽簷
+            ctx.fillStyle = '#d4ac0d';
+            ctx.fillRect(px + 4, py + 14, 32, 4);
+            // 臉/眼睛
+            ctx.fillStyle = '#f1f2f6';
+            ctx.fillRect(px + 14, py + 20, 12, 8);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(px + 16, py + 22, 3, 3);
+            ctx.fillRect(px + 22, py + 22, 3, 3);
+            // 頭燈光點
             ctx.fillStyle = '#fff';
-            ctx.fillRect(px + 8, py + 8, TILE_SIZE - 16, TILE_SIZE - 16);
-            ctx.fillStyle = '#ffd32a';
-            ctx.fillRect(px + 12, py + 12, 6, 6);
-            ctx.fillRect(px + 22, py + 12, 6, 6);
+            ctx.beginPath(); ctx.arc(px + 20, py + 12, 3, 0, Math.PI*2); ctx.fill();
         }
 
         for (let i = particles.length - 1; i >= 0; i--) {
@@ -624,7 +683,7 @@
         ctx.globalAlpha = 1;
 
         if (isDigging) {
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
@@ -640,13 +699,11 @@
         requestAnimationFrame(draw);
     }
 
-    // 初始化
     resize();
     initMap();
     updateHUD();
     draw();
     
-    // 如果一入嚟係地面，就打開商店
     if (gameState === 'surface' && player.y === 0) {
         document.getElementById('shop-modal').classList.add('active');
         updateShopButtons();
