@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>滾雪球 · 全香港大富翁（神作版）</title>
+<title>全香港大富翁</title>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
 <style>
+  /* 樣式保持不變，節省篇幅 */
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   :root{
     --gold:#E8C46A; --gold-2:#B8912E; --gold-glow:rgba(232,196,106,.45);
@@ -280,7 +281,7 @@ let myId = null, roomCode = null, roomRef = null, localData = null, myRole = 'pl
 let animState = { active: false, pid: null, current: 0, steps: 0, newCash: 0 };
 let timerInterval = null;
 let timeLeft = 60;
-let lastBotRollAttempt = 0; // 👈 改用時間戳記，解決卡死
+let lastBotRollAttempt = 0; 
 
 function selectAvatar(el) {
   document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('active'));
@@ -299,7 +300,7 @@ function createPlayerObj(id, name, color, emoji, isBot) {
     id: id, isBot: isBot, name: name, color: color, emoji: emoji, skillName: SKILLS[emoji].name,
     cash: 50000, pos: 0, props: [], debts: [], jailTurns: 0,
     missionIndex: Math.floor(Math.random() * MISSIONS.length),
-    bankrupt: false, pandasSaved: false, movePenalty: 0
+    bankrupt: false, pandasSaved: false, movePenalty: 0, isCheckingBankrupt: false
   };
 }
 
@@ -421,6 +422,16 @@ function listenToRoom() {
         initChat(); startTimer();
       }
       renderAll();
+
+      // 👇 全局破產檢查：只要有人現金負數且未破產，強制執行破產程序
+      if(!data.gameState.auction) {
+        Object.keys(data.players).forEach(pid => {
+          const p = data.players[pid];
+          if(!p.bankrupt && p.cash < 0 && !p.isCheckingBankrupt) {
+            checkBankrupt(pid);
+          }
+        });
+      }
       
       if(data.gameState.auction) {
         renderAuction();
@@ -429,13 +440,12 @@ function listenToRoom() {
         if(auctionMask) auctionMask.remove();
       }
 
-      // 👇 定時檢查 AI 狀態（防卡死看門狗）
       if(data.gameState.phase === 'roll' && !data.gameState.auction) {
         if(!timerInterval) startTimer();
         checkBotTurn();
       }
 
-      // 👇 防卡死：如果輪到電腦，而狀態係 action，自動幫佢結束回合
+      // 防卡死：如果輪到電腦，而狀態係 action，自動幫佢結束回合
       if(data.gameState.phase === 'action' && !data.gameState.auction) {
         const curP = data.players[data.gameState.currentId];
         if(curP && curP.isBot) {
@@ -543,7 +553,7 @@ function renderBoard() {
 
 function forceBotRoll() {
   if(localData.gameState.phase === 'roll' && localData.players[localData.gameState.currentId].isBot) {
-    lastBotRollAttempt = 0; // 重置時間戳，強制觸發
+    lastBotRollAttempt = 0; 
     checkBotTurn();
   } else if(localData.gameState.phase === 'action' && localData.players[localData.gameState.currentId].isBot) {
     endTurn();
@@ -764,14 +774,12 @@ function handleChanceCard(card, playerId) {
   roomRef.update({ [`players/${playerId}/cash`]: newCash });
 }
 
-// 👇 重寫 AI 觸發邏輯，加入防卡死
 function checkBotTurn() {
   if(!localData || !localData.gameState || localData.gameState.phase !== 'roll' || localData.gameState.auction || isRolling) return;
   const curId = localData.gameState.currentId;
   const curP = localData.players[curId];
   
   if(curP && curP.isBot) {
-    // 如果超過 1.5 秒電腦都未擲骰，強制幫佢擲
     if(Date.now() - lastBotRollAttempt > 1500) {
       lastBotRollAttempt = Date.now();
       doBotRoll(curId);
@@ -959,63 +967,75 @@ function handleLanding(pos) {
   }
 }
 
+// 👇 重寫破產機制，不再用 localData 的非同步舊數據，強制讀取最新狀態
 function checkBankrupt(pid) {
-  const p = localData.players[pid];
-  if (p.bankrupt || p.cash >= 0) return;
+  // 防止重複觸發
+  if(localData.players[pid] && localData.players[pid].isCheckingBankrupt) return;
 
-  if (p.props && p.props.length > 0) {
-    let newProps = [...p.props];
-    let currentCash = p.cash;
-    let updates = {};
-    
-    let saveProp = null;
-    if (p.emoji === '🐼' && !p.pandasSaved && newProps.length > 0) {
-      newProps.sort((a,b) => BOARD[b].price - BOARD[a].price);
-      saveProp = newProps.shift();
-      updates[`players/${pid}/pandasSaved`] = true;
-      addLog(`🐼 ${p.name} 發動【國寶保護】，保留咗最貴嘅 ${BOARD[saveProp].n}！`, 'system');
-    }
-    
-    while (currentCash < 0 && newProps.length > 0) {
-      const sellPos = newProps.shift();
-      const sellValue = Math.floor(BOARD[sellPos].price * 0.7);
-      currentCash += sellValue;
-      updates[`gameState/owners/${sellPos}`] = null;
-      if(saveProp && newProps.length === 0) newProps.push(saveProp);
+  db.ref(`rooms/${roomCode}/players/${pid}`).once('value').then(snap => {
+    const p = snap.val();
+    if (!p || p.bankrupt || p.cash >= 0) return;
+
+    roomRef.child(`players/${pid}/isCheckingBankrupt`).set(true);
+    addLog(`⚠️ ${p.name} 現金不足 ($ ${p.cash.toLocaleString()})，系統強制介入！`, 'danger');
+
+    if (p.props && p.props.length > 0) {
+      let newProps = [...p.props];
+      let currentCash = p.cash;
+      let updates = {};
       
-      updates[`players/${pid}/props`] = newProps;
-      updates[`players/${pid}/cash`] = currentCash;
-      addLog(`🏚️ ${p.name} 被迫以 $${sellValue.toLocaleString()} 拍賣 ${BOARD[sellPos].n} 還債。`, 'danger');
+      let saveProp = null;
+      if (p.emoji === '🐼' && !p.pandasSaved && newProps.length > 0) {
+        newProps.sort((a,b) => BOARD[b].price - BOARD[a].price);
+        saveProp = newProps.shift();
+        updates[`players/${pid}/pandasSaved`] = true;
+        addLog(`🐼 ${p.name} 發動【國寶保護】，保留咗最貴嘅 ${BOARD[saveProp].n}！`, 'system');
+      }
+      
+      while (currentCash < 0 && newProps.length > 0) {
+        const sellPos = newProps.shift();
+        const sellValue = Math.floor(BOARD[sellPos].price * 0.7);
+        currentCash += sellValue;
+        updates[`gameState/owners/${sellPos}`] = null;
+        if(saveProp && newProps.length === 0) newProps.push(saveProp);
+        
+        updates[`players/${pid}/props`] = newProps;
+        updates[`players/${pid}/cash`] = currentCash;
+        addLog(`🏚️ ${p.name} 被迫以 $${sellValue.toLocaleString()} 拍賣 ${BOARD[sellPos].n} 還債。`, 'danger');
+      }
+      
+      if (currentCash >= 0) {
+        updates[`players/${pid}/isCheckingBankrupt`] = null; // 解除標記
+        roomRef.update(updates);
+        return;
+      }
     }
+
+    // 賣晒地都唔夠，正式破產
+    let updates = {
+      [`players/${pid}/bankrupt`]: true,
+      [`players/${pid}/cash`]: 0,
+      [`players/${pid}/props`]: [],
+      [`players/${pid}/debts`]: [],
+      [`players/${pid}/isCheckingBankrupt`]: null
+    };
+    if (p.props) p.props.forEach(pos => { updates[`gameState/owners/${pos}`] = null; });
     
-    if (currentCash >= 0) {
-      roomRef.update(updates);
-      return;
+    roomRef.update(updates);
+    addLog(`💀 ${p.name} 宣佈破產！所有資產被銀行沒收。`, 'danger');
+    playSound('bad');
+
+    if (pid === myId) {
+      setTimeout(() => { alert('你已經破產！將自動結束回合。'); endTurn(); }, 500);
+    } else if (localData.gameState.currentId === pid) {
+      setTimeout(() => endTurn(), 1500);
     }
-  }
-
-  let updates = {
-    [`players/${pid}/bankrupt`]: true,
-    [`players/${pid}/cash`]: 0,
-    [`players/${pid}/props`]: [],
-    [`players/${pid}/debts`]: []
-  };
-  if (p.props) p.props.forEach(pos => { updates[`gameState/owners/${pos}`] = null; });
-  
-  roomRef.update(updates);
-  addLog(`💀 ${p.name} 宣佈破產！所有資產被銀行沒收。`, 'danger');
-  playSound('bad');
-
-  if (pid === myId) {
-    setTimeout(() => { alert('你已經破產！將自動結束回合。'); endTurn(); }, 500);
-  } else if (localData.gameState.currentId === pid) {
-    setTimeout(() => endTurn(), 1500);
-  }
+  });
 }
 
 function endTurn() {
   clearInterval(timerInterval);
-  lastBotRollAttempt = 0; // 👈 每次結束回合重置
+  lastBotRollAttempt = 0; 
   
   const gs = localData.gameState;
   if(gs.phase !== 'action' && gs.currentId !== myId) return;
