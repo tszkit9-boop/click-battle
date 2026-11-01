@@ -64,9 +64,27 @@
             position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
             color: #a4b0be; font-size: 12px; letter-spacing: 1px; z-index: 5; pointer-events: none;
         }
+
+        /* --- 新增：返回大廳按鈕 --- */
+        .back-btn {
+            position: fixed; top: 15px; left: 15px; z-index: 99999;
+            padding: 8px 16px; background: rgba(5, 5, 16, 0.8);
+            color: #66fcf1; border: 2px solid #66fcf1; border-radius: 8px;
+            text-decoration: none; font-family: 'Orbitron', sans-serif;
+            font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(102, 252, 241, 0.5);
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: #66fcf1; color: #000; box-shadow: 0 0 20px #66fcf1; }
+        
+        @media (max-width: 600px) {
+            .back-btn { font-size: 12px; padding: 6px 12px; top: 10px; left: 10px; }
+        }
     </style>
 </head>
 <body>
+    <!-- 返回大廳按鈕 -->
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
     <div id="game-container">
         <canvas id="gameCanvas" width="900" height="500"></canvas>
         
