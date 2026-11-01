@@ -71,6 +71,17 @@
         #btn-right { float: left; margin-left: 15px; }
         #btn-jump { float: right; width: 75px; height: 75px; font-size: 18px; }
 
+        /* --- 返回大廳按鈕 --- */
+        .back-btn {
+            position: fixed; top: 15px; left: 15px; z-index: 99999;
+            padding: 8px 16px; background: rgba(5, 5, 5, 0.8);
+            color: #ff4757; border: 2px solid #ff4757; border-radius: 8px;
+            text-decoration: none; font-family: 'Press Start 2P', monospace;
+            font-size: 12px; box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: #ff4757; color: #000; }
+
         /* 針對手機屏幕嘅字體縮放 */
         @media (max-width: 600px) {
             .overlay h2 { font-size: 16px; }
@@ -80,10 +91,15 @@
             #system-msg { font-size: 10px; }
             #btn-left, #btn-right { width: 50px; height: 50px; font-size: 18px; }
             #btn-jump { width: 65px; height: 65px; font-size: 14px; }
+            .back-btn { font-size: 10px; padding: 6px 12px; }
         }
     </style>
 </head>
 <body>
+
+    <!-- 返回大廳按鈕 -->
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
     <div id="game-container">
         <canvas id="gameCanvas" width="900" height="450"></canvas>
         
@@ -261,7 +277,6 @@
             () => { handleJump(); },
             null
         );
-
 
         function createParticles(x, y, color, count) {
             for(let i=0; i<count; i++) {
