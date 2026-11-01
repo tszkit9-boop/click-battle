@@ -18,15 +18,17 @@
             border-bottom: 2px solid #00d2d3; box-shadow: 0 0 15px rgba(0,210,211,0.3);
             flex-wrap: wrap;
         }
-        .btn-group { display: flex; gap: 5px; margin: 5px 0; }
-        button {
+        .btn-group { display: flex; gap: 5px; margin: 5px 0; align-items: center; }
+        button, .back-btn {
             background: transparent; color: #00d2d3; border: 2px solid #00d2d3;
             padding: 6px 10px; font-family: 'Orbitron', sans-serif; font-weight: bold;
             border-radius: 5px; cursor: pointer; font-size: 12px; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
         }
-        button:hover { background: #00d2d3; color: #000; }
+        button:hover, .back-btn:hover { background: #00d2d3; color: #000; }
         button.active { background: #00d2d3; color: #000; box-shadow: 0 0 15px #00d2d3; }
         button.danger { color: #ff4757; border-color: #ff4757; }
+        button.danger:hover { background: #ff4757; color: #000; }
         button.record { color: #ff4757; border-color: #ff4757; }
         button.record.active { background: #ff4757; color: #fff; animation: pulse 1s infinite; }
         button.download { color: #2ed573; border-color: #2ed573; display: none; }
@@ -44,6 +46,8 @@
 <body>
     <div id="toolbar">
         <div class="btn-group">
+            <!-- 加入返回大廳按鈕 -->
+            <a href="../" class="back-btn">⬅ 返回</a>
             <button id="btn-play" onclick="togglePlay()">▶ 播放</button>
             <button id="btn-reset" class="danger" onclick="clearAll()">🗑 清空</button>
         </div>
