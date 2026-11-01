@@ -51,9 +51,16 @@
   
   #game{display:grid;grid-template-columns:280px 1fr 320px;gap:16px;padding:16px;height:100vh;max-height:100vh;}
   @media(max-width:1200px){#game{grid-template-columns:1fr;height:auto;max-height:none;padding-bottom:50px}.board-wrap{order:-1}}
+  
   .players-panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:calc(100vh - 32px);}
   .p-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;position:relative;transition:all .3s;}
   .p-card.active{border-color:var(--gold);box-shadow:0 0 15px rgba(232,196,106,.2);transform:translateX(4px);}
+  
+  /* 👇 銀行 NPC 專用樣式 */
+  .p-card.bank-npc{border-color:rgba(96,165,250,.4);background:linear-gradient(160deg,rgba(30,40,60,.9),rgba(20,20,35,.9));}
+  .p-card.bank-npc .p-name{color:var(--blue);}
+  .p-card.bank-npc .p-cash{color:var(--blue);text-shadow:0 0 10px rgba(96,165,250,.3);font-size:1.1rem;}
+
   .p-head{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
   .p-name{font-weight:800;font-size:1rem;}
   .p-cash{font-size:1.4rem;font-weight:900;color:var(--green);text-shadow:0 0 10px rgba(74,222,128,.3);}
@@ -235,8 +242,6 @@ const CHANCE_CARDS = [
 ];
 
 let myId = null, roomCode = null, roomRef = null, localData = null, myRole = 'player', isRolling = false, myName = '', myEmoji = '👧';
-
-// 👇 用嚟控制逐格移動動畫嘅狀態
 let animState = { active: false, pid: null, current: 0, steps: 0, newCash: 0 };
 
 function selectAvatar(el) {
@@ -444,12 +449,11 @@ function renderBoard() {
     const p = getGridPos(i);
     const ownerId = gs.owners && gs.owners[i];
     
-    // 👇 判斷邊個喺呢格（包括動畫中嘅臨時位置）
     let pawnsHere = [];
     Object.keys(localData.players).forEach(pid => {
       let pPos = localData.players[pid].pos;
       if (animState.active && animState.pid === pid) {
-        pPos = animState.current; // 如果緊動畫，用臨時位置
+        pPos = animState.current;
       }
       if (pPos === i) pawnsHere.push(pid);
     });
@@ -510,12 +514,28 @@ function renderPlayers() {
   const panel = document.getElementById('playersPanel');
   if(!panel || !localData.players) return;
   let html = '';
+
+  // 👇 計算全場總借貸額
+  let totalDebt = 0;
+  Object.values(localData.players).forEach(p => {
+    totalDebt += (p.debts || []).reduce((s,d)=>s+d.principal,0);
+  });
+
+  // 👇 加入「系統銀行 NPC」卡片
+  html += `<div class="p-card bank-npc">
+    <div class="p-head"><div style="font-size:1.6rem">🏦</div><div class="p-name">系統銀行 (NPC)</div></div>
+    <div class="p-cash">💰 總借出：$${totalDebt.toLocaleString()}</div>
+    <div class="p-stats">
+      <div class="p-stat">固定利率 5%</div>
+      <div class="p-stat">無限現金</div>
+    </div>
+  </div>`;
+
   Object.keys(localData.players).forEach(pid => {
     const p = localData.players[pid];
     const isActive = pid === localData.gameState.currentId;
     const debt = (p.debts || []).reduce((s,d)=>s+d.principal,0);
     
-    // 如果緊動畫，左邊面板嘅現金都要實時跟住跳
     let displayCash = p.cash;
     if (animState.active && animState.pid === pid) {
       displayCash = animState.newCash;
@@ -538,7 +558,6 @@ function doRoll() {
   const gs = localData.gameState;
   if(gs.currentId !== myId || gs.phase !== 'roll') return;
   
-  // 1. 骰子搖動動畫
   isRolling = true; renderBoard();
   
   setTimeout(() => {
@@ -546,25 +565,21 @@ function doRoll() {
     const d1 = Math.ceil(Math.random()*6), d2 = Math.ceil(Math.random()*6), steps = d1 + d2;
     const p = localData.players[myId];
 
-    // 2. 先更新 Firebase 嘅骰子數字，等所有人見到
     roomRef.update({ [`gameState/dice1`]: d1, [`gameState/dice2`]: d2 }).then(() => {
       
-      // 3. 啟動本地逐格移動動畫
       animState = { active: true, pid: myId, current: p.pos, steps: steps, newCash: p.cash };
       let count = 0;
 
       const timer = setInterval(() => {
         animState.current = (animState.current + 1) % 40;
         
-        // 如果經過起點，現金即刻加 $20,000
         if (animState.current === 0) {
           animState.newCash += 20000;
         }
         
         count++;
-        renderAll(); // 實時重繪畫面（包括地圖同左邊現金）
+        renderAll(); 
 
-        // 4. 行完步數後，寫入最終結果落 Firebase
         if (count >= steps) {
           clearInterval(timer);
           animState.active = false;
@@ -572,13 +587,13 @@ function doRoll() {
           const updates = {};
           updates[`players/${myId}/pos`] = animState.current;
           updates[`players/${myId}/cash`] = animState.newCash;
-          updates[`gameState/phase`] = 'action'; // 改為行動階段
+          updates[`gameState/phase`] = 'action'; 
 
           roomRef.update(updates).then(() => {
-            handleLanding(animState.current); // 觸發踩中格仔事件
+            handleLanding(animState.current); 
           });
         }
-      }, 200); // 每 200ms 行一格
+      }, 200); 
     });
   }, 600);
 }
@@ -616,6 +631,11 @@ function handleLanding(pos) {
     addLog(`🏛️ ${p.name} 交稅 $${tax.toLocaleString()}，餘額 $${(p.cash - tax).toLocaleString()}`, 'danger');
   } else if (cell.t === 'gojail') {
     roomRef.update({ [`players/${myId}/pos`]: 10 }); addLog(`👮 ${p.name} 被送入監獄！`, 'danger');
+  } else if (cell.t === 'free') {
+    // 👇 踩中銀行格，自動派 $5,000 利息
+    roomRef.update({ [`players/${myId}/cash`]: p.cash + 5000 });
+    showModal(`<h3>🏦 銀行</h3><p>你嚟到銀行，獲得 $5,000 存款利息！</p><button class="btn primary" onclick="closeModal()">多謝銀行！</button>`);
+    addLog(`🏦 ${p.name} 嚟到銀行，獲得 $5,000 利息，餘額 $${(p.cash + 5000).toLocaleString()}`, 'money');
   }
 }
 
@@ -667,8 +687,8 @@ function openLoanModal() {
   const p = localData.players[myId];
   const others = Object.keys(localData.players).filter(id => id !== myId);
   const lenderOpts = others.map(id => `<option value="${id}">${localData.players[id].emoji} ${localData.players[id].name}</option>`).join('');
-  showModal(`<h3>💸 借款</h3><p>向銀行（5%息）或其他玩家（自訂息）借錢。每回合複利結算。</p>
-    <div class="loan-row"><label>放貸方</label><select id="loanLender"><option value="bank">🏦 銀行</option>${lenderOpts}</select></div>
+  showModal(`<h3>💸 借款</h3><p>向系統銀行（5%息）或其他玩家（自訂息）借錢。每回合複利結算。</p>
+    <div class="loan-row"><label>放貸方</label><select id="loanLender"><option value="bank">🏦 系統銀行</option>${lenderOpts}</select></div>
     <div class="loan-row"><label>借款額</label><input type="number" id="loanAmount" value="20000" step="5000"></div>
     <div class="loan-row"><label>每回合息</label><select id="loanRate"><option value="0.05">5%</option><option value="0.1">10%</option><option value="0.2">20%</option><option value="0.3">30%（貴利）</option></select></div>
     <button class="btn primary" onclick="confirmLoan()">確認</button><button class="btn" onclick="closeModal()">取消</button>`);
@@ -685,10 +705,10 @@ function confirmLoan() {
   const newDebt = { lender: lenderVal, principal: amount, rate: rate };
 
   if(lenderVal === 'bank') {
-    if(amount > 30000) return alert('銀行上限 $30,000');
+    if(amount > 30000) return alert('系統銀行上限 $30,000');
     updates[`players/${myId}/cash`] = p.cash + amount;
     updates[`players/${myId}/debts`] = [...(p.debts||[]), newDebt];
-    addLog(`🏦 ${p.name} 向銀行借 $${amount.toLocaleString()}，餘額 $${(p.cash + amount).toLocaleString()}`, 'money');
+    addLog(`🏦 ${p.name} 向系統銀行借 $${amount.toLocaleString()}，餘額 $${(p.cash + amount).toLocaleString()}`, 'money');
   } else {
     const lenderP = localData.players[lenderVal];
     if(lenderP.cash < amount) return alert('對方現金不足！');
@@ -704,7 +724,7 @@ function openRepayModal() {
   const p = localData.players[myId];
   if(!p.debts || p.debts.length === 0) return alert('你冇債務喎！');
   const opts = p.debts.map((d, i) => {
-    const lenderName = d.lender === 'bank' ? '銀行' : localData.players[d.lender].name;
+    const lenderName = d.lender === 'bank' ? '系統銀行' : localData.players[d.lender].name;
     return `<option value="${i}">欠 ${lenderName} $${d.principal.toLocaleString()}</option>`;
   }).join('');
   showModal(`<h3>💳 還款</h3><div class="loan-row"><label>選擇債務</label><select id="repayIdx">${opts}</select></div>
@@ -725,7 +745,7 @@ function confirmRepay() {
     updates[`players/${d.lender}/cash`] = localData.players[d.lender].cash + d.principal;
     addLog(`💳 ${p.name} 還清咗 ${localData.players[d.lender].name} 嘅錢，餘額 $${(p.cash - d.principal).toLocaleString()}`, 'money');
   } else { 
-    addLog(`💳 ${p.name} 還清咗銀行貸款，餘額 $${(p.cash - d.principal).toLocaleString()}`, 'money'); 
+    addLog(`💳 ${p.name} 還清咗系統銀行貸款，餘額 $${(p.cash - d.principal).toLocaleString()}`, 'money'); 
   }
   roomRef.update(updates); closeModal();
 }
