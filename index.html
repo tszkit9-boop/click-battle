@@ -2,119 +2,22 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>呀樂遊戲工作室</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
-        
-        body {
-            margin: 0; padding: 0; background-color: #050510; color: #fff;
-            font-family: 'Orbitron', 'PingFang HK', sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; overflow-x: hidden; padding-bottom: 50px;
-        }
-
-        /* 動態背景網格 */
-        .bg-grid {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 210, 211, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 210, 211, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px; z-index: -1;
-            animation: gridMove 10s linear infinite;
-        }
-        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
-
-        h1 {
-            color: #00d2d3; text-shadow: 0 0 20px #00d2d3;
-            font-size: 36px; letter-spacing: 4px; margin-bottom: 10px; margin-top: 40px; text-align: center;
-        }
-        p.subtitle {
-            color: #a4b0be; font-size: 14px; letter-spacing: 2px; margin-bottom: 50px;
-        }
-
-        /* 卡片容器 */
-        .games-container {
-            display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;
-            max-width: 1000px; padding: 0 20px;
-        }
-
-        /* 單張遊戲卡片 */
-        .game-card {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 280px; height: 180px; border-radius: 15px;
-            background: rgba(17, 17, 17, 0.8); border: 2px solid rgba(0, 210, 211, 0.3);
-            text-decoration: none; color: #fff; position: relative; overflow: hidden;
-            transition: all 0.3s ease; box-shadow: 0 0 15px rgba(0,0,0,0.5); cursor: pointer;
-        }
-        .game-card h2 { margin: 0; font-size: 22px; z-index: 2; transition: all 0.3s; }
-        .game-card p { color: #a4b0be; font-size: 12px; z-index: 2; margin-top: 10px; transition: all 0.3s; text-align: center; padding: 0 10px; }
-        
-        /* 卡片專屬顏色光暈 */
-        .card-grudge:hover { border-color: #ff4757; box-shadow: 0 0 30px rgba(255, 71, 87, 0.6); transform: translateY(-10px); }
-        .card-grudge h2 { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
-        
-        .card-line:hover { border-color: #66fcf1; box-shadow: 0 0 30px rgba(102, 252, 241, 0.6); transform: translateY(-10px); }
-        .card-line h2 { color: #66fcf1; text-shadow: 0 0 10px #66fcf1; }
-
-        .card-music:hover { border-color: #e056fd; box-shadow: 0 0 30px rgba(224, 86, 253, 0.6); transform: translateY(-10px); }
-        .card-music h2 { color: #e056fd; text-shadow: 0 0 10px #e056fd; }
-
-        .card-maze:hover { border-color: #2ed573; box-shadow: 0 0 30px rgba(46, 213, 115, 0.6); transform: translateY(-10px); }
-        .card-maze h2 { color: #2ed573; text-shadow: 0 0 10px #2ed573; }
-
-        .card-monopoly:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
-        .card-monopoly h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
-
-        /* 發光掃描特效 */
-        .game-card::before {
-            content: ''; position: absolute; top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: linear-gradient(transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg); transition: all 0.5s;
-        }
-        .game-card:hover::before { top: 100%; left: 100%; }
-
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>會記仇的遊戲</title>
+    <!-- 你原本嘅 <style> 代碼放喺度 -->
 </head>
 <body>
 
+    <!-- 👇 就係呢段代碼，幫你加咗個超靚嘅懸浮返回掣 👇 -->
+    <a href="../" style="position: fixed; top: 15px; left: 15px; z-index: 99999; padding: 8px 16px; background: rgba(5, 5, 16, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(0,210,211,0.5); transition: all 0.2s;" onmouseover="this.style.background='#00d2d3'; this.style.color='#000';" onmouseout="this.style.background='rgba(5, 5, 16, 0.8)'; this.style.color='#00d2d3';">
+        ⬅ 返回大廳
+    </a>
+    <!-- 👆 返回掣完結 👆 -->
+
+    <!-- 你原本嘅遊戲 canvas 同 script 放喺呢度 -->
     <div class="bg-grid"></div>
-
-    <h1>呀樂</h1>
-    <p class="subtitle">原創網頁遊戲工作室</p>
-
-    <div class="games-container">
-        <!-- 遊戲 1 -->
-        <a href="./grudge-game/" class="game-card card-grudge">
-            <h2>會記仇的遊戲</h2>
-            <p>AI 學習你嘅習慣，生成陷阱針對你</p>
-        </a>
-
-        <!-- 遊戲 2 -->
-        <a href="./one-line-life/" class="game-card card-line">
-            <h2>一筆定生死</h2>
-            <p>畫一條完美光線，避開致命陷阱</p>
-        </a>
-
-        <!-- 遊戲 3 -->
-        <a href="./neon-music-box/" class="game-card card-music">
-            <h2>霓虹音樂盒</h2>
-            <p>自由砌出專屬軌道，彈奏你的音樂</p>
-        </a>
-
-        <!-- 遊戲 4 (新增) -->
-        <a href="./endless-maze/" class="game-card card-maze">
-            <h2>無盡迷宮</h2>
-            <p>喺變幻莫測嘅迷宮中尋找出口</p>
-        </a>
-
-        <!-- 遊戲 5 (新增) -->
-        <a href="./snowball-game/" class="game-card card-monopoly">
-            <h2>香港大富翁</h2>
-            <p>擲骰買地，體驗香港版大富翁</p>
-        </a>
-    </div>
-
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- 你原本嘅 <script> 代碼放喺度 -->
 </body>
 </html>
