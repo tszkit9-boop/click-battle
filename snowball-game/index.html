@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>全香港大富翁</title>
+<title> 香港大富翁</title>
 <!-- 引入 Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
 <style>
+  /* ======== CSS 保持原有一樣，幫你節省篇幅 ======== */
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   :root{
     --gold:#E8C46A; --gold-2:#B8912E; --gold-glow:rgba(232,196,106,.45);
@@ -30,7 +31,7 @@
   button:disabled{opacity:.38;cursor:not-allowed;transform:none!important;filter:grayscale(.5)}
   .hidden{display:none!important}
 
-  /* ===== 大廳介面 ===== */
+  /* 大廳介面 */
   #lobby{max-width:480px;margin:0 auto;padding:60px 24px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
   .logo h1{font-size:3rem;font-weight:900;letter-spacing:6px;text-align:center;
     background:linear-gradient(135deg,#FFF6D6,#E8C46A 40%,#B8912E 70%,#E8C46A);
@@ -46,10 +47,9 @@
   .room-info{margin-top:20px;text-align:center;font-size:.9rem;color:var(--text-dim);}
   .room-code{font-size:2.5rem;font-weight:900;color:var(--gold);letter-spacing:6px;margin:10px 0;}
   
-  /* ===== 遊戲介面 ===== */
+  /* 遊戲介面 (略) */
   #game{display:grid;grid-template-columns:280px 1fr 320px;gap:16px;padding:16px;height:100vh;max-height:100vh;}
   @media(max-width:1200px){#game{grid-template-columns:1fr;height:auto;max-height:none;padding-bottom:50px}.board-wrap{order:-1}}
-  
   .players-panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:calc(100vh - 32px);}
   .p-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;position:relative;transition:all .3s;}
   .p-card.active{border-color:var(--gold);box-shadow:0 0 15px rgba(232,196,106,.2);transform:translateX(4px);}
@@ -59,8 +59,6 @@
   .p-cash.neg{color:var(--red);text-shadow:0 0 10px rgba(248,113,113,.3);}
   .p-stats{display:flex;gap:6px;margin-top:8px;font-size:.75rem;color:var(--text-dim);flex-wrap:wrap;}
   .p-stat{background:rgba(10,10,20,.6);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.05);}
-
-  /* 棋盤 */
   .board-wrap{display:flex;align-items:center;justify-content:center;}
   .board{display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(11,1fr);width:min(100%,calc(100vh - 32px));aspect-ratio:1;gap:3px;padding:8px;background:var(--panel-solid);border:1px solid var(--border);border-radius:18px;box-shadow:0 30px 60px rgba(0,0,0,.6);}
   .cell{background:rgba(35,35,56,.95);border-radius:6px;padding:4px;font-size:.6rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.04);transition:all .2s;}
@@ -77,35 +75,27 @@
   @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
   .c-pawns{position:absolute;bottom:3px;left:3px;right:3px;display:flex;gap:2px;flex-wrap:wrap;}
   .pawn{width:8px;height:8px;border-radius:50%;border:1px solid rgba(0,0,0,.6);box-shadow:0 1px 2px rgba(0,0,0,.5);}
-
-  /* 中央控制台 */
   .center-panel{grid-row:2/11;grid-column:2/11;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:radial-gradient(circle,rgba(232,196,106,.05),transparent 70%);border-radius:14px;}
   .turn-player{font-size:1.6rem;font-weight:900;text-shadow:0 0 20px currentColor;}
   .dice-row{display:flex;gap:14px;}
   .die{width:60px;height:60px;border-radius:14px;background:linear-gradient(145deg,#FFF8E6,#E8DCC0);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;color:#1a1a2e;box-shadow:0 8px 0 #B8A880, 0 12px 20px rgba(0,0,0,.5);}
   .die.rolling{animation:shake .5s infinite;}
   @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}}
-  
   .action-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
   .btn{padding:10px 20px;border-radius:12px;font-weight:800;font-size:.85rem;background:rgba(40,40,68,.9);color:var(--text);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 10px rgba(0,0,0,.4);}
   .btn:hover{background:rgba(56,56,90,.95);}
   .btn.primary{background:linear-gradient(135deg,#F5DB99,#E8C46A);color:#1a1408;font-weight:900;}
-
-  /* 聊天與日誌 */
   .log-panel{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;max-height:calc(100vh - 32px);}
   .log-title{padding:10px 14px;font-weight:800;font-size:.8rem;color:var(--gold);border-bottom:1px solid var(--border);background:rgba(10,10,20,.4);letter-spacing:1px;}
   .log-list{flex:1;overflow-y:auto;padding:10px;font-size:.8rem;display:flex;flex-direction:column;gap:6px;}
   .log-item{padding:4px 0;border-bottom:1px dashed rgba(255,255,255,.05);color:#c8c2b4;}
   .log-item.money{color:var(--green);}
   .log-item.danger{color:var(--red);}
-  
   .chat-area{border-top:1px solid var(--border);display:flex;flex-direction:column;height:40%;}
   .chat-input-wrap{display:flex;padding:8px;background:rgba(10,10,20,.5);}
   .chat-input-wrap input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);color:#fff;outline:none;padding:8px 12px;border-radius:8px;font-size:.85rem;}
   .chat-input-wrap button{background:var(--gold);color:#000;padding:8px 16px;border-radius:8px;font-weight:800;margin-left:8px;}
   .msg .sender{font-weight:800;color:var(--gold);font-size:.75rem;margin-bottom:2px;}
-
-  /* Modal */
   .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
   .modal{background:linear-gradient(160deg,#1c1c38,#14142a);border:1px solid var(--gold);border-radius:20px;padding:28px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.8), 0 0 40px rgba(232,196,106,.2);animation:pop .3s cubic-bezier(.34,1.56,.64,1);}
   @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
@@ -131,13 +121,17 @@
       <label>你的名字</label>
       <input type="text" id="playerName" placeholder="輸入名字" maxlength="8">
     </div>
-    <button class="btn-main" onclick="createRoom()">➕ 建立新房間</button>
-    <div style="text-align:center; margin:16px 0; color:#8a8478; font-size:.8rem;">— 或者 —</div>
+    
+    <!-- 一鍵快速配對 -->
+    <button class="btn-main" onclick="quickMatch()">⚡ 快速配對（隨機加入）</button>
+    
+    <div style="text-align:center; margin:16px 0; color:#8a8478; font-size:.8rem;">— 或者用房號加入朋友 —</div>
+    
     <div class="field">
       <label>輸入 6 位房間碼</label>
       <input type="text" id="joinCode" placeholder="例如：A7K2P9" maxlength="6" style="text-transform:uppercase">
     </div>
-    <button class="btn-outline" onclick="joinRoom()">🔗 加入房間</button>
+    <button class="btn-outline" onclick="joinRoom()">🔗 加入指定房間</button>
   </div>
 
   <div class="setup-card hidden" id="lobby-wait" style="text-align:center;">
@@ -173,25 +167,21 @@
 
 <script>
 /* ========================================================
-   🔴 1. 填寫你嘅 Firebase 設定（必須修改！）
+   🔴 1. Firebase 設定
    ======================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSy...", // 換成你專案嘅 apiKey
+  apiKey: "AIzaSy...", // 👈 請確保呢度換成你專案嘅真實資料
   authDomain: "snowball-game-a66a8.firebaseapp.com",
-  databaseURL: "https://snowball-game-a66a8-default-rtdb.asia-southeast1.firebasedatabase.app", // 換成你嘅 databaseURL
+  databaseURL: "https://snowball-game-a66a8-default-rtdb.asia-southeast1.firebasedatabase.app", // 👈 確保有 databaseURL
   projectId: "snowball-game-a66a8",
   storageBucket: "snowball-game-a66a8.firebasestorage.app",
   messagingSenderId: "623618119221",
-  appId: "1:623618119221:web:897caed70af2beb2e8037c" // 換成你嘅 appId
+  appId: "1:623618119221:web:897caed70af2beb2e8037c"
 };
 
-// 初始化 Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ========================================================
-   遊戲常數與資料
-   ======================================================== */
 const COLORS = ['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C'];
 const EMOJIS = ['🐯','🦊','🐼','🦁','🐸','🐙'];
 
@@ -219,24 +209,13 @@ const BOARD = [
 ];
 
 const CHANCE_CARDS = [
-  {text:'股市大升！獲得 $3,000', fx:p=>p.cash+=3000},
-  {text:'稅務調查，交出現金 10%', fx:p=>p.cash-=Math.round(p.cash*0.1)},
-  {text:'打風維修，支付 $1,000', fx:p=>p.cash-=1000},
-  {text:'遺產繼承，獲得 $2,500', fx:p=>p.cash+=2500},
-  {text:'黑市交易獲利 $2,000', fx:p=>p.cash+=2000},
-  {text:'交通罰款，支付 $800', fx:p=>p.cash-=800},
+  {text:'股市大升！獲得 $3,000', fx:p=>p.cash+=3000}, {text:'稅務調查，交出現金 10%', fx:p=>p.cash-=Math.round(p.cash*0.1)},
+  {text:'打風維修，支付 $1,000', fx:p=>p.cash-=1000}, {text:'遺產繼承，獲得 $2,500', fx:p=>p.cash+=2500},
+  {text:'黑市交易獲利 $2,000', fx:p=>p.cash+=2000}, {text:'交通罰款，支付 $800', fx:p=>p.cash-=800},
   {text:'自由行帶動，獲得 $1,500', fx:p=>p.cash+=1500},
 ];
 
-/* ========================================================
-   全局狀態
-   ======================================================== */
-let myId = null;
-let roomCode = null;
-let roomRef = null;
-let localData = null;
-let myRole = 'player';
-let isRolling = false;
+let myId = null, roomCode = null, roomRef = null, localData = null, myRole = 'player', isRolling = false;
 
 /* ========================================================
    大廳邏輯
@@ -246,22 +225,53 @@ function getPlayerName() {
   return name || '無名氏';
 }
 
-function createRoom() {
+// ⚡ 快速配對
+function quickMatch() {
   const name = getPlayerName();
-  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  roomCode = code;
   myId = 'p_' + Date.now();
-  myRole = 'host';
   localStorage.setItem('snowball_id', myId);
   localStorage.setItem('snowball_name', name);
 
+  document.querySelector('.btn-main').innerText = '搜尋中...';
+
+  // 搜尋所有房間
+  db.ref('rooms').once('value').then(snapshot => {
+    let foundRoom = null;
+    snapshot.forEach(child => {
+      const data = child.val();
+      const playerCount = Object.keys(data.players || {}).length;
+      // 如果狀態係 waiting 而且人數少於 6
+      if(data.status === 'waiting' && playerCount < 6 && !foundRoom) {
+        foundRoom = child.key;
+      }
+    });
+
+    if(foundRoom) {
+      roomCode = foundRoom;
+      myRole = 'player';
+      roomRef = db.ref('rooms/' + roomCode);
+      joinExistingRoom(name);
+    } else {
+      // 冇房就自己開一個
+      createRoom(name);
+    }
+  }).catch(err => {
+    document.querySelector('.btn-main').innerText = '⚡ 快速配對（隨機加入）';
+    alert('連線錯誤：' + err.message);
+  });
+}
+
+function createRoom(name) {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  roomCode = code;
+  myRole = 'host';
   roomRef = db.ref('rooms/' + roomCode);
   
   roomRef.set({
     status: 'waiting',
     host: myId,
     players: {
-      [myId]: { name: name, color: COLORS[0], emoji: EMOJIS[0], cash: 5000, pos: 0, props: [], debts: [], bankrupt: 0 }
+      [myId]: { name: name, color: COLORS[0], emoji: EMOJIS[0], cash: 5000, pos: 0, props: [], debts: [], bankrupt: 0, credit:'B' }
     }
   }).then(() => {
     showWaitingRoom();
@@ -281,17 +291,32 @@ function joinRoom() {
   localStorage.setItem('snowball_name', name);
 
   roomRef = db.ref('rooms/' + roomCode);
-  
+  joinExistingRoom(name);
+}
+
+function joinExistingRoom(name) {
   roomRef.once('value').then(snapshot => {
     const data = snapshot.val();
-    if(!data) return alert('房間唔存在！');
-    if(data.status !== 'waiting') return alert('遊戲已經開始咗！');
+    if(!data) {
+      alert('房間唔存在！');
+      location.reload();
+      return;
+    }
+    if(data.status !== 'waiting') {
+      alert('遊戲已經開始咗！');
+      location.reload();
+      return;
+    }
     
     const currentPlayers = data.players || {};
     const numPlayers = Object.keys(currentPlayers).length;
-    if(numPlayers >= 6) return alert('房間已滿！');
+    if(numPlayers >= 6) {
+      alert('房間已滿！');
+      location.reload();
+      return;
+    }
 
-    const myData = { name: name, color: COLORS[numPlayers], emoji: EMOJIS[numPlayers], cash: 5000, pos: 0, props: [], debts: [], bankrupt: 0 };
+    const myData = { name: name, color: COLORS[numPlayers], emoji: EMOJIS[numPlayers], cash: 5000, pos: 0, props: [], debts: [], bankrupt: 0, credit:'B' };
     roomRef.child('players/' + myId).set(myData).then(() => {
       showWaitingRoom();
       listenToRoom();
@@ -306,11 +331,7 @@ function showWaitingRoom() {
   if(myRole !== 'host') document.getElementById('btnStart').classList.add('hidden');
 }
 
-/* ========================================================
-   監聽 Firebase (同步核心)
-   ======================================================== */
 function listenToRoom() {
-  // 監聽大廳等待
   roomRef.on('value', snapshot => {
     const data = snapshot.val();
     if(!data) return;
@@ -323,16 +344,13 @@ function listenToRoom() {
       }
     }
 
-    // 切換到遊戲畫面
     if(data.status === 'playing' && document.getElementById('game').classList.contains('hidden')) {
       document.getElementById('lobby').classList.add('hidden');
       document.getElementById('game').classList.remove('hidden');
       initChat();
     }
 
-    if(data.status === 'playing') {
-      renderAll();
-    }
+    if(data.status === 'playing') renderAll();
   });
 }
 
@@ -343,21 +361,12 @@ function startGameHost() {
 
   roomRef.update({
     status: 'playing',
-    gameState: {
-      currentId: pIds[0],
-      round: 1,
-      totalRounds: 8,
-      phase: 'roll',
-      dice1: null,
-      dice2: null,
-      owners: {},
-      rentBoost: 1
-    }
+    gameState: { currentId: pIds[0], round: 1, totalRounds: 8, phase: 'roll', dice1: null, dice2: null, owners: {}, rentBoost: 1 }
   });
 }
 
 /* ========================================================
-   聊天室
+   遊戲核心與 UI 渲染
    ======================================================== */
 function initChat() {
   roomRef.child('chat').limitToLast(50).on('child_added', snapshot => {
@@ -391,28 +400,15 @@ function sendChat() {
   input.value = '';
 }
 
-function addLog(text, type='') {
-  roomRef.child('logs').push({ text, type });
-}
+function addLog(text, type='') { roomRef.child('logs').push({ text, type }); }
 
-/* ========================================================
-   渲染畫面
-   ======================================================== */
 function getGridPos(i){
-  if(i===0) return {r:11,c:11};
-  if(i>=1&&i<=9) return {r:11,c:11-i};
-  if(i===10) return {r:11,c:1};
-  if(i>=11&&i<=19) return {r:11-(i-10),c:1};
-  if(i===20) return {r:1,c:1};
-  if(i>=21&&i<=29) return {r:1,c:1+(i-20)};
-  if(i===30) return {r:1,c:11};
-  if(i>=31&&i<=39) return {r:1+(i-30),c:11};
+  if(i===0) return {r:11,c:11}; if(i>=1&&i<=9) return {r:11,c:11-i}; if(i===10) return {r:11,c:1};
+  if(i>=11&&i<=19) return {r:11-(i-10),c:1}; if(i===20) return {r:1,c:1}; if(i>=21&&i<=29) return {r:1,c:1+(i-20)};
+  if(i===30) return {r:1,c:11}; if(i>=31&&i<=39) return {r:1+(i-30),c:11};
 }
 
-function renderAll() {
-  renderBoard();
-  renderPlayers();
-}
+function renderAll() { renderBoard(); renderPlayers(); }
 
 function renderBoard() {
   const boardEl = document.getElementById('board');
@@ -426,27 +422,19 @@ function renderBoard() {
     const p = getGridPos(i);
     const ownerId = gs.owners && gs.owners[i];
     const pawnsHere = Object.keys(localData.players).filter(pid => localData.players[pid].pos === i);
-
     let cls = 'cell';
-    if(cell.t==='start') cls+=' corner start';
-    else if(cell.t==='jail') cls+=' corner jail';
-    else if(cell.t==='free') cls+=' corner free';
-    else if(cell.t==='gojail') cls+=' corner gojail';
+    if(cell.t==='start') cls+=' corner start'; else if(cell.t==='jail') cls+=' corner jail';
+    else if(cell.t==='free') cls+=' corner free'; else if(cell.t==='gojail') cls+=' corner gojail';
     if(cell.tier) cls+=' tier-'+cell.tier;
 
     let inner = '';
     if(cell.t==='prop'){
       inner = `<div class="c-name">${cell.n}</div><div class="c-price">$${cell.price}</div>`;
-      if(ownerId && localData.players[ownerId]) {
-        inner += `<div class="c-owner" style="background:${localData.players[ownerId].color};color:${localData.players[ownerId].color}"></div>`;
-      }
+      if(ownerId && localData.players[ownerId]) inner += `<div class="c-owner" style="background:${localData.players[ownerId].color};color:${localData.players[ownerId].color}"></div>`;
     } else {
       inner = `<div class="c-icon">${cell.icon}</div><div class="c-label">${cell.n}</div>`;
     }
-
-    if(pawnsHere.length){
-      inner += `<div class="c-pawns">${pawnsHere.map(pid => `<div class="pawn" style="background:${localData.players[pid].color}"></div>`).join('')}</div>`;
-    }
+    if(pawnsHere.length) inner += `<div class="c-pawns">${pawnsHere.map(pid => `<div class="pawn" style="background:${localData.players[pid].color}"></div>`).join('')}</div>`;
     html += `<div class="${cls}" style="grid-row:${p.r};grid-column:${p.c}" onclick="showCellInfo(${i})">${inner}</div>`;
   });
 
@@ -457,10 +445,7 @@ function renderBoard() {
   html += `<div class="center-panel">
     <div style="font-size:.8rem;color:#8a8478">第 <b>${gs.round}</b> / ${gs.totalRounds} 回合</div>
     <div class="turn-player" style="color:${curP.color}">${curP.emoji} ${curP.name}</div>
-    <div class="dice-row">
-      <div class="${d1Class}" id="die1">${gs.dice1 || '?'}</div>
-      <div class="${d2Class}" id="die2">${gs.dice2 || '?'}</div>
-    </div>
+    <div class="dice-row"><div class="${d1Class}">${gs.dice1 || '?'}</div><div class="${d2Class}">${gs.dice2 || '?'}</div></div>
     <div class="action-btns">
       <button class="btn primary" onclick="doRoll()" ${isMyTurn && gs.phase==='roll' ? '' : 'disabled'}>🎲 擲骰</button>
       <button class="btn" onclick="endTurn()" ${isMyTurn && gs.phase==='action' ? '' : 'disabled'}>✅ 結束回合</button>
@@ -481,7 +466,6 @@ function renderPlayers() {
     const p = localData.players[pid];
     const isActive = pid === localData.gameState.currentId;
     const debt = (p.debts || []).reduce((s,d)=>s+d.principal,0);
-    
     html += `<div class="p-card ${isActive?'active':''}" style="--pcolor:${p.color}">
       <div class="p-head"><div style="font-size:1.4rem">${p.emoji}</div><div class="p-name">${p.name} ${pid===myId?'(你)':''}</div></div>
       <div class="p-cash ${p.cash<0?'neg':''}">$${p.cash.toLocaleString()}</div>
@@ -495,69 +479,45 @@ function renderPlayers() {
   panel.innerHTML = html;
 }
 
-/* ========================================================
-   遊戲核心動作
-   ======================================================== */
 function doRoll() {
   const gs = localData.gameState;
   if(gs.currentId !== myId || gs.phase !== 'roll') return;
-  
-  isRolling = true;
-  renderBoard(); // 觸發動畫
+  isRolling = true; renderBoard();
   
   setTimeout(() => {
     isRolling = false;
-    const d1 = Math.ceil(Math.random()*6);
-    const d2 = Math.ceil(Math.random()*6);
-    const steps = d1 + d2;
-    
+    const d1 = Math.ceil(Math.random()*6), d2 = Math.ceil(Math.random()*6), steps = d1 + d2;
     const p = localData.players[myId];
-    let newPos = (p.pos + steps) % 40;
-    let newCash = p.cash;
-    
+    let newPos = (p.pos + steps) % 40, newCash = p.cash;
     if(p.pos + steps >= 40) newCash += 2000;
 
     const updates = {};
-    updates[`gameState/dice1`] = d1;
-    updates[`gameState/dice2`] = d2;
-    updates[`players/${myId}/pos`] = newPos;
-    updates[`players/${myId}/cash`] = newCash;
+    updates[`gameState/dice1`] = d1; updates[`gameState/dice2`] = d2;
+    updates[`players/${myId}/pos`] = newPos; updates[`players/${myId}/cash`] = newCash;
     updates[`gameState/phase`] = 'action';
 
-    roomRef.update(updates).then(() => {
-      handleLanding(newPos);
-    });
+    roomRef.update(updates).then(() => handleLanding(newPos));
   }, 600);
 }
 
 function handleLanding(pos) {
-  const cell = BOARD[pos];
-  const p = localData.players[myId];
+  const cell = BOARD[pos], p = localData.players[myId];
   const ownerId = localData.gameState.owners && localData.gameState.owners[pos];
 
   if (cell.t === 'prop') {
     if (!ownerId && p.cash >= cell.price) {
-      showModal(`
-        <h3>🏠 購買 ${cell.n}</h3>
-        <p>地價：<b style="color:var(--gold)">$${cell.price}</b><br>租金：<b>$${cell.rent}</b></p>
-        <button class="btn primary" onclick="buyProperty(${pos})">買！</button>
-        <button class="btn" onclick="closeModal()">放棄</button>
-      `);
+      showModal(`<h3>🏠 購買 ${cell.n}</h3><p>地價：<b style="color:var(--gold)">$${cell.price}</b><br>租金：<b>$${cell.rent}</b></p>
+        <button class="btn primary" onclick="buyProperty(${pos})">買！</button><button class="btn" onclick="closeModal()">放棄</button>`);
     } else if (ownerId && ownerId !== myId) {
-      const ownerP = localData.players[ownerId];
-      const rent = cell.rent;
+      const ownerP = localData.players[ownerId], rent = cell.rent;
       if(confirm(`踩中 ${ownerP.name} 嘅 ${cell.n}，要交租 $${rent}`)) {
-        const updates = {};
-        updates[`players/${myId}/cash`] = p.cash - rent;
-        updates[`players/${ownerId}/cash`] = ownerP.cash + rent;
-        roomRef.update(updates);
+        roomRef.update({ [`players/${myId}/cash`]: p.cash - rent, [`players/${ownerId}/cash`]: ownerP.cash + rent });
         addLog(`💸 ${p.name} 向 ${ownerP.name} 交租 $${rent}`, 'danger');
       }
     }
   } else if (cell.t === 'chance') {
     const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
-    let newCash = p.cash;
-    card.fx({ get cash(){return newCash}, set cash(v){newCash=v} });
+    let newCash = p.cash; card.fx({ get cash(){return newCash}, set cash(v){newCash=v} });
     roomRef.update({ [`players/${myId}/cash`]: newCash });
     showModal(`<h3>❓ 機會</h3><p>${card.text}</p><button class="btn" onclick="closeModal()">確定</button>`);
     addLog(`❓ ${p.name} 抽中：${card.text}`, 'money');
@@ -566,25 +526,18 @@ function handleLanding(pos) {
     roomRef.update({ [`players/${myId}/cash`]: p.cash - tax });
     addLog(`🏛️ ${p.name} 交稅 $${tax}`, 'danger');
   } else if (cell.t === 'gojail') {
-    roomRef.update({ [`players/${myId}/pos`]: 10 });
-    addLog(`👮 ${p.name} 被送入監獄！`, 'danger');
+    roomRef.update({ [`players/${myId}/pos`]: 10 }); addLog(`👮 ${p.name} 被送入監獄！`, 'danger');
   }
 }
 
 function buyProperty(pos) {
-  const cell = BOARD[pos];
-  const p = localData.players[myId];
+  const cell = BOARD[pos], p = localData.players[myId];
   if(p.cash < cell.price) return closeModal();
-  
-  const updates = {};
-  updates[`gameState/owners/${pos}`] = myId;
-  updates[`players/${myId}/props`] = [...(p.props||[]), pos];
-  updates[`players/${myId}/cash`] = p.cash - cell.price;
-  
-  roomRef.update(updates).then(() => {
-    addLog(`🏠 ${p.name} 買入 ${cell.n}`, 'money');
-    closeModal();
-  });
+  roomRef.update({
+    [`gameState/owners/${pos}`]: myId,
+    [`players/${myId}/props`]: [...(p.props||[]), pos],
+    [`players/${myId}/cash`]: p.cash - cell.price
+  }).then(() => { addLog(`🏠 ${p.name} 買入 ${cell.n}`, 'money'); closeModal(); });
 }
 
 function endTurn() {
@@ -592,31 +545,23 @@ function endTurn() {
   if(gs.currentId !== myId || gs.phase !== 'action') return;
   
   const pIds = Object.keys(localData.players);
-  const currentIndex = pIds.indexOf(myId);
-  const nextIndex = (currentIndex + 1) % pIds.length;
+  const nextIndex = (pIds.indexOf(myId) + 1) % pIds.length;
   
   const updates = {};
   updates['gameState/currentId'] = pIds[nextIndex];
   updates['gameState/phase'] = 'roll';
-  updates['gameState/dice1'] = null;
-  updates['gameState/dice2'] = null;
+  updates['gameState/dice1'] = null; updates['gameState/dice2'] = null;
 
   if(nextIndex === 0) {
     updates['gameState/round'] = gs.round + 1;
-    // 結算利息
     pIds.forEach(pid => {
       const pl = localData.players[pid];
       if(pl.debts && pl.debts.length > 0) {
-        let newDebts = [];
-        pl.debts.forEach(d => {
-          d.principal += Math.round(d.principal * d.rate);
-          newDebts.push(d);
-        });
+        let newDebts = pl.debts.map(d => { d.principal += Math.round(d.principal * d.rate); return d; });
         updates[`players/${pid}/debts`] = newDebts;
       }
     });
   }
-
   roomRef.update(updates);
 }
 
@@ -627,40 +572,17 @@ function openLoanModal() {
   const p = localData.players[myId];
   const others = Object.keys(localData.players).filter(id => id !== myId);
   const lenderOpts = others.map(id => `<option value="${id}">${localData.players[id].name}</option>`).join('');
-  
-  showModal(`
-    <h3>💸 借款</h3>
-    <p>向銀行（5%息）或其他玩家（自訂息）借錢。每回合複利結算。</p>
-    <div class="loan-row">
-      <label>放貸方</label>
-      <select id="loanLender">
-        <option value="bank">🏦 銀行</option>
-        ${lenderOpts}
-      </select>
-    </div>
-    <div class="loan-row">
-      <label>借款額</label>
-      <input type="number" id="loanAmount" value="2000" step="500">
-    </div>
-    <div class="loan-row">
-      <label>每回合息</label>
-      <select id="loanRate">
-        <option value="0.05">5%</option>
-        <option value="0.1">10%</option>
-        <option value="0.2">20%</option>
-        <option value="0.3">30%（貴利）</option>
-      </select>
-    </div>
-    <button class="btn primary" onclick="confirmLoan()">確認</button>
-    <button class="btn" onclick="closeModal()">取消</button>
-  `);
+  showModal(`<h3>💸 借款</h3><p>向銀行（5%息）或其他玩家（自訂息）借錢。每回合複利結算。</p>
+    <div class="loan-row"><label>放貸方</label><select id="loanLender"><option value="bank">🏦 銀行</option>${lenderOpts}</select></div>
+    <div class="loan-row"><label>借款額</label><input type="number" id="loanAmount" value="2000" step="500"></div>
+    <div class="loan-row"><label>每回合息</label><select id="loanRate"><option value="0.05">5%</option><option value="0.1">10%</option><option value="0.2">20%</option><option value="0.3">30%（貴利）</option></select></div>
+    <button class="btn primary" onclick="confirmLoan()">確認</button><button class="btn" onclick="closeModal()">取消</button>`);
 }
 
 function confirmLoan() {
   const lenderVal = document.getElementById('loanLender').value;
   const amount = +document.getElementById('loanAmount').value;
   const rate = +document.getElementById('loanRate').value;
-  
   const p = localData.players[myId];
   if(amount < 500) return alert('最少借 $500');
 
@@ -680,53 +602,35 @@ function confirmLoan() {
     updates[`players/${myId}/debts`] = [...(p.debts||[]), newDebt];
     addLog(`💸 ${p.name} 向 ${lenderP.name} 借 $${amount} (${rate*100}%息)`, 'money');
   }
-  
-  roomRef.update(updates);
-  closeModal();
+  roomRef.update(updates); closeModal();
 }
 
 function openRepayModal() {
   const p = localData.players[myId];
   if(!p.debts || p.debts.length === 0) return alert('你冇債務喎！');
-  
   const opts = p.debts.map((d, i) => {
     const lenderName = d.lender === 'bank' ? '銀行' : localData.players[d.lender].name;
     return `<option value="${i}">欠 ${lenderName} $${d.principal}</option>`;
   }).join('');
-
-  showModal(`
-    <h3>💳 還款</h3>
-    <div class="loan-row">
-      <label>選擇債務</label>
-      <select id="repayIdx">${opts}</select>
-    </div>
-    <button class="btn primary" onclick="confirmRepay()">還清</button>
-    <button class="btn" onclick="closeModal()">取消</button>
-  `);
+  showModal(`<h3>💳 還款</h3><div class="loan-row"><label>選擇債務</label><select id="repayIdx">${opts}</select></div>
+    <button class="btn primary" onclick="confirmRepay()">還清</button><button class="btn" onclick="closeModal()">取消</button>`);
 }
 
 function confirmRepay() {
   const idx = +document.getElementById('repayIdx').value;
-  const p = localData.players[myId];
-  const d = p.debts[idx];
-  
+  const p = localData.players[myId], d = p.debts[idx];
   if(p.cash < d.principal) return alert(`現金不足！需 $${d.principal}`);
 
   const updates = {};
   updates[`players/${myId}/cash`] = p.cash - d.principal;
-  const newDebts = [...p.debts];
-  newDebts.splice(idx, 1);
+  const newDebts = [...p.debts]; newDebts.splice(idx, 1);
   updates[`players/${myId}/debts`] = newDebts;
 
   if(d.lender !== 'bank') {
     updates[`players/${d.lender}/cash`] = localData.players[d.lender].cash + d.principal;
     addLog(`💳 ${p.name} 還清咗 ${localData.players[d.lender].name} 嘅錢`, 'money');
-  } else {
-    addLog(`💳 ${p.name} 還清咗銀行貸款`, 'money');
-  }
-
-  roomRef.update(updates);
-  closeModal();
+  } else { addLog(`💳 ${p.name} 還清咗銀行貸款`, 'money'); }
+  roomRef.update(updates); closeModal();
 }
 
 /* ========================================================
@@ -737,26 +641,14 @@ function showCellInfo(pos) {
   if(cell.t !== 'prop') return;
   const ownerId = localData.gameState.owners && localData.gameState.owners[pos];
   const ownerName = ownerId ? localData.players[ownerId].name : '無主';
-  showModal(`
-    <h3>${cell.n}</h3>
-    <p>地價：$${cell.price}<br>租金：$${cell.rent}<br>業主：<b style="color:gold">${ownerName}</b></p>
-    <button class="btn" onclick="closeModal()">關閉</button>
-  `);
+  showModal(`<h3>${cell.n}</h3><p>地價：$${cell.price}<br>租金：$${cell.rent}<br>業主：<b style="color:gold">${ownerName}</b></p><button class="btn" onclick="closeModal()">關閉</button>`);
 }
-
 function showModal(html) {
   closeModal();
-  const mask = document.createElement('div');
-  mask.className = 'modal-mask';
-  mask.id = 'modalMask';
-  mask.innerHTML = `<div class="modal">${html}</div>`;
-  document.body.appendChild(mask);
+  const mask = document.createElement('div'); mask.className = 'modal-mask'; mask.id = 'modalMask';
+  mask.innerHTML = `<div class="modal">${html}</div>`; document.body.appendChild(mask);
 }
-
-function closeModal() {
-  const m = document.getElementById('modalMask');
-  if(m) m.remove();
-}
+function closeModal() { const m = document.getElementById('modalMask'); if(m) m.remove(); }
 </script>
 </body>
 </html>
