@@ -8,7 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
 <style>
-  /* 樣式保持不變，節省篇幅，請保留你原有嘅 CSS */
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   :root{
     --gold:#E8C46A; --gold-2:#B8912E; --gold-glow:rgba(232,196,106,.45);
@@ -202,10 +201,10 @@
 
 <script>
 /* ========================================================
-   🔴 1. Firebase 設定 (請確保呢度有你嘅真實資料)
+   🔴 已幫你填好嘅 Firebase 設定
    ======================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSy...", // 換成你嘅 apiKey
+  apiKey: "AIzaSyCkk64youdDu9TpEN75BGbe22NirsXqTU",
   authDomain: "snowball-game-a66a8.firebaseapp.com",
   databaseURL: "https://snowball-game-a66a8-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "snowball-game-a66a8",
@@ -268,7 +267,6 @@ const CHANCE_CARDS = [
   {text:'🚨 大耳窿掃蕩！所有負債利息加 10%', type:'event'},
 ];
 
-// 為咗避免存入 Firebase，我哋將原本嘅 check 函數拆出嚟
 const MISSIONS = [
   {text:'擁有至少 5 塊地', check:p=>p.props.length>=5, score:10},
   {text:'成為全場現金最多嘅人', check:(p, all)=>Object.values(all).every(o=>o.id===p.id || o.cash < p.cash), score:10},
@@ -297,23 +295,17 @@ function getPlayerName() {
   return name;
 }
 
-// 🔴 修復重點：只存 missionIndex，唔存函數！
 function createPlayerObj(id, name, color, emoji, isBot) {
   return {
     id: id, isBot: isBot, name: name, color: color, emoji: emoji, skillName: SKILLS[emoji].name,
     cash: 50000, pos: 0, props: [], debts: [], jailTurns: 0,
-    missionIndex: Math.floor(Math.random() * MISSIONS.length), // 👈 改為儲存 Index
+    missionIndex: Math.floor(Math.random() * MISSIONS.length),
     bankrupt: false, pandasSaved: false, movePenalty: 0
   };
 }
 
 function startSoloGame() {
   const name = getPlayerName(); if(!name) return;
-  
-  if(firebaseConfig.apiKey === "AIzaSy...") {
-    return alert("❌ 錯誤：你未填寫真實嘅 Firebase API Key！請去 Firebase 控制台 Copy 返。");
-  }
-
   myName = name; myId = 'p_' + Date.now(); myRole = 'host';
   localStorage.setItem('snowball_id', myId); localStorage.setItem('snowball_name', myName);
   
