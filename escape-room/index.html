@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>賽博密室：代碼 2077</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    
+    body {
+        background-color: #050510; color: #fff; font-family: 'Orbitron', 'PingFang HK', sans-serif;
+        height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+        touch-action: none;
+    }
+
+    /* --- 返回大廳按鈕 --- */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 99999;
+        padding: 8px 16px; background: rgba(10, 10, 20, 0.85);
+        color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px;
+        text-decoration: none; font-weight: bold; font-size: 14px;
+        box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); transition: all 0.2s;
+        backdrop-filter: blur(5px);
+    }
+    .back-btn:hover { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
+
+    /* 頂部狀態欄 */
+    #hud {
+        position: absolute; top: 0; left: 0; width: 100%; padding: 15px 20px;
+        display: flex; justify-content: space-between; align-items: flex-start;
+        z-index: 10; pointer-events: none;
+    }
+    #timer {
+        font-size: 24px; font-weight: 900; color: #ff4757;
+        text-shadow: 0 0 15px #ff4757; margin-left: auto;
+        letter-spacing: 2px;
+    }
+    #inventory-btn {
+        pointer-events: auto; cursor: pointer;
+        background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3;
+        padding: 8px 15px; border-radius: 8px; font-weight: bold; color: #00d2d3;
+        display: flex; align-items: center; gap: 5px; transition: all 0.2s;
+    }
+    #inventory-btn:hover { background: rgba(0, 210, 211, 0.3); }
+
+    /* 遊戲場景 */
+    #room {
+        flex: 1; position: relative; overflow: hidden;
+        background: 
+            radial-gradient(circle at 50% 30%, rgba(20, 20, 50, 1), rgba(5, 5, 10, 1)),
+            linear-gradient(rgba(0, 210, 211, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 210, 211, 0.05) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px, 40px 40px;
+    }
+    
+    /* 房間中央嘅雷射網格線 (背景裝飾) */
+    .laser-grid {
+        position: absolute; inset: 0;
+        background: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255, 71, 87, 0.05) 20px, rgba(255, 71, 87, 0.05) 21px);
+        animation: scan 10s linear infinite; z-index: 0;
+    }
+    @keyframes scan { 0% { background-position: 0 0; } 100% { background-position: 0 100px; } }
+
+    /* 可點擊物件 */
+    .interactable {
+        position: absolute; cursor: pointer; z-index: 2;
+        transition: transform 0.2s, filter 0.2s;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .interactable:hover {
+        filter: drop-shadow(0 0 15px #00d2d3) brightness(1.2);
+        transform: scale(1.05);
+    }
+    .interactable:active { transform: scale(0.95); }
+
+    /* 1. 大門 (右側) */
+    #door {
+        top: 15%; right: 5%; width: 25%; height: 60%;
+        background: linear-gradient(to bottom, #1a1a2e, #0a0a15);
+        border: 4px solid #333; border-radius: 10px;
+        box-shadow: inset 0 0 20px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8);
+    }
+    #door-lock {
+        width: 60px; height: 80px; background: #111; border: 2px solid #ff4757;
+        border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-shadow: 0 0 15px #ff4757; margin-bottom: 20px;
+    }
+    #door-lock .dot { width: 8px; height: 8px; background: #ff4757; border-radius: 50%; margin: 2px; }
+    #door-text { color: #555; font-weight: bold; letter-spacing: 5px; }
+
+    /* 2. 書枱 (左下) */
+    #desk {
+        bottom: 5%; left: 5%; width: 35%; height: 25%;
+        background: linear-gradient(to bottom, #2c3e50, #1a252f);
+        border-top: 5px solid #00d2d3; border-radius: 5px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+
+    /* 3. 電腦螢幕 (書枱上) */
+    #computer {
+        bottom: 30%; left: 10%; width: 20%; height: 20%;
+        background: #0a0a1a; border: 3px solid #c084fc; border-radius: 5px;
+        box-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+        font-size: 12px; color: #c084fc; text-align: center;
+    }
+    #computer::after {
+        content: ''; position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%);
+        width: 40px; height: 15px; background: #333;
+    }
+
+    /* 4. 壁畫 (左上牆) */
+    #painting {
+        top: 15%; left: 5%; width: 20%; height: 25%;
+        border: 6px solid #555; background: #111;
+        box-shadow: 0 0 15px rgba(255, 211, 42, 0.2);
+    }
+
+    /* 5. 垃圾桶 (右下) */
+    #trash {
+        bottom: 5%; right: 35%; width: 10%; height: 15%;
+        background: #222; border-radius: 0 0 10px 10px;
+        border: 2px solid #444;
+    }
+
+    /* 對話/提示框 */
+    #dialogue {
+        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8); border: 1px solid #00d2d3; padding: 10px 20px;
+        border-radius: 20px; color: #fff; font-size: 14px; opacity: 0; transition: opacity 0.3s;
+        pointer-events: none; z-index: 10; text-align: center; backdrop-filter: blur(5px);
+    }
+
+    /* 全螢幕彈窗 (解謎/背包) */
+    .modal-overlay {
+        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
+        z-index: 20; padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .glass-panel {
+        background: linear-gradient(135deg, rgba(30, 30, 50, 0.9), rgba(10, 10, 20, 0.95));
+        border: 2px solid rgba(0, 210, 211, 0.5); border-radius: 15px;
+        padding: 30px; width: 100%; max-width: 400px; text-align: center;
+        box-shadow: 0 0 40px rgba(0, 210, 211, 0.2);
+        position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .glass-panel h2 { color: #00d2d3; margin-bottom: 15px; font-size: 22px; text-shadow: 0 0 10px #00d2d3; }
+    .glass-panel p { color: #ccc; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    
+    .close-btn {
+        position: absolute; top: 10px; right: 15px; color: #ff4757; font-size: 24px;
+        cursor: pointer; font-weight: bold; transition: transform 0.2s;
+    }
+    .close-btn:hover { transform: scale(1.2); }
+
+    /* 背包 */
+    .inventory-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px;
+    }
+    .inv-slot {
+        aspect-ratio: 1; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .inv-slot.filled { border-color: #ffd32a; box-shadow: 0 0 10px rgba(255, 211, 42, 0.3); }
+
+    /* 密碼鎖 */
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .key {
+        padding: 15px; background: #111; border: 1px solid #555; border-radius: 8px;
+        font-size: 20px; font-weight: bold; cursor: pointer; color: #fff;
+    }
+    .key:active { background: #00d2d3; color: #000; }
+    #password-display {
+        font-size: 32px; letter-spacing: 10px; color: #00d2d3; margin-bottom: 20px;
+        background: #000; padding: 10px; border-radius: 8px; border: 2px solid #333; min-height: 60px;
+    }
+
+    /* 結算畫面 */
+    #end-screen {
+        position: absolute; inset: 0; background: #000; z-index: 50;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    #end-screen h1 { font-size: 40px; text-shadow: 0 0 30px #00d2d3; margin-bottom: 20px; }
+    #end-screen button {
+        padding: 15px 40px; background: #00d2d3; color: #000; border: none;
+        border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px;
+    }
+
+</style>
+</head>
+<body>
+
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <div id="hud">
+        <div id="inventory-btn" onclick="toggleModal('inventory-modal')">🎒 背包</div>
+        <div id="timer">01:00</div>
+    </div>
+
+    <div id="room">
+        <div class="laser-grid"></div>
+
+        <!-- 大門 -->
+        <div class="interactable" id="door" onclick="openModal('door-modal')">
+            <div id="door-lock">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div id="door-text">LOCKED</div>
+        </div>
+
+        <!-- 書枱 -->
+        <div class="interactable" id="desk" onclick="inspectDesk()"></div>
+
+        <!-- 電腦 -->
+        <div class="interactable" id="computer" onclick="showDialogue('電腦螢幕亮著，顯示：系統已鎖定，需要大門密碼。')">
+            <span style="font-size: 24px;">💻</span>
+        </div>
+
+        <!-- 壁畫 -->
+        <div class="interactable" id="painting" onclick="inspectPainting()">
+            <span style="font-size: 30px;">🖼️</span>
+        </div>
+
+        <!-- 垃圾桶 -->
+        <div class="interactable" id="trash" onclick="inspectTrash()">
+            <span style="font-size: 24px;">🗑️</span>
+        </div>
+    </div>
+
+    <div id="dialogue">系統提示</div>
+
+    <!-- 背包彈窗 -->
+    <div id="inventory-modal" class="modal-overlay">
+        <div class="glass-panel">
+            <div class="close-btn" onclick="closeModal('inventory-modal')">×</div>
+            <h2>🎒 隨身背包</h2>
+            <div class="inventory-grid" id="inventory-grid">
+                <div class="inv-slot" id="slot-0"></div>
+                <div class="inv-slot" id="slot-1"></div>
+                <div class="inv-slot" id="slot-2"></div>
+                <div class="inv-slot" id="slot-3"></div>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px;">點擊背包物品以使用</p>
+        </div>
+    </div>
+
+    <!-- 書枱線索彈窗 -->
+    <div id="desk-modal" class="modal-overlay">
+        <div class="glass-panel">
+            <div class="close-btn" onclick="closeModal('desk-modal')">×</div>
+            <h2>🔍 凌亂的書枱</h2>
+            <p id="desk-text">書枱上只有一堆無用的電子零件。抽屜似乎被鎖住了。</p>
+            <button id="desk-action-btn" onclick="deskAction()" style="display:none; padding:10px 20px; background:#00d2d3; color:#000; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">使用鑰匙</button>
+        </div>
+    </div>
+
+    <!-- 壁畫線索彈窗 -->
+    <div id="painting-modal" class="modal-overlay">
+        <div class="glass-panel">
+            <div class="close-btn" onclick="closeModal('painting-modal')">×</div>
+            <h2>🖼️ 賽博壁畫</h2>
+            <p>壁畫上畫住一個舊時代嘅日曆，上面用紅色馬克筆圈住咗一個年份：<br><br><span style="font-size: 32px; color: #ffd32a; font-weight: bold;">2000</span></p>
+        </div>
+    </div>
+
+    <!-- 大門密碼鎖彈窗 -->
+    <div id="door-modal" class="modal-overlay">
+        <div class="glass-panel">
+            <div class="close-btn" onclick="closeModal('door-modal')">×</div>
+            <h2>🔐 終極防盜門</h2>
+            <div id="password-display"></div>
+            <div class="keypad">
+                <div class="key" onclick="pressKey('1')">1</div>
+                <div class="key" onclick="pressKey('2')">2</div>
+                <div class="key" onclick="pressKey('3')">3</div>
+                <div class="key" onclick="pressKey('4')">4</div>
+                <div class="key" onclick="pressKey('5')">5</div>
+                <div class="key" onclick="pressKey('6')">6</div>
+                <div class="key" onclick="pressKey('7')">7</div>
+                <div class="key" onclick="pressKey('8')">8</div>
+                <div class="key" onclick="pressKey('9')">9</div>
+                <div class="key" onclick="pressKey('C')" style="color: #ff4757;">C</div>
+                <div class="key" onclick="pressKey('0')">0</div>
+                <div class="key" onclick="pressKey('E')" style="color: #2ed573;">E</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="end-screen">
+        <h1>🎉 逃脫成功！</h1>
+        <p style="color: #aaa; font-size: 18px;">你成功破解咗密室密碼！</p>
+        <button onclick="location.reload()">再玩一次</button>
+    </div>
+
+<script>
+    // --- 遊戲狀態 ---
+    let timeLeft = 60;
+    let inventory = [];
+    let hasKey = false;
+    let hasPaper = false;
+    let password = "";
+    let timerInterval;
+    let gameActive = true;
+
+    // 音效系統
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        
+        if (type === 'click') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        } else if (type === 'pickup') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        } else if (type === 'unlock') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'error') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'win') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+            osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+        }
+    }
+
+    // UI 控制
+    function openModal(id) {
+        playSound('click');
+        closeAllModals();
+        document.getElementById(id).classList.add('active');
+        if (id === 'door-modal') { password = ""; updatePasswordDisplay(); }
+    }
+
+    function closeModal(id) {
+        playSound('click');
+        document.getElementById(id).classList.remove('active');
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
+    }
+
+    function toggleModal(id) {
+        if (document.getElementById(id).classList.contains('active')) closeModal(id);
+        else openModal(id);
+    }
+
+    function showDialogue(text) {
+        const d = document.getElementById('dialogue');
+        d.innerText = text;
+        d.style.opacity = 1;
+        setTimeout(() => { d.style.opacity = 0; }, 3000);
+    }
+
+    // 計時器
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            if (!gameActive) return;
+            timeLeft--;
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+            if (timeLeft <= 10) document.getElementById('timer').style.color = '#ff4757';
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                gameActive = false;
+                showDialogue('氧氣耗盡！你永遠留在密室了...');
+                setTimeout(() => { location.reload(); }, 3000);
+            }
+        }, 1000);
+    }
+
+    // 更新背包 UI
+    function updateInventory() {
+        for (let i = 0; i < 4; i++) {
+            let slot = document.getElementById(`slot-${i}`);
+            slot.innerHTML = '';
+            slot.classList.remove('filled');
+            slot.onclick = null;
+        }
+        inventory.forEach((item, index) => {
+            let slot = document.getElementById(`slot-${index}`);
+            slot.innerHTML = item.emoji;
+            slot.classList.add('filled');
+            slot.title = item.name;
+            slot.onclick = () => useItem(item.id);
+        });
+    }
+
+    function addItem(id, name, emoji) {
+        inventory.push({ id, name, emoji });
+        updateInventory();
+        playSound('pickup');
+        showDialogue(`獲得物品：${name}`);
+    }
+
+    // --- 物件互動邏輯 ---
+
+    // 1. 書枱
+    function inspectDesk() {
+        openModal('desk-modal');
+        let text = document.getElementById('desk-text');
+        let btn = document.getElementById('desk-action-btn');
+        
+        if (hasPaper) {
+            text.innerHTML = "抽屜已經打開，入面空空如也。";
+            btn.style.display = 'none';
+        } else {
+            text.innerHTML = "書枱上只有一堆無用的電子零件。<br>下面有一個鎖住嘅抽屜。";
+            if (hasKey) {
+                btn.style.display = 'inline-block';
+                btn.innerText = "使用生鏽鑰匙開鎖";
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+    }
+
+    function deskAction() {
+        if (!hasKey || hasPaper) return;
+        playSound('unlock');
+        hasPaper = true;
+        // 移除鎖匙
+        inventory = inventory.filter(item => item.id !== 'key');
+        hasKey = false;
+        updateInventory();
+        // 加入紙條
+        addItem('paper', '密碼紙條', '📝');
+        
+        document.getElementById('desk-text').innerHTML = "你用鑰匙打開抽屜，發現一張紙條！<br><br><span style='color:#00d2d3;'>紙條上寫住：『年份 + 77』</span>";
+        document.getElementById('desk-action-btn').style.display = 'none';
+    }
+
+    // 2. 壁畫
+    function inspectPainting() {
+        openModal('painting-modal');
+    }
+
+    // 3. 垃圾桶
+    function inspectTrash() {
+        if (hasKey) {
+            showDialogue('垃圾桶入面只有一堆垃圾。');
+        } else {
+            hasKey = true;
+            addItem('key', '生鏽鑰匙', '🔑');
+            showDialogue('你在垃圾桶底部摸到一條生鏽的鑰匙！');
+        }
+    }
+
+    // 4. 電腦
+    function inspectComputer() {
+        showDialogue('電腦螢幕顯示：請在大門輸入 4 位數字密碼。');
+    }
+
+    // 5. 使用物品
+    function useItem(id) {
+        closeAllModals();
+        if (id === 'paper') {
+            showDialogue('紙條上寫住：『年份 + 77』');
+        } else if (id === 'key') {
+            showDialogue('你要用呢條鑰匙打開書枱嘅抽屜。');
+        }
+    }
+
+    // 6. 密碼鎖
+    function pressKey(key) {
+        playSound('click');
+        if (key === 'C') {
+            password = "";
+        } else if (key === 'E') {
+            if (password === '2077') {
+                unlockDoor();
+                return;
+            } else {
+                playSound('error');
+                password = "";
+                showDialogue('❌ 密碼錯誤！大門發出警告聲。');
+            }
+        } else {
+            if (password.length < 4) password += key;
+        }
+        updatePasswordDisplay();
+    }
+
+    function updatePasswordDisplay() {
+        let display = password.padEnd(4, '-');
+        document.getElementById('password-display').innerText = display;
+    }
+
+    function unlockDoor() {
+        playSound('win');
+        gameActive = false;
+        clearInterval(timerInterval);
+        document.getElementById('door-modal').classList.remove('active');
+        document.getElementById('end-screen').style.display = 'flex';
+    }
+
+    // 初始化
+    window.onload = () => {
+        startTimer();
+        updateInventory();
+    };
+
+</script>
+</body>
+</html>
