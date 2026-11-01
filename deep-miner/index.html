@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>深淵礦工：貪婪與恐懼</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+    body {
+        margin: 0; padding: 0; background-color: #050505; color: #fff;
+        font-family: 'Orbitron', 'PingFang HK', sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        height: 100dvh; height: 100vh; overflow: hidden; touch-action: none; user-select: none;
+    }
+
+    /* --- 全局返回大廳按鈕 --- */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 99999;
+        padding: 8px 16px; background: rgba(5, 5, 16, 0.85);
+        color: #ffd32a; border: 2px solid #ffd32a; border-radius: 8px;
+        text-decoration: none; font-weight: bold; font-size: 14px;
+        box-shadow: 0 0 10px rgba(255, 211, 42, 0.5); transition: all 0.2s;
+    }
+    .back-btn:hover { background: #ffd32a; color: #000; box-shadow: 0 0 20px #ffd32a; }
+
+    #game-container { position: relative; width: 100%; max-width: 600px; display: flex; flex-direction: column; height: 100%; box-shadow: 0 0 50px rgba(0,0,0,1); }
+    
+    /* 頂部狀態欄 */
+    #hud {
+        display: flex; justify-content: space-between; padding: 8px 10px;
+        background: rgba(10,10,10,0.95); border-bottom: 2px solid #333; z-index: 5;
+        font-size: 11px; font-weight: bold; align-items: center;
+    }
+    #hud div { display: flex; align-items: center; gap: 4px; flex-direction: column; }
+    .bar-bg { width: 50px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 2px; }
+    .hp-fill { height: 100%; background: #ff4757; width: 100%; transition: width 0.2s; }
+    .en-fill { height: 100%; background: #00d2d3; width: 100%; transition: width 0.2s; }
+    #depth-text { color: #ffd32a; font-size: 16px; text-shadow: 0 0 10px #ffd32a; }
+    #record-text { font-size: 9px; color: #888; }
+    
+    /* 遊戲畫布 */
+    #canvas-container { flex: 1; position: relative; overflow: hidden; background: #000; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* 底部控制區 */
+    #controls {
+        padding: 10px; background: #0a0a0a; border-top: 2px solid #333;
+        display: flex; flex-direction: column; gap: 6px; z-index: 5;
+    }
+    .btn-row { display: flex; gap: 6px; justify-content: center; }
+    .control-btn {
+        flex: 1; padding: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333;
+        border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: bold;
+        font-size: 13px; cursor: pointer; transition: all 0.1s; display: flex; align-items: center; justify-content: center;
+    }
+    .control-btn:active { background: #333; transform: scale(0.95); }
+    .control-btn.action { background: #2ed573; color: #000; border-color: #2ed573; }
+    .control-btn.danger { background: #ff4757; color: #fff; border-color: #ff4757; }
+    .control-btn.bomb { background: #e67e22; color: #fff; border-color: #e67e22; }
+    
+    /* 商店/結算彈窗 */
+    .modal {
+        position: absolute; inset: 0; background: rgba(5,5,5,0.95); z-index: 20;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        padding: 15px; text-align: center; backdrop-filter: blur(5px); overflow-y: auto;
+    }
+    .modal.active { display: flex; }
+    .modal h2 { color: #ffd32a; margin-bottom: 5px; font-size: 20px; text-shadow: 0 0 10px #ffd32a; }
+    .modal p { color: #aaa; margin-bottom: 15px; font-size: 12px; line-height: 1.4; }
+    .shop-item {
+        display: flex; justify-content: space-between; align-items: center;
+        width: 100%; max-width: 380px; background: #111; padding: 10px 12px;
+        margin-bottom: 6px; border-radius: 8px; border: 1px solid #333;
+    }
+    .shop-item-info { text-align: left; }
+    .shop-item-info b { font-size: 13px; }
+    .shop-item-info small { color: #888; font-size: 10px; }
+    .shop-btn {
+        padding: 6px 12px; background: #ffd32a; color: #000; border: none;
+        border-radius: 5px; font-weight: bold; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 12px; min-width: 70px;
+    }
+    .shop-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    
+    /* 狂熱狀態提示 */
+    #frenzy-text { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); color: #ff4757; font-size: 24px; font-weight: 900; text-shadow: 0 0 20px #ff4757; display: none; animation: pulse 0.5s infinite alternate; z-index: 10; pointer-events: none; }
+    @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
+</style>
+</head>
+<body>
+
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <div id="game-container">
+        <div id="hud">
+            <div>❤️ <div class="bar-bg"><div class="hp-fill" id="hp-fill"></div></div><span id="hp-text" style="font-size:9px;">100/100</span></div>
+            <div>⚡ <div class="bar-bg"><div class="en-fill" id="en-fill"></div></div><span id="en-text" style="font-size:9px;">100/100</span></div>
+            <div>
+                <span id="depth-text">🌍 0m</span>
+                <span id="record-text">最深: 0m</span>
+            </div>
+            <div>🎒 <span id="bag-text">0/10</span></div>
+            <div>💰 <span id="coin-text" style="color:#ffd32a;">0</span></div>
+        </div>
+
+        <div id="canvas-container">
+            <div id="frenzy-text">🔥 狂熱狀態 🔥</div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="controls">
+            <div class="btn-row">
+                <button class="control-btn" onclick="movePlayer(0, -1)">⬆️ 上</button>
+                <button class="control-btn bomb" id="btn-bomb" onclick="useBomb()">💣 炸彈 (0)</button>
+                <button class="control-btn action" onclick="returnToSurface()">🏠 返回地面</button>
+            </div>
+            <div class="btn-row">
+                <button class="control-btn" onclick="movePlayer(-1, 0)">⬅️ 左</button>
+                <button class="control-btn" onclick="movePlayer(0, 1)">⬇️ 挖掘</button>
+                <button class="control-btn" onclick="movePlayer(1, 0)">➡️ 右</button>
+            </div>
+        </div>
+
+        <div id="shop-modal" class="modal">
+            <h2>🏪 地面營地</h2>
+            <p>安全返回！賣出礦物獲得金幣。<br>升級裝備，準備下一次深潛。</p>
+            
+            <div class="shop-item">
+                <div class="shop-item-info"><b>❤️ 治療</b><br><small>回復滿血</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('heal')" id="btn-heal">$100</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info"><b>⚡ 提神飲品</b><br><small>回復滿體力</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('energy')" id="btn-energy">$100</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info"><b>💣 購買炸彈</b><br><small>炸開 3x3 範圍</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('bomb')" id="btn-buy-bomb">$300</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info"><b>🎒 擴充背包</b><br><small>容量 +5</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('bag')" id="btn-bag">$500</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info"><b>🔦 升級頭燈</b><br><small>擴大視野範圍</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('flashlight')" id="btn-flashlight">$800</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info"><b>⛏️ 升級鑽頭</b><br><small>挖掘更快、省體力</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('pickaxe')" id="btn-pickaxe">$1000</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info"><b>⚔️ 升級武器</b><br><small>一擊秒殺更深層怪物</small></div>
+                <button class="shop-btn" onclick="buyUpgrade('sword')" id="btn-sword">$1500</button>
+            </div>
+            
+            <button class="control-btn action" style="width:80%;margin-top:10px;" onclick="goDeeper()">⛏️ 繼續下潛 (第 <span id="next-depth">1</span> 層)</button>
+        </div>
+
+        <div id="death-modal" class="modal">
+            <h2 style="color:#ff4757;">💀 你死咗！</h2>
+            <p>你喺深淵中失去知覺...<br>今次搵到嘅礦物全部化為烏有！<br>(已保留金幣及升級)</p>
+            <button class="control-btn danger" style="width:80%;" onclick="revive()">返回地面</button>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const hpFill = document.getElementById('hp-fill');
+    const enFill = document.getElementById('en-fill');
+    const hpText = document.getElementById('hp-text');
+    const enText = document.getElementById('en-text');
+    const coinText = document.getElementById('coin-text');
+    const bagText = document.getElementById('bag-text');
+    const depthText = document.getElementById('depth-text');
+    const recordText = document.getElementById('record-text');
+    const nextDepthText = document.getElementById('next-depth');
+    const btnBomb = document.getElementById('btn-bomb');
+    const frenzyText = document.getElementById('frenzy-text');
+
+    // --- 自動存檔系統 (localStorage) ---
+    let saveData = JSON.parse(localStorage.getItem('deepMinerSave') || '{}');
+    let coins = saveData.coins || 0;
+    let maxHp = saveData.maxHp || 100; 
+    let maxEn = saveData.maxEn || 100;
+    let maxBag = saveData.maxBag || 10;
+    let pickaxeLvl = saveData.pickaxeLvl || 1; 
+    let swordLvl = saveData.swordLvl || 1; 
+    let flashlightLvl = saveData.flashlightLvl || 1;
+    let bombs = saveData.bombs || 0;
+    let maxDepthRecord = saveData.maxDepthRecord || 0;
+
+    function saveGame() {
+        localStorage.setItem('deepMinerSave', JSON.stringify({
+            coins, maxHp, maxEn, maxBag, pickaxeLvl, swordLvl, flashlightLvl, bombs, maxDepthRecord
+        }));
+    }
+
+    let player = { x: 3, y: 0 };
+    let map = {};
+    let cameraY = 0;
+    let hp = maxHp;
+    let energy = maxEn;
+    let bag = [];
+    let isDigging = false;
+    let gameState = 'surface'; 
+    let shakeTime = 0;
+    let isFrenzy = false;
+    let frenzyTimer = 0;
+
+    recordText.innerText = `最深: ${maxDepthRecord}m`;
+
+    const TILE_SIZE = 40;
+    let COLS = 8;
+    let VISIBLE_ROWS = 12;
+    
+    const TILES = {
+        dirt: { color: '#4a3320', value: 0, enCost: 5 },
+        stone: { color: '#444', value: 0, enCost: 10 },
+        copper: { color: '#b87333', value: 15, enCost: 8 },
+        iron: { color: '#a8a8a8', value: 40, enCost: 12 },
+        gold: { color: '#ffd700', value: 120, enCost: 15 },
+        diamond: { color: '#00ffff', value: 600, enCost: 20 },
+        chest: { color: '#e67e22', value: 0, enCost: 15 },
+        monster: { color: '#ff4757', value: 0, enCost: 0 },
+        lava: { color: '#ff3300', value: 0, enCost: 0 }
+    };
+
+    // 音效系統
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        
+        if (type === 'dig') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'coin') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'hurt') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        } else if (type === 'bomb') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+    }
+
+    function resize() {
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        COLS = Math.floor(canvas.width / TILE_SIZE);
+        VISIBLE_ROWS = Math.floor(canvas.height / TILE_SIZE) + 1;
+    }
+    window.addEventListener('resize', resize);
+
+    function generateTile(x, y) {
+        let rand = Math.random();
+        if (y < 5) {
+            if (rand < 0.15) return 'copper';
+            return 'dirt';
+        } else if (y < 15) {
+            if (rand < 0.05) return 'chest';
+            if (rand < 0.2) return 'copper';
+            if (rand < 0.35) return 'stone';
+            if (rand < 0.45) return 'monster';
+            return 'dirt';
+        } else if (y < 30) {
+            if (rand < 0.08) return 'chest';
+            if (rand < 0.15) return 'iron';
+            if (rand < 0.25) return 'lava';
+            if (rand < 0.5) return 'stone';
+            if (rand < 0.65) return 'monster';
+            return 'dirt';
+        } else if (y < 60) {
+            if (rand < 0.1) return 'chest';
+            if (rand < 0.25) return 'iron';
+            if (rand < 0.35) return 'gold';
+            if (rand < 0.5) return 'lava';
+            if (rand < 0.7) return 'stone';
+            if (rand < 0.85) return 'monster';
+            return 'dirt';
+        } else {
+            if (rand < 0.15) return 'chest';
+            if (rand < 0.35) return 'gold';
+            if (rand < 0.5) return 'diamond';
+            if (rand < 0.7) return 'lava';
+            if (rand < 0.85) return 'monster';
+            return 'stone';
+        }
+    }
+
+    function initMap() {
+        map = {};
+        for (let y = 1; y < 120; y++) {
+            for (let x = 0; x < 15; x++) {
+                map[`${x},${y}`] = generateTile(x, y);
+            }
+        }
+    }
+
+    function updateHUD() {
+        hpFill.style.width = `${Math.max(0, (hp / maxHp) * 100)}%`;
+        hpText.innerText = `${Math.max(0, hp)}/${maxHp}`;
+        enFill.style.width = `${Math.max(0, (energy / maxEn) * 100)}%`;
+        enText.innerText = `${Math.max(0, energy)}/${maxEn}`;
+        coinText.innerText = coins;
+        bagText.innerText = `${bag.length}/${maxBag}`;
+        depthText.innerText = `🌍 ${player.y}m`;
+        nextDepthText.innerText = player.y === 0 ? '1' : player.y + 1;
+        btnBomb.innerText = `💣 炸彈 (${bombs})`;
+        
+        if (player.y > maxDepthRecord) {
+            maxDepthRecord = player.y;
+            recordText.innerText = `最深: ${maxDepthRecord}m`;
+            saveGame(); // 破紀錄即刻存檔
+        }
+    }
+
+    function movePlayer(dx, dy) {
+        if (isDigging || gameState !== 'digging') return;
+        
+        if (energy <= 0 && !isFrenzy && dy > 0) {
+            if (hp <= 10) { die(); return; }
+            hp -= 10; energy = 0; updateHUD();
+            triggerShake(); playSound('hurt');
+            if (hp <= 0) { die(); return; }
+            return;
+        }
+
+        let nx = player.x + dx;
+        let ny = player.y + dy;
+        
+        if (nx < 0 || nx >= COLS || ny < 0) return;
+        
+        let tileKey = `${nx},${ny}`;
+        let tileType = map[tileKey];
+        
+        if (!tileType) {
+            player.x = nx; player.y = ny;
+            updateHUD(); draw();
+            return;
+        }
+        
+        isDigging = true;
+        let tData = TILES[tileType];
+
+        setTimeout(() => {
+            if (tileType === 'monster') {
+                let dmg = swordLvl * 25;
+                if (dmg >= 50) {
+                    delete map[tileKey];
+                    addParticles(nx, ny, '#ff4757', 20);
+                } else {
+                    hp -= 30; triggerShake(); playSound('hurt');
+                    if (hp <= 0) { die(); return; }
+                }
+            } else if (tileType === 'lava') {
+                hp -= 50; triggerShake(); playSound('hurt');
+                delete map[tileKey];
+                addParticles(nx, ny, '#ff3300', 25);
+                if (hp <= 0) { die(); return; }
+            } else if (tileType === 'chest') {
+                let loot = Math.floor(Math.random() * 300) + 200;
+                coins += loot;
+                saveGame(); // 執到寶箱即刻存檔
+                delete map[tileKey];
+                addParticles(nx, ny, '#ffd700', 30);
+                playSound('coin');
+                alert(`🎁 發現神秘寶箱！獲得 ${loot} 金幣！`);
+            } else {
+                let actualEnCost = Math.max(1, tData.enCost - (pickaxeLvl * 2));
+                if (!isFrenzy) energy -= actualEnCost;
+                
+                // 隨機觸發狂熱
+                if (Math.random() < 0.02 && !isFrenzy) {
+                    isFrenzy = true;
+                    frenzyTimer = 10;
+                    frenzyText.style.display = 'block';
+                }
+
+                if (tData.value > 0) {
+                    if (bag.length < maxBag) {
+                        bag.push(tileType);
+                        addParticles(nx, ny, tData.color, 10);
+                        playSound('coin');
+                    } else {
+                        alert("背包滿了！請返回地面出售！");
+                        isDigging = false;
+                        return;
+                    }
+                } else {
+                    addParticles(nx, ny, tData.color, 5);
+                    playSound('dig');
+                }
+                delete map[tileKey];
+                player.x = nx; player.y = ny;
+            }
+
+            updateHUD();
+            isDigging = false;
+            draw();
+        }, Math.max(100, 400 / pickaxeLvl));
+        
+        draw();
+    }
+
+    function useBomb() {
+        if (bombs <= 0 || gameState !== 'digging') return;
+        bombs--;
+        playSound('bomb');
+        triggerShake();
+        
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                let tx = player.x + dx;
+                let ty = player.y + dy;
+                if (tx >= 0 && tx < COLS && ty >= 0) {
+                    let tKey = `${tx},${ty}`;
+                    if (map[tKey] && map[tKey] !== 'lava') {
+                        delete map[tKey];
+                        addParticles(tx, ty, '#ff4757', 15);
+                    }
+                }
+            }
+        }
+        saveGame();
+        updateHUD();
+        draw();
+    }
+
+    function returnToSurface() {
+        if (gameState !== 'digging' || player.y === 0) return;
+        let sellTotal = 0;
+        bag.forEach(item => { sellTotal += TILES[item].value; });
+        coins += sellTotal;
+        bag = [];
+        player.x = 3; player.y = 0;
+        energy = maxEn;
+        isFrenzy = false; frenzyText.style.display = 'none';
+        gameState = 'surface';
+        
+        saveGame(); // 返回地面賣嘢，自動存檔
+        updateHUD();
+        document.getElementById('shop-modal').classList.add('active');
+        updateShopButtons();
+        draw();
+    }
+
+    function goDeeper() {
+        document.getElementById('shop-modal').classList.remove('active');
+        gameState = 'digging';
+        if (map[`${player.x},1`]) delete map[`${player.x},1`];
+        player.y = 1;
+        updateHUD();
+        draw();
+    }
+
+    function die() {
+        gameState = 'dead';
+        bag = [];
+        hp = maxHp; energy = maxEn;
+        isFrenzy = false; frenzyText.style.display = 'none';
+        updateHUD();
+        document.getElementById('death-modal').classList.add('active');
+    }
+
+    function revive() {
+        document.getElementById('death-modal').classList.remove('active');
+        player.x = 3; player.y = 0;
+        gameState = 'surface';
+        document.getElementById('shop-modal').classList.add('active');
+        updateShopButtons();
+        draw();
+    }
+
+    const UPGRADE_COSTS = {
+        heal: () => 100,
+        energy: () => 100,
+        bomb: () => 300,
+        bag: () => 500 + (maxBag - 10) * 200,
+        flashlight: () => 800 + (flashlightLvl - 1) * 600,
+        pickaxe: () => pickaxeLvl * 1000,
+        sword: () => swordLvl * 1500
+    };
+
+    function updateShopButtons() {
+        document.getElementById('btn-heal').disabled = coins < 100 || hp >= maxHp;
+        document.getElementById('btn-energy').disabled = coins < 100 || energy >= maxEn;
+        document.getElementById('btn-buy-bomb').disabled = coins < 300;
+        
+        document.getElementById('btn-bag').innerText = `$${UPGRADE_COSTS.bag()}`;
+        document.getElementById('btn-bag').disabled = coins < UPGRADE_COSTS.bag() || maxBag >= 50;
+
+        document.getElementById('btn-flashlight').innerText = `$${UPGRADE_COSTS.flashlight()} (Lv.${flashlightLvl})`;
+        document.getElementById('btn-flashlight').disabled = coins < UPGRADE_COSTS.flashlight() || flashlightLvl >= 5;
+
+        document.getElementById('btn-pickaxe').innerText = `$${UPGRADE_COSTS.pickaxe()} (Lv.${pickaxeLvl})`;
+        document.getElementById('btn-pickaxe').disabled = coins < UPGRADE_COSTS.pickaxe() || pickaxeLvl >= 5;
+
+        document.getElementById('btn-sword').innerText = `$${UPGRADE_COSTS.sword()} (Lv.${swordLvl})`;
+        document.getElementById('btn-sword').disabled = coins < UPGRADE_COSTS.sword() || swordLvl >= 5;
+    }
+
+    function buyUpgrade(type) {
+        let cost = UPGRADE_COSTS[type]();
+        if (coins < cost) return;
+        coins -= cost;
+        if (type === 'heal') hp = maxHp;
+        else if (type === 'energy') energy = maxEn;
+        else if (type === 'bomb') bombs++;
+        else if (type === 'bag') maxBag += 5;
+        else if (type === 'flashlight') flashlightLvl++;
+        else if (type === 'pickaxe') pickaxeLvl++;
+        else if (type === 'sword') swordLvl++;
+        
+        saveGame(); // 買完嘢自動存檔
+        updateHUD(); updateShopButtons();
+    }
+
+    let particles = [];
+    function addParticles(gx, gy, color, count) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: gx * TILE_SIZE + TILE_SIZE/2,
+                y: gy * TILE_SIZE + TILE_SIZE/2,
+                vx: (Math.random() - 0.5) * 15, vy: (Math.random() - 0.5) * 15,
+                life: 1, color: color, size: Math.random() * 4 + 2
+            });
+        }
+    }
+
+    function triggerShake() { shakeTime = 15; }
+
+    function draw() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (shakeTime > 0) shakeTime--;
+
+        if (player.y > VISIBLE_ROWS / 2) {
+            cameraY = (player.y - Math.floor(VISIBLE_ROWS / 2)) * TILE_SIZE;
+        } else {
+            cameraY = 0;
+        }
+
+        ctx.save();
+        if (shakeTime > 0) ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+
+        for (let y = Math.floor(cameraY / TILE_SIZE) - 1; y < Math.floor(cameraY / TILE_SIZE) + VISIBLE_ROWS + 1; y++) {
+            for (let x = 0; x < COLS; x++) {
+                let tileType = map[`${x},${y}`];
+                let screenX = x * TILE_SIZE;
+                let screenY = y * TILE_SIZE - cameraY;
+
+                ctx.strokeStyle = '#151515';
+                ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+
+                if (tileType) {
+                    let tData = TILES[tileType];
+                    ctx.fillStyle = tData.color;
+                    ctx.fillRect(screenX + 1, screenY + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+
+                    if (['copper', 'iron', 'gold', 'diamond'].includes(tileType)) {
+                        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.6;
+                        ctx.beginPath(); ctx.arc(screenX + TILE_SIZE/2, screenY + TILE_SIZE/2, 6, 0, Math.PI*2); ctx.fill();
+                        ctx.globalAlpha = 1;
+                    } else if (tileType === 'monster') {
+                        ctx.fillStyle = '#fff'; ctx.fillRect(screenX + 10, screenY + 12, 6, 6); ctx.fillRect(screenX + 24, screenY + 12, 6, 6);
+                        ctx.fillStyle = '#000'; ctx.fillRect(screenX + 12, screenY + 14, 3, 3); ctx.fillRect(screenX + 26, screenY + 14, 3, 3);
+                    } else if (tileType === 'chest') {
+                        ctx.fillStyle = '#333'; ctx.fillRect(screenX + 8, screenY + 20, 24, 15);
+                        ctx.fillStyle = '#ffd700'; ctx.fillRect(screenX + 18, screenY + 22, 4, 6);
+                    } else if (tileType === 'lava') {
+                        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+                        ctx.beginPath(); ctx.arc(screenX + TILE_SIZE/2 + Math.sin(Date.now()/200 + x)*5, screenY + TILE_SIZE/2, 8, 0, Math.PI*2); ctx.fill();
+                    }
+                }
+            }
+        }
+
+        let px = player.x * TILE_SIZE;
+        let py = player.y * TILE_SIZE - cameraY;
+        
+        if (gameState !== 'surface' || player.y > 0) {
+            let lightRadius = TILE_SIZE * (2 + flashlightLvl * 0.8);
+            let glow = ctx.createRadialGradient(px+TILE_SIZE/2, py+TILE_SIZE/2, 5, px+TILE_SIZE/2, py+TILE_SIZE/2, lightRadius);
+            glow.addColorStop(0, 'rgba(255, 211, 42, 0.5)');
+            glow.addColorStop(1, 'rgba(255, 211, 42, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, lightRadius, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(px + 8, py + 8, TILE_SIZE - 16, TILE_SIZE - 16);
+            ctx.fillStyle = '#ffd32a';
+            ctx.fillRect(px + 12, py + 12, 6, 6);
+            ctx.fillRect(px + 22, py + 12, 6, 6);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy; p.life -= 0.03;
+            if (p.life <= 0) { particles.splice(i, 1); continue; }
+            ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y - cameraY, p.size, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        if (isDigging) {
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.restore();
+        
+        if (isFrenzy && gameState === 'digging') {
+            frenzyTimer -= 1/60;
+            if (frenzyTimer <= 0) {
+                isFrenzy = false; frenzyText.style.display = 'none';
+            }
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    // 初始化
+    resize();
+    initMap();
+    updateHUD();
+    draw();
+    
+    // 如果一入嚟係地面，就打開商店
+    if (gameState === 'surface' && player.y === 0) {
+        document.getElementById('shop-modal').classList.add('active');
+        updateShopButtons();
+    }
+</script>
+</body>
+</html>
