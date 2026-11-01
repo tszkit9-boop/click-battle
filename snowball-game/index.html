@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全香港大富翁</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,"PingFang HK","Microsoft JhengHei","Noto Sans HK",sans-serif;background:#12121f;color:#e8e2d4;min-height:100vh}
+
+  /* ===== 通用 ===== */
+  .hidden{display:none!important}
+  button{font-family:inherit;cursor:pointer;border:none;transition:all .15s}
+  button:active{transform:scale(.96)}
+  .gold{color:#D4AF37}
+
+  /* ===== 設定畫面 ===== */
+  #setup{max-width:720px;margin:0 auto;padding:40px 20px}
+  #setup h1{font-size:2.2rem;text-align:center;color:#D4AF37;letter-spacing:2px;margin-bottom:8px}
+  #setup .sub{text-align:center;color:#8a8478;margin-bottom:28px;font-size:.95rem}
+  .setup-box{background:#1c1c30;border-radius:16px;padding:24px;border:1px solid #2e2e48}
+  .setup-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .setup-row label{font-weight:600;min-width:80px}
+  .setup-row select,.setup-row input{background:#12121f;border:1px solid #3a3a58;color:#e8e2d4;padding:8px 12px;border-radius:8px;font-family:inherit;font-size:.95rem}
+  .name-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+  .name-inputs input{width:100%}
+  .start-btn{width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#D4AF37,#b8941f);color:#12121f;font-weight:800;font-size:1.1rem;letter-spacing:1px}
+  .start-btn:hover{filter:brightness(1.1)}
+
+  /* ===== 遊戲畫面 ===== */
+  .game-layout{display:grid;grid-template-columns:260px 1fr 280px;gap:14px;padding:14px;min-height:100vh;max-width:1500px;margin:0 auto}
+  @media(max-width:1100px){.game-layout{grid-template-columns:1fr;}.players-panel,.log-panel{max-height:240px;overflow-y:auto}}
+
+  /* 玩家面板 */
+  .players-panel{display:flex;flex-direction:column;gap:8px}
+  .p-card{background:#1c1c30;border-radius:10px;padding:10px 12px;border:2px solid transparent;transition:all .2s}
+  .p-card.active{border-color:#D4AF37;box-shadow:0 0 12px rgba(212,175,55,.3)}
+  .p-card.bankrupt{opacity:.55}
+  .p-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .p-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+  .p-name{font-weight:700;font-size:.95rem}
+  .p-cash{font-size:1.1rem;font-weight:800;color:#4ade80;font-variant-numeric:tabular-nums}
+  .p-cash.neg{color:#f87171}
+  .p-meta{font-size:.75rem;color:#8a8478;display:flex;gap:10px;margin-top:2px;flex-wrap:wrap}
+  .p-meta .debt{color:#f87171}
+
+  /* 棋盤 */
+  .board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .board{display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(11,1fr);width:100%;max-width:820px;aspect-ratio:1;background:#1c1c30;border-radius:14px;padding:6px;gap:2px;border:2px solid #2e2e48}
+  .cell{background:#232338;border-radius:5px;padding:3px;font-size:.58rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative;cursor:pointer;border:1px solid transparent;transition:all .15s;line-height:1.15}
+  .cell:hover{border-color:#D4AF37}
+  .cell.corner{background:#2a2a45}
+  .cell.start{background:linear-gradient(135deg,#2d4a1e,#1e3a12)}
+  .cell.jail,.cell.gojail{background:#4a1e1e}
+  .cell.free{background:#1e3a4a}
+  .cell .c-name{font-weight:700;font-size:.58rem}
+  .cell .c-price{color:#D4AF37;font-size:.52rem;font-weight:700}
+  .cell .c-owner{position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;border:1px solid #fff3}
+  .cell .c-pawns{display:flex;gap:2px;flex-wrap:wrap;position:absolute;bottom:2px;left:2px;right:2px}
+  .pawn{width:8px;height:8px;border-radius:50%;border:1px solid #0006}
+  .tier-S{box-shadow:inset 0 0 0 1px #D4AF37}
+  .tier-A{box-shadow:inset 0 0 0 1px #c0392b}
+  .tier-B{box-shadow:inset 0 0 0 1px #2471a3}
+
+  /* 中央控制台 */
+  .center-panel{grid-row:2/11;grid-column:2/11;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px;background:radial-gradient(circle,#232338,#1a1a2e);border-radius:12px;text-align:center}
+  .turn-info{font-size:.85rem;color:#8a8478}
+  .turn-info b{color:#D4AF37}
+  .dice{display:flex;gap:10px;margin:4px 0}
+  .die{width:52px;height:52px;background:#f5f0e6;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;color:#1a1a2e;box-shadow:0 4px 0 #b0a890}
+  .die.rolling{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}}
+  .action-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .btn{padding:9px 20px;border-radius:9px;font-weight:700;font-size:.9rem;background:#3a3a58;color:#e8e2d4}
+  .btn:hover{background:#4a4a70}
+  .btn.primary{background:linear-gradient(135deg,#D4AF37,#b8941f);color:#12121f}
+  .btn.primary:hover{filter:brightness(1.1)}
+  .btn.danger{background:#7a2020;color:#fdd}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* 日誌 */
+  .log-panel{display:flex;flex-direction:column;background:#1c1c30;border-radius:12px;border:1px solid #2e2e48;overflow:hidden;max-height:calc(100vh - 28px)}
+  .log-title{padding:10px 14px;font-weight:700;border-bottom:1px solid #2e2e48;font-size:.85rem;color:#D4AF37}
+  .log-list{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:.8rem;line-height:1.4}
+  .log-item{padding:4px 0;border-bottom:1px dashed #2a2a40;color:#c8c2b4}
+  .log-item.highlight{color:#D4AF37;font-weight:600}
+  .log-item.danger{color:#f87171}
+  .log-item.money{color:#4ade80}
+
+  /* Modal */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal{background:#1c1c30;border-radius:16px;padding:24px;max-width:420px;width:100%;border:1px solid #3a3a58;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .modal h3{color:#D4AF37;margin-bottom:10px;font-size:1.15rem}
+  .modal p{color:#c8c2b4;font-size:.9rem;margin-bottom:16px;line-height:1.5}
+  .modal .modal-btns{display:flex;gap:10px;flex-wrap:wrap}
+  .modal .modal-btns button{flex:1;min-width:100px}
+  .loan-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.85rem}
+  .loan-row label{min-width:90px;color:#a8a294}
+  .loan-row select,.loan-row input{flex:1;background:#12121f;border:1px solid #3a3a58;color:#e8e2d4;padding:7px 10px;border-radius:7px;font-family:inherit}
+
+  /* 遊戲結束 */
+  .gameover{text-align:center;padding:30px}
+  .gameover h2{color:#D4AF37;font-size:1.8rem;margin-bottom:14px}
+  .rank-row{display:flex;justify-content:space-between;padding:8px 12px;background:#232338;border-radius:8px;margin-bottom:6px;font-size:.9rem}
+  .rank-row.top{background:linear-gradient(90deg,#3a3020,#232338);border:1px solid #D4AF37}
+</style>
+</head>
+<body>
+
+<!-- ===== 設定畫面 ===== -->
+<div id="setup">
+  <h1>🎲 滾雪球</h1>
+  <p class="sub">全香港大富翁 · 資產與債務，一齊滾大佢</p>
+  <div class="setup-box">
+    <div class="setup-row">
+      <label>玩家人數</label>
+      <select id="playerCount">
+        <option value="2">2 人</option>
+        <option value="3">3 人</option>
+        <option value="4" selected>4 人</option>
+        <option value="5">5 人</option>
+        <option value="6">6 人</option>
+      </select>
+    </div>
+    <div class="setup-row">
+      <label>起始現金</label>
+      <select id="startCash">
+        <option value="4000">$4,000</option>
+        <option value="5000" selected>$5,000</option>
+        <option value="8000">$8,000</option>
+      </select>
+    </div>
+    <div class="setup-row">
+      <label>總回合數</label>
+      <select id="totalRounds">
+        <option value="6">6 回合</option>
+        <option value="8" selected>8 回合</option>
+        <option value="10">10 回合</option>
+      </select>
+    </div>
+    <div class="name-inputs" id="nameInputs"></div>
+    <button class="start-btn" onclick="startGame()">開始遊戲</button>
+  </div>
+</div>
+
+<!-- ===== 遊戲畫面 ===== -->
+<div id="game" class="hidden">
+  <div class="game-layout">
+    <aside class="players-panel" id="playersPanel"></aside>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+
+    <aside class="log-panel">
+      <div class="log-title">📜 遊戲日誌</div>
+      <div class="log-list" id="logList"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   棋盤資料 40 格
+   ============================================================ */
+const BOARD = [
+  {t:'start',  n:'起點',  icon:'🏁'},
+  {t:'prop',   n:'中環',   d:'中西區', tier:'S', price:6000, rent:720},
+  {t:'chance', n:'機會',  icon:'❓'},
+  {t:'prop',   n:'山頂',   d:'中西區', tier:'S', price:6000, rent:720},
+  {t:'tax',    n:'稅局',  icon:'🏛️'},
+  {t:'prop',   n:'銅鑼灣', d:'灣仔區', tier:'S', price:5500, rent:660},
+  {t:'prop',   n:'跑馬地', d:'灣仔區', tier:'S', price:5000, rent:600},
+  {t:'market', n:'市場',  icon:'📈'},
+  {t:'prop',   n:'北角',   d:'東區',   tier:'A', price:3500, rent:420},
+  {t:'prop',   n:'柴灣',   d:'東區',   tier:'A', price:2500, rent:300},
+  {t:'jail',   n:'監獄',  icon:'🚔'},
+  {t:'prop',   n:'淺水灣', d:'南區',   tier:'S', price:5000, rent:600},
+  {t:'chance', n:'機會',  icon:'❓'},
+  {t:'prop',   n:'香港仔', d:'南區',   tier:'S', price:4000, rent:480},
+  {t:'prop',   n:'尖沙咀', d:'油尖旺', tier:'A', price:4000, rent:480},
+  {t:'prop',   n:'旺角',   d:'油尖旺', tier:'A', price:3800, rent:460},
+  {t:'black',  n:'黑市',  icon:'🕶️'},
+  {t:'prop',   n:'深水埗', d:'深水埗', tier:'A', price:2500, rent:300},
+  {t:'prop',   n:'美孚',   d:'深水埗', tier:'A', price:3000, rent:360},
+  {t:'prop',   n:'啟德',   d:'九龍城', tier:'S', price:4500, rent:540},
+  {t:'free',   n:'銀行',  icon:'🏦'},
+  {t:'prop',   n:'九龍塘', d:'九龍城', tier:'S', price:4000, rent:480},
+  {t:'prop',   n:'黃大仙', d:'黃大仙', tier:'A', price:2800, rent:340},
+  {t:'market', n:'市場',  icon:'📈'},
+  {t:'prop',   n:'鑽石山', d:'黃大仙', tier:'A', price:3000, rent:360},
+  {t:'prop',   n:'觀塘',   d:'觀塘',   tier:'A', price:3000, rent:360},
+  {t:'prop',   n:'藍田',   d:'觀塘',   tier:'A', price:2800, rent:340},
+  {t:'chance', n:'機會',  icon:'❓'},
+  {t:'prop',   n:'沙田',   d:'沙田',   tier:'A', price:3500, rent:420},
+  {t:'prop',   n:'馬鞍山', d:'沙田',   tier:'A', price:3200, rent:380},
+  {t:'gojail', n:'去監獄', icon:'👮'},
+  {t:'prop',   n:'將軍澳', d:'西貢',   tier:'A', price:3500, rent:420},
+  {t:'prop',   n:'西貢市中心', d:'西貢', tier:'A', price:3000, rent:360},
+  {t:'black',  n:'黑市',  icon:'🕶️'},
+  {t:'prop',   n:'荃灣',   d:'荃灣',   tier:'B', price:2500, rent:300},
+  {t:'prop',   n:'青衣',   d:'葵青',   tier:'B', price:2000, rent:240},
+  {t:'prop',   n:'屯門',   d:'屯門',   tier:'B', price:1800, rent:220},
+  {t:'prop',   n:'元朗',   d:'元朗',   tier:'B', price:2000, rent:240},
+  {t:'prop',   n:'上水',   d:'北區',   tier:'B', price:1800, rent:220},
+  {t:'prop',   n:'東涌',   d:'離島',   tier:'B', price:1800, rent:220},
+];
+
+const COLORS = ['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#34495E','#E91E63','#00BCD4'];
+
+/* ============================================================
+   卡牌
+   ============================================================ */
+const CHANCE_CARDS = [
+  {text:'股市大升！獲得 $3,000', fx:p=>p.cash+=3000},
+  {text:'稅務調查，交出現金 10%', fx:p=>p.cash-=Math.round(p.cash*0.1)},
+  {text:'打風維修，支付 $1,000', fx:p=>p.cash-=1000},
+  {text:'遺產繼承，獲得 $2,500', fx:p=>p.cash+=2500},
+  {text:'黑市交易獲利 $2,000', fx:p=>p.cash+=2000},
+  {text:'交通罰款，支付 $800', fx:p=>p.cash-=800},
+  {text:'自由行帶動，獲得 $1,500', fx:p=>p.cash+=1500},
+  {text:'銀行派息，獲得 $1,200', fx:p=>p.cash+=1200},
+  {text:'裝修超支，支付 $1,500', fx:p=>p.cash-=1500},
+  {text:'神秘財團注資 $3,500', fx:p=>p.cash+=3500},
+];
+
+const MARKET_CARDS = [
+  {text:'📈 全市場加息！所有債務利息 +5%', fx:()=>{ state.players.forEach(p=>p.debts.forEach(d=>d.rate=Math.min(d.rate+0.05,0.5))); }},
+  {text:'💰 政府派錢！所有玩家 +$2,000', fx:()=>{ state.players.forEach(p=>p.cash+=2000); }},
+  {text:'📉 金融風暴！所有玩家現金 -10%', fx:()=>{ state.players.forEach(p=>p.cash-=Math.round(p.cash*0.1)); }},
+  {text:'🏗️ 樓市狂潮！所有玩家收租 ×2 一回合', fx:()=>{ state.rentBoost = 2; }},
+  {text:'🏦 銀行擠提！所有玩家現金 -$1,000', fx:()=>{ state.players.forEach(p=>p.cash-=1000); }},
+  {text:'🎉 消費券！所有玩家 +$1,500', fx:()=>{ state.players.forEach(p=>p.cash+=1500); }},
+];
+
+const SECRET_MISSIONS = [
+  {text:'擁有至少 3 個地產', check:p=>p.props.length>=3, reward:8},
+  {text:'現金超過 $8,000', check:p=>p.cash>=8000, reward:6},
+  {text:'擁有至少 1 個 S 級地產', check:p=>p.props.some(i=>BOARD[i].tier==='S'), reward:10},
+  {text:'總資產超過 $15,000', check:p=>calcNetWorth(p)>=15000, reward:12},
+  {text:'從未爆煲', check:p=>p.bankruptCount===0, reward:5},
+];
+
+/* ============================================================
+   遊戲狀態
+   ============================================================ */
+let state = null;
+
+function current(){ return state.players[state.current]; }
+
+/* ============================================================
+   設定畫面
+   ============================================================ */
+function renderNameInputs(){
+  const n = +document.getElementById('playerCount').value;
+  const box = document.getElementById('nameInputs');
+  let html = '';
+  for(let i=0;i<n;i++){
+    html += `<input type="text" id="name${i}" placeholder="玩家 ${i+1}" value="玩家 ${i+1}">`;
+  }
+  box.innerHTML = html;
+}
+document.getElementById('playerCount').addEventListener('change', renderNameInputs);
+renderNameInputs();
+
+/* ============================================================
+   開始遊戲
+   ============================================================ */
+function startGame(){
+  const n = +document.getElementById('playerCount').value;
+  const startCash = +document.getElementById('startCash').value;
+  const totalRounds = +document.getElementById('totalRounds').value;
+
+  const players = [];
+  for(let i=0;i<n;i++){
+    const name = document.getElementById('name'+i).value.trim() || ('玩家 '+(i+1));
+    const mission = SECRET_MISSIONS[Math.floor(Math.random()*SECRET_MISSIONS.length)];
+    players.push({
+      id:i, name, color:COLORS[i%COLORS.length],
+      cash:startCash, pos:0, props:[], debts:[],
+      credit:'B', bankruptCount:0, inJail:false,
+      mission
+    });
+  }
+
+  state = {
+    players, current:0, round:1, totalRounds,
+    phase:'roll', log:[], owners:{}, gameOver:false,
+    rentBoost:1
+  };
+
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+
+  log('🎲 遊戲開始！', 'highlight');
+  log(`每位玩家起始現金 $${startCash.toLocaleString()}，共 ${totalRounds} 回合`);
+  render();
+}
+
+/* ============================================================
+   日誌
+   ============================================================ */
+function log(text, cls=''){
+  state.log.unshift({text, cls});
+  if(state.log.length>200) state.log.pop();
+  renderLog();
+}
+function renderLog(){
+  const el = document.getElementById('logList');
+  if(!el || !state) return;
+  el.innerHTML = state.log.map(l=>`<div class="log-item ${l.cls}">${l.text}</div>`).join('');
+}
+
+/* ============================================================
+   渲染
+   ============================================================ */
+function render(){
+  renderBoard();
+  renderPlayers();
+  renderControls();
+  renderLog();
+}
+
+function getGridPos(i){
+  if(i===0) return {r:11,c:11};
+  if(i>=1&&i<=9) return {r:11,c:11-i};
+  if(i===10) return {r:11,c:1};
+  if(i>=11&&i<=19) return {r:11-(i-10),c:1};
+  if(i===20) return {r:1,c:1};
+  if(i>=21&&i<=29) return {r:1,c:1+(i-20)};
+  if(i===30) return {r:1,c:11};
+  if(i>=31&&i<=39) return {r:1+(i-30),c:11};
+}
+
+function renderBoard(){
+  const board = document.getElementById('board');
+  let html = '';
+  BOARD.forEach((cell, i) => {
+    const p = getGridPos(i);
+    const owner = state.owners[i];
+    const pawnsHere = state.players.filter(pl=>pl.pos===i && !pl.out);
+
+    let cls = 'cell';
+    if(cell.t==='start') cls+=' corner start';
+    else if(cell.t==='jail') cls+=' corner jail';
+    else if(cell.t==='free') cls+=' corner free';
+    else if(cell.t==='gojail') cls+=' corner gojail';
+    if(cell.tier) cls+=' tier-'+cell.tier;
+
+    let inner = '';
+    if(cell.t==='prop'){
+      inner = `<div class="c-name">${cell.n}</div><div class="c-price">$${cell.price.toLocaleString()}</div>`;
+      if(owner!==undefined){
+        inner += `<div class="c-owner" style="background:${state.players[owner].color}"></div>`;
+      }
+    } else {
+      inner = `<div style="text-align:center;font-size:1.2rem">${cell.icon||''}</div><div style="text-align:center;font-size:.52rem;color:#8a8478">${cell.n}</div>`;
+    }
+
+    if(pawnsHere.length){
+      inner += `<div class="c-pawns">${pawnsHere.map(pl=>`<div class="pawn" style="background:${pl.color}" title="${pl.name}"></div>`).join('')}</div>`;
+    }
+
+    html += `<div class="${cls}" style="grid-row:${p.r};grid-column:${p.c}" onclick="showCellInfo(${i})">${inner}</div>`;
+  });
+
+  // 中央面板
+  const cur = current();
+  const canRoll = state.phase==='roll' && !state.gameOver;
+  const canEnd = state.phase==='action' && !state.gameOver;
+
+  html += `<div class="center-panel">
+    <div class="turn-info">第 <b>${state.round}</b> / ${state.totalRounds} 回合 · 而家係 <b style="color:${cur.color}">${cur.name}</b></div>
+    <div class="dice">
+      <div class="die" id="die1">${state.dice1||'?'}</div>
+      <div class="die" id="die2">${state.dice2||'?'}</div>
+    </div>
+    <div class="action-btns">
+      <button class="btn primary" onclick="doRoll()" ${canRoll?'':'disabled'}>🎲 擲骰</button>
+      <button class="btn" onclick="endTurn()" ${canEnd?'':'disabled'}>✅ 結束回合</button>
+      <button class="btn" onclick="openLoanModal()" ${state.gameOver?'disabled':''}>💸 借款</button>
+      <button class="btn" onclick="openRepayModal()" ${state.gameOver?'disabled':''}>💳 還款</button>
+    </div>
+  </div>`;
+
+  board.innerHTML = html;
+}
+
+function renderPlayers(){
+  const panel = document.getElementById('playersPanel');
+  let html = '';
+  state.players.forEach((p, i) => {
+    const debtTotal = p.debts.reduce((s,d)=>s+d.principal,0);
+    const isActive = i===state.current && !state.gameOver;
+    html += `<div class="p-card ${isActive?'active':''}">
+      <div class="p-head">
+        <div class="p-dot" style="background:${p.color}"></div>
+        <div class="p-name">${p.name}</div>
+      </div>
+      <div class="p-cash ${p.cash<0?'neg':''}">$${p.cash.toLocaleString()}</div>
+      <div class="p-meta">
+        <span>🏠 ${p.props.length} 地</span>
+        ${debtTotal>0?`<span class="debt">💸 欠 $${debtTotal.toLocaleString()}</span>`:''}
+        <span>信用 ${p.credit}</span>
+      </div>
+    </div>`;
+  });
+  panel.innerHTML = html;
+}
+
+function renderControls(){ /* 中央面板已包含控制 */ }
+
+/* ============================================================
+   擲骰與移動
+   ============================================================ */
+function doRoll(){
+  if(state.phase!=='roll' || state.gameOver) return;
+  const d1 = Math.ceil(Math.random()*6);
+  const d2 = Math.ceil(Math.random()*6);
+  state.dice1 = d1; state.dice2 = d2;
+  const steps = d1 + d2;
+  const p = current();
+
+  log(`🎲 ${p.name} 擲出 ${d1} + ${d2} = ${steps}`, 'highlight');
+
+  // 移動
+  const oldPos = p.pos;
+  p.pos = (p.pos + steps) % 40;
+  if(p.pos < oldPos || (p.pos===0 && steps>0)){
+    p.cash += 2000;
+    log(`🏁 ${p.name} 經過起點，獲得 $2,000`, 'money');
+  }
+
+  render();
+  setTimeout(()=>{
+    landOn(p.pos);
+  }, 200);
+}
+
+function landOn(pos){
+  const cell = BOARD[pos];
+  const p = current();
+
+  if(cell.t==='prop'){
+    const owner = state.owners[pos];
+    if(owner===undefined){
+      // 可以買
+      if(p.cash >= cell.price){
+        showBuyModal(pos);
+      } else {
+        log(`${p.name} 現金不足，買唔起 ${cell.n}`, 'danger');
+        state.phase = 'action';
+        render();
+      }
+    } else if(owner === p.id){
+      log(`${p.name} 踩中自己嘅 ${cell.n}`);
+      state.phase = 'action';
+      render();
+    } else {
+      // 付租
+      const rent = cell.rent * (state.rentBoost||1);
+      const ownerP = state.players[owner];
+      p.cash -= rent;
+      ownerP.cash += rent;
+      log(`💰 ${p.name} 踩中 ${ownerP.name} 嘅 ${cell.n}，付租 $${rent}`, 'danger');
+      checkBankrupt(p);
+      state.phase = 'action';
+      render();
+    }
+  } else if(cell.t==='chance'){
+    drawChance(p);
+  } else if(cell.t==='market'){
+    drawMarket();
+  } else if(cell.t==='tax'){
+    const tax = Math.max(500, Math.round(p.cash*0.1));
+    p.cash -= tax;
+    log(`🏛️ ${p.name} 交稅 $${tax}`, 'danger');
+    state.phase = 'action';
+    render();
+  } else if(cell.t==='gojail'){
+    p.pos = 10;
+    log(`👮 ${p.name} 被送入監獄！`, 'danger');
+    state.phase = 'action';
+    render();
+  } else if(cell.t==='black'){
+    log(`🕶️ ${p.name} 踩中黑市，可以借款或還款`);
+    state.phase = 'action';
+    render();
+  } else {
+    state.phase = 'action';
+    render();
+  }
+}
+
+/* ============================================================
+   買地
+   ============================================================ */
+function showBuyModal(pos){
+  const cell = BOARD[pos];
+  const p = current();
+  showModal(`
+    <h3>🏠 購買 ${cell.n}</h3>
+    <p>${cell.d} · ${cell.tier} 級<br>
+    地價：<b class="gold">$${cell.price.toLocaleString()}</b><br>
+    租金：<b>$${cell.rent}</b></p>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="buyProperty(${pos})">買！</button>
+      <button class="btn" onclick="passBuy()">放棄</button>
+    </div>
+  `);
+}
+
+function buyProperty(pos){
+  const cell = BOARD[pos];
+  const p = current();
+  if(p.cash < cell.price){ closeModal(); return; }
+  p.cash -= cell.price;
+  p.props.push(pos);
+  state.owners[pos] = p.id;
+  log(`🏠 ${p.name} 買入 ${cell.n}（$${cell.price.toLocaleString()}）`, 'money');
+  closeModal();
+  state.phase = 'action';
+  render();
+}
+
+function passBuy(){
+  closeModal();
+  const p = current();
+  log(`${p.name} 放棄購買`);
+  state.phase = 'action';
+  render();
+}
+
+/* ============================================================
+   事件卡
+   ============================================================ */
+function drawChance(p){
+  const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
+  card.fx(p);
+  log(`❓ 機會：${card.text}`, 'highlight');
+  checkBankrupt(p);
+  state.phase = 'action';
+  render();
+}
+
+function drawMarket(){
+  const card = MARKET_CARDS[Math.floor(Math.random()*MARKET_CARDS.length)];
+  card.fx();
+  log(`📈 市場：${card.text}`, 'highlight');
+  state.players.forEach(p=>checkBankrupt(p));
+  state.phase = 'action';
+  render();
+}
+
+/* ============================================================
+   爆煲檢查
+   ============================================================ */
+function checkBankrupt(p){
+  const debt = p.debts.reduce((s,d)=>s+d.principal,0);
+  const assets = p.cash + p.props.reduce((s,i)=>s+BOARD[i].price,0);
+  if(debt > assets && debt > 0){
+    p.bankruptCount++;
+    log(`💥 ${p.name} 爆煲！資產 $${assets} < 債務 $${debt}`, 'danger');
+    // 簡化：強制賣地還債
+    while(p.props.length && p.debts.reduce((s,d)=>s+d.principal,0) > p.cash){
+      const idx = p.props.shift();
+      delete state.owners[idx];
+      const sellPrice = Math.round(BOARD[idx].price * 0.7);
+      p.cash += sellPrice;
+      log(`🔨 ${p.name} 被迫拍賣 ${BOARD[idx].n}，套現 $${sellPrice}`, 'danger');
+    }
+    // 剩餘債務打七折
+    p.debts.forEach(d=>d.principal = Math.round(d.principal*0.7));
+    p.credit = 'D';
+    log(`📉 ${p.name} 信用跌至 D`, 'danger');
+  }
+}
+
+/* ============================================================
+   結束回合
+   ============================================================ */
+function endTurn(){
+  if(state.gameOver) return;
+  const p = current();
+  log(`— ${p.name} 結束回合 —`);
+
+  state.phase = 'roll';
+  state.dice1 = null; state.dice2 = null;
+  state.rentBoost = 1;
+
+  // 下一位
+  state.current++;
+  if(state.current >= state.players.length){
+    state.current = 0;
+    state.round++;
+    settleRound();
+  }
+
+  if(state.round > state.totalRounds){
+    endGame();
+    return;
+  }
+
+  render();
+}
+
+function settleRound(){
+  log(`═══ 第 ${state.round} 回合開始 ═══`, 'highlight');
+
+  // 結算利息（複利）
+  state.players.forEach(p=>{
+    p.debts.forEach(d=>{
+      const interest = Math.round(d.principal * d.rate);
+      d.principal += interest;
+      d.roundsLeft--;
+      log(`💸 ${p.name} 債務利息 +$${interest}（現欠 $${d.principal.toLocaleString()}）`, 'danger');
+    });
+    // 過期債務
+    p.debts = p.debts.filter(d=>{
+      if(d.roundsLeft <= 0 && d.principal > 0){
+        log(`⏰ ${p.name} 一筆債務到期！`, 'danger');
+      }
+      return true;
+    });
+    checkBankrupt(p);
+  });
+
+  // 信用升級
+  state.players.forEach(p=>{
+    if(p.credit==='C' && p.bankruptCount===0) p.credit='B';
+  });
+}
+
+/* ============================================================
+   借款
+   ============================================================ */
+function openLoanModal(){
+  if(state.gameOver) return;
+  const p = current();
+  const others = state.players.filter(x=>x.id!==p.id);
+  const lenderOpts = others.map(o=>`<option value="${o.id}">${o.name}（現金 $${o.cash.toLocaleString()}）</option>`).join('');
+  showModal(`
+    <h3>💸 借款</h3>
+    <p>向其他玩家或銀行借錢。利息由放貸方自訂，每回合結算複利。</p>
+    <div class="loan-row">
+      <label>放貸方</label>
+      <select id="loanLender">
+        <option value="bank">🏦 銀行（固定 5%）</option>
+        ${lenderOpts}
+      </select>
+    </div>
+    <div class="loan-row">
+      <label>借款額</label>
+      <input type="number" id="loanAmount" value="2000" min="500" step="500">
+    </div>
+    <div class="loan-row">
+      <label>每回合利息</label>
+      <select id="loanRate">
+        <option value="0.05">5%</option>
+        <option value="0.1">10%</option>
+        <option value="0.15">15%</option>
+        <option value="0.2">20%</option>
+        <option value="0.25">25%</option>
+      </select>
+    </div>
+    <div class="loan-row">
+      <label>還款期</label>
+      <select id="loanRounds">
+        <option value="2">2 回合</option>
+        <option value="3" selected>3 回合</option>
+        <option value="4">4 回合</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="confirmLoan()">確認借款</button>
+      <button class="btn" onclick="closeModal()">取消</button>
+    </div>
+  `);
+}
+
+function confirmLoan(){
+  const p = current();
+  const lenderVal = document.getElementById('loanLender').value;
+  const amount = +document.getElementById('loanAmount').value;
+  const rate = +document.getElementById('loanRate').value;
+  const rounds = +document.getElementById('loanRounds').value;
+
+  if(amount < 500 || isNaN(amount)){ alert('借款額最少 $500'); return; }
+
+  if(lenderVal === 'bank'){
+    if(amount > 3000){ alert('銀行貸款上限 $3,000'); return; }
+    p.cash += amount;
+    p.debts.push({lender:'bank', lenderName:'銀行', principal:amount, rate, roundsLeft:rounds});
+    log(`🏦 ${p.name} 向銀行借 $${amount.toLocaleString()}（每回合 ${Math.round(rate*100)}% 息）`, 'money');
+  } else {
+    const lender = state.players[+lenderVal];
+    if(lender.cash < amount){ alert(`${lender.name} 現金不足`); return; }
+    lender.cash -= amount;
+    p.cash += amount;
+    p.debts.push({lender:lender.id, lenderName:lender.name, principal:amount, rate, roundsLeft:rounds});
+    log(`💸 ${p.name} 向 ${lender.name} 借 $${amount.toLocaleString()}（每回合 ${Math.round(rate*100)}% 息）`, 'money');
+    log(`💰 ${lender.name} 放貸 $${amount.toLocaleString()}`, 'money');
+  }
+
+  closeModal();
+  render();
+}
+
+/* ============================================================
+   還款
+   ============================================================ */
+function openRepayModal(){
+  if(state.gameOver) return;
+  const p = current();
+  if(!p.debts.length){
+    showModal(`<h3>💳 還款</h3><p>你目前冇任何債務。</p><div class="modal-btns"><button class="btn" onclick="closeModal()">關閉</button></div>`);
+    return;
+  }
+  const opts = p.debts.map((d,i)=>
+    `<option value="${i}">${d.lenderName} · 欠 $${d.principal.toLocaleString()}（${Math.round(d.rate*100)}%息）</option>`
+  ).join('');
+  showModal(`
+    <h3>💳 還款</h3>
+    <p>選擇一筆債務還清。還款後債務消除。</p>
+    <div class="loan-row">
+      <label>債務</label>
+      <select id="repayIndex">${opts}</select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="confirmRepay()">還清</button>
+      <button class="btn" onclick="closeModal()">取消</button>
+    </div>
+  `);
+}
+
+function confirmRepay(){
+  const p = current();
+  const idx = +document.getElementById('repayIndex').value;
+  const d = p.debts[idx];
+  if(!d) return;
+
+  if(p.cash < d.principal){
+    alert(`現金不足！需要 $${d.principal.toLocaleString()}`);
+    return;
+  }
+
+  p.cash -= d.principal;
+  if(d.lender !== 'bank'){
+    const lender = state.players[d.lender];
+    if(lender) lender.cash += d.principal;
+    log(`💳 ${p.name} 還清 ${d.lenderName} 嘅債務 $${d.principal.toLocaleString()}`, 'money');
+  } else {
+    log(`🏦 ${p.name} 還清銀行貸款 $${d.principal.toLocaleString()}`, 'money');
+  }
+  p.debts.splice(idx,1);
+  closeModal();
+  render();
+}
+
+/* ============================================================
+   格子資訊
+   ============================================================ */
+function showCellInfo(pos){
+  const cell = BOARD[pos];
+  if(cell.t!=='prop') return;
+  const owner = state.owners[pos];
+  const ownerName = owner!==undefined ? state.players[owner].name : '無主';
+  showModal(`
+    <h3>${cell.n}</h3>
+    <p>${cell.d} · ${cell.tier} 級<br>
+    地價：<b class="gold">$${cell.price.toLocaleString()}</b><br>
+    租金：<b>$${cell.rent}</b><br>
+    擁有者：<b style="color:${owner!==undefined?state.players[owner].color:'#8a8478'}">${ownerName}</b></p>
+    <div class="modal-btns"><button class="btn" onclick="closeModal()">關閉</button></div>
+  `);
+}
+
+/* ============================================================
+   結算
+   ============================================================ */
+function calcNetWorth(p){
+  const assets = p.cash + p.props.reduce((s,i)=>s+BOARD[i].price,0);
+  const debt = p.debts.reduce((s,d)=>s+d.principal,0);
+  return assets - debt;
+}
+
+function endGame(){
+  state.gameOver = true;
+  const results = state.players.map(p=>{
+    let score = Math.round(calcNetWorth(p)/1000);
+    // 秘密任務
+    let missionDone = false;
+    if(p.mission && p.mission.check(p)){
+      score += p.mission.reward;
+      missionDone = true;
+    }
+    score -= p.bankruptCount * 5;
+    // 未還債務 ×2 扣分（已在淨資產扣過，這裡額外）
+    const unpaidDebt = p.debts.reduce((s,d)=>s+d.principal,0);
+    score -= Math.round(unpaidDebt/1000);
+    return {p, score, net:calcNetWorth(p), missionDone};
+  }).sort((a,b)=>b.score-a.score);
+
+  let html = `<div class="gameover"><h2>🏆 遊戲結束</h2>`;
+  results.forEach((r,i)=>{
+    html += `<div class="rank-row ${i===0?'top':''}">
+      <span>${i===0?'👑 ':''}${r.p.name}${r.missionDone?' ✅':''}</span>
+      <span>淨資產 $${r.net.toLocaleString()} · <b class="gold">${r.score} 分</b></span>
+    </div>`;
+  });
+  html += `<div class="modal-btns" style="margin-top:16px">
+    <button class="btn primary" onclick="location.reload()">再玩一次</button>
+  </div></div>`;
+
+  showModal(html, true);
+  log(`🏆 遊戲結束！冠軍：${results[0].p.name}（${results[0].score} 分）`, 'highlight');
+}
+
+/* ============================================================
+   Modal
+   ============================================================ */
+function showModal(content, noClose){
+  closeModal();
+  const mask = document.createElement('div');
+  mask.className = 'modal-mask';
+  mask.id = 'modalMask';
+  mask.innerHTML = `<div class="modal">${content}</div>`;
+  if(!noClose){
+    mask.addEventListener('click', e=>{ if(e.target===mask) closeModal(); });
+  }
+  document.body.appendChild(mask);
+}
+
+function closeModal(){
+  const m = document.getElementById('modalMask');
+  if(m) m.remove();
+}
+
+/* ============================================================
+   初始化
+   ============================================================ */
+</script>
+</body>
+</html>
