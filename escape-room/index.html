@@ -26,6 +26,13 @@
     }
     .back-btn:hover { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
 
+    /* --- 關卡顯示 (左上角) --- */
+    #level-display {
+        position: fixed; top: 15px; left: 140px; z-index: 9999;
+        color: #ffd32a; font-size: 16px; font-weight: bold;
+        text-shadow: 0 0 10px #ffd32a; padding: 8px 0;
+    }
+
     /* --- 倒數計時 (右上角) --- */
     #timer {
         position: fixed; top: 15px; right: 15px; z-index: 9999;
@@ -38,7 +45,7 @@
     #timer.danger { color: #ff4757; text-shadow: 0 0 15px rgba(255, 71, 87, 0.8); animation: pulseRed 0.5s infinite alternate; }
     @keyframes pulseRed { from { opacity: 1; } to { opacity: 0.5; } }
 
-    /* --- 背包按鈕 (右上角，計時器下方) --- */
+    /* --- 背包按鈕 (右上角) --- */
     #inventory-btn {
         position: fixed; top: 60px; right: 15px; z-index: 9999;
         background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3;
@@ -54,13 +61,11 @@
         background: radial-gradient(circle at 50% 30%, rgba(20, 20, 50, 1), rgba(5, 5, 10, 1));
     }
     
-    /* 暗角特效 */
     #room::after {
         content: ''; position: absolute; inset: 0; pointer-events: none;
         box-shadow: inset 0 0 150px rgba(0,0,0,0.9); z-index: 5;
     }
 
-    /* 房間中央嘅雷射網格線 (背景裝飾) */
     .laser-grid {
         position: absolute; inset: 0;
         background: 
@@ -70,7 +75,6 @@
     }
     @keyframes scan { 0% { background-position: 0 0; } 100% { background-position: 0 100px; } }
 
-    /* 可點擊物件通用樣式 */
     .interactable {
         position: absolute; cursor: pointer; z-index: 2;
         transition: transform 0.2s, filter 0.2s;
@@ -84,9 +88,7 @@
     }
     .interactable:active { transform: scale(0.95); }
 
-    /* ================= 物件排版 ================= */
-
-    /* 1. 大門 (右側) */
+    /* 1. 大門 */
     #door {
         top: 25%; right: 8%; width: 25%; height: 50%;
         background: linear-gradient(to bottom, #1a1a2e, #0a0a15);
@@ -102,7 +104,7 @@
     #door-lock .dot { width: 6px; height: 6px; background: #ff4757; border-radius: 50%; margin: 2px; }
     #door-text { color: #555; font-weight: bold; letter-spacing: 3px; font-size: 14px; }
 
-    /* 2. 壁畫 (左上牆) */
+    /* 2. 壁畫 */
     #painting {
         top: 25%; left: 8%; width: 25%; height: 25%;
         border: 8px solid #222; background: #111;
@@ -110,7 +112,7 @@
         z-index: 1; font-size: 40px;
     }
 
-    /* 3. 書枱 (左下) */
+    /* 3. 書枱 */
     #desk {
         bottom: 15%; left: 8%; width: 42%; height: 20%;
         background: linear-gradient(to bottom, #2c3e50, #1a252f);
@@ -119,7 +121,7 @@
         z-index: 1; 
     }
 
-    /* 4. 電腦螢幕 (書枱上) */
+    /* 4. 電腦 */
     #computer {
         bottom: calc(15% + 20%); 
         left: calc(8% + 10%); 
@@ -136,7 +138,7 @@
         border-radius: 0 0 5px 5px; z-index: 2;
     }
 
-    /* 5. 垃圾桶 (右下) */
+    /* 5. 垃圾桶 */
     #trash {
         bottom: 15%; right: 15%; width: 12%; height: 15%;
         background: #1a1a1a; border-radius: 5px 5px 10px 10px;
@@ -144,7 +146,16 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 1; font-size: 24px;
     }
 
-    /* 對話/提示框 */
+    /* 👇 6. 通風口 (全新物件) 👇 */
+    #vent {
+        top: 15%; right: 12%; width: 15%; height: 15%;
+        background: repeating-linear-gradient(0deg, #222, #222 5px, #111 5px, #111 10px);
+        border: 4px solid #333; border-radius: 5px;
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        z-index: 1; font-size: 20px;
+    }
+
+    /* 對話框 */
     #dialogue {
         position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
         background: rgba(0, 0, 0, 0.85); border: 1px solid #00d2d3; padding: 10px 20px;
@@ -153,7 +164,7 @@
         white-space: nowrap; max-width: 90%;
     }
 
-    /* 全螢幕彈窗 (解謎/背包) */
+    /* 彈窗通用 */
     .modal-overlay {
         position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85);
         backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
@@ -203,7 +214,7 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* 結算畫面 */
+    /* 結算/過關畫面 */
     #end-screen {
         position: absolute; inset: 0; background: #000; z-index: 50;
         display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -219,6 +230,7 @@
     /* 手機版特殊排版 */
     @media (max-width: 600px) {
         .back-btn { font-size: 12px; padding: 6px 12px; }
+        #level-display { left: 100px; font-size: 14px; }
         #timer { font-size: 20px; }
         #inventory-btn { font-size: 12px; padding: 6px 12px; top: 50px; }
         
@@ -227,6 +239,7 @@
         #desk { bottom: 10%; left: 5%; width: 55%; height: 18%; }
         #computer { bottom: calc(10% + 18%); left: calc(5% + 10%); width: 25%; height: 14%; }
         #trash { bottom: 10%; right: 5%; width: 15%; height: 12%; }
+        #vent { top: 15%; right: 8%; width: 15%; height: 12%; }
         
         .glass-panel { padding: 15px; }
         .key { padding: 12px; font-size: 18px; }
@@ -235,10 +248,9 @@
 </head>
 <body>
 
-    <!-- 固定左上角 -->
     <a href="../" class="back-btn">⬅ 返回大廳</a>
-
-    <!-- 固定右上角 -->
+    <div id="level-display">第 1 關</div>
+    
     <div id="timer">01:00</div>
     <div id="inventory-btn" onclick="toggleModal('inventory-modal')">🎒 背包</div>
 
@@ -270,6 +282,11 @@
         <div class="interactable" id="trash" onclick="inspectTrash()">
             🗑️
         </div>
+
+        <!-- 通風口 -->
+        <div class="interactable" id="vent" onclick="inspectVent()">
+            🪟
+        </div>
     </div>
 
     <div id="dialogue">系統提示</div>
@@ -299,12 +316,12 @@
         </div>
     </div>
 
-    <!-- 壁畫線索彈窗 -->
-    <div id="painting-modal" class="modal-overlay">
+    <!-- 通用線索彈窗 (壁畫/垃圾桶/通風口) -->
+    <div id="clue-modal" class="modal-overlay">
         <div class="glass-panel">
-            <div class="close-btn" onclick="closeModal('painting-modal')">×</div>
-            <h2>🖼️ 賽博壁畫</h2>
-            <p>壁畫上畫住一個舊時代嘅日曆，上面用紅色馬克筆圈住咗一個年份：<br><br><span style="font-size: 32px; color: #ffd32a; font-weight: bold;">2000</span></p>
+            <div class="close-btn" onclick="closeModal('clue-modal')">×</div>
+            <h2 id="clue-title">🔍 調查</h2>
+            <p id="clue-text"></p>
         </div>
     </div>
 
@@ -335,7 +352,7 @@
             
             <div id="computer-unlocked-ui" style="display: none; margin-top: 20px;">
                 <p style="color: #2ed573; font-size: 16px;">✅ 系統已解鎖！</p>
-                <p style="font-size: 16px;">機密訊息：<br><span style="color: #ffd32a; font-weight: bold; font-size: 20px;">大門密碼 = 解鎖年份 + 77</span></p>
+                <p id="computer-secret" style="font-size: 16px;"></p>
             </div>
         </div>
     </div>
@@ -367,14 +384,15 @@
     <div id="end-screen">
         <h1>🎉 逃脫成功！</h1>
         <div class="stats">
-            剩餘時間：<span id="final-time">--</span><br>
-            <span style="color: #00d2d3; font-size: 24px; margin-top: 10px; display: inline-block;">⭐⭐⭐</span>
+            完成關卡：第 <span id="final-level">1</span> 關<br>
+            剩餘時間：<span id="final-time">--</span>
         </div>
-        <button onclick="location.reload()">再玩一次</button>
+        <button onclick="nextLevel()">進入下一關</button>
     </div>
 
 <script>
-    // --- 遊戲狀態 ---
+    // --- 遊戲核心狀態 ---
+    let currentLevel = 1;
     let timeLeft = 60;
     let inventory = [];
     let hasKey = false;
@@ -385,62 +403,42 @@
     let timerInterval;
     let gameActive = true;
 
-    // 音效系統
+    // 當前關卡的隨機變數
+    let currentData = {
+        keyLocation: 'trash', // 'trash' 或 'vent'
+        year: 2000,
+        formula: '+ 77',
+        doorCode: 2077,
+        pinCode: "2000",
+        computerSecret: ""
+    };
+
+    // 音效
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-        
-        if (type === 'click') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-        } else if (type === 'pickup') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-        } else if (type === 'unlock') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-        } else if (type === 'error') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-        } else if (type === 'win') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
-            osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.6);
-        }
+        if (type === 'click') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); osc.start(); osc.stop(audioCtx.currentTime + 0.05); } 
+        else if (type === 'pickup') { osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); } 
+        else if (type === 'unlock') { osc.type = 'square'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); } 
+        else if (type === 'error') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); } 
+        else if (type === 'win') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2); osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.4); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6); osc.start(); osc.stop(audioCtx.currentTime + 0.6); }
     }
 
     // UI 控制
     function openModal(id) {
-        playSound('click');
-        closeAllModals();
+        playSound('click'); closeAllModals();
         document.getElementById(id).classList.add('active');
-        
         if (id === 'door-modal') { password = ""; updatePasswordDisplay(); }
         if (id === 'computer-modal') { 
-            pinCode = ""; 
-            updatePinDisplay();
+            pinCode = ""; updatePinDisplay();
             if(isComputerUnlocked) {
                 document.getElementById('computer-locked-ui').style.display = 'none';
                 document.getElementById('computer-unlocked-ui').style.display = 'block';
                 document.getElementById('computer-title').innerText = '💻 已解鎖終端機';
                 document.getElementById('computer-text').innerText = '系統歡迎你，黑客。';
+                document.getElementById('computer-secret').innerHTML = currentData.computerSecret;
             } else {
                 document.getElementById('computer-locked-ui').style.display = 'block';
                 document.getElementById('computer-unlocked-ui').style.display = 'none';
@@ -450,40 +448,21 @@
         }
     }
 
-    function closeModal(id) {
-        playSound('click');
-        document.getElementById(id).classList.remove('active');
-    }
-
-    function closeAllModals() {
-        document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
-    }
-
-    function toggleModal(id) {
-        if (document.getElementById(id).classList.contains('active')) closeModal(id);
-        else openModal(id);
-    }
-
-    function showDialogue(text) {
-        const d = document.getElementById('dialogue');
-        d.innerText = text;
-        d.style.opacity = 1;
-        clearTimeout(window.dialogueTimeout);
-        window.dialogueTimeout = setTimeout(() => { d.style.opacity = 0; }, 3000);
-    }
+    function closeModal(id) { playSound('click'); document.getElementById(id).classList.remove('active'); }
+    function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active')); }
+    function toggleModal(id) { if (document.getElementById(id).classList.contains('active')) closeModal(id); else openModal(id); }
+    function showDialogue(text) { const d = document.getElementById('dialogue'); d.innerText = text; d.style.opacity = 1; clearTimeout(window.dialogueTimeout); window.dialogueTimeout = setTimeout(() => { d.style.opacity = 0; }, 3000); }
 
     // 計時器
     function startTimer() {
+        clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             if (!gameActive) return;
             timeLeft--;
             let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             let s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('timer').innerText = `${m}:${s}`;
-            
-            if (timeLeft <= 10) {
-                document.getElementById('timer').classList.add('danger');
-            }
+            if (timeLeft <= 10) document.getElementById('timer').classList.add('danger');
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 gameActive = false;
@@ -493,169 +472,179 @@
         }, 1000);
     }
 
-    // 更新背包 UI
+    // 更新背包
     function updateInventory() {
-        for (let i = 0; i < 4; i++) {
-            let slot = document.getElementById(`slot-${i}`);
-            slot.innerHTML = '';
-            slot.classList.remove('filled');
-            slot.onclick = null;
-        }
+        for (let i = 0; i < 4; i++) { let slot = document.getElementById(`slot-${i}`); slot.innerHTML = ''; slot.classList.remove('filled'); slot.onclick = null; }
         inventory.forEach((item, index) => {
-            let slot = document.getElementById(`slot-${index}`);
-            slot.innerHTML = item.emoji;
-            slot.classList.add('filled');
-            slot.title = item.name;
-            slot.onclick = () => useItem(item.id);
+            let slot = document.getElementById(`slot-${index}`); slot.innerHTML = item.emoji; slot.classList.add('filled'); slot.title = item.name; slot.onclick = () => useItem(item.id);
         });
     }
 
-    function addItem(id, name, emoji) {
-        inventory.push({ id, name, emoji });
-        updateInventory();
-        playSound('pickup');
-        showDialogue(`獲得物品：${name}`);
-    }
+    function addItem(id, name, emoji) { inventory.push({ id, name, emoji }); updateInventory(); playSound('pickup'); showDialogue(`獲得物品：${name}`); }
 
-    // --- 物件互動邏輯 ---
+    // --- 物件互動 ---
 
     // 1. 書枱
     function inspectDesk() {
         openModal('desk-modal');
-        let text = document.getElementById('desk-text');
-        let btn = document.getElementById('desk-action-btn');
-        
-        if (hasPhoto) {
-            text.innerHTML = "抽屜已經打開，入面空空如也。";
-            btn.style.display = 'none';
-        } else {
+        let text = document.getElementById('desk-text'); let btn = document.getElementById('desk-action-btn');
+        if (hasPhoto) { text.innerHTML = "抽屜已經打開，入面空空如也。"; btn.style.display = 'none'; }
+        else {
             text.innerHTML = "書枱上只有一堆無用的電子零件。<br>下面有一個鎖住嘅抽屜。";
-            if (hasKey) {
-                btn.style.display = 'inline-block';
-                btn.innerText = "使用生鏽鑰匙開鎖";
-            } else {
-                btn.style.display = 'none';
-            }
+            if (hasKey) { btn.style.display = 'inline-block'; btn.innerText = "使用生鏽鑰匙開鎖"; }
+            else { btn.style.display = 'none'; }
         }
     }
 
     function deskAction() {
         if (!hasKey || hasPhoto) return;
-        playSound('unlock');
-        hasPhoto = true;
-        inventory = inventory.filter(item => item.id !== 'key');
-        hasKey = false;
-        updateInventory();
+        playSound('unlock'); hasPhoto = true;
+        inventory = inventory.filter(item => item.id !== 'key'); hasKey = false; updateInventory();
         addItem('photo', '破舊照片', '🖼️');
-        
         document.getElementById('desk-text').innerHTML = "你用鑰匙打開抽屜，發現一張破舊照片！<br><br><span style='color:#00d2d3;'>照片背面寫住：『解鎖年份在壁畫上』</span>";
         document.getElementById('desk-action-btn').style.display = 'none';
     }
 
     // 2. 壁畫
     function inspectPainting() {
-        openModal('painting-modal');
+        openModal('clue-modal');
+        document.getElementById('clue-title').innerText = "🖼️ 賽博壁畫";
+        document.getElementById('clue-text').innerHTML = `壁畫上畫住一個舊時代嘅日曆，上面用紅色馬克筆圈住咗一個年份：<br><br><span style="font-size: 32px; color: #ffd32a; font-weight: bold;">${currentData.year}</span>`;
     }
 
     // 3. 垃圾桶
     function inspectTrash() {
-        if (hasKey) {
-            showDialogue('垃圾桶入面只有一堆垃圾。');
+        if (currentData.keyLocation === 'trash') {
+            if (hasKey) { showDialogue('垃圾桶入面只有一堆垃圾。'); }
+            else { hasKey = true; addItem('key', '生鏽鑰匙', '🔑'); showDialogue('你在垃圾桶底部摸到一條生鏽的鑰匙！'); }
         } else {
-            hasKey = true;
-            addItem('key', '生鏽鑰匙', '🔑');
-            showDialogue('你在垃圾桶底部摸到一條生鏽的鑰匙！');
+            openModal('clue-modal');
+            document.getElementById('clue-title').innerText = "🗑️ 垃圾桶";
+            document.getElementById('clue-text').innerHTML = "裡面只有一些燒焦的電路板和垃圾，沒有特別的東西。";
         }
     }
 
-    // 4. 電腦
-    function inspectComputer() {
-        openModal('computer-modal');
+    // 4. 通風口 (新)
+    function inspectVent() {
+        if (currentData.keyLocation === 'vent') {
+            if (hasKey) { showDialogue('通風口裡面只有灰塵。'); }
+            else { hasKey = true; addItem('key', '生鏽鑰匙', '🔑'); showDialogue('你在通風口邊緣摸到一條生鏽的鑰匙！'); }
+        } else {
+            openModal('clue-modal');
+            document.getElementById('clue-title').innerText = "🪟 通風口";
+            document.getElementById('clue-text').innerHTML = "通風口被生鏽的鐵網封死，你無法通過。";
+        }
     }
 
-    // 5. 使用物品
+    // 5. 電腦
+    function inspectComputer() { openModal('computer-modal'); }
+
+    // 6. 使用物品
     function useItem(id) {
         closeAllModals();
-        if (id === 'photo') {
-            showDialogue('照片背面寫住：『解鎖年份在壁畫上』');
-        } else if (id === 'key') {
-            showDialogue('你要用呢條鑰匙打開書枱嘅抽屜。');
-        }
+        if (id === 'photo') { showDialogue(`照片背面寫住：『解鎖年份在壁畫上』`); }
+        else if (id === 'key') { showDialogue('你要用呢條鑰匙打開書枱嘅抽屜。'); }
     }
 
-    // 6. 電腦 PIN 碼鎖
+    // 7. 電腦 PIN 碼
     function pressPin(key) {
         playSound('click');
-        if (key === 'C') {
-            pinCode = "";
-        } else if (key === 'E') {
-            if (pinCode === '2000') {
-                isComputerUnlocked = true;
-                playSound('win');
+        if (key === 'C') { pinCode = ""; } 
+        else if (key === 'E') {
+            if (pinCode === currentData.pinCode) {
+                isComputerUnlocked = true; playSound('win');
                 document.getElementById('computer-locked-ui').style.display = 'none';
                 document.getElementById('computer-unlocked-ui').style.display = 'block';
                 document.getElementById('computer-title').innerText = '💻 已解鎖終端機';
                 document.getElementById('computer-text').innerText = '系統歡迎你，黑客。';
+                document.getElementById('computer-secret').innerHTML = currentData.computerSecret;
                 showDialogue('成功解鎖終端機！');
-                return;
-            } else {
-                playSound('error');
-                pinCode = "";
-                showDialogue('❌ PIN 碼錯誤！');
-            }
-        } else {
-            if (pinCode.length < 4) pinCode += key;
-        }
+            } else { playSound('error'); pinCode = ""; showDialogue('❌ PIN 碼錯誤！'); }
+        } else { if (pinCode.length < 4) pinCode += key; }
         updatePinDisplay();
     }
+    function updatePinDisplay() { document.getElementById('pin-display').innerText = pinCode.padEnd(4, '-'); }
 
-    function updatePinDisplay() {
-        let display = pinCode.padEnd(4, '-');
-        document.getElementById('pin-display').innerText = display;
-    }
-
-    // 7. 大門密碼鎖
+    // 8. 大門密碼
     function pressKey(key) {
         playSound('click');
-        if (key === 'C') {
-            password = "";
-        } else if (key === 'E') {
-            if (password === '2077') {
-                unlockDoor();
-                return;
-            } else {
-                playSound('error');
-                password = "";
-                showDialogue('❌ 密碼錯誤！大門發出警告聲。');
-            }
-        } else {
-            if (password.length < 4) password += key;
-        }
+        if (key === 'C') { password = ""; } 
+        else if (key === 'E') {
+            if (password === currentData.doorCode.toString()) { unlockDoor(); return; } 
+            else { playSound('error'); password = ""; showDialogue('❌ 密碼錯誤！大門發出警告聲。'); }
+        } else { if (password.length < 4) password += key; }
         updatePasswordDisplay();
     }
-
-    function updatePasswordDisplay() {
-        let display = password.padEnd(4, '-');
-        document.getElementById('password-display').innerText = display;
-    }
+    function updatePasswordDisplay() { document.getElementById('password-display').innerText = password.padEnd(4, '-'); }
 
     function unlockDoor() {
-        playSound('win');
-        gameActive = false;
-        clearInterval(timerInterval);
+        playSound('win'); gameActive = false; clearInterval(timerInterval);
         document.getElementById('door-modal').classList.remove('active');
-        
+        document.getElementById('final-level').innerText = currentLevel;
         let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         let s = (timeLeft % 60).toString().padStart(2, '0');
         document.getElementById('final-time').innerText = `${m}:${s}`;
-        
         document.getElementById('end-screen').style.display = 'flex';
+    }
+
+    // --- 核心：生成新關卡 ---
+    function generateLevel() {
+        gameActive = true;
+        
+        // 隨機年份 (1950 ~ 2050)
+        let year = Math.floor(Math.random() * 100) + 1950;
+        
+        // 隨機公式
+        let formulas = [
+            { op: ' + 77', result: year + 77 },
+            { op: ' - 50', result: year - 50 },
+            { op: ' x 2', result: year * 2 }
+        ];
+        let form = formulas[Math.floor(Math.random() * formulas.length)];
+        
+        // 隨機鎖匙位置
+        let keyLoc = Math.random() < 0.5 ? 'trash' : 'vent';
+
+        // 密碼必須係 4 位數，如果計出嚟少過 4 位就補 0
+        let finalCode = form.result.toString();
+        if(finalCode.length > 4) finalCode = finalCode.substring(0, 4); // 太長就截斷
+        while(finalCode.length < 4) finalCode = "0" + finalCode; // 太短就補零
+
+        currentData = {
+            keyLocation: keyLoc,
+            year: year,
+            formula: form.op,
+            doorCode: parseInt(finalCode),
+            pinCode: year.toString(),
+            computerSecret: `機密訊息：<br><span style="color: #ffd32a; font-weight: bold; font-size: 20px;">大門密碼 = 解鎖年份 ${form.op}</span>`
+        };
+
+        // 重設狀態
+        inventory = []; hasKey = false; hasPhoto = false; isComputerUnlocked = false;
+        updateInventory();
+        
+        // 隨機切換一下壁畫提示 (如果鎖匙喺通風口，壁畫提示仍然有用)
+        document.getElementById('clue-text').innerHTML = `壁畫上畫住一個舊時代嘅日曆，上面用紅色馬克筆圈住咗一個年份：<br><br><span style="font-size: 32px; color: #ffd32a; font-weight: bold;">${year}</span>`;
+
+        // 重設計時器 (每關時間會越來越少，最少 30 秒)
+        timeLeft = Math.max(30, 70 - (currentLevel * 5));
+        document.getElementById('timer').innerText = `01:00`;
+        document.getElementById('timer').classList.remove('danger');
+        startTimer();
+
+        document.getElementById('level-display').innerText = `第 ${currentLevel} 關`;
+        showDialogue(`第 ${currentLevel} 關開始！`);
+    }
+
+    function nextLevel() {
+        document.getElementById('end-screen').style.display = 'none';
+        currentLevel++;
+        generateLevel();
     }
 
     // 初始化
     window.onload = () => {
-        startTimer();
-        updateInventory();
+        generateLevel();
     };
 
 </script>
