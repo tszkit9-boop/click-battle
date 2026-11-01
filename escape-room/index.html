@@ -146,7 +146,7 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 1; font-size: 24px;
     }
 
-    /* 👇 6. 通風口 (全新物件) 👇 */
+    /* 6. 通風口 */
     #vent {
         top: 15%; right: 12%; width: 15%; height: 15%;
         background: repeating-linear-gradient(0deg, #222, #222 5px, #111 5px, #111 10px);
@@ -316,7 +316,7 @@
         </div>
     </div>
 
-    <!-- 通用線索彈窗 (壁畫/垃圾桶/通風口) -->
+    <!-- 通用線索彈窗 -->
     <div id="clue-modal" class="modal-overlay">
         <div class="glass-panel">
             <div class="close-btn" onclick="closeModal('clue-modal')">×</div>
@@ -405,9 +405,10 @@
 
     // 當前關卡的隨機變數
     let currentData = {
-        keyLocation: 'trash', // 'trash' 或 'vent'
+        keyLocation: 'trash',
         year: 2000,
-        formula: '+ 77',
+        operator: '+',
+        randomNum: 77,
         doorCode: 2077,
         pinCode: "2000",
         computerSecret: ""
@@ -524,7 +525,7 @@
         }
     }
 
-    // 4. 通風口 (新)
+    // 4. 通風口
     function inspectVent() {
         if (currentData.keyLocation === 'vent') {
             if (hasKey) { showDialogue('通風口裡面只有灰塵。'); }
@@ -594,36 +595,34 @@
         // 隨機年份 (1950 ~ 2050)
         let year = Math.floor(Math.random() * 100) + 1950;
         
-        // 隨機公式
-        let formulas = [
-            { op: ' + 77', result: year + 77 },
-            { op: ' - 50', result: year - 50 },
-            { op: ' x 2', result: year * 2 }
-        ];
-        let form = formulas[Math.floor(Math.random() * formulas.length)];
-        
+        // 完全隨機加減數 (10 到 89)，保證結果係 4 位數
+        let isAddition = Math.random() < 0.5;
+        let randomNum = Math.floor(Math.random() * 80) + 10; // 10 ~ 89
+        let result = isAddition ? year + randomNum : year - randomNum;
+        let opStr = isAddition ? '+' : '-';
+
         // 隨機鎖匙位置
         let keyLoc = Math.random() < 0.5 ? 'trash' : 'vent';
 
-        // 密碼必須係 4 位數，如果計出嚟少過 4 位就補 0
-        let finalCode = form.result.toString();
-        if(finalCode.length > 4) finalCode = finalCode.substring(0, 4); // 太長就截斷
-        while(finalCode.length < 4) finalCode = "0" + finalCode; // 太短就補零
+        // 轉做字串確保 4 位數
+        let finalCode = result.toString();
+        while(finalCode.length < 4) finalCode = "0" + finalCode;
 
         currentData = {
             keyLocation: keyLoc,
             year: year,
-            formula: form.op,
+            operator: opStr,
+            randomNum: randomNum,
             doorCode: parseInt(finalCode),
             pinCode: year.toString(),
-            computerSecret: `機密訊息：<br><span style="color: #ffd32a; font-weight: bold; font-size: 20px;">大門密碼 = 解鎖年份 ${form.op}</span>`
+            computerSecret: `機密訊息：<br><span style="color: #ffd32a; font-weight: bold; font-size: 20px;">大門密碼 = ${year} ${opStr} ${randomNum}</span><br><span style="font-size: 14px; color: #aaa;">(請自行心算並於大門輸入)</span>`
         };
 
         // 重設狀態
         inventory = []; hasKey = false; hasPhoto = false; isComputerUnlocked = false;
         updateInventory();
         
-        // 隨機切換一下壁畫提示 (如果鎖匙喺通風口，壁畫提示仍然有用)
+        // 更新壁畫提示
         document.getElementById('clue-text').innerHTML = `壁畫上畫住一個舊時代嘅日曆，上面用紅色馬克筆圈住咗一個年份：<br><br><span style="font-size: 32px; color: #ffd32a; font-weight: bold;">${year}</span>`;
 
         // 重設計時器 (每關時間會越來越少，最少 30 秒)
