@@ -29,7 +29,7 @@
   button:disabled{opacity:.38;cursor:not-allowed;transform:none!important;filter:grayscale(.5)}
   .hidden{display:none!important}
 
-  /* 大廳與遊戲 CSS 保持原樣，省略部分以節省空間，實際使用時請保留之前嘅 CSS */
+  /* ====== 大廳 ====== */
   #lobby{max-width:480px;margin:0 auto;padding:60px 24px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
   .logo h1{font-size:3rem;font-weight:900;letter-spacing:6px;text-align:center;background:linear-gradient(135deg,#FFF6D6,#E8C46A 40%,#B8912E 70%,#E8C46A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
   .logo .sub{text-align:center;color:var(--text-dim);font-size:.85rem;margin-bottom:32px;letter-spacing:2px;}
@@ -40,7 +40,7 @@
   .field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,196,106,.15);}
   
   .avatar-selector{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
-  .avatar-opt{font-size:1.6rem;padding:8px 12px;background:rgba(10,10,20,.7);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;filter:grayscale(1);opacity:.6;position:relative;}
+  .avatar-opt{font-size:1.6rem;padding:8px 12px;background:rgba(10,10,20,.7);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;filter:grayscale(1);opacity:.6;position:relative;min-width:48px;text-align:center;}
   .avatar-opt:hover{filter:grayscale(0);opacity:1;}
   .avatar-opt.active{background:rgba(232,196,106,.15);border-color:var(--gold);filter:grayscale(0);opacity:1;transform:scale(1.1);box-shadow:0 0 15px rgba(232,196,106,.3);}
   .avatar-opt .skill-hint{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--gold);white-space:nowrap;display:none;}
@@ -51,6 +51,7 @@
   .btn-outline{width:100%;padding:14px;border-radius:12px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-weight:700;font-size:1rem;}
   .room-code{font-size:2.5rem;font-weight:900;color:var(--gold);letter-spacing:6px;margin:10px 0;}
   
+  /* ====== 遊戲主畫面 ====== */
   #game{display:grid;grid-template-columns:280px 1fr 320px;gap:16px;padding:16px;height:100vh;max-height:100vh;}
   @media(max-width:1200px){#game{grid-template-columns:1fr;height:auto;max-height:none;padding-bottom:50px}.board-wrap{order:-1}}
   
@@ -209,8 +210,11 @@
 </div>
 
 <script>
+/* ========================================================
+   🔴 1. Firebase 設定 (請確保呢度有你嘅真實資料)
+   ======================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSy...", 
+  apiKey: "AIzaSy...", // 換成你嘅 apiKey
   authDomain: "snowball-game-a66a8.firebaseapp.com",
   databaseURL: "https://snowball-game-a66a8-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "snowball-game-a66a8",
@@ -225,14 +229,14 @@ const db = firebase.database();
 const COLORS = ['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C'];
 const ALL_EMOJIS = ['👧','👦','🐱','🐶','🐯','🦊','🐼','🐸'];
 
-// 🦸‍♂️ 角色技能對應表
+// 🦸‍♂️ 角色技能
 const SKILLS = {
   '👧': { name: '交易專家', desc: '與人交易時，對方需額外補 $5,000 俾你。' },
   '👦': { name: '打工達人', desc: '每回合結束時，額外獲得 $5,000。' },
   '🐱': { name: '招財貓', desc: '每次經過起點，額外獲得 $10,000。' },
   '🐶': { name: '看門狗', desc: '收取租金時，租金增加 20%。' },
   '🐯': { name: '猛虎', desc: '交租時，只需支付 80% 租金。' },
-  '🦊': { name: '狡猾狐狸', desc: '還款時，只需支付 90% 本金（銀行照收100%）。' },
+  '🦊': { name: '狡猾狐狸', desc: '向銀行/玩家借款時，利息降低 5%。' },
   '🐼': { name: '國寶保護', desc: '首次面臨破產時，系統會保留你一塊最貴的地。' },
   '🐸': { name: '黑市大佬', desc: '喺黑市買地只需 7 折。' }
 };
@@ -266,7 +270,7 @@ const CHANCE_CARDS = [
   {text:'🌀 颱風襲港！所有玩家需支付 $5,000 維修費', type:'event'},
   {text:'🚕 的士加價！下回合移動步數 -1', type:'event'},
   {text:'🔥 樓市辣招！擁有 3 塊地以上嘅玩家交 15% 資產稅', type:'event'},
-  {text:'🛍️ 自由行重臨！油尖旺區地產今回合租金 ×3', type:'event'},
+  {text:'🛍️ 自由行重臨！全場租金今回合 ×3', type:'event'},
   {text:'📈 股市大升！你獲得 $30,000', type:'good'},
   {text:'💸 稅務調查！交出現金 10%', type:'bad'},
   {text:'💼 遺產繼承！獲得 $25,000', type:'good'},
@@ -310,6 +314,9 @@ function createPlayerObj(id, name, color, emoji, isBot) {
   };
 }
 
+/* ========================================================
+   房間建立與加入邏輯
+   ======================================================== */
 function startSoloGame() {
   const name = getPlayerName(); if(!name) return;
   myName = name; myId = 'p_' + Date.now(); myRole = 'host';
@@ -325,11 +332,22 @@ function startSoloGame() {
     playersData[botId] = createPlayerObj(botId, BOT_NAMES[i], COLORS[i+1], ALL_EMOJIS[i+1], true);
   }
 
-  roomRef.set({ status: 'playing', host: myId, players: playersData }).then(() => {
+  // 修復：一次性寫入完整狀態
+  const initialData = {
+    status: 'playing', 
+    host: myId, 
+    players: playersData,
+    gameState: { currentId: myId, round: 1, totalRounds: 8, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null }
+  };
+
+  roomRef.set(initialData).then(() => {
     document.getElementById('lobby').classList.add('hidden'); 
     document.getElementById('game').classList.remove('hidden');
-    listenToRoom(); initChat(); startTimer();
-    roomRef.update({ gameState: { currentId: myId, round: 1, totalRounds: 8, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null } });
+    listenToRoom(); 
+    initChat(); 
+    startTimer();
+  }).catch(err => {
+    alert("建立房間失敗：" + err.message);
   });
 }
 
@@ -403,9 +421,9 @@ function startGameHost() {
   roomRef.update({ status: 'playing', gameState: { currentId: pIds[0], round: 1, totalRounds: 8, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null } });
 }
 
-// ==========================================
-// 監聽與渲染
-// ==========================================
+/* ========================================================
+   監聽與渲染
+   ======================================================== */
 function listenToRoom() {
   roomRef.on('value', snapshot => {
     const data = snapshot.val(); if(!data) return; localData = data;
@@ -558,9 +576,9 @@ function renderPlayers() {
   panel.innerHTML = html;
 }
 
-// ==========================================
-// 暗標拍賣系統
-// ==========================================
+/* ========================================================
+   暗標拍賣系統
+   ======================================================== */
 function renderAuction() {
   const auc = localData.gameState.auction;
   if(!auc) return;
@@ -681,9 +699,9 @@ setInterval(() => {
   }
 }, 1000);
 
-// ==========================================
-// 香港特色事件處理
-// ==========================================
+/* ========================================================
+   香港特色事件處理
+   ======================================================== */
 function handleChanceCard(card, playerId) {
   const p = localData.players[playerId];
   const pIds = Object.keys(localData.players);
@@ -728,7 +746,7 @@ function handleChanceCard(card, playerId) {
   }
   else if(card.text.includes('自由行重臨')) {
     eventFired = true;
-    updates['gameState/rentBoost'] = 3; // 暫時簡化，全場租金x3（原程式碼需要調整租金讀取）
+    updates['gameState/rentBoost'] = 3;
     addLog(`🛍️ 自由行重臨！今回合全場租金 ×3！`, 'money');
   }
   else if(card.text.includes('大耳窿掃蕩')) {
@@ -756,9 +774,9 @@ function handleChanceCard(card, playerId) {
   roomRef.update({ [`players/${playerId}/cash`]: newCash });
 }
 
-// ==========================================
-// 遊戲核心與 AI
-// ==========================================
+/* ========================================================
+   遊戲核心與 AI
+   ======================================================== */
 function checkBotTurn() {
   if(!localData || !localData.gameState || localData.gameState.phase !== 'roll' || localData.gameState.auction) return;
   const curId = localData.gameState.currentId;
@@ -795,7 +813,7 @@ function doBotRoll(botId) {
         animState.current = (animState.current + 1) % 40;
         if (animState.current === 0) {
           animState.newCash += 20000;
-          if (p.emoji === '🐱') animState.newCash += 10000; // 招財貓技能
+          if (p.emoji === '🐱') animState.newCash += 10000;
         }
         count++; renderAll();
         if (count >= animState.steps) {
@@ -833,9 +851,7 @@ function handleBotLanding(botId, pos) {
       let rent = cell.rent * Math.pow(2, level);
       if(checkMonopoly(ownerId, cell.d)) rent *= 2;
       
-      // 🐶 看門狗技能 (收多20%)
       if (ownerP.emoji === '🐶') rent = Math.round(rent * 1.2);
-      // 🐯 猛虎技能 (交少20%)
       if (p.emoji === '🐯') rent = Math.round(rent * 0.8);
       
       roomRef.update({ [`players/${botId}/cash`]: p.cash - rent, [`players/${ownerId}/cash`]: ownerP.cash + rent })
@@ -843,7 +859,7 @@ function handleBotLanding(botId, pos) {
     } else {
       // AI 拒絕買地，觸發暗標
       startAuction(pos);
-      setTimeout(() => { roomRef.update({'gameState/phase': 'action'}); }, 1000); // 等待拍賣
+      setTimeout(() => { roomRef.update({'gameState/phase': 'action'}); }, 1000);
     }
   } else if (cell.t === 'chance') {
     const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
@@ -859,14 +875,12 @@ function handleBotLanding(botId, pos) {
   } else if (cell.t === 'free') {
     roomRef.update({ [`players/${botId}/cash`]: p.cash + 5000 }).then(() => finishTurn());
   } else if (cell.t === 'black') {
-    // AI 黑市簡單邏輯
     if(p.cash > 30000) {
        roomRef.update({ [`players/${botId}/cash`]: p.cash - 30000 }).then(() => finishTurn());
     } else { finishTurn(); }
   } else { finishTurn(); }
 }
 
-// 真人玩家動作
 function doRoll() {
   const gs = localData.gameState; if(gs.currentId !== myId || gs.phase !== 'roll' || gs.auction) return;
   const p = localData.players[myId];
@@ -934,10 +948,7 @@ function handleLanding(pos) {
           .then(() => { addLog(`💸 ${p.name} 向 ${ownerP.name} 交租 $${rent.toLocaleString()}`, 'danger'); playSound('bad'); checkBankrupt(myId); });
       }
     } else if (!ownerData && p.cash < cell.price) {
-       // 唔夠錢買，自動觸發拍賣
        showModal(`<h3>🏠 ${cell.n}</h3><p>你現金不足以購買，觸發全場暗標拍賣！</p><button class="btn primary" onclick="startAuction(${pos}); closeModal();">開始拍賣</button>`);
-    } else {
-      // 自己地
     }
   } else if (cell.t === 'chance') {
     const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
@@ -960,7 +971,6 @@ function handleLanding(pos) {
   }
 }
 
-// 🐼 國寶保護破產邏輯
 function checkBankrupt(pid) {
   const p = localData.players[pid];
   if (p.bankrupt || p.cash >= 0) return;
@@ -970,7 +980,6 @@ function checkBankrupt(pid) {
     let currentCash = p.cash;
     let updates = {};
     
-    // 🐼 如果係國寶，保留最貴嗰塊
     let saveProp = null;
     if (p.emoji === '🐼' && !p.pandasSaved && newProps.length > 0) {
       newProps.sort((a,b) => BOARD[b].price - BOARD[a].price);
@@ -984,7 +993,7 @@ function checkBankrupt(pid) {
       const sellValue = Math.floor(BOARD[sellPos].price * 0.7);
       currentCash += sellValue;
       updates[`gameState/owners/${sellPos}`] = null;
-      if(saveProp && newProps.length === 0) newProps.push(saveProp); // 塞返入去
+      if(saveProp && newProps.length === 0) newProps.push(saveProp);
       
       updates[`players/${pid}/props`] = newProps;
       updates[`players/${pid}/cash`] = currentCash;
@@ -1022,7 +1031,7 @@ function endTurn() {
   
   const gs = localData.gameState;
   if(gs.phase !== 'action' && gs.currentId !== myId) return;
-  if(gs.auction) return; // 拍賣中唔可以結束
+  if(gs.auction) return;
   
   const pIds = Object.keys(localData.players);
   let nextIndex = (pIds.indexOf(gs.currentId) + 1) % pIds.length;
@@ -1039,7 +1048,7 @@ function endTurn() {
   updates['gameState/currentId'] = pIds[nextIndex];
   updates['gameState/phase'] = 'roll';
   updates['gameState/dice1'] = null; updates['gameState/dice2'] = null;
-  updates['gameState/rentBoost'] = 1; // 重置租金加成
+  updates['gameState/rentBoost'] = 1;
 
   if(nextIndex <= pIds.indexOf(gs.currentId)) {
     updates['gameState/round'] = gs.round + 1;
@@ -1048,7 +1057,7 @@ function endTurn() {
       if(pl.bankrupt) return;
       
       let roundBonus = 10000;
-      if (pl.emoji === '👦') roundBonus += 5000; // 打工達人技能
+      if (pl.emoji === '👦') roundBonus += 5000;
       
       let newCash = (pl.cash || 0) + roundBonus;
       if(pl.debts && pl.debts.length > 0) {
@@ -1094,7 +1103,7 @@ function buyProperty(pos) {
 }
 function openBlackMarket() {
   const p = localData.players[myId];
-  const bmDiscount = p.emoji === '🐸' ? 0.7 : 0.8; // 黑市大佬技能
+  const bmDiscount = p.emoji === '🐸' ? 0.7 : 0.8;
   showModal(`<h3>🕶️ 黑市地下交易</h3>
     <p style="font-size:.8rem;color:#aaa;">呢度冇王法，只要你有錢，咩都買到。</p>
     <button class="btn danger" onclick="bmLoan()">💰 借大耳窿 ($50,000 / 30%息)</button>
@@ -1160,7 +1169,6 @@ function bmSabotage() {
   }
 }
 
-// 工具：其他未列出嘅功能同之前版本一致，包括監獄、交易、還款、結算等
 function payBail() { const gs = localData.gameState; if(gs.currentId !== myId || gs.phase !== 'roll') return; const p = localData.players[myId]; if (p.cash < 10000) return alert('現金不足！'); if(confirm('確定支付 $10,000 保釋金？')) { roomRef.update({ [`players/${myId}/cash`]: p.cash - 10000, [`players/${myId}/pos`]: 0, [`players/${myId}/jailTurns`]: 0 }); addLog(`💸 ${p.name} 支付保釋金出獄。`, 'danger'); } }
 function showCellInfo(pos) { const cell = BOARD[pos]; if(cell.t !== 'prop') return; const ownerData = localData.gameState.owners && localData.gameState.owners[pos]; const ownerId = ownerData ? ownerData.owner : null; const level = ownerData ? ownerData.level : 0; if (!ownerId) { showModal(`<h3>${cell.n}</h3><p>無主地<br>地價：$${cell.price.toLocaleString()}</p><button class="btn" onclick="closeModal()">關閉</button>`); } else { const ownerP = localData.players[ownerId]; const mono = checkMonopoly(ownerId, cell.d); let rent = cell.rent * Math.pow(2, level); if(mono) rent *= 2; if(ownerP.emoji === '🐶') rent = Math.round(rent * 1.2); if (ownerId === myId && localData.gameState.currentId === myId) { const cost = cell.price / 2; showModal(`<h3>🏠 ${cell.n}</h3><p>業主：你<br>等級：Level ${level} ${mono?'(🎉已壟斷 ×2)':''}<br>目前租金：<b style="color:var(--green)">$${rent.toLocaleString()}</b></p><button class="btn primary" onclick="upgradeProperty(${pos})" ${level>=3||localData.players[myId].cash<cost?'disabled':''}>升級房屋 (花費 $${cost.toLocaleString()})</button><button class="btn" onclick="closeModal()">關閉</button>`); } else if (ownerId !== myId) { showModal(`<h3>🏠 ${cell.n}</h3><p>業主：${ownerP.emoji} ${ownerP.name}<br>等級：Level ${level} ${mono?'(🎉已壟斷 ×2)':''}<br>租金：<b style="color:var(--red)">$${rent.toLocaleString()}</b></p><button class="btn primary" onclick="openTradeModal('${ownerId}', ${pos})">🤝 提出交易</button><button class="btn" onclick="closeModal()">關閉</button>`); } else { showModal(`<h3>🏠 ${cell.n}</h3><p>業主：你<br>等級：Level ${level} ${mono?'(🎉已壟斷 ×2)':''}</p><button class="btn" onclick="closeModal()">關閉</button>`); } } }
 function upgradeProperty(pos) { const cell = BOARD[pos], p = localData.players[myId]; const ownerData = localData.gameState.owners[pos]; if(!ownerData || ownerData.owner !== myId) return; if(p.cash < cell.price / 2) return alert('現金不足！'); roomRef.update({ [`gameState/owners/${pos}/level`]: (ownerData.level || 0) + 1, [`players/${myId}/cash`]: p.cash - (cell.price / 2) }).then(() => { addLog(`🏗️ ${p.name} 升級咗 ${cell.n}！`, 'money'); playSound('buy'); closeModal(); }); }
