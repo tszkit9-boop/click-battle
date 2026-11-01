@@ -254,7 +254,6 @@ const BOARD = [
   {t:'prop', n:'上水', d:'北區', tier:'B', price:18000, rent:2200}, {t:'prop', n:'東涌', d:'離島', tier:'B', price:18000, rent:2200},
 ];
 
-// 🇭🇰 香港特色機會卡
 const CHANCE_CARDS = [
   {text:'🎉 政府派錢！全場現金最少嘅玩家獲得 $20,000', type:'event'},
   {text:'🌀 颱風襲港！所有玩家需支付 $5,000 維修費', type:'event'},
@@ -279,9 +278,9 @@ const BOT_NAMES = ['電腦阿明', '電腦阿珍', '電腦阿強'];
 
 let myId = null, roomCode = null, roomRef = null, localData = null, myRole = 'player', isRolling = false, myName = '', myEmoji = '👧';
 let animState = { active: false, pid: null, current: 0, steps: 0, newCash: 0 };
-let timerInterval = null, auctionInterval = null;
+let timerInterval = null;
 let timeLeft = 60;
-let botTurnTimeout = null;
+let lastBotRollAttempt = 0; // 👈 改用時間戳記，解決卡死
 
 function selectAvatar(el) {
   document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('active'));
@@ -430,17 +429,17 @@ function listenToRoom() {
         if(auctionMask) auctionMask.remove();
       }
 
+      // 👇 定時檢查 AI 狀態（防卡死看門狗）
       if(data.gameState.phase === 'roll' && !data.gameState.auction) {
         if(!timerInterval) startTimer();
         checkBotTurn();
       }
 
-      // 👇 防卡死：如果輪到電腦，而狀態係 action（例如拍賣完結），自動幫佢結束回合
+      // 👇 防卡死：如果輪到電腦，而狀態係 action，自動幫佢結束回合
       if(data.gameState.phase === 'action' && !data.gameState.auction) {
         const curP = data.players[data.gameState.currentId];
-        if(curP && curP.isBot && !botTurnTimeout) {
-          botTurnTimeout = setTimeout(() => {
-            botTurnTimeout = null;
+        if(curP && curP.isBot) {
+          setTimeout(() => {
             if(localData.gameState.phase === 'action' && localData.gameState.currentId === curP.id) {
               endTurn();
             }
@@ -537,8 +536,18 @@ function renderBoard() {
     <div class="turn-cash ${displayCash<0?'neg':''}">💰 現金：$${displayCash.toLocaleString()}</div>
     <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
     ${actionArea}
+    ${curP.isBot ? `<div style="font-size:.7rem;color:#666;margin-top:10px;cursor:pointer;" onclick="forceBotRoll()">(如果卡住咗，撳呢度強制電腦行動)</div>` : ''}
   </div>`;
   boardEl.innerHTML = html;
+}
+
+function forceBotRoll() {
+  if(localData.gameState.phase === 'roll' && localData.players[localData.gameState.currentId].isBot) {
+    lastBotRollAttempt = 0; // 重置時間戳，強制觸發
+    checkBotTurn();
+  } else if(localData.gameState.phase === 'action' && localData.players[localData.gameState.currentId].isBot) {
+    endTurn();
+  }
 }
 
 function renderPlayers() {
@@ -755,16 +764,18 @@ function handleChanceCard(card, playerId) {
   roomRef.update({ [`players/${playerId}/cash`]: newCash });
 }
 
+// 👇 重寫 AI 觸發邏輯，加入防卡死
 function checkBotTurn() {
-  if(!localData || !localData.gameState || localData.gameState.phase !== 'roll' || localData.gameState.auction) return;
+  if(!localData || !localData.gameState || localData.gameState.phase !== 'roll' || localData.gameState.auction || isRolling) return;
   const curId = localData.gameState.currentId;
   const curP = localData.players[curId];
   
-  if(curP && curP.isBot && !botTurnTimeout) {
-    botTurnTimeout = setTimeout(() => {
-      botTurnTimeout = null;
+  if(curP && curP.isBot) {
+    // 如果超過 1.5 秒電腦都未擲骰，強制幫佢擲
+    if(Date.now() - lastBotRollAttempt > 1500) {
+      lastBotRollAttempt = Date.now();
       doBotRoll(curId);
-    }, 1200);
+    }
   }
 }
 
@@ -1004,7 +1015,7 @@ function checkBankrupt(pid) {
 
 function endTurn() {
   clearInterval(timerInterval);
-  if(botTurnTimeout) { clearTimeout(botTurnTimeout); botTurnTimeout = null; }
+  lastBotRollAttempt = 0; // 👈 每次結束回合重置
   
   const gs = localData.gameState;
   if(gs.phase !== 'action' && gs.currentId !== myId) return;
