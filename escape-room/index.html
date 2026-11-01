@@ -12,12 +12,12 @@
     body {
         background-color: #050510; color: #fff; font-family: 'Orbitron', 'PingFang HK', sans-serif;
         height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
-        touch-action: manipulation; /* 防止手機雙擊縮放 */
+        touch-action: manipulation; 
     }
 
-    /* --- 返回大廳按鈕 --- */
+    /* --- 返回大廳按鈕 (左上角) --- */
     .back-btn {
-        position: fixed; top: 15px; left: 15px; z-index: 99999;
+        position: fixed; top: 15px; left: 15px; z-index: 9999;
         padding: 8px 16px; background: rgba(10, 10, 20, 0.85);
         color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px;
         text-decoration: none; font-weight: bold; font-size: 14px;
@@ -26,29 +26,25 @@
     }
     .back-btn:hover { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
 
-    /* 頂部狀態欄 */
-    #hud {
-        position: absolute; top: 0; left: 0; width: 100%; padding: 15px 20px;
-        display: flex; justify-content: space-between; align-items: flex-start;
-        z-index: 10; pointer-events: none;
-    }
-    
+    /* --- 倒數計時 (右上角) --- */
     #timer {
+        position: fixed; top: 15px; right: 15px; z-index: 9999;
         font-size: 26px; font-weight: 900; color: #00d2d3; 
-        letter-spacing: 2px; margin-left: auto; margin-right: 20px;
-        font-variant-numeric: tabular-nums; /* 確保數字唔會跳位 */
+        letter-spacing: 2px;
+        font-variant-numeric: tabular-nums; 
         text-shadow: 0 0 10px rgba(0, 210, 211, 0.5);
         transition: color 0.3s, text-shadow 0.3s;
     }
     #timer.danger { color: #ff4757; text-shadow: 0 0 15px rgba(255, 71, 87, 0.8); animation: pulseRed 0.5s infinite alternate; }
     @keyframes pulseRed { from { opacity: 1; } to { opacity: 0.5; } }
 
+    /* --- 背包按鈕 (右上角，計時器下方) --- */
     #inventory-btn {
-        pointer-events: auto; cursor: pointer;
+        position: fixed; top: 60px; right: 15px; z-index: 9999;
         background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3;
         padding: 8px 15px; border-radius: 8px; font-weight: bold; color: #00d2d3;
         display: flex; align-items: center; gap: 5px; transition: all 0.2s;
-        touch-action: manipulation;
+        cursor: pointer; backdrop-filter: blur(5px);
     }
     #inventory-btn:hover { background: rgba(0, 210, 211, 0.3); }
 
@@ -88,11 +84,11 @@
     }
     .interactable:active { transform: scale(0.95); }
 
-    /* ================= 物件排版 (完美比例) ================= */
+    /* ================= 物件排版 ================= */
 
     /* 1. 大門 (右側) */
     #door {
-        top: 20%; right: 8%; width: 25%; height: 55%;
+        top: 25%; right: 8%; width: 25%; height: 50%;
         background: linear-gradient(to bottom, #1a1a2e, #0a0a15);
         border: 4px solid #333; border-radius: 10px;
         box-shadow: inset 0 0 20px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8);
@@ -108,7 +104,7 @@
 
     /* 2. 壁畫 (左上牆) */
     #painting {
-        top: 15%; left: 8%; width: 25%; height: 28%;
+        top: 25%; left: 8%; width: 25%; height: 25%;
         border: 8px solid #222; background: #111;
         box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,1);
         z-index: 1; font-size: 40px;
@@ -201,7 +197,7 @@
         font-size: 20px; font-weight: bold; cursor: pointer; color: #fff;
     }
     .key:active { background: #00d2d3; color: #000; }
-    #password-display {
+    #password-display, #pin-display {
         font-size: 32px; letter-spacing: 10px; color: #00d2d3; margin-bottom: 20px;
         background: #000; padding: 10px; border-radius: 8px; border: 2px solid #333; min-height: 60px;
         font-variant-numeric: tabular-nums;
@@ -219,17 +215,19 @@
         padding: 15px 40px; background: #00d2d3; color: #000; border: none;
         border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px;
     }
-    
-    /* 電腦解鎖後的隱藏道具 */
-    #hidden-photo { display: none; }
 
-    /* 手機版特殊排版 (當屏幕太窄時) */
+    /* 手機版特殊排版 */
     @media (max-width: 600px) {
-        #door { top: 15%; right: 5%; width: 28%; height: 45%; }
-        #painting { top: 15%; left: 5%; width: 28%; height: 25%; }
+        .back-btn { font-size: 12px; padding: 6px 12px; }
+        #timer { font-size: 20px; }
+        #inventory-btn { font-size: 12px; padding: 6px 12px; top: 50px; }
+        
+        #door { top: 20%; right: 5%; width: 28%; height: 45%; }
+        #painting { top: 20%; left: 5%; width: 28%; height: 22%; }
         #desk { bottom: 10%; left: 5%; width: 55%; height: 18%; }
         #computer { bottom: calc(10% + 18%); left: calc(5% + 10%); width: 25%; height: 14%; }
         #trash { bottom: 10%; right: 5%; width: 15%; height: 12%; }
+        
         .glass-panel { padding: 15px; }
         .key { padding: 12px; font-size: 18px; }
     }
@@ -237,12 +235,12 @@
 </head>
 <body>
 
+    <!-- 固定左上角 -->
     <a href="../" class="back-btn">⬅ 返回大廳</a>
 
-    <div id="hud">
-        <div id="inventory-btn" onclick="toggleModal('inventory-modal')">🎒 背包</div>
-        <div id="timer">01:00</div>
-    </div>
+    <!-- 固定右上角 -->
+    <div id="timer">01:00</div>
+    <div id="inventory-btn" onclick="toggleModal('inventory-modal')">🎒 背包</div>
 
     <div id="room">
         <div class="laser-grid"></div>
@@ -266,7 +264,6 @@
         <!-- 電腦 -->
         <div class="interactable" id="computer" onclick="inspectComputer()">
             💻
-            <div id="hidden-photo">🖼️</div>
         </div>
 
         <!-- 垃圾桶 -->
@@ -319,8 +316,8 @@
             <p id="computer-text">終端機已鎖定。<br>請輸入 4 位數 PIN 碼解除限制。</p>
             
             <div id="computer-locked-ui">
-                <div id="pin-display" style="font-size: 24px; letter-spacing: 5px; color:#c084fc; margin-bottom: 15px; font-variant-numeric: tabular-nums;">----</div>
-                <div class="keypad" style="grid-template-columns: repeat(3, 1fr); max-width: 250px; margin: 0 auto;">
+                <div id="pin-display">----</div>
+                <div class="keypad" style="max-width: 250px; margin: 0 auto;">
                     <div class="key" onclick="pressPin('1')">1</div>
                     <div class="key" onclick="pressPin('2')">2</div>
                     <div class="key" onclick="pressPin('3')">3</div>
