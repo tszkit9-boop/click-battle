@@ -3,650 +3,220 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>滾雪球 · 全香港大富翁</title>
+<title>全香港大富翁</title>
+<!-- 引入 Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-
   :root{
-    --gold:#E8C46A;
-    --gold-2:#B8912E;
-    --gold-glow:rgba(232,196,106,.45);
-    --bg-1:#0a0a14;
-    --bg-2:#12122a;
-    --bg-3:#1a1a35;
-    --panel:rgba(26,26,53,.72);
-    --panel-solid:#1a1a35;
-    --border:rgba(232,196,106,.18);
-    --border-2:rgba(232,196,106,.35);
-    --text:#F0EAD8;
-    --text-dim:#8a8478;
-    --green:#4ade80;
-    --red:#f87171;
-    --blue:#60a5fa;
+    --gold:#E8C46A; --gold-2:#B8912E; --gold-glow:rgba(232,196,106,.45);
+    --bg-1:#0a0a14; --bg-2:#12122a; --bg-3:#1a1a35;
+    --panel:rgba(26,26,53,.85); --panel-solid:#1a1a35;
+    --border:rgba(232,196,106,.18); --border-2:rgba(232,196,106,.35);
+    --text:#F0EAD8; --text-dim:#8a8478;
+    --green:#4ade80; --red:#f87171; --blue:#60a5fa;
   }
-
   body{
-    font-family:-apple-system,"PingFang HK","Microsoft JhengHei","Noto Sans HK",system-ui,sans-serif;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%,rgba(232,196,106,.14),transparent 60%),
-      radial-gradient(ellipse 60% 40% at 100% 100%,rgba(96,165,250,.08),transparent 50%),
-      radial-gradient(ellipse 50% 40% at 0% 100%,rgba(248,113,113,.06),transparent 50%),
-      linear-gradient(160deg,var(--bg-1),var(--bg-2) 50%,var(--bg-1));
-    color:var(--text);
-    min-height:100vh;
-    overflow-x:hidden;
-    letter-spacing:.2px;
+    font-family:-apple-system,"PingFang HK","Microsoft JhengHei","Noto Sans HK",sans-serif;
+    background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(232,196,106,.14),transparent 60%),
+               radial-gradient(ellipse 60% 40% at 100% 100%,rgba(96,165,250,.08),transparent 50%),
+               linear-gradient(160deg,var(--bg-1),var(--bg-2) 50%,var(--bg-1));
+    color:var(--text); min-height:100vh; overflow-x:hidden;
   }
-
-  button{font-family:inherit;cursor:pointer;border:none;transition:all .18s cubic-bezier(.4,0,.2,1)}
+  button{font-family:inherit;cursor:pointer;border:none;transition:all .18s}
   button:active{transform:scale(.96)}
   button:disabled{opacity:.38;cursor:not-allowed;transform:none!important;filter:grayscale(.5)}
-
   .hidden{display:none!important}
 
-  /* ============ 設定畫面 ============ */
-  #setup{
-    max-width:560px;margin:0 auto;padding:60px 24px 40px;
-    min-height:100vh;display:flex;flex-direction:column;justify-content:center;
-    position:relative;
-  }
-
-  #setup::before{
-    content:'';position:absolute;top:8%;left:50%;transform:translateX(-50%);
-    width:220px;height:220px;border-radius:50%;
-    background:radial-gradient(circle,rgba(232,196,106,.22),transparent 70%);
-    filter:blur(30px);pointer-events:none;
-  }
-
-  .logo{
-    text-align:center;margin-bottom:8px;position:relative;
-  }
-  .logo h1{
-    font-size:3rem;font-weight:900;letter-spacing:6px;
+  /* ===== 大廳介面 ===== */
+  #lobby{max-width:480px;margin:0 auto;padding:60px 24px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+  .logo h1{font-size:3rem;font-weight:900;letter-spacing:6px;text-align:center;
     background:linear-gradient(135deg,#FFF6D6,#E8C46A 40%,#B8912E 70%,#E8C46A);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 4px 24px rgba(232,196,106,.35));
-  }
-  .logo .sub{
-    color:var(--text-dim);font-size:.85rem;letter-spacing:4px;margin-top:2px;
-  }
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .logo .sub{text-align:center;color:var(--text-dim);font-size:.85rem;margin-bottom:32px;letter-spacing:2px;}
+  .setup-card{background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:28px;box-shadow:0 20px 40px rgba(0,0,0,.6);}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:.75rem;font-weight:700;color:var(--gold);margin-bottom:8px;letter-spacing:1px;}
+  .field input{width:100%;background:rgba(10,10,20,.7);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:11px;font-size:1rem;outline:none;}
+  .field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,196,106,.15);}
+  .btn-main{width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#F5DB99,#E8C46A,#B8912E);color:#1a1408;font-weight:900;font-size:1rem;margin-bottom:12px;box-shadow:0 6px 20px rgba(232,196,106,.3);}
+  .btn-outline{width:100%;padding:14px;border-radius:12px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-weight:700;font-size:1rem;}
+  .room-info{margin-top:20px;text-align:center;font-size:.9rem;color:var(--text-dim);}
+  .room-code{font-size:2.5rem;font-weight:900;color:var(--gold);letter-spacing:6px;margin:10px 0;}
+  
+  /* ===== 遊戲介面 ===== */
+  #game{display:grid;grid-template-columns:280px 1fr 320px;gap:16px;padding:16px;height:100vh;max-height:100vh;}
+  @media(max-width:1200px){#game{grid-template-columns:1fr;height:auto;max-height:none;padding-bottom:50px}.board-wrap{order:-1}}
+  
+  .players-panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:calc(100vh - 32px);}
+  .p-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;position:relative;transition:all .3s;}
+  .p-card.active{border-color:var(--gold);box-shadow:0 0 15px rgba(232,196,106,.2);transform:translateX(4px);}
+  .p-head{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
+  .p-name{font-weight:800;font-size:1rem;}
+  .p-cash{font-size:1.4rem;font-weight:900;color:var(--green);text-shadow:0 0 10px rgba(74,222,128,.3);}
+  .p-cash.neg{color:var(--red);text-shadow:0 0 10px rgba(248,113,113,.3);}
+  .p-stats{display:flex;gap:6px;margin-top:8px;font-size:.75rem;color:var(--text-dim);flex-wrap:wrap;}
+  .p-stat{background:rgba(10,10,20,.6);padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.05);}
 
-  .setup-card{
-    margin-top:32px;
-    background:var(--panel);
-    backdrop-filter:blur(20px) saturate(1.4);
-    -webkit-backdrop-filter:blur(20px) saturate(1.4);
-    border:1px solid var(--border);
-    border-radius:22px;
-    padding:28px;
-    box-shadow:
-      0 30px 60px -20px rgba(0,0,0,.6),
-      inset 0 1px 0 rgba(255,255,255,.06);
-    position:relative;
-    overflow:hidden;
-  }
-  .setup-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:1px;
-    background:linear-gradient(90deg,transparent,var(--gold-glow),transparent);
-  }
+  /* 棋盤 */
+  .board-wrap{display:flex;align-items:center;justify-content:center;}
+  .board{display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(11,1fr);width:min(100%,calc(100vh - 32px));aspect-ratio:1;gap:3px;padding:8px;background:var(--panel-solid);border:1px solid var(--border);border-radius:18px;box-shadow:0 30px 60px rgba(0,0,0,.6);}
+  .cell{background:rgba(35,35,56,.95);border-radius:6px;padding:4px;font-size:.6rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.04);transition:all .2s;}
+  .cell:hover{border-color:var(--gold);transform:translateY(-1px);z-index:2;}
+  .cell.tier-S{background:linear-gradient(160deg,rgba(74,60,20,.95),rgba(40,32,12,.95));border-color:rgba(232,196,106,.35);}
+  .cell.tier-A{background:linear-gradient(160deg,rgba(60,22,22,.95),rgba(38,16,16,.95));border-color:rgba(192,57,43,.3);}
+  .cell.tier-B{background:linear-gradient(160deg,rgba(20,38,54,.95),rgba(14,26,38,.95));border-color:rgba(36,113,163,.3);}
+  .cell.corner{background:linear-gradient(160deg,rgba(48,38,80,.95),rgba(28,22,52,.95))!important;}
+  .c-name{font-weight:800;font-size:.65rem;line-height:1.15;}
+  .c-price{color:var(--gold);font-size:.55rem;font-weight:800;}
+  .c-icon{text-align:center;font-size:1.2rem;line-height:1;}
+  .c-label{text-align:center;font-size:.5rem;color:var(--text-dim);font-weight:700;}
+  .c-owner{position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 8px currentColor;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+  .c-pawns{position:absolute;bottom:3px;left:3px;right:3px;display:flex;gap:2px;flex-wrap:wrap;}
+  .pawn{width:8px;height:8px;border-radius:50%;border:1px solid rgba(0,0,0,.6);box-shadow:0 1px 2px rgba(0,0,0,.5);}
 
-  .field{margin-bottom:18px}
-  .field label{
-    display:block;font-size:.72rem;font-weight:700;letter-spacing:2px;
-    color:var(--gold);text-transform:uppercase;margin-bottom:8px;
-  }
-  .field select,.field input{
-    width:100%;background:rgba(10,10,20,.7);
-    border:1px solid rgba(232,196,106,.2);
-    color:var(--text);padding:12px 14px;border-radius:11px;
-    font-family:inherit;font-size:.95rem;font-weight:500;
-    transition:all .2s;
-  }
-  .field select:focus,.field input:focus{
-    outline:none;border-color:var(--gold);
-    box-shadow:0 0 0 3px rgba(232,196,106,.15);
-  }
+  /* 中央控制台 */
+  .center-panel{grid-row:2/11;grid-column:2/11;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:radial-gradient(circle,rgba(232,196,106,.05),transparent 70%);border-radius:14px;}
+  .turn-player{font-size:1.6rem;font-weight:900;text-shadow:0 0 20px currentColor;}
+  .dice-row{display:flex;gap:14px;}
+  .die{width:60px;height:60px;border-radius:14px;background:linear-gradient(145deg,#FFF8E6,#E8DCC0);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;color:#1a1a2e;box-shadow:0 8px 0 #B8A880, 0 12px 20px rgba(0,0,0,.5);}
+  .die.rolling{animation:shake .5s infinite;}
+  @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}}
+  
+  .action-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .btn{padding:10px 20px;border-radius:12px;font-weight:800;font-size:.85rem;background:rgba(40,40,68,.9);color:var(--text);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 10px rgba(0,0,0,.4);}
+  .btn:hover{background:rgba(56,56,90,.95);}
+  .btn.primary{background:linear-gradient(135deg,#F5DB99,#E8C46A);color:#1a1408;font-weight:900;}
 
-  .field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  @media(max-width:500px){.field-row{grid-template-columns:1fr}}
+  /* 聊天與日誌 */
+  .log-panel{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;max-height:calc(100vh - 32px);}
+  .log-title{padding:10px 14px;font-weight:800;font-size:.8rem;color:var(--gold);border-bottom:1px solid var(--border);background:rgba(10,10,20,.4);letter-spacing:1px;}
+  .log-list{flex:1;overflow-y:auto;padding:10px;font-size:.8rem;display:flex;flex-direction:column;gap:6px;}
+  .log-item{padding:4px 0;border-bottom:1px dashed rgba(255,255,255,.05);color:#c8c2b4;}
+  .log-item.money{color:var(--green);}
+  .log-item.danger{color:var(--red);}
+  
+  .chat-area{border-top:1px solid var(--border);display:flex;flex-direction:column;height:40%;}
+  .chat-input-wrap{display:flex;padding:8px;background:rgba(10,10,20,.5);}
+  .chat-input-wrap input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);color:#fff;outline:none;padding:8px 12px;border-radius:8px;font-size:.85rem;}
+  .chat-input-wrap button{background:var(--gold);color:#000;padding:8px 16px;border-radius:8px;font-weight:800;margin-left:8px;}
+  .msg .sender{font-weight:800;color:var(--gold);font-size:.75rem;margin-bottom:2px;}
 
-  .name-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  @media(max-width:500px){.name-grid{grid-template-columns:1fr}}
-
-  .start-btn{
-    width:100%;padding:16px;border-radius:14px;
-    background:linear-gradient(135deg,#F5DB99,#E8C46A 40%,#B8912E 100%);
-    color:#1a1408;font-weight:900;font-size:1.05rem;letter-spacing:2px;
-    box-shadow:0 8px 30px -8px var(--gold-glow),inset 0 1px 0 rgba(255,255,255,.5);
-    margin-top:8px;
-  }
-  .start-btn:hover{filter:brightness(1.08);box-shadow:0 12px 40px -8px var(--gold-glow),inset 0 1px 0 rgba(255,255,255,.6)}
-
-  /* ============ 遊戲主畫面 ============ */
-  #game{
-    display:grid;
-    grid-template-columns:280px 1fr 300px;
-    gap:16px;
-    padding:16px;
-    height:100vh;
-    max-height:100vh;
-  }
-  @media(max-width:1200px){
-    #game{grid-template-columns:1fr;height:auto;max-height:none}
-    .board-wrap{order:-1}
-    .players-panel,.log-panel{max-height:280px}
-  }
-
-  /* ---- 玩家面板 ---- */
-  .players-panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-right:4px}
-  .players-panel::-webkit-scrollbar{width:6px}
-  .players-panel::-webkit-scrollbar-thumb{background:rgba(232,196,106,.2);border-radius:3px}
-
-  .p-card{
-    background:var(--panel);
-    backdrop-filter:blur(16px);
-    -webkit-backdrop-filter:blur(16px);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:12px 14px;
-    position:relative;
-    overflow:hidden;
-    transition:all .3s cubic-bezier(.4,0,.2,1);
-  }
-  .p-card::before{
-    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-    background:var(--pcolor,#666);opacity:.4;transition:all .3s;
-  }
-  .p-card.active{
-    border-color:var(--gold);
-    box-shadow:0 0 0 1px var(--gold),0 8px 28px -6px var(--gold-glow);
-    transform:translateX(3px);
-  }
-  .p-card.active::before{width:4px;opacity:1;box-shadow:0 0 12px var(--pcolor)}
-  .p-card.active .p-turn-badge{opacity:1;transform:scale(1)}
-
-  .p-turn-badge{
-    position:absolute;top:10px;right:12px;
-    font-size:.6rem;font-weight:800;letter-spacing:1.5px;
-    color:#1a1408;background:var(--gold);
-    padding:2px 8px;border-radius:20px;
-    opacity:0;transform:scale(.6);transition:all .3s;
-  }
-
-  .p-head{display:flex;align-items:center;gap:9px;margin-bottom:6px}
-  .p-avatar{
-    width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
-    font-size:1rem;font-weight:800;color:#0a0a14;flex-shrink:0;
-    box-shadow:0 4px 12px -2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);
-  }
-  .p-name{font-weight:800;font-size:.95rem;letter-spacing:.5px}
-
-  .p-cash{
-    font-size:1.45rem;font-weight:900;color:var(--green);
-    font-variant-numeric:tabular-nums;letter-spacing:-.5px;
-    line-height:1.1;
-    text-shadow:0 0 20px rgba(74,222,128,.25);
-  }
-  .p-cash.neg{color:var(--red);text-shadow:0 0 20px rgba(248,113,113,.3)}
-
-  .p-stats{
-    display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;font-size:.68rem;color:var(--text-dim);
-  }
-  .p-stat{
-    background:rgba(10,10,20,.5);padding:3px 8px;border-radius:6px;
-    border:1px solid rgba(255,255,255,.04);
-    display:flex;align-items:center;gap:4px;
-  }
-  .p-stat.debt{color:var(--red);border-color:rgba(248,113,113,.2)}
-  .p-stat .v{font-weight:700;color:var(--text)}
-
-  /* ---- 棋盤 ---- */
-  .board-wrap{
-    display:flex;align-items:center;justify-content:center;
-    position:relative;
-  }
-  .board{
-    display:grid;
-    grid-template-columns:repeat(11,1fr);
-    grid-template-rows:repeat(11,1fr);
-    width:min(100%,calc(100vh - 32px));
-    aspect-ratio:1;
-    gap:3px;
-    padding:8px;
-    background:
-      radial-gradient(circle at 50% 50%,rgba(232,196,106,.06),transparent 70%),
-      var(--panel-solid);
-    border:1px solid var(--border);
-    border-radius:18px;
-    box-shadow:
-      0 40px 80px -30px rgba(0,0,0,.8),
-      inset 0 1px 0 rgba(255,255,255,.05),
-      0 0 80px -20px rgba(232,196,106,.15);
-  }
-
-  .cell{
-    background:linear-gradient(160deg,rgba(35,35,56,.95),rgba(24,24,44,.95));
-    border-radius:6px;
-    padding:4px 5px;
-    font-size:.6rem;
-    display:flex;flex-direction:column;justify-content:space-between;
-    overflow:hidden;position:relative;
-    cursor:pointer;
-    border:1px solid rgba(255,255,255,.04);
-    transition:all .2s;
-    line-height:1.2;
-  }
-  .cell:hover{
-    border-color:var(--gold);
-    transform:translateY(-1px);
-    box-shadow:0 4px 16px -4px var(--gold-glow);
-    z-index:2;
-  }
-
-  .cell.tier-S{background:linear-gradient(160deg,rgba(74,60,20,.95),rgba(40,32,12,.95));border-color:rgba(232,196,106,.35)}
-  .cell.tier-A{background:linear-gradient(160deg,rgba(60,22,22,.95),rgba(38,16,16,.95));border-color:rgba(192,57,43,.3)}
-  .cell.tier-B{background:linear-gradient(160deg,rgba(20,38,54,.95),rgba(14,26,38,.95));border-color:rgba(36,113,163,.3)}
-
-  .cell.corner{
-    background:linear-gradient(160deg,rgba(48,38,80,.95),rgba(28,22,52,.95))!important;
-    border-color:rgba(232,196,106,.25)!important;
-  }
-  .cell.start{background:linear-gradient(160deg,rgba(40,72,28,.95),rgba(22,44,14,.95))!important}
-  .cell.jail,.cell.gojail{background:linear-gradient(160deg,rgba(72,28,28,.95),rgba(44,14,14,.95))!important}
-  .cell.free{background:linear-gradient(160deg,rgba(20,48,60,.95),rgba(12,30,38,.95))!important}
-
-  .c-name{font-weight:800;font-size:.62rem;letter-spacing:.2px;color:var(--text);line-height:1.15}
-  .c-price{color:var(--gold);font-size:.56rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.2px}
-
-  .c-icon{
-    text-align:center;font-size:1.3rem;line-height:1;
-    filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));
-  }
-  .c-label{
-    text-align:center;font-size:.52rem;font-weight:700;
-    color:var(--text-dim);letter-spacing:.5px;margin-top:1px;
-  }
-
-  .c-owner{
-    position:absolute;top:3px;right:3px;
-    width:11px;height:11px;border-radius:50%;
-    border:1.5px solid rgba(255,255,255,.85);
-    box-shadow:0 0 8px currentColor;
-    animation:pulse-owner 2s ease-in-out infinite;
-  }
-  @keyframes pulse-owner{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-
-  .c-pawns{
-    position:absolute;bottom:3px;left:3px;right:3px;
-    display:flex;gap:2px;flex-wrap:wrap;
-  }
-  .pawn{
-    width:9px;height:9px;border-radius:50%;
-    border:1.5px solid rgba(0,0,0,.6);
-    box-shadow:0 1px 3px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.4);
-    transition:all .3s;
-  }
-
-  /* ---- 中央控制台 ---- */
-  .center-panel{
-    grid-row:2/11;grid-column:2/11;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:14px;padding:16px;text-align:center;
-    background:radial-gradient(circle at 50% 30%,rgba(232,196,106,.06),transparent 70%);
-    border-radius:14px;
-  }
-
-  .turn-label{
-    font-size:.72rem;letter-spacing:3px;text-transform:uppercase;
-    color:var(--text-dim);font-weight:700;
-  }
-  .turn-player{
-    font-size:1.6rem;font-weight:900;letter-spacing:1px;
-    text-shadow:0 0 30px currentColor;
-  }
-  .turn-round{
-    font-size:.8rem;color:var(--text-dim);letter-spacing:1px;
-  }
-  .turn-round b{color:var(--gold);font-weight:800}
-
-  .dice-row{display:flex;gap:14px;margin:4px 0}
-
-  .die{
-    width:64px;height:64px;border-radius:14px;
-    background:linear-gradient(145deg,#FFF8E6,#E8DCC0);
-    display:flex;align-items:center;justify-content:center;
-    position:relative;
-    box-shadow:
-      0 8px 0 #B8A880,
-      0 12px 30px -6px rgba(0,0,0,.6),
-      inset 0 2px 0 rgba(255,255,255,.9);
-  }
-  .die .pip{
-    width:100%;height:100%;padding:10px;
-    display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
-    gap:4px;
-  }
-  .die .pip span{
-    border-radius:50%;
-    background:radial-gradient(circle at 35% 35%,#3a3a55,#1a1a2e);
-    box-shadow:inset 0 1px 2px rgba(0,0,0,.5);
-    opacity:0;
-    transform:scale(.3);
-    transition:opacity .15s,transform .15s;
-  }
-  .die .pip span.on{opacity:1;transform:scale(1)}
-  .die .qmark{
-    font-size:2.4rem;font-weight:900;color:#B8A880;
-    text-shadow:0 2px 0 rgba(255,255,255,.5);
-  }
-  .die.rolling{animation:roll .55s cubic-bezier(.4,0,.2,1)}
-  @keyframes roll{
-    0%{transform:rotate(0) scale(1)}
-    20%{transform:rotate(-25deg) scale(1.1)}
-    45%{transform:rotate(20deg) scale(.95)}
-    70%{transform:rotate(-12deg) scale(1.05)}
-    100%{transform:rotate(0) scale(1)}
-  }
-
-  .action-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px}
-
-  .btn{
-    padding:11px 22px;border-radius:12px;font-weight:800;font-size:.85rem;
-    letter-spacing:.5px;background:rgba(40,40,68,.9);color:var(--text);
-    border:1px solid rgba(255,255,255,.08);
-    box-shadow:0 4px 12px -4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
-    transition:all .18s;
-  }
-  .btn:hover{background:rgba(56,56,90,.95);transform:translateY(-1px)}
-
-  .btn.primary{
-    background:linear-gradient(135deg,#F5DB99,#E8C46A 50%,#B8912E);
-    color:#1a1408;
-    box-shadow:0 6px 20px -4px var(--gold-glow),inset 0 1px 0 rgba(255,255,255,.5);
-    font-weight:900;
-  }
-  .btn.primary:hover{filter:brightness(1.08);box-shadow:0 10px 28px -4px var(--gold-glow),inset 0 1px 0 rgba(255,255,255,.6)}
-
-  .btn.danger{
-    background:linear-gradient(135deg,#8a2424,#6a1818);
-    border-color:rgba(248,113,113,.3);
-  }
-  .btn.danger:hover{background:linear-gradient(135deg,#a82c2c,#7a1c1c)}
-
-  /* ---- 日誌 ---- */
-  .log-panel{
-    display:flex;flex-direction:column;
-    background:var(--panel);
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
-    border:1px solid var(--border);
-    border-radius:16px;
-    overflow:hidden;
-    max-height:calc(100vh - 32px);
-    box-shadow:0 20px 50px -20px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);
-  }
-
-  .log-title{
-    padding:12px 16px;font-weight:800;font-size:.78rem;
-    letter-spacing:2px;text-transform:uppercase;
-    color:var(--gold);
-    border-bottom:1px solid var(--border);
-    background:rgba(10,10,20,.35);
-    display:flex;align-items:center;gap:8px;
-  }
-
-  .log-list{
-    flex:1;overflow-y:auto;padding:10px 14px;
-    display:flex;flex-direction:column;gap:2px;
-    font-size:.78rem;line-height:1.5;
-  }
-  .log-list::-webkit-scrollbar{width:5px}
-  .log-list::-webkit-scrollbar-thumb{background:rgba(232,196,106,.2);border-radius:3px}
-
-  .log-item{
-    padding:5px 0 5px 12px;
-    border-bottom:1px solid rgba(255,255,255,.03);
-    color:#c8c2b4;position:relative;
-    animation:log-in .3s ease-out;
-  }
-  .log-item::before{
-    content:'';position:absolute;left:0;top:11px;
-    width:4px;height:4px;border-radius:50%;background:var(--text-dim);
-  }
-  @keyframes log-in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
-
-  .log-item.highlight{color:var(--gold);font-weight:700}
-  .log-item.highlight::before{background:var(--gold);box-shadow:0 0 6px var(--gold)}
-  .log-item.danger{color:var(--red)}
-  .log-item.danger::before{background:var(--red);box-shadow:0 0 6px var(--red)}
-  .log-item.money{color:var(--green)}
-  .log-item.money::before{background:var(--green);box-shadow:0 0 6px var(--green)}
-
-  /* ---- Modal ---- */
-  .modal-mask{
-    position:fixed;inset:0;background:rgba(5,5,12,.75);
-    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-    display:flex;align-items:center;justify-content:center;
-    z-index:200;padding:20px;
-    animation:fade-in .2s ease-out;
-  }
-  @keyframes fade-in{from{opacity:0}to{opacity:1}}
-
-  .modal{
-    background:linear-gradient(160deg,#1c1c38,#14142a);
-    border:1px solid var(--border-2);
-    border-radius:20px;
-    padding:28px;
-    max-width:440px;width:100%;
-    box-shadow:
-      0 40px 100px -20px rgba(0,0,0,.9),
-      0 0 60px -20px var(--gold-glow),
-      inset 0 1px 0 rgba(255,255,255,.08);
-    animation:modal-in .3s cubic-bezier(.34,1.56,.64,1);
-    position:relative;overflow:hidden;
-  }
-  .modal::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:1px;
-    background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  }
-  @keyframes modal-in{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-
-  .modal h3{
-    color:var(--gold);font-size:1.15rem;font-weight:900;letter-spacing:1px;
-    margin-bottom:12px;display:flex;align-items:center;gap:8px;
-  }
-  .modal p{color:#c8c2b4;font-size:.9rem;margin-bottom:18px;line-height:1.6}
-  .modal p b{color:var(--text)}
-
-  .modal-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
-  .modal-btns button{flex:1;min-width:110px}
-
-  .loan-row{
-    display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.85rem;
-  }
-  .loan-row label{min-width:88px;color:var(--text-dim);font-weight:600;font-size:.78rem;letter-spacing:.5px}
-  .loan-row select,.loan-row input{
-    flex:1;background:rgba(10,10,20,.7);
-    border:1px solid rgba(232,196,106,.2);
-    color:var(--text);padding:9px 12px;border-radius:9px;
-    font-family:inherit;font-size:.88rem;font-weight:600;
-    transition:all .2s;
-  }
-  .loan-row select:focus,.loan-row input:focus{
-    outline:none;border-color:var(--gold);
-    box-shadow:0 0 0 3px rgba(232,196,106,.15);
-  }
-
-  /* ---- 結算 ---- */
-  .gameover{padding:8px 4px}
-  .gameover h2{
-    text-align:center;font-size:1.6rem;font-weight:900;
-    letter-spacing:2px;margin-bottom:20px;
-    background:linear-gradient(135deg,#FFF6D6,#E8C46A,#B8912E);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 4px 20px var(--gold-glow));
-  }
-
-  .rank-row{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:11px 14px;
-    background:rgba(30,30,56,.7);
-    border:1px solid rgba(255,255,255,.05);
-    border-radius:11px;margin-bottom:7px;font-size:.85rem;
-    transition:all .3s;
-  }
-  .rank-row.top{
-    background:linear-gradient(90deg,rgba(232,196,106,.18),rgba(30,30,56,.7));
-    border-color:var(--gold);
-    box-shadow:0 0 20px -6px var(--gold-glow);
-    animation:winner-glow 2s ease-in-out infinite;
-  }
-  @keyframes winner-glow{0%,100%{box-shadow:0 0 20px -6px var(--gold-glow)}50%{box-shadow:0 0 30px -4px var(--gold-glow)}}
-  .rank-row .rank-name{font-weight:800;display:flex;align-items:center;gap:8px}
-  .rank-row .rank-score{font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums}
-  .rank-row .rank-net{color:var(--text-dim);font-size:.72rem;margin-top:2px}
-
-  /* ---- 手機 ---- */
-  @media(max-width:1200px){
-    #game{padding:10px;gap:10px}
-    .center-panel{padding:12px}
-    .die{width:52px;height:52px;border-radius:11px}
-    .turn-player{font-size:1.3rem}
-    .board{width:100%;padding:6px;gap:2px}
-    .cell{font-size:.5rem;padding:2px 3px;border-radius:4px}
-    .c-name{font-size:.52rem}
-    .c-price{font-size:.46rem}
-    .c-icon{font-size:1rem}
-    .c-label{font-size:.44rem}
-    .pawn{width:7px;height:7px}
-    .c-owner{width:9px;height:9px}
-    .log-panel{max-height:240px}
-  }
-  @media(max-width:520px){
-    .logo h1{font-size:2.2rem;letter-spacing:3px}
-    .setup-card{padding:20px}
-    .cell .c-name{font-size:.46rem}
-    .cell .c-price{font-size:.4rem}
-    .cell .c-icon{font-size:.85rem}
-    .cell .c-label{font-size:.38rem;display:none}
-  }
-
-  /* 減少動畫（尊重系統設定） */
-  @media(prefers-reduced-motion:reduce){
-    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-  }
+  /* Modal */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+  .modal{background:linear-gradient(160deg,#1c1c38,#14142a);border:1px solid var(--gold);border-radius:20px;padding:28px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.8), 0 0 40px rgba(232,196,106,.2);animation:pop .3s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal h3{color:var(--gold);margin-bottom:12px;font-size:1.2rem;}
+  .modal p{color:#c8c2b4;margin-bottom:20px;line-height:1.5;font-size:.9rem;}
+  .modal .btn{width:100%;margin-bottom:10px;}
+  .loan-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.85rem;}
+  .loan-row label{min-width:80px;color:var(--text-dim);}
+  .loan-row select,.loan-row input{flex:1;background:rgba(10,10,20,.7);border:1px solid var(--border);color:#fff;padding:8px;border-radius:8px;font-size:.9rem;}
 </style>
 </head>
 <body>
 
-<!-- ===== 設定畫面 ===== -->
-<div id="setup">
+<!-- ================= 大廳 ================= -->
+<div id="lobby">
   <div class="logo">
     <h1>滾雪球</h1>
-    <div class="sub">全香港大富翁 · 資產與債務一齊滾</div>
+    <div class="sub">全香港大富翁 · 多人連線版</div>
+  </div>
+  
+  <div class="setup-card" id="lobby-actions">
+    <div class="field">
+      <label>你的名字</label>
+      <input type="text" id="playerName" placeholder="輸入名字" maxlength="8">
+    </div>
+    <button class="btn-main" onclick="createRoom()">➕ 建立新房間</button>
+    <div style="text-align:center; margin:16px 0; color:#8a8478; font-size:.8rem;">— 或者 —</div>
+    <div class="field">
+      <label>輸入 6 位房間碼</label>
+      <input type="text" id="joinCode" placeholder="例如：A7K2P9" maxlength="6" style="text-transform:uppercase">
+    </div>
+    <button class="btn-outline" onclick="joinRoom()">🔗 加入房間</button>
   </div>
 
-  <div class="setup-card">
-    <div class="field">
-      <label>玩家人數</label>
-      <select id="playerCount">
-        <option value="2">2 人</option>
-        <option value="3">3 人</option>
-        <option value="4" selected>4 人</option>
-        <option value="5">5 人</option>
-        <option value="6">6 人</option>
-      </select>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label>起始現金</label>
-        <select id="startCash">
-          <option value="4000">$4,000</option>
-          <option value="5000" selected>$5,000</option>
-          <option value="8000">$8,000</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>總回合數</label>
-        <select id="totalRounds">
-          <option value="6">6 回合</option>
-          <option value="8" selected>8 回合</option>
-          <option value="10">10 回合</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>玩家名稱</label>
-      <div class="name-grid" id="nameInputs"></div>
-    </div>
-
-    <button class="start-btn" onclick="startGame()">開始遊戲</button>
+  <div class="setup-card hidden" id="lobby-wait" style="text-align:center;">
+    <p style="color:#8a8478;margin-bottom:10px;">房間已建立，等待玩家加入...</p>
+    <div class="room-code" id="displayCode">------</div>
+    <p style="color:#8a8478;margin-top:10px;font-size:.85rem;">將呢個房號傳俾朋友！</p>
+    <div style="margin-top:20px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;" id="waitingPlayers"></div>
+    <button class="btn-main" style="margin-top:24px;" onclick="startGameHost()" id="btnStart">開始遊戲</button>
   </div>
 </div>
 
-<!-- ===== 遊戲畫面 ===== -->
+<!-- ================= 遊戲畫面 ================= -->
 <div id="game" class="hidden">
   <aside class="players-panel" id="playersPanel"></aside>
+  
   <div class="board-wrap">
     <div class="board" id="board"></div>
   </div>
+  
   <aside class="log-panel">
     <div class="log-title">📜 遊戲日誌</div>
     <div class="log-list" id="logList"></div>
+    <div class="chat-area">
+      <div class="log-title" style="border-top:1px solid var(--border);">💬 玩家聊天</div>
+      <div class="log-list" id="chatList"></div>
+      <div class="chat-input-wrap">
+        <input type="text" id="chatInput" placeholder="打字傾偈/傾交易..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button onclick="sendChat()">發送</button>
+      </div>
+    </div>
   </aside>
 </div>
 
 <script>
-/* ============================================================
-   棋盤資料 40 格
-   ============================================================ */
-const BOARD = [
-  {t:'start',  n:'起點',  icon:'🏁'},
-  {t:'prop',   n:'中環',   d:'中西區', tier:'S', price:6000, rent:720},
-  {t:'chance', n:'機會',  icon:'❓'},
-  {t:'prop',   n:'山頂',   d:'中西區', tier:'S', price:6000, rent:720},
-  {t:'tax',    n:'稅局',  icon:'🏛️'},
-  {t:'prop',   n:'銅鑼灣', d:'灣仔區', tier:'S', price:5500, rent:660},
-  {t:'prop',   n:'跑馬地', d:'灣仔區', tier:'S', price:5000, rent:600},
-  {t:'market', n:'市場',  icon:'📈'},
-  {t:'prop',   n:'北角',   d:'東區',   tier:'A', price:3500, rent:420},
-  {t:'prop',   n:'柴灣',   d:'東區',   tier:'A', price:2500, rent:300},
-  {t:'jail',   n:'監獄',  icon:'🚔'},
-  {t:'prop',   n:'淺水灣', d:'南區',   tier:'S', price:5000, rent:600},
-  {t:'chance', n:'機會',  icon:'❓'},
-  {t:'prop',   n:'香港仔', d:'南區',   tier:'S', price:4000, rent:480},
-  {t:'prop',   n:'尖沙咀', d:'油尖旺', tier:'A', price:4000, rent:480},
-  {t:'prop',   n:'旺角',   d:'油尖旺', tier:'A', price:3800, rent:460},
-  {t:'black',  n:'黑市',  icon:'🕶️'},
-  {t:'prop',   n:'深水埗', d:'深水埗', tier:'A', price:2500, rent:300},
-  {t:'prop',   n:'美孚',   d:'深水埗', tier:'A', price:3000, rent:360},
-  {t:'prop',   n:'啟德',   d:'九龍城', tier:'S', price:4500, rent:540},
-  {t:'free',   n:'銀行',  icon:'🏦'},
-  {t:'prop',   n:'九龍塘', d:'九龍城', tier:'S', price:4000, rent:480},
-  {t:'prop',   n:'黃大仙', d:'黃大仙', tier:'A', price:2800, rent:340},
-  {t:'market', n:'市場',  icon:'📈'},
-  {t:'prop',   n:'鑽石山', d:'黃大仙', tier:'A', price:3000, rent:360},
-  {t:'prop',   n:'觀塘',   d:'觀塘',   tier:'A', price:3000, rent:360},
-  {t:'prop',   n:'藍田',   d:'觀塘',   tier:'A', price:2800, rent:340},
-  {t:'chance', n:'機會',  icon:'❓'},
-  {t:'prop',   n:'沙田',   d:'沙田',   tier:'A', price:3500, rent:420},
-  {t:'prop',   n:'馬鞍山', d:'沙田',   tier:'A', price:3200, rent:380},
-  {t:'gojail', n:'去監獄', icon:'👮'},
-  {t:'prop',   n:'將軍澳', d:'西貢',   tier:'A', price:3500, rent:420},
-  {t:'prop',   n:'西貢市中心', d:'西貢', tier:'A', price:3000, rent:360},
-  {t:'black',  n:'黑市',  icon:'🕶️'},
-  {t:'prop',   n:'荃灣',   d:'荃灣',   tier:'B', price:2500, rent:300},
-  {t:'prop',   n:'青衣',   d:'葵青',   tier:'B', price:2000, rent:240},
-  {t:'prop',   n:'屯門',   d:'屯門',   tier:'B', price:1800, rent:220},
-  {t:'prop',   n:'元朗',   d:'元朗',   tier:'B', price:2000, rent:240},
-  {t:'prop',   n:'上水',   d:'北區',   tier:'B', price:1800, rent:220},
-  {t:'prop',   n:'東涌',   d:'離島',   tier:'B', price:1800, rent:220},
-];
+/* ========================================================
+   🔴 1. 填寫你嘅 Firebase 設定（必須修改！）
+   ======================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSy...", // 換成你專案嘅 apiKey
+  authDomain: "snowball-game-a66a8.firebaseapp.com",
+  databaseURL: "https://snowball-game-a66a8-default-rtdb.asia-southeast1.firebasedatabase.app", // 換成你嘅 databaseURL
+  projectId: "snowball-game-a66a8",
+  storageBucket: "snowball-game-a66a8.firebasestorage.app",
+  messagingSenderId: "623618119221",
+  appId: "1:623618119221:web:897caed70af2beb2e8037c" // 換成你嘅 appId
+};
 
+// 初始化 Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ========================================================
+   遊戲常數與資料
+   ======================================================== */
 const COLORS = ['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C'];
 const EMOJIS = ['🐯','🦊','🐼','🦁','🐸','🐙'];
+
+const BOARD = [
+  {t:'start', n:'起點', icon:'🏁'}, {t:'prop', n:'中環', d:'中西', tier:'S', price:6000, rent:720},
+  {t:'chance', n:'機會', icon:'❓'}, {t:'prop', n:'山頂', d:'中西', tier:'S', price:6000, rent:720},
+  {t:'tax', n:'稅局', icon:'🏛️'}, {t:'prop', n:'銅鑼灣', d:'灣仔', tier:'S', price:5500, rent:660},
+  {t:'prop', n:'跑馬地', d:'灣仔', tier:'S', price:5000, rent:600}, {t:'market', n:'市場', icon:'📈'},
+  {t:'prop', n:'北角', d:'東區', tier:'A', price:3500, rent:420}, {t:'prop', n:'柴灣', d:'東區', tier:'A', price:2500, rent:300},
+  {t:'jail', n:'監獄', icon:'🚔'}, {t:'prop', n:'淺水灣', d:'南區', tier:'S', price:5000, rent:600},
+  {t:'chance', n:'機會', icon:'❓'}, {t:'prop', n:'香港仔', d:'南區', tier:'S', price:4000, rent:480},
+  {t:'prop', n:'尖沙咀', d:'油尖旺', tier:'A', price:4000, rent:480}, {t:'prop', n:'旺角', d:'油尖旺', tier:'A', price:3800, rent:460},
+  {t:'black', n:'黑市', icon:'🕶️'}, {t:'prop', n:'深水埗', d:'深水埗', tier:'A', price:2500, rent:300},
+  {t:'prop', n:'美孚', d:'深水埗', tier:'A', price:3000, rent:360}, {t:'prop', n:'啟德', d:'九龍城', tier:'S', price:4500, rent:540},
+  {t:'free', n:'銀行', icon:'🏦'}, {t:'prop', n:'九龍塘', d:'九龍城', tier:'S', price:4000, rent:480},
+  {t:'prop', n:'黃大仙', d:'黃大仙', tier:'A', price:2800, rent:340}, {t:'market', n:'市場', icon:'📈'},
+  {t:'prop', n:'鑽石山', d:'黃大仙', tier:'A', price:3000, rent:360}, {t:'prop', n:'觀塘', d:'觀塘', tier:'A', price:3000, rent:360},
+  {t:'prop', n:'藍田', d:'觀塘', tier:'A', price:2800, rent:340}, {t:'chance', n:'機會', icon:'❓'},
+  {t:'prop', n:'沙田', d:'沙田', tier:'A', price:3500, rent:420}, {t:'prop', n:'馬鞍山', d:'沙田', tier:'A', price:3200, rent:380},
+  {t:'gojail', n:'去監獄', icon:'👮'}, {t:'prop', n:'將軍澳', d:'西貢', tier:'A', price:3500, rent:420},
+  {t:'prop', n:'西貢市中心', d:'西貢', tier:'A', price:3000, rent:360}, {t:'black', n:'黑市', icon:'🕶️'},
+  {t:'prop', n:'荃灣', d:'荃灣', tier:'B', price:2500, rent:300}, {t:'prop', n:'青衣', d:'葵青', tier:'B', price:2000, rent:240},
+  {t:'prop', n:'屯門', d:'屯門', tier:'B', price:1800, rent:220}, {t:'prop', n:'元朗', d:'元朗', tier:'B', price:2000, rent:240},
+  {t:'prop', n:'上水', d:'北區', tier:'B', price:1800, rent:220}, {t:'prop', n:'東涌', d:'離島', tier:'B', price:1800, rent:220},
+];
 
 const CHANCE_CARDS = [
   {text:'股市大升！獲得 $3,000', fx:p=>p.cash+=3000},
@@ -656,99 +226,178 @@ const CHANCE_CARDS = [
   {text:'黑市交易獲利 $2,000', fx:p=>p.cash+=2000},
   {text:'交通罰款，支付 $800', fx:p=>p.cash-=800},
   {text:'自由行帶動，獲得 $1,500', fx:p=>p.cash+=1500},
-  {text:'銀行派息，獲得 $1,200', fx:p=>p.cash+=1200},
-  {text:'裝修超支，支付 $1,500', fx:p=>p.cash-=1500},
-  {text:'神秘財團注資 $3,500', fx:p=>p.cash+=3500},
 ];
 
-const MARKET_CARDS = [
-  {text:'📈 全市場加息！所有債務利息 +5%', fx:()=>{ state.players.forEach(p=>p.debts.forEach(d=>d.rate=Math.min(d.rate+0.05,0.5))); }},
-  {text:'💰 政府派錢！所有玩家 +$2,000', fx:()=>{ state.players.forEach(p=>p.cash+=2000); }},
-  {text:'📉 金融風暴！所有玩家現金 -10%', fx:()=>{ state.players.forEach(p=>p.cash-=Math.round(p.cash*0.1)); }},
-  {text:'🏗️ 樓市狂潮！所有玩家收租 ×2 一回合', fx:()=>{ state.rentBoost = 2; }},
-  {text:'🏦 銀行擠提！所有玩家現金 -$1,000', fx:()=>{ state.players.forEach(p=>p.cash-=1000); }},
-  {text:'🎉 消費券！所有玩家 +$1,500', fx:()=>{ state.players.forEach(p=>p.cash+=1500); }},
-];
+/* ========================================================
+   全局狀態
+   ======================================================== */
+let myId = null;
+let roomCode = null;
+let roomRef = null;
+let localData = null;
+let myRole = 'player';
+let isRolling = false;
 
-const SECRET_MISSIONS = [
-  {text:'擁有至少 3 個地產', check:p=>p.props.length>=3, reward:8},
-  {text:'現金超過 $8,000', check:p=>p.cash>=8000, reward:6},
-  {text:'擁有至少 1 個 S 級地產', check:p=>p.props.some(i=>BOARD[i].tier==='S'), reward:10},
-  {text:'總資產超過 $15,000', check:p=>calcNetWorth(p)>=15000, reward:12},
-  {text:'從未爆煲', check:p=>p.bankruptCount===0, reward:5},
-];
-
-let state = null;
-function current(){ return state.players[state.current]; }
-
-/* ============================================================
-   設定
-   ============================================================ */
-function renderNameInputs(){
-  const n = +document.getElementById('playerCount').value;
-  const box = document.getElementById('nameInputs');
-  let html = '';
-  for(let i=0;i<n;i++){
-    html += `<input type="text" id="name${i}" placeholder="玩家 ${i+1}" value="玩家 ${i+1}">`;
-  }
-  box.innerHTML = html;
+/* ========================================================
+   大廳邏輯
+   ======================================================== */
+function getPlayerName() {
+  let name = document.getElementById('playerName').value.trim();
+  return name || '無名氏';
 }
-document.getElementById('playerCount').addEventListener('change', renderNameInputs);
-renderNameInputs();
 
-function startGame(){
-  const n = +document.getElementById('playerCount').value;
-  const startCash = +document.getElementById('startCash').value;
-  const totalRounds = +document.getElementById('totalRounds').value;
+function createRoom() {
+  const name = getPlayerName();
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  roomCode = code;
+  myId = 'p_' + Date.now();
+  myRole = 'host';
+  localStorage.setItem('snowball_id', myId);
+  localStorage.setItem('snowball_name', name);
 
-  const players = [];
-  for(let i=0;i<n;i++){
-    const name = document.getElementById('name'+i).value.trim() || ('玩家 '+(i+1));
-    const mission = SECRET_MISSIONS[Math.floor(Math.random()*SECRET_MISSIONS.length)];
-    players.push({
-      id:i, name, color:COLORS[i%COLORS.length], emoji:EMOJIS[i%EMOJIS.length],
-      cash:startCash, pos:0, props:[], debts:[],
-      credit:'B', bankruptCount:0, inJail:false, mission
+  roomRef = db.ref('rooms/' + roomCode);
+  
+  roomRef.set({
+    status: 'waiting',
+    host: myId,
+    players: {
+      [myId]: { name: name, color: COLORS[0], emoji: EMOJIS[0], cash: 5000, pos: 0, props: [], debts: [], bankrupt: 0 }
+    }
+  }).then(() => {
+    showWaitingRoom();
+    listenToRoom();
+  });
+}
+
+function joinRoom() {
+  const name = getPlayerName();
+  let code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if(!code) return alert('請輸入房號');
+  
+  myId = 'p_' + Date.now();
+  myRole = 'player';
+  roomCode = code;
+  localStorage.setItem('snowball_id', myId);
+  localStorage.setItem('snowball_name', name);
+
+  roomRef = db.ref('rooms/' + roomCode);
+  
+  roomRef.once('value').then(snapshot => {
+    const data = snapshot.val();
+    if(!data) return alert('房間唔存在！');
+    if(data.status !== 'waiting') return alert('遊戲已經開始咗！');
+    
+    const currentPlayers = data.players || {};
+    const numPlayers = Object.keys(currentPlayers).length;
+    if(numPlayers >= 6) return alert('房間已滿！');
+
+    const myData = { name: name, color: COLORS[numPlayers], emoji: EMOJIS[numPlayers], cash: 5000, pos: 0, props: [], debts: [], bankrupt: 0 };
+    roomRef.child('players/' + myId).set(myData).then(() => {
+      showWaitingRoom();
+      listenToRoom();
     });
-  }
-
-  state = {
-    players, current:0, round:1, totalRounds,
-    phase:'roll', log:[], owners:{}, gameOver:false, rentBoost:1,
-    dice1:null, dice2:null
-  };
-
-  document.getElementById('setup').classList.add('hidden');
-  document.getElementById('game').classList.remove('hidden');
-
-  log('🎲 遊戲開始！','highlight');
-  log(`每位玩家起始現金 $${startCash.toLocaleString()}，共 ${totalRounds} 回合`);
-  render();
+  });
 }
 
-/* ============================================================
-   日誌
-   ============================================================ */
-function log(text, cls=''){
-  state.log.unshift({text, cls});
-  if(state.log.length>200) state.log.pop();
-  renderLog();
-}
-function renderLog(){
-  const el = document.getElementById('logList');
-  if(!el || !state) return;
-  el.innerHTML = state.log.map(l=>`<div class="log-item ${l.cls}">${l.text}</div>`).join('');
+function showWaitingRoom() {
+  document.getElementById('lobby-actions').classList.add('hidden');
+  document.getElementById('lobby-wait').classList.remove('hidden');
+  document.getElementById('displayCode').innerText = roomCode;
+  if(myRole !== 'host') document.getElementById('btnStart').classList.add('hidden');
 }
 
-/* ============================================================
-   渲染
-   ============================================================ */
-function render(){
-  renderBoard();
-  renderPlayers();
-  renderLog();
+/* ========================================================
+   監聽 Firebase (同步核心)
+   ======================================================== */
+function listenToRoom() {
+  // 監聽大廳等待
+  roomRef.on('value', snapshot => {
+    const data = snapshot.val();
+    if(!data) return;
+    localData = data;
+
+    if(data.status === 'waiting') {
+      const waitDiv = document.getElementById('waitingPlayers');
+      if(waitDiv) {
+        waitDiv.innerHTML = Object.values(data.players).map(p => `<div style="padding:8px 16px;border-radius:8px;background:${p.color}33;border:1px solid ${p.color};color:#fff">${p.emoji} ${p.name}</div>`).join('');
+      }
+    }
+
+    // 切換到遊戲畫面
+    if(data.status === 'playing' && document.getElementById('game').classList.contains('hidden')) {
+      document.getElementById('lobby').classList.add('hidden');
+      document.getElementById('game').classList.remove('hidden');
+      initChat();
+    }
+
+    if(data.status === 'playing') {
+      renderAll();
+    }
+  });
 }
 
+function startGameHost() {
+  if(myRole !== 'host') return;
+  const pIds = Object.keys(localData.players);
+  if(pIds.length < 2) return alert('最少要 2 個人先玩到！');
+
+  roomRef.update({
+    status: 'playing',
+    gameState: {
+      currentId: pIds[0],
+      round: 1,
+      totalRounds: 8,
+      phase: 'roll',
+      dice1: null,
+      dice2: null,
+      owners: {},
+      rentBoost: 1
+    }
+  });
+}
+
+/* ========================================================
+   聊天室
+   ======================================================== */
+function initChat() {
+  roomRef.child('chat').limitToLast(50).on('child_added', snapshot => {
+    const msg = snapshot.val();
+    const list = document.getElementById('chatList');
+    if(!list) return;
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<div class="sender">${msg.sender}</div><div>${msg.text}</div>`;
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+  });
+  
+  roomRef.child('logs').limitToLast(30).on('child_added', snapshot => {
+    const log = snapshot.val();
+    const list = document.getElementById('logList');
+    if(!list) return;
+    const div = document.createElement('div');
+    div.className = 'log-item ' + (log.type || '');
+    div.innerText = log.text;
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+  });
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  roomRef.child('chat').push({ sender: localStorage.getItem('snowball_name'), text: text });
+  input.value = '';
+}
+
+function addLog(text, type='') {
+  roomRef.child('logs').push({ text, type });
+}
+
+/* ========================================================
+   渲染畫面
+   ======================================================== */
 function getGridPos(i){
   if(i===0) return {r:11,c:11};
   if(i>=1&&i<=9) return {r:11,c:11-i};
@@ -760,35 +409,23 @@ function getGridPos(i){
   if(i>=31&&i<=39) return {r:1+(i-30),c:11};
 }
 
-const DICE_PIPS = {
-  1:[[1,1]],
-  2:[[0,0],[2,2]],
-  3:[[0,0],[1,1],[2,2]],
-  4:[[0,0],[0,2],[2,0],[2,2]],
-  5:[[0,0],[0,2],[1,1],[2,0],[2,2]],
-  6:[[0,0],[0,2],[1,0],[1,2],[2,0],[2,2]]
-};
-
-function dieHTML(val, id){
-  if(!val) return `<div class="die" id="${id}"><div class="qmark">?</div></div>`;
-  const pips = DICE_PIPS[val];
-  let cells = '';
-  for(let r=0;r<3;r++){
-    for(let c=0;c<3;c++){
-      const on = pips.some(([pr,pc])=>pr===r&&pc===c);
-      cells += `<span class="${on?'on':''}"></span>`;
-    }
-  }
-  return `<div class="die" id="${id}"><div class="pip">${cells}</div></div>`;
+function renderAll() {
+  renderBoard();
+  renderPlayers();
 }
 
-function renderBoard(){
-  const board = document.getElementById('board');
+function renderBoard() {
+  const boardEl = document.getElementById('board');
+  if(!boardEl || !localData.gameState) return;
+  
+  const gs = localData.gameState;
+  const isMyTurn = gs.currentId === myId;
+  
   let html = '';
   BOARD.forEach((cell, i) => {
     const p = getGridPos(i);
-    const owner = state.owners[i];
-    const pawnsHere = state.players.filter(pl=>pl.pos===i);
+    const ownerId = gs.owners && gs.owners[i];
+    const pawnsHere = Object.keys(localData.players).filter(pid => localData.players[pid].pos === i);
 
     let cls = 'cell';
     if(cell.t==='start') cls+=' corner start';
@@ -799,475 +436,326 @@ function renderBoard(){
 
     let inner = '';
     if(cell.t==='prop'){
-      inner = `<div class="c-name">${cell.n}</div><div class="c-price">$${cell.price.toLocaleString()}</div>`;
-      if(owner!==undefined){
-        inner += `<div class="c-owner" style="background:${state.players[owner].color};color:${state.players[owner].color}"></div>`;
+      inner = `<div class="c-name">${cell.n}</div><div class="c-price">$${cell.price}</div>`;
+      if(ownerId && localData.players[ownerId]) {
+        inner += `<div class="c-owner" style="background:${localData.players[ownerId].color};color:${localData.players[ownerId].color}"></div>`;
       }
     } else {
-      inner = `<div class="c-icon">${cell.icon||''}</div><div class="c-label">${cell.n}</div>`;
+      inner = `<div class="c-icon">${cell.icon}</div><div class="c-label">${cell.n}</div>`;
     }
 
     if(pawnsHere.length){
-      inner += `<div class="c-pawns">${pawnsHere.map(pl=>`<div class="pawn" style="background:${pl.color}" title="${pl.name}"></div>`).join('')}</div>`;
+      inner += `<div class="c-pawns">${pawnsHere.map(pid => `<div class="pawn" style="background:${localData.players[pid].color}"></div>`).join('')}</div>`;
     }
-
     html += `<div class="${cls}" style="grid-row:${p.r};grid-column:${p.c}" onclick="showCellInfo(${i})">${inner}</div>`;
   });
 
-  const cur = current();
-  const canRoll = state.phase==='roll' && !state.gameOver;
-  const canEnd = state.phase==='action' && !state.gameOver;
+  const curP = localData.players[gs.currentId] || {emoji:'',name:'',color:'#fff'};
+  const d1Class = isRolling ? 'die rolling' : 'die';
+  const d2Class = isRolling ? 'die rolling' : 'die';
 
   html += `<div class="center-panel">
-    <div class="turn-label">當前回合</div>
-    <div class="turn-player" style="color:${cur.color}">${cur.emoji} ${cur.name}</div>
-    <div class="turn-round">第 <b>${state.round}</b> / ${state.totalRounds} 回合</div>
-    <div class="dice-row" id="diceRow">
-      ${dieHTML(state.dice1,'die1')}
-      ${dieHTML(state.dice2,'die2')}
+    <div style="font-size:.8rem;color:#8a8478">第 <b>${gs.round}</b> / ${gs.totalRounds} 回合</div>
+    <div class="turn-player" style="color:${curP.color}">${curP.emoji} ${curP.name}</div>
+    <div class="dice-row">
+      <div class="${d1Class}" id="die1">${gs.dice1 || '?'}</div>
+      <div class="${d2Class}" id="die2">${gs.dice2 || '?'}</div>
     </div>
     <div class="action-btns">
-      <button class="btn primary" onclick="doRoll()" ${canRoll?'':'disabled'}>🎲 擲骰</button>
-      <button class="btn" onclick="endTurn()" ${canEnd?'':'disabled'}>✅ 結束回合</button>
+      <button class="btn primary" onclick="doRoll()" ${isMyTurn && gs.phase==='roll' ? '' : 'disabled'}>🎲 擲骰</button>
+      <button class="btn" onclick="endTurn()" ${isMyTurn && gs.phase==='action' ? '' : 'disabled'}>✅ 結束回合</button>
     </div>
     <div class="action-btns">
-      <button class="btn" onclick="openLoanModal()" ${state.gameOver?'disabled':''}>💸 借款</button>
-      <button class="btn" onclick="openRepayModal()" ${state.gameOver?'disabled':''}>💳 還款</button>
+      <button class="btn" onclick="openLoanModal()" ${isMyTurn ? '' : 'disabled'}>💸 借款</button>
+      <button class="btn" onclick="openRepayModal()" ${isMyTurn ? '' : 'disabled'}>💳 還款</button>
     </div>
   </div>`;
-
-  board.innerHTML = html;
+  boardEl.innerHTML = html;
 }
 
-function renderPlayers(){
+function renderPlayers() {
   const panel = document.getElementById('playersPanel');
+  if(!panel || !localData.players) return;
   let html = '';
-  state.players.forEach((p, i) => {
-    const debtTotal = p.debts.reduce((s,d)=>s+d.principal,0);
-    const isActive = i===state.current && !state.gameOver;
+  Object.keys(localData.players).forEach(pid => {
+    const p = localData.players[pid];
+    const isActive = pid === localData.gameState.currentId;
+    const debt = (p.debts || []).reduce((s,d)=>s+d.principal,0);
+    
     html += `<div class="p-card ${isActive?'active':''}" style="--pcolor:${p.color}">
-      <div class="p-turn-badge">TURN</div>
-      <div class="p-head">
-        <div class="p-avatar" style="background:linear-gradient(135deg,${p.color},${p.color}cc)">${p.emoji}</div>
-        <div class="p-name">${p.name}</div>
-      </div>
+      <div class="p-head"><div style="font-size:1.4rem">${p.emoji}</div><div class="p-name">${p.name} ${pid===myId?'(你)':''}</div></div>
       <div class="p-cash ${p.cash<0?'neg':''}">$${p.cash.toLocaleString()}</div>
       <div class="p-stats">
-        <div class="p-stat">🏠 <span class="v">${p.props.length}</span></div>
-        ${debtTotal>0?`<div class="p-stat debt">💸 <span class="v">$${debtTotal.toLocaleString()}</span></div>`:''}
-        <div class="p-stat">信用 <span class="v">${p.credit}</span></div>
+        <div class="p-stat">🏠 ${(p.props||[]).length}</div>
+        ${debt>0?`<div class="p-stat" style="color:var(--red)">💸 $${debt}</div>`:''}
+        <div class="p-stat">信用 ${p.credit || 'B'}</div>
       </div>
     </div>`;
   });
   panel.innerHTML = html;
 }
 
-/* ============================================================
-   擲骰
-   ============================================================ */
-function doRoll(){
-  if(state.phase!=='roll' || state.gameOver) return;
-  const d1 = Math.ceil(Math.random()*6);
-  const d2 = Math.ceil(Math.random()*6);
-  const steps = d1 + d2;
-  const p = current();
+/* ========================================================
+   遊戲核心動作
+   ======================================================== */
+function doRoll() {
+  const gs = localData.gameState;
+  if(gs.currentId !== myId || gs.phase !== 'roll') return;
+  
+  isRolling = true;
+  renderBoard(); // 觸發動畫
+  
+  setTimeout(() => {
+    isRolling = false;
+    const d1 = Math.ceil(Math.random()*6);
+    const d2 = Math.ceil(Math.random()*6);
+    const steps = d1 + d2;
+    
+    const p = localData.players[myId];
+    let newPos = (p.pos + steps) % 40;
+    let newCash = p.cash;
+    
+    if(p.pos + steps >= 40) newCash += 2000;
 
-  // 動畫
-  const die1 = document.getElementById('die1');
-  const die2 = document.getElementById('die2');
-  die1.classList.add('rolling');
-  die2.classList.add('rolling');
+    const updates = {};
+    updates[`gameState/dice1`] = d1;
+    updates[`gameState/dice2`] = d2;
+    updates[`players/${myId}/pos`] = newPos;
+    updates[`players/${myId}/cash`] = newCash;
+    updates[`gameState/phase`] = 'action';
 
-  // 快速切換數字
-  let tick = 0;
-  const interval = setInterval(()=>{
-    die1.outerHTML = dieHTML(Math.ceil(Math.random()*6),'die1');
-    die2.outerHTML = dieHTML(Math.ceil(Math.random()*6),'die2');
-    tick++;
-    if(tick>6){
-      clearInterval(interval);
-      document.getElementById('die1').outerHTML = dieHTML(d1,'die1');
-      document.getElementById('die2').outerHTML = dieHTML(d2,'die2');
-      state.dice1 = d1; state.dice2 = d2;
-      log(`🎲 ${p.name} 擲出 ${d1} + ${d2} = ${steps}`,'highlight');
-      movePlayer(p, steps);
-    }
-  }, 60);
-}
-
-function movePlayer(p, steps){
-  const oldPos = p.pos;
-  let moved = 0;
-  const interval = setInterval(()=>{
-    p.pos = (p.pos + 1) % 40;
-    moved++;
-    if(oldPos + moved >= 40 && p.pos===0 || (oldPos+moved>40 && oldPos+moved-40===0)){
-      // 經過起點
-    }
-    if(p.pos === 0 && moved > 0 && oldPos !== 0){
-      p.cash += 2000;
-      log(`🏁 ${p.name} 經過起點，獲得 $2,000`,'money');
-    }
-    renderBoard();
-    renderPlayers();
-    if(moved >= steps){
-      clearInterval(interval);
-      setTimeout(()=>landOn(p.pos), 180);
-    }
-  }, 110);
-}
-
-function landOn(pos){
-  const cell = BOARD[pos];
-  const p = current();
-
-  if(cell.t==='prop'){
-    const owner = state.owners[pos];
-    if(owner===undefined){
-      if(p.cash >= cell.price) showBuyModal(pos);
-      else {
-        log(`${p.name} 現金不足，買唔起 ${cell.n}`,'danger');
-        state.phase = 'action';
-        render();
-      }
-    } else if(owner === p.id){
-      log(`${p.name} 踩中自己嘅 ${cell.n}`);
-      state.phase = 'action';
-      render();
-    } else {
-      const rent = cell.rent * (state.rentBoost||1);
-      const ownerP = state.players[owner];
-      p.cash -= rent;
-      ownerP.cash += rent;
-      log(`💰 ${p.name} 踩中 ${ownerP.name} 嘅 ${cell.n}，付租 $${rent}`,'danger');
-      checkBankrupt(p);
-      state.phase = 'action';
-      render();
-    }
-  } else if(cell.t==='chance'){
-    const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
-    card.fx(p);
-    log(`❓ 機會：${card.text}`,'highlight');
-    checkBankrupt(p);
-    state.phase = 'action';
-    render();
-  } else if(cell.t==='market'){
-    const card = MARKET_CARDS[Math.floor(Math.random()*MARKET_CARDS.length)];
-    card.fx();
-    log(`📈 市場：${card.text}`,'highlight');
-    state.players.forEach(pp=>checkBankrupt(pp));
-    state.phase = 'action';
-    render();
-  } else if(cell.t==='tax'){
-    const tax = Math.max(500, Math.round(p.cash*0.1));
-    p.cash -= tax;
-    log(`🏛️ ${p.name} 交稅 $${tax}`,'danger');
-    state.phase = 'action';
-    render();
-  } else if(cell.t==='gojail'){
-    p.pos = 10;
-    log(`👮 ${p.name} 被送入監獄！`,'danger');
-    state.phase = 'action';
-    render();
-  } else if(cell.t==='black'){
-    log(`🕶️ ${p.name} 踩中黑市，可以借款或還款`);
-    state.phase = 'action';
-    render();
-  } else {
-    state.phase = 'action';
-    render();
-  }
-}
-
-/* ============================================================
-   Modal 通用
-   ============================================================ */
-function showModal(content, noClose){
-  closeModal();
-  const mask = document.createElement('div');
-  mask.className = 'modal-mask';
-  mask.id = 'modalMask';
-  mask.innerHTML = `<div class="modal">${content}</div>`;
-  if(!noClose){
-    mask.addEventListener('click', e=>{ if(e.target===mask) closeModal(); });
-  }
-  document.body.appendChild(mask);
-}
-
-function closeModal(){
-  const m = document.getElementById('modalMask');
-  if(m) m.remove();
-}
-
-/* ============================================================
-   買地
-   ============================================================ */
-function showBuyModal(pos){
-  const cell = BOARD[pos];
-  showModal(`
-    <h3>🏠 購買 ${cell.n}</h3>
-    <p>${cell.d} · <b>${cell.tier} 級</b><br>
-    地價：<b style="color:var(--gold)">$${cell.price.toLocaleString()}</b><br>
-    租金：<b style="color:var(--green)">$${cell.rent}</b></p>
-    <div class="modal-btns">
-      <button class="btn primary" onclick="buyProperty(${pos})">買！</button>
-      <button class="btn" onclick="passBuy()">放棄</button>
-    </div>
-  `);
-}
-
-function buyProperty(pos){
-  const cell = BOARD[pos];
-  const p = current();
-  if(p.cash < cell.price){ closeModal(); return; }
-  p.cash -= cell.price;
-  p.props.push(pos);
-  state.owners[pos] = p.id;
-  log(`🏠 ${p.name} 買入 ${cell.n}（$${cell.price.toLocaleString()}）`,'money');
-  closeModal();
-  state.phase = 'action';
-  render();
-}
-
-function passBuy(){
-  closeModal();
-  log(`${current().name} 放棄購買`);
-  state.phase = 'action';
-  render();
-}
-
-/* ============================================================
-   爆煲
-   ============================================================ */
-function checkBankrupt(p){
-  const debt = p.debts.reduce((s,d)=>s+d.principal,0);
-  const assets = p.cash + p.props.reduce((s,i)=>s+BOARD[i].price,0);
-  if(debt > assets && debt > 0){
-    p.bankruptCount++;
-    log(`💥 ${p.name} 爆煲！資產 $${assets} < 債務 $${debt}`,'danger');
-    while(p.props.length && p.debts.reduce((s,d)=>s+d.principal,0) > p.cash){
-      const idx = p.props.shift();
-      delete state.owners[idx];
-      const sellPrice = Math.round(BOARD[idx].price * 0.7);
-      p.cash += sellPrice;
-      log(`🔨 ${p.name} 被迫拍賣 ${BOARD[idx].n}，套現 $${sellPrice}`,'danger');
-    }
-    p.debts.forEach(d=>d.principal = Math.round(d.principal*0.7));
-    p.credit = 'D';
-    log(`📉 ${p.name} 信用跌至 D`,'danger');
-  }
-}
-
-/* ============================================================
-   結束回合
-   ============================================================ */
-function endTurn(){
-  if(state.gameOver) return;
-  log(`— ${current().name} 結束回合 —`);
-  state.phase = 'roll';
-  state.dice1 = null; state.dice2 = null;
-  state.rentBoost = 1;
-
-  state.current++;
-  if(state.current >= state.players.length){
-    state.current = 0;
-    state.round++;
-    settleRound();
-  }
-
-  if(state.round > state.totalRounds){ endGame(); return; }
-  render();
-}
-
-function settleRound(){
-  log(`═══ 第 ${state.round} 回合開始 ═══`,'highlight');
-  state.players.forEach(p=>{
-    p.debts.forEach(d=>{
-      const interest = Math.round(d.principal * d.rate);
-      d.principal += interest;
-      d.roundsLeft--;
-      log(`💸 ${p.name} 債務利息 +$${interest}（現欠 $${d.principal.toLocaleString()}）`,'danger');
+    roomRef.update(updates).then(() => {
+      handleLanding(newPos);
     });
-    checkBankrupt(p);
-  });
-  state.players.forEach(p=>{
-    if(p.credit==='C' && p.bankruptCount===0) p.credit='B';
+  }, 600);
+}
+
+function handleLanding(pos) {
+  const cell = BOARD[pos];
+  const p = localData.players[myId];
+  const ownerId = localData.gameState.owners && localData.gameState.owners[pos];
+
+  if (cell.t === 'prop') {
+    if (!ownerId && p.cash >= cell.price) {
+      showModal(`
+        <h3>🏠 購買 ${cell.n}</h3>
+        <p>地價：<b style="color:var(--gold)">$${cell.price}</b><br>租金：<b>$${cell.rent}</b></p>
+        <button class="btn primary" onclick="buyProperty(${pos})">買！</button>
+        <button class="btn" onclick="closeModal()">放棄</button>
+      `);
+    } else if (ownerId && ownerId !== myId) {
+      const ownerP = localData.players[ownerId];
+      const rent = cell.rent;
+      if(confirm(`踩中 ${ownerP.name} 嘅 ${cell.n}，要交租 $${rent}`)) {
+        const updates = {};
+        updates[`players/${myId}/cash`] = p.cash - rent;
+        updates[`players/${ownerId}/cash`] = ownerP.cash + rent;
+        roomRef.update(updates);
+        addLog(`💸 ${p.name} 向 ${ownerP.name} 交租 $${rent}`, 'danger');
+      }
+    }
+  } else if (cell.t === 'chance') {
+    const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
+    let newCash = p.cash;
+    card.fx({ get cash(){return newCash}, set cash(v){newCash=v} });
+    roomRef.update({ [`players/${myId}/cash`]: newCash });
+    showModal(`<h3>❓ 機會</h3><p>${card.text}</p><button class="btn" onclick="closeModal()">確定</button>`);
+    addLog(`❓ ${p.name} 抽中：${card.text}`, 'money');
+  } else if (cell.t === 'tax') {
+    const tax = Math.max(500, Math.round(p.cash*0.1));
+    roomRef.update({ [`players/${myId}/cash`]: p.cash - tax });
+    addLog(`🏛️ ${p.name} 交稅 $${tax}`, 'danger');
+  } else if (cell.t === 'gojail') {
+    roomRef.update({ [`players/${myId}/pos`]: 10 });
+    addLog(`👮 ${p.name} 被送入監獄！`, 'danger');
+  }
+}
+
+function buyProperty(pos) {
+  const cell = BOARD[pos];
+  const p = localData.players[myId];
+  if(p.cash < cell.price) return closeModal();
+  
+  const updates = {};
+  updates[`gameState/owners/${pos}`] = myId;
+  updates[`players/${myId}/props`] = [...(p.props||[]), pos];
+  updates[`players/${myId}/cash`] = p.cash - cell.price;
+  
+  roomRef.update(updates).then(() => {
+    addLog(`🏠 ${p.name} 買入 ${cell.n}`, 'money');
+    closeModal();
   });
 }
 
-/* ============================================================
-   借款
-   ============================================================ */
-function openLoanModal(){
-  if(state.gameOver) return;
-  const p = current();
-  const others = state.players.filter(x=>x.id!==p.id);
-  const lenderOpts = others.map(o=>`<option value="${o.id}">${o.emoji} ${o.name}（$${o.cash.toLocaleString()}）</option>`).join('');
+function endTurn() {
+  const gs = localData.gameState;
+  if(gs.currentId !== myId || gs.phase !== 'action') return;
+  
+  const pIds = Object.keys(localData.players);
+  const currentIndex = pIds.indexOf(myId);
+  const nextIndex = (currentIndex + 1) % pIds.length;
+  
+  const updates = {};
+  updates['gameState/currentId'] = pIds[nextIndex];
+  updates['gameState/phase'] = 'roll';
+  updates['gameState/dice1'] = null;
+  updates['gameState/dice2'] = null;
+
+  if(nextIndex === 0) {
+    updates['gameState/round'] = gs.round + 1;
+    // 結算利息
+    pIds.forEach(pid => {
+      const pl = localData.players[pid];
+      if(pl.debts && pl.debts.length > 0) {
+        let newDebts = [];
+        pl.debts.forEach(d => {
+          d.principal += Math.round(d.principal * d.rate);
+          newDebts.push(d);
+        });
+        updates[`players/${pid}/debts`] = newDebts;
+      }
+    });
+  }
+
+  roomRef.update(updates);
+}
+
+/* ========================================================
+   借款與還款
+   ======================================================== */
+function openLoanModal() {
+  const p = localData.players[myId];
+  const others = Object.keys(localData.players).filter(id => id !== myId);
+  const lenderOpts = others.map(id => `<option value="${id}">${localData.players[id].name}</option>`).join('');
+  
   showModal(`
     <h3>💸 借款</h3>
-    <p>向其他玩家或銀行借錢。利息由放貸方自訂，每回合結算複利。</p>
+    <p>向銀行（5%息）或其他玩家（自訂息）借錢。每回合複利結算。</p>
     <div class="loan-row">
       <label>放貸方</label>
       <select id="loanLender">
-        <option value="bank">🏦 銀行（固定 5%）</option>
+        <option value="bank">🏦 銀行</option>
         ${lenderOpts}
       </select>
     </div>
     <div class="loan-row">
       <label>借款額</label>
-      <input type="number" id="loanAmount" value="2000" min="500" step="500">
+      <input type="number" id="loanAmount" value="2000" step="500">
     </div>
     <div class="loan-row">
-      <label>每回合利息</label>
+      <label>每回合息</label>
       <select id="loanRate">
         <option value="0.05">5%</option>
         <option value="0.1">10%</option>
-        <option value="0.15">15%</option>
         <option value="0.2">20%</option>
-        <option value="0.25">25%</option>
+        <option value="0.3">30%（貴利）</option>
       </select>
     </div>
-    <div class="loan-row">
-      <label>還款期</label>
-      <select id="loanRounds">
-        <option value="2">2 回合</option>
-        <option value="3" selected>3 回合</option>
-        <option value="4">4 回合</option>
-      </select>
-    </div>
-    <div class="modal-btns">
-      <button class="btn primary" onclick="confirmLoan()">確認借款</button>
-      <button class="btn" onclick="closeModal()">取消</button>
-    </div>
+    <button class="btn primary" onclick="confirmLoan()">確認</button>
+    <button class="btn" onclick="closeModal()">取消</button>
   `);
 }
 
-function confirmLoan(){
-  const p = current();
+function confirmLoan() {
   const lenderVal = document.getElementById('loanLender').value;
   const amount = +document.getElementById('loanAmount').value;
   const rate = +document.getElementById('loanRate').value;
-  const rounds = +document.getElementById('loanRounds').value;
+  
+  const p = localData.players[myId];
+  if(amount < 500) return alert('最少借 $500');
 
-  if(amount < 500 || isNaN(amount)){ alert('借款額最少 $500'); return; }
+  const updates = {};
+  const newDebt = { lender: lenderVal, principal: amount, rate: rate };
 
-  if(lenderVal === 'bank'){
-    if(amount > 3000){ alert('銀行貸款上限 $3,000'); return; }
-    p.cash += amount;
-    p.debts.push({lender:'bank', lenderName:'銀行', principal:amount, rate, roundsLeft:rounds});
-    log(`🏦 ${p.name} 向銀行借 $${amount.toLocaleString()}（${Math.round(rate*100)}% 息）`,'money');
+  if(lenderVal === 'bank') {
+    if(amount > 3000) return alert('銀行上限 $3000');
+    updates[`players/${myId}/cash`] = p.cash + amount;
+    updates[`players/${myId}/debts`] = [...(p.debts||[]), newDebt];
+    addLog(`🏦 ${p.name} 向銀行借 $${amount}`, 'money');
   } else {
-    const lender = state.players[+lenderVal];
-    if(lender.cash < amount){ alert(`${lender.name} 現金不足`); return; }
-    lender.cash -= amount;
-    p.cash += amount;
-    p.debts.push({lender:lender.id, lenderName:lender.name, principal:amount, rate, roundsLeft:rounds});
-    log(`💸 ${p.name} 向 ${lender.name} 借 $${amount.toLocaleString()}（${Math.round(rate*100)}% 息）`,'money');
+    const lenderP = localData.players[lenderVal];
+    if(lenderP.cash < amount) return alert('對方現金不足！');
+    updates[`players/${myId}/cash`] = p.cash + amount;
+    updates[`players/${lenderVal}/cash`] = lenderP.cash - amount;
+    updates[`players/${myId}/debts`] = [...(p.debts||[]), newDebt];
+    addLog(`💸 ${p.name} 向 ${lenderP.name} 借 $${amount} (${rate*100}%息)`, 'money');
   }
+  
+  roomRef.update(updates);
   closeModal();
-  render();
 }
 
-/* ============================================================
-   還款
-   ============================================================ */
-function openRepayModal(){
-  if(state.gameOver) return;
-  const p = current();
-  if(!p.debts.length){
-    showModal(`<h3>💳 還款</h3><p>你目前冇任何債務。</p><div class="modal-btns"><button class="btn" onclick="closeModal()">關閉</button></div>`);
-    return;
-  }
-  const opts = p.debts.map((d,i)=>
-    `<option value="${i}">${d.lenderName} · 欠 $${d.principal.toLocaleString()}（${Math.round(d.rate*100)}%息）</option>`
-  ).join('');
+function openRepayModal() {
+  const p = localData.players[myId];
+  if(!p.debts || p.debts.length === 0) return alert('你冇債務喎！');
+  
+  const opts = p.debts.map((d, i) => {
+    const lenderName = d.lender === 'bank' ? '銀行' : localData.players[d.lender].name;
+    return `<option value="${i}">欠 ${lenderName} $${d.principal}</option>`;
+  }).join('');
+
   showModal(`
     <h3>💳 還款</h3>
-    <p>選擇一筆債務還清。</p>
     <div class="loan-row">
-      <label>債務</label>
-      <select id="repayIndex">${opts}</select>
+      <label>選擇債務</label>
+      <select id="repayIdx">${opts}</select>
     </div>
-    <div class="modal-btns">
-      <button class="btn primary" onclick="confirmRepay()">還清</button>
-      <button class="btn" onclick="closeModal()">取消</button>
-    </div>
+    <button class="btn primary" onclick="confirmRepay()">還清</button>
+    <button class="btn" onclick="closeModal()">取消</button>
   `);
 }
 
-function confirmRepay(){
-  const p = current();
-  const idx = +document.getElementById('repayIndex').value;
+function confirmRepay() {
+  const idx = +document.getElementById('repayIdx').value;
+  const p = localData.players[myId];
   const d = p.debts[idx];
-  if(!d) return;
-  if(p.cash < d.principal){ alert(`現金不足！需要 $${d.principal.toLocaleString()}`); return; }
-  p.cash -= d.principal;
-  if(d.lender !== 'bank'){
-    const lender = state.players[d.lender];
-    if(lender) lender.cash += d.principal;
+  
+  if(p.cash < d.principal) return alert(`現金不足！需 $${d.principal}`);
+
+  const updates = {};
+  updates[`players/${myId}/cash`] = p.cash - d.principal;
+  const newDebts = [...p.debts];
+  newDebts.splice(idx, 1);
+  updates[`players/${myId}/debts`] = newDebts;
+
+  if(d.lender !== 'bank') {
+    updates[`players/${d.lender}/cash`] = localData.players[d.lender].cash + d.principal;
+    addLog(`💳 ${p.name} 還清咗 ${localData.players[d.lender].name} 嘅錢`, 'money');
+  } else {
+    addLog(`💳 ${p.name} 還清咗銀行貸款`, 'money');
   }
-  log(`💳 ${p.name} 還清 ${d.lenderName} 嘅債務 $${d.principal.toLocaleString()}`,'money');
-  p.debts.splice(idx,1);
+
+  roomRef.update(updates);
   closeModal();
-  render();
 }
 
-/* ============================================================
-   格子資訊
-   ============================================================ */
-function showCellInfo(pos){
+/* ========================================================
+   UI 工具
+   ======================================================== */
+function showCellInfo(pos) {
   const cell = BOARD[pos];
-  if(cell.t!=='prop') return;
-  const owner = state.owners[pos];
-  const ownerName = owner!==undefined ? `${state.players[owner].emoji} ${state.players[owner].name}` : '無主';
-  const ownerColor = owner!==undefined ? state.players[owner].color : '#8a8478';
+  if(cell.t !== 'prop') return;
+  const ownerId = localData.gameState.owners && localData.gameState.owners[pos];
+  const ownerName = ownerId ? localData.players[ownerId].name : '無主';
   showModal(`
     <h3>${cell.n}</h3>
-    <p>${cell.d} · <b>${cell.tier} 級</b><br>
-    地價：<b style="color:var(--gold)">$${cell.price.toLocaleString()}</b><br>
-    租金：<b style="color:var(--green)">$${cell.rent}</b><br>
-    擁有者：<b style="color:${ownerColor}">${ownerName}</b></p>
-    <div class="modal-btns"><button class="btn" onclick="closeModal()">關閉</button></div>
+    <p>地價：$${cell.price}<br>租金：$${cell.rent}<br>業主：<b style="color:gold">${ownerName}</b></p>
+    <button class="btn" onclick="closeModal()">關閉</button>
   `);
 }
 
-/* ============================================================
-   結算
-   ============================================================ */
-function calcNetWorth(p){
-  const assets = p.cash + p.props.reduce((s,i)=>s+BOARD[i].price,0);
-  const debt = p.debts.reduce((s,d)=>s+d.principal,0);
-  return assets - debt;
+function showModal(html) {
+  closeModal();
+  const mask = document.createElement('div');
+  mask.className = 'modal-mask';
+  mask.id = 'modalMask';
+  mask.innerHTML = `<div class="modal">${html}</div>`;
+  document.body.appendChild(mask);
 }
 
-function endGame(){
-  state.gameOver = true;
-  const results = state.players.map(p=>{
-    let score = Math.round(calcNetWorth(p)/1000);
-    let missionDone = false;
-    if(p.mission && p.mission.check(p)){ score += p.mission.reward; missionDone = true; }
-    score -= p.bankruptCount * 5;
-    const unpaidDebt = p.debts.reduce((s,d)=>s+d.principal,0);
-    score -= Math.round(unpaidDebt/1000);
-    return {p, score, net:calcNetWorth(p), missionDone};
-  }).sort((a,b)=>b.score-a.score);
-
-  let html = `<div class="gameover"><h2>🏆 遊戲結束</h2>`;
-  results.forEach((r,i)=>{
-    html += `<div class="rank-row ${i===0?'top':''}">
-      <div>
-        <div class="rank-name">${i===0?'👑 ':''}${r.p.emoji} ${r.p.name}${r.missionDone?' ✅':''}</div>
-        <div class="rank-net">淨資產 $${r.net.toLocaleString()}</div>
-      </div>
-      <div class="rank-score">${r.score} 分</div>
-    </div>`;
-  });
-  html += `<div class="modal-btns" style="margin-top:18px">
-    <button class="btn primary" onclick="location.reload()">再玩一次</button>
-  </div></div>`;
-
-  showModal(html, true);
-  log(`🏆 遊戲結束！冠軍：${results[0].p.name}（${results[0].score} 分）`,'highlight');
+function closeModal() {
+  const m = document.getElementById('modalMask');
+  if(m) m.remove();
 }
 </script>
 </body>
