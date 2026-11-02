@@ -10,7 +10,6 @@
     html, body { overscroll-behavior: none; }
     body { background-color: #050510; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1a2e, #050510); }
     
-    /* 獨立頂部按鈕區，絕對唔會遮住數值 */
     .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(10, 10, 20, 0.95); border-bottom: 1px solid #333; z-index: 20; flex-shrink: 0; }
     .back-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); }
     .top-right-btns { display: flex; gap: 8px; }
@@ -20,7 +19,6 @@
 
     #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
     
-    /* HUD 狀態欄 3 欄完美適配 */
     #hud { background: rgba(10, 10, 20, 0.9); padding: 8px 6px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px; z-index: 10; backdrop-filter: blur(5px); flex-shrink: 0; }
     .stat-item { display: flex; align-items: center; gap: 3px; }
     .stat-label { width: 22px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 9px; white-space: nowrap; }
@@ -125,7 +123,6 @@
 <body>
 
     <div id="game-container">
-        <!-- 獨立頂部按鈕區 -->
         <div class="top-bar">
             <a href="../" class="back-btn">⬅ 返回大廳</a>
             <div class="top-right-btns">
@@ -163,7 +160,23 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 寵物系統彈窗 (新) -->
+    <!-- 感情與家庭彈窗 -->
+    <div id="family-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #ff9ff3;">
+            <h2 style="color: #ff9ff3;">💍 感情與家庭</h2>
+            <p id="family-status">你目前單身，專心做社畜。</p>
+            <div id="family-options">
+                <button class="modal-btn primary" onclick="findPartner()">🌸 去交友App識人 ($5,000)<small>增加心情，有機會拍拖</small></button>
+            </div>
+            <div id="partner-actions" style="display:none;">
+                <button class="modal-btn danger" onclick="getMarried()">💒 結婚擺酒 ($100,000)<small>人生大事，但會大出血</small></button>
+                <button class="modal-btn warning" onclick="haveBaby()">👶 生仔 ($50,000)<small>傳宗接代，但每月要畀大筆奶粉錢</small></button>
+            </div>
+            <button class="modal-btn danger" style="background:#555;" onclick="closeModal('family-modal')">離開</button>
+        </div>
+    </div>
+
+    <!-- 寵物系統彈窗 -->
     <div id="pet-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">🐱 寵物領養中心</h2>
@@ -237,7 +250,7 @@
         </div>
     </div>
 
-    <!-- 地產霸權與貸款 -->
+    <!-- 地產霸權、貸款與保險 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -249,6 +262,7 @@
             <hr style="border-color:#333; margin:10px 0;">
             <button class="modal-btn danger" onclick="takeLoan()">💸 向財仔借 $100,000<small>每月 10% 利息，還唔到即破產</small></button>
             <button class="modal-btn primary" onclick="repayLoan()">💰 還清貸款<small>清還所有本金及利息</small></button>
+            <button class="modal-btn primary" onclick="buyLifeInsurance()" style="background:#e67e22;">🛡️ 買人壽保險 ($10,000/年)<small>死後留筆錢俾家人</small></button>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('property-modal')">離開</button>
         </div>
     </div>
@@ -339,7 +353,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v33';
+    const SAVE_KEY = 'officeSlaveSave_v34';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -367,7 +381,8 @@
         job: '求職中', salary: 0, stage: 'job_select', isInHospital: false, workCount: 0, hasInsurance: false, 
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
-        car: null, demeritPoints: 0, pet: null // 👈 加入寵物屬性
+        car: null, demeritPoints: 0, pet: null,
+        isDating: false, isMarried: false, hasKid: false, mpf: 0, hasLifeInsurance: false // 新增屬性
     };
     
     let currentMonth = 0, candidates = [];
@@ -476,6 +491,50 @@
         updateHUD(); updateActionButtons();
     }
 
+    // === 感情與家庭系統 ===
+    function openFamilyModal() {
+        document.getElementById('family-modal').style.display = 'flex';
+        let status = "你目前單身，專心做社畜。";
+        if (player.hasKid) status = "你結咗婚仲生咗個仔，每日為奶粉錢奔波。";
+        else if (player.isMarried) status = "你已經結婚，有半個家要養。";
+        else if (player.isDating) status = "你拍緊拖，總算有啲心靈慰藉。";
+        
+        document.getElementById('family-status').innerText = status;
+        if (player.isDating) {
+            document.getElementById('family-options').style.display = 'none';
+            document.getElementById('partner-actions').style.display = 'block';
+        } else {
+            document.getElementById('family-options').style.display = 'block';
+            document.getElementById('partner-actions').style.display = 'none';
+        }
+    }
+    function findPartner() {
+        if (player.money < 5000) { showToast("連 $5,000 約會費都冇！"); return; }
+        player.money -= 5000;
+        if (Math.random() < 0.6) {
+            player.isDating = true; player.mood = Math.min(100, player.mood + 30);
+            showToast("🎉 成功脫單！有人陪你分擔壓力啦！");
+        } else {
+            player.mood = Math.max(0, player.mood - 10);
+            showToast("😢 對方發咗好人卡俾你...");
+        }
+        updateHUD(); openFamilyModal();
+    }
+    function getMarried() {
+        if (player.money < 100000) { showToast("連 $100,000 擺酒錢都冇，學人結婚？"); return; }
+        player.money -= 100000; player.isMarried = true; player.mood = Math.min(100, player.mood + 50);
+        showToast("💒 恭喜晒！你結婚啦！但之後條數有排計...");
+        updateHUD(); openFamilyModal();
+    }
+    function haveBaby() {
+        if (!player.isMarried) { showToast("結咗婚先諗生仔啦！"); return; }
+        if (player.hasKid) { showToast("你已經有小朋友啦！"); return; }
+        if (player.money < 50000) { showToast("連 $50,000 生育基金都冇！"); return; }
+        player.money -= 50000; player.hasKid = true; player.mood = Math.min(100, player.mood + 50); player.stress = Math.min(100, player.stress + 20);
+        showToast("👶 恭喜！BB 出世啦！不過以後奶粉錢、補習費...");
+        updateHUD(); openFamilyModal();
+    }
+
     // === 寵物系統 ===
     function openPetModal() {
         document.getElementById('pet-modal').style.display = 'flex';
@@ -524,12 +583,12 @@
         }
     }
 
-    // === 地產與貸款系統 ===
+    // === 地產、貸款與保險 ===
     function openPropertyModal() {
         document.getElementById('property-modal').style.display = 'flex';
         let propCount = player.properties.length;
         let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
-        document.getElementById('property-status').innerHTML = `🏠 持有物業：${propCount} 個<br>💸 每月供款：$${player.mortgage.toLocaleString()}<br>💰 每月收租：$${rentInc.toLocaleString()}<br>🏦 財仔欠款：$${player.loan.toLocaleString()}`;
+        document.getElementById('property-status').innerHTML = `🏠 持有物業：${propCount} 個<br>💸 每月供款：$${player.mortgage.toLocaleString()}<br>💰 每月收租：$${rentInc.toLocaleString()}<br>🏦 財仔欠款：$${player.loan.toLocaleString()}<br>🛡️ 人壽保險：${player.hasLifeInsurance ? '已購買' : '未購買'}`;
     }
     function drawHousing(type) {
         let cost = type === 'public' ? 50000 : 150000, prob = type === 'public' ? 0.2 : 0.15, mortgage = type === 'public' ? 2000 : 6000, rent = type === 'public' ? 4000 : 10000;
@@ -558,6 +617,12 @@
         player.money -= player.loan; player.loan = 0;
         showToast("✅ 成功還清所有財仔數！一身鬆晒！"); closeModal('property-modal'); updateHUD();
     }
+    function buyLifeInsurance() {
+        if (player.hasLifeInsurance) { showToast("你已經買咗人壽保險啦！"); closeModal('property-modal'); return; }
+        if (player.money < 10000) { showToast("連 $10,000 保費都冇！"); return; }
+        player.money -= 10000; player.hasLifeInsurance = true;
+        showToast("🛡️ 成功購買人壽保險！死後有筆錢留俾家人..."); closeModal('property-modal'); updateHUD();
+    }
 
     // === 副業兼職 ===
     function doPartTime(money, energyCost, stressCost, name) {
@@ -584,7 +649,7 @@
         checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 ===
+    // === 隨機事件 (新增天災人禍) ===
     function triggerRandomEvent() {
         if (Math.random() > 0.2) return;
         let events = [
@@ -594,7 +659,9 @@
             { msg: "😡 被麻煩客投訴！扣 $1000 人工！", effect: () => { player.money = Math.max(0, player.money - 1000); player.stress += 10; } },
             { msg: "🤕 行路仆街！扣 20 體力！", effect: () => { player.energy = Math.max(1, player.energy - 20); } },
             { msg: "⛈️ 打風交通癱瘓！心情大跌！", effect: () => { player.mood = Math.max(0, player.mood - 20); } },
-            { msg: "🥤 飲珍珠奶茶濁親，咳到死！扣 10 體力！", effect: () => { player.energy = Math.max(1, player.energy - 10); } }
+            { msg: "🥤 飲珍珠奶茶濁親，咳到死！扣 10 體力！", effect: () => { player.energy = Math.max(1, player.energy - 10); } },
+            { msg: "🌪️ 突發金融風暴！公司蝕錢，你被扣 $5000 花紅！", effect: () => { player.money = Math.max(0, player.money - 5000); } },
+            { msg: "📉 公司宣佈裁員！你壓力爆煲！", effect: () => { player.stress = Math.min(100, player.stress + 30); player.mood -= 20; } }
         ];
         let ev = events[Math.floor(Math.random() * events.length)];
         ev.effect(); showToast(ev.msg);
@@ -698,9 +765,19 @@
                     showToast(`🐱 扣除主子開支 $${player.pet.cost}`);
                 }
             }
+            // 家庭開支 (生仔)
+            if (player.hasKid) {
+                let kidCost = 8000;
+                player.money -= kidCost;
+                showToast(`👶 扣除小朋友奶粉錢及補習費 $${kidCost}`);
+            }
 
             if (player.money < 0) { gameOver("你供唔起樓或無力還債，宣佈破產！"); return; }
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
+            
+            // 強積金 (每月自動儲蓄)
+            if (!player.isBoss) player.mpf += Math.floor(player.salary * 0.05);
+
             if (currentDay % 30 === 0) { player.age++; if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓..."); }
         }
         updateHUD(); 
@@ -782,6 +859,7 @@
                 showToast("😴 瞓咗個好覺，第二朝體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
@@ -792,6 +870,7 @@
             addActionBtn('👀 巡視業務', '減壓，視察員工', 'rest', bossPatrolAction);
             addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
             addActionBtn('🏢 員工管理', '請人/炒人擴張版圖', 'boss', openStaffModal);
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
@@ -808,7 +887,18 @@
     function gameOver(reason) {
         player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
         document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") || reason.includes("離世") ? "💀 過勞死" : (reason.includes("停牌") ? "🚗 停牌收場" : "👴 光榮退休"));
-        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${player.money.toLocaleString()}<br>最終身份：${player.isBoss ? '老闆' : '打工仔'}`;
+        
+        let finalMoney = player.money;
+        let mpfText = "";
+        let insuranceText = "";
+        
+        // 結算 MPF 及保險
+        if (player.age >= 65 || reason.includes("猝死") || reason.includes("離世")) {
+            if (player.mpf > 0) { finalMoney += player.mpf; mpfText = `<br>提取 MPF：+$${player.mpf.toLocaleString()}`; }
+            if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
+        }
+
+        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${player.isBoss ? '老闆' : '打工仔'}`;
         localStorage.removeItem(SAVE_KEY); speakText(reason);
     }
 
