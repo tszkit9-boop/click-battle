@@ -43,9 +43,95 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    #staff-area { display: none; position: absolute; top: 15%; width: 100%; justify-content: center; flex-wrap: wrap; gap: 15px; z-index: 4; }
-    .staff-desk { display: flex; flex-direction: column; align-items: center; font-size: 24px; animation: typing 1s infinite alternate; }
-    .staff-desk small { font-size: 10px; color: #fff; margin-top: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; }
+    /* 老闆寫字樓 */
+    #office-view {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 6;
+        padding: 15px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    #office-view.active { display: flex; }
+    .office-title {
+        text-align: center;
+        color: #f1c40f;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 12px;
+        text-shadow: 0 0 10px rgba(241,196,15,0.6);
+    }
+    .staff-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-width: 480px;
+        width: 100%;
+    }
+    .staff-desk {
+        background: linear-gradient(135deg, rgba(44,62,80,0.95), rgba(30,39,46,0.95));
+        border: 2px solid #3498db;
+        border-radius: 12px;
+        padding: 10px 8px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 0 15px rgba(52,152,219,0.3);
+        position: relative;
+        overflow: hidden;
+        min-height: 100px;
+    }
+    .staff-desk.manager {
+        border-color: #f1c40f;
+        box-shadow: 0 0 15px rgba(241,196,15,0.5);
+    }
+    .staff-desk .desk-emoji {
+        font-size: 34px;
+        animation: typing 1s infinite alternate;
+    }
+    .staff-desk .desk-name {
+        font-size: 12px;
+        color: #fff;
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    .staff-desk .desk-status {
+        font-size: 10px;
+        color: #a4b0be;
+        background: rgba(0,0,0,0.5);
+        padding: 2px 8px;
+        border-radius: 8px;
+        margin-top: 2px;
+    }
+    .staff-desk .desk-level {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        font-size: 9px;
+        color: #f1c40f;
+        background: rgba(0,0,0,0.6);
+        padding: 1px 5px;
+        border-radius: 4px;
+    }
+    .empty-desk {
+        background: rgba(44,62,80,0.35);
+        border: 2px dashed #555;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 12px;
+        min-height: 100px;
+    }
     @keyframes typing { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
 
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -154,6 +240,8 @@
         .modal-btn { padding: 10px; font-size: 12px; }
         .job-btn { padding: 6px 2px; font-size: 11px; }
         #character { transform: scale(0.6); animation: none; }
+        .staff-desk { padding: 8px 6px 6px; min-height: 90px; }
+        .staff-desk .desk-emoji { font-size: 28px; }
     }
 </style>
 </head>
@@ -178,7 +266,10 @@
         </div>
 
         <div id="scene" class="bg-morning">
-            <div id="staff-area"></div>
+            <div id="office-view">
+                <div class="office-title">🏢 社畜無限公司 · 員工辦公區</div>
+                <div class="staff-grid" id="staff-grid"></div>
+            </div>
             <div id="character" class="character-male">
                 <div class="hair"></div>
                 <div class="head">
@@ -620,26 +711,74 @@
         } catch(e) {}
     }
 
+    // === 老闆寫字樓 ===
+    const STAFF_STATUSES = [
+        { emoji: '⌨️', text: '打字中' },
+        { emoji: '📞', text: '傾緊電話' },
+        { emoji: '😴', text: '摸魚中' },
+        { emoji: '☕', text: '沖緊咖啡' },
+        { emoji: '📄', text: '睇文件' },
+        { emoji: '🐟', text: '偷懶中' },
+        { emoji: '💼', text: '見客中' },
+        { emoji: '🤔', text: '諗緊嘢' },
+        { emoji: '🖨️', text: '印嘢' },
+        { emoji: '😰', text: 'OT 中' }
+    ];
+
+    function getStaffEmoji(s) {
+        if (s.isManager) return '👔';
+        if (s.type === 'intern') return '👨‍🎓';
+        if (s.type === 'sales') return '🕴️';
+        if (s.type === 'cleaner') return '🧹';
+        return '🧑‍💻';
+    }
+
     function renderStaffScene() {
-        let staffArea = document.getElementById('staff-area');
-        staffArea.innerHTML = '';
-        if (player.isBoss && !player.isListed && player.staffList.length > 0) {
-            staffArea.style.display = 'flex';
-            player.staffList.forEach(s => {
-                let emoji = '🧑‍💻';
-                if (s.isManager) emoji = '👔';
-                else if (s.type === 'intern') emoji = '👨‍🎓';
-                else if (s.type === 'sales') emoji = '🕴️';
-                else if (s.type === 'cleaner') emoji = '🧹';
-                
-                let div = document.createElement('div');
-                div.className = 'staff-desk';
-                div.innerHTML = `<span>${emoji}</span><small>${s.name}${s.isManager ? ' (主管)' : ''}</small>`;
-                staffArea.appendChild(div);
-            });
-        } else {
-            staffArea.style.display = 'none';
+        const officeView = document.getElementById('office-view');
+        const staffGrid = document.getElementById('staff-grid');
+        const char = document.getElementById('character');
+        if (!officeView || !staffGrid) return;
+
+        if (!player.isBoss || player.isListed) {
+            officeView.classList.remove('active');
+            if (char) char.style.display = '';
+            return;
         }
+
+        officeView.classList.add('active');
+        if (char) char.style.display = 'none';
+        staffGrid.innerHTML = '';
+
+        player.staffList.forEach(s => {
+            if (!s.status) s.status = STAFF_STATUSES[0];
+            let div = document.createElement('div');
+            div.className = 'staff-desk' + (s.isManager ? ' manager' : '');
+            div.innerHTML = `
+                <div class="desk-level">${s.isManager ? '👔 主管' : 'Lv.' + (s.level || 1)}</div>
+                <div class="desk-emoji">${getStaffEmoji(s)}</div>
+                <div class="desk-name">${s.name}</div>
+                <div class="desk-status">${s.status.emoji} ${s.status.text}</div>
+            `;
+            staffGrid.appendChild(div);
+        });
+
+        for (let i = player.staffList.length; i < MAX_STAFF; i++) {
+            let div = document.createElement('div');
+            div.className = 'empty-desk';
+            div.innerText = '空位 · 待招聘';
+            staffGrid.appendChild(div);
+        }
+    }
+
+    let staffStatusTimer = null;
+    function startStaffStatusTimer() {
+        if (staffStatusTimer) return;
+        staffStatusTimer = setInterval(() => {
+            if (!player.isBoss || player.isListed || !player.staffList || player.staffList.length === 0) return;
+            let idx = Math.floor(Math.random() * player.staffList.length);
+            player.staffList[idx].status = STAFF_STATUSES[Math.floor(Math.random() * STAFF_STATUSES.length)];
+            renderStaffScene();
+        }, 4000);
     }
 
     function advanceTime() {
@@ -1241,11 +1380,9 @@
         advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 月結算（重構：抽出 doMonthSettle） ===
     function checkMonthEnd() {
         currentMonth++;
         if (currentMonth % 3 === 0) {
-            // 老闆未上市 + 30% 機率觸發競爭對手
             if (player.isBoss && !player.isListed && Math.random() < 0.3) {
                 triggerCompetitorEvent(() => doMonthSettle());
                 return;
@@ -1257,29 +1394,24 @@
     }
 
     function doMonthSettle() {
-        // 1. 收入部分
         if (player.isListed) {
             player.money += player.dividendPerMonth;
             showToast(`💹 收到上市股息 $${player.dividendPerMonth.toLocaleString()}`);
         } else if (player.isBoss) {
-            let totalSalary = 0, totalProfit = 0, managerBonus = 0;
+            let totalSalary = 0, totalProfit = 0, managerCount = 0;
             player.staffList.forEach(s => {
                 totalSalary += s.salary;
                 if (s.isManager) {
-                    managerBonus += 0.10;
+                    managerCount++;
                 } else if (s.type === 'sales') {
                     totalProfit += (Math.random() < 0.5 ? Math.floor(Math.random() * 40000) : 0);
                 } else {
                     totalProfit += s.profit;
                 }
             });
-            // 競爭對手乘數
             totalProfit = Math.floor(totalProfit * (player.competitorMultiplier || 1));
-            // 永久收購加成
             totalProfit = Math.floor(totalProfit * (player.permanentProfitBonus || 1));
-            // 主管加成
-            totalProfit = Math.floor(totalProfit * (1 + managerBonus));
-            // 重置臨時乘數
+            totalProfit = Math.floor(totalProfit * (1 + managerCount * 0.10));
             player.competitorMultiplier = 1;
 
             let net = totalProfit - totalSalary - 5000;
@@ -1289,7 +1421,6 @@
                 player.mpf += mpfCost;
                 net -= mpfCost;
                 player.money += net;
-                // 公司淨資產累積（50% 淨利潤）
                 player.companyValue += Math.floor(net * 0.5);
                 showToast(`📈 月結淨賺：$${net} (已扣 $${mpfCost} 老闆 MPF)`);
             } else {
@@ -1306,7 +1437,6 @@
             showToast(`💼 老闆出糧啦！袋 $${salaryPay} (另供 $${mpfCost} MPF)`);
         }
 
-        // 2. MPF 回報
         if (player.mpf > 0) {
             if (Math.random() < 0.7) {
                 let rate = 0.01 + Math.random() * 0.03;
@@ -1321,7 +1451,6 @@
             }
         }
 
-        // 3. 供樓收租
         if (player.mortgage > 0) {
             player.money -= player.mortgage;
             let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
@@ -1329,13 +1458,11 @@
             showToast(`🏠 扣除供樓 $${player.mortgage}，收租 $${rentInc}`);
         }
 
-        // 4. 停車場
         if (player.hasParking) {
             player.money -= 2500;
             showToast(`🚗 扣除停車場月租 $2,500`);
         }
 
-        // 5. 財仔利息
         if (player.loan > 0) {
             let interest = Math.floor(player.loan * 0.1);
             player.money -= interest;
@@ -1343,7 +1470,6 @@
             if (player.money < 0) { gameOver("你欠落大耳窿巨債，無力償還，被破產收場！"); return; }
         }
 
-        // 6. 寵物
         if (player.pet) {
             player.money -= player.pet.cost;
             player.pet.health -= 10;
@@ -1355,18 +1481,15 @@
             }
         }
 
-        // 7. 小朋友
         if (player.hasKid) {
             let kidCost = 8000;
             player.money -= kidCost;
             showToast(`👶 扣除小朋友奶粉錢及補習費 $${kidCost}`);
         }
 
-        // 8. 破產檢查
         if (player.money < 0) { gameOver("你供唔起樓或無力還債，宣佈破產！"); return; }
         if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
 
-        // 9. 生日
         if (currentDay % 30 === 0) {
             player.age++;
             showToast(`🎂 生日快樂！你而家 ${player.age} 歲啦！`);
@@ -1377,7 +1500,6 @@
         updateHUD();
     }
 
-    // === 競爭對手系統 ===
     function triggerCompetitorEvent(callback) {
         const names = ['大灣區集團', '社畜帝國', '996控股', '地獄企業', '地產霸權', '離地資本'];
         let compName = names[Math.floor(Math.random() * names.length)];
@@ -1427,7 +1549,7 @@
         if (player.money < 300000) { showToast("資本不足 $300,000！"); return; }
         player.money -= 300000; player.isBoss = true; player.job = '老闆';
         player.companyValue = 300000;
-        closeModal('company-modal'); sceneEl.className = 'bg-boss'; showToast("🚀 恭喜！你成立咗自己嘅公司！淨資產 $300,000"); updateHUD(); updateActionButtons();
+        closeModal('company-modal'); sceneEl.className = 'bg-boss'; showToast("🚀 恭喜！你成立咗自己嘅公司！淨資產 $300,000"); startStaffStatusTimer(); updateHUD(); updateActionButtons();
     }
 
     function generateCandidates() {
@@ -1465,7 +1587,7 @@
         player.staffList.forEach((s, i) => {
             let div = document.createElement('div'); div.className = 'staff-card';
             let isManager = s.isManager;
-            let trainCost = isManager ? 0 : Math.floor(10000 * Math.pow(2, s.level - 1));
+            let trainCost = isManager ? 0 : Math.floor(10000 * Math.pow(2, (s.level || 1) - 1));
             let status = isManager ? '👔 主管' : `Lv.${s.level || 1}`;
             
             let btnHtml = '';
@@ -1484,12 +1606,11 @@
     function hireCandidate(index) {
         if (player.staffList.length >= MAX_STAFF) { showToast("公司座位滿咗啦！"); return; }
         let c = candidates[index]; if (player.money < c.cost) { showToast("唔夠錢俾招聘費！"); return; }
-        player.money -= c.cost; player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit, level: 1, isManager: false });
+        player.money -= c.cost; player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit, level: 1, isManager: false, status: STAFF_STATUSES[0] });
         showToast(`✅ 成功請咗個 ${c.name}！`); updateHUD(); openStaffModal();
     }
     function fireStaff(index) { let staff = player.staffList[index]; player.staffList.splice(index, 1); showToast(`🔥 你炒咗 ${staff.name} 魷魚！`); updateHUD(); openStaffModal(); }
 
-    // === 員工培訓 ===
     function trainStaff(index) {
         let s = player.staffList[index];
         if (!s || s.isManager) return;
@@ -1503,7 +1624,6 @@
         updateHUD(); openStaffModal();
     }
 
-    // === 員工升主管 ===
     function promoteToManager(index) {
         let s = player.staffList[index];
         if (!s || s.isManager) return;
@@ -1517,7 +1637,6 @@
         updateHUD(); openStaffModal();
     }
 
-    // === IPO ===
     function doIPO() {
         if (player.isListed) { showToast("公司已經上市啦！"); return; }
         if (player.companyValue < 5000000) {
@@ -1529,7 +1648,7 @@
         player.isListed = true;
         player.job = '資本家';
         player.dividendPerMonth = Math.floor(player.companyValue * 0.05);
-        player.staffList = []; // 上市後公司由市場管理
+        player.staffList = [];
         closeModal('account-modal');
         showToast(`🎉 IPO 成功！套現 $${ipoMoney.toLocaleString()}！每月股息 $${player.dividendPerMonth.toLocaleString()}`);
         updateHUD(); updateActionButtons();
@@ -1571,7 +1690,6 @@
         if (player.stage !== 'work') return;
         
         if (player.isListed) {
-            // === 資本家模式 ===
             addActionBtn('💹 收取股息', `每月 $${player.dividendPerMonth.toLocaleString()}`, 'boss', () => {
                 player.money += player.dividendPerMonth;
                 showToast(`💹 收到股息 $${player.dividendPerMonth.toLocaleString()}`);
@@ -1590,7 +1708,6 @@
             addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
             addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
         } else if (player.isBoss) {
-            // === 老闆模式 ===
             addActionBtn('💰 公司帳目', '查看每月出糧及盈虧', 'boss', openAccountModal);
             addActionBtn('👀 巡視業務', '睇住班員工做嘢', 'rest', bossPatrolAction);
             addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
@@ -1602,7 +1719,6 @@
             addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
             addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
         } else {
-            // === 打工仔模式 ===
             addActionBtn('💼 努力工作', `每次 +$${Math.floor(player.salary/3)}`, 'work', () => { 
                 let info = jobDatabase[player.jobType];
                 let earn = Math.floor(player.salary / 3);
@@ -1675,14 +1791,4 @@
                     else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
                     else sceneEl.className = 'bg-night';
                 }
-                updateActionButtons(); 
-            } else { 
-                player.stage = 'gender_select'; player.money = 0; 
-                document.getElementById('gender-modal').style.display = 'flex'; 
-            }
-            updateHUD();
-        } catch(e) {}
-    };
-</script>
-</body>
-</html>
+                updateActionButtons();
