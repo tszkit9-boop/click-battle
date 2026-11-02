@@ -1734,4 +1734,279 @@
     function generateCandidates() {
         candidates = []; const types = ['intern', 'it', 'sales', 'cleaner'];
         for (let i = 0; i < 3; i++) {
-            let t = types[Math.floor(Math.random
+            let t = types[Math.floor(Math.random() * types.length)], name = '', salary = 0, profit = 0, cost = 0;
+            if (t === 'intern') { name = '實習生'; salary = 3000; profit = 5000; cost = 5000; }
+            else if (t === 'it') { name = 'IT狗'; salary = 10000; profit = 25000; cost = 15000; }
+            else if (t === 'sales') { name = '金融Sales'; salary = 6000; profit = -1; cost = 10000; }
+            else if (t === 'cleaner') { name = '清潔姐姐'; salary = 4000; profit = 0; cost = 8000; }
+            candidates.push({ id: Date.now() + i, type: t, name, salary, profit, cost });
+        }
+    }
+    function openStaffModal() {
+        document.getElementById('staff-modal').style.display = 'flex'; generateCandidates();
+        let totalSal = 0, totalProf = 0, managerCount = 0;
+        player.staffList.forEach(s => { 
+            totalSal += s.salary; 
+            if (s.isManager) managerCount++;
+            else if (s.type !== 'sales') totalProf += s.profit; 
+        });
+        document.getElementById('total-staff').innerText = player.staffList.length;
+        document.getElementById('total-salary').innerText = `$${totalSal.toLocaleString()}`;
+        document.getElementById('total-profit').innerText = `$${totalProf.toLocaleString()}${managerCount > 0 ? ` (+${managerCount*10}% 主管加成)` : ''}`;
+        
+        let candList = document.getElementById('candidate-list'); candList.innerHTML = '';
+        candidates.forEach((c, i) => {
+            let div = document.createElement('div'); div.className = 'staff-card';
+            div.innerHTML = `<div class="staff-info"><b>${c.name}</b><small>月薪: $${c.salary} | 利潤: ${c.profit===-1?'隨機':('$'+c.profit)}</small><small>招聘費: $${c.cost}</small></div><button onclick="hireCandidate(${i})" style="background:#2ecc71; border:none; color:#fff; padding:6px 10px; border-radius:5px; cursor:pointer;">聘請</button>`;
+            candList.appendChild(div);
+        });
+        
+        let staffList = document.getElementById('current-staff-list'); staffList.innerHTML = '';
+        if (player.staffList.length === 0) { staffList.innerHTML = '<p style="font-size:12px;color:#888;text-align:left;">暫時未有員工。</p>'; }
+        player.staffList.forEach((s, i) => {
+            let div = document.createElement('div'); div.className = 'staff-card';
+            let isManager = s.isManager;
+            let trainCost = isManager ? 0 : Math.floor(10000 * Math.pow(2, (s.level || 1) - 1));
+            let status = isManager ? '👔 主管' : `Lv.${s.level || 1}`;
+            
+            let btnHtml = '';
+            if (!isManager && (s.level || 1) < 5) {
+                btnHtml += `<button onclick="trainStaff(${i})" style="background:#3498db; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">培訓<br>$${trainCost.toLocaleString()}</button>`;
+            }
+            if (!isManager && (s.level || 1) >= 3) {
+                btnHtml += `<button onclick="promoteToManager(${i})" style="background:#f39c12; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">升職<br>$50k</button>`;
+            }
+            btnHtml += `<button onclick="fireStaff(${i})" style="background:#e74c3c; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">解僱</button>`;
+            
+            div.innerHTML = `<div class="staff-info"><b>${s.name}</b> <small style="color:#f1c40f; display:inline;">[${status}]</small><small>月薪: $${s.salary} | ${isManager ? '全公司 +10% 利潤' : '利潤: $' + s.profit}</small></div><div style="display:flex; flex-direction:column; gap:4px; flex-shrink:0;">${btnHtml}</div>`;
+            staffList.appendChild(div);
+        });
+    }
+    function hireCandidate(index) {
+        if (player.staffList.length >= MAX_STAFF) { showToast("公司座位滿咗啦！"); return; }
+        let c = candidates[index]; if (player.money < c.cost) { showToast("唔夠錢俾招聘費！"); return; }
+        player.money -= c.cost; player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit, level: 1, isManager: false, status: STAFF_STATUSES[0] });
+        showToast(`✅ 成功請咗個 ${c.name}！`); updateHUD(); openStaffModal();
+    }
+    function fireStaff(index) { let staff = player.staffList[index]; player.staffList.splice(index, 1); showToast(`🔥 你炒咗 ${staff.name} 魷魚！`); updateHUD(); openStaffModal(); }
+
+    function trainStaff(index) {
+        let s = player.staffList[index];
+        if (!s || s.isManager) return;
+        if ((s.level || 1) >= 5) { showToast("已經滿級啦！"); return; }
+        let cost = Math.floor(10000 * Math.pow(2, (s.level || 1) - 1));
+        if (player.money < cost) { showToast(`培訓費 $${cost.toLocaleString()} 唔夠！`); return; }
+        player.money -= cost;
+        s.level = (s.level || 1) + 1;
+        s.profit = Math.floor(s.profit * 1.5);
+        showToast(`📚 ${s.name} 完成培訓！Lv.${s.level}，利潤升至 $${s.profit.toLocaleString()}`);
+        updateHUD(); openStaffModal();
+    }
+
+    function promoteToManager(index) {
+        let s = player.staffList[index];
+        if (!s || s.isManager) return;
+        if ((s.level || 1) < 3) { showToast("要 Lv.3 以上先可以升做主管！"); return; }
+        if (player.money < 50000) { showToast("升職費 $50,000 唔夠！"); return; }
+        player.money -= 50000;
+        s.isManager = true;
+        s.profit = 0;
+        s.salary = Math.floor(s.salary * 1.5);
+        showToast(`👔 ${s.name} 升做主管！全公司利潤 +10%，但人工加到 $${s.salary.toLocaleString()}`);
+        updateHUD(); openStaffModal();
+    }
+
+    function doIPO() {
+        if (player.isListed) { showToast("公司已經上市啦！"); return; }
+        if (player.companyValue < 5000000) {
+            showToast(`公司淨資產要 $5,000,000 先可以上市！目前 $${player.companyValue.toLocaleString()}`);
+            return;
+        }
+        let ipoMoney = player.companyValue * 2;
+        player.money += ipoMoney;
+        player.isListed = true;
+        player.autoBusiness = false;
+        stopAutoBusiness();
+        player.job = '資本家';
+        player.dividendPerMonth = Math.floor(player.companyValue * 0.05);
+        player.staffList = [];
+        closeModal('account-modal');
+        showToast(`🎉 IPO 成功！套現 $${ipoMoney.toLocaleString()}！每月股息 $${player.dividendPerMonth.toLocaleString()}`);
+        updateHUD(); updateActionButtons();
+    }
+
+    function openAccountModal() {
+        document.getElementById('account-modal').style.display = 'flex';
+        let totalSal = 0, totalProf = 0, managerCount = 0;
+        player.staffList.forEach(s => { 
+            totalSal += s.salary; 
+            if (s.isManager) managerCount++;
+            else if (s.type !== 'sales') totalProf += s.profit; 
+        });
+        let baseNet = Math.floor(totalProf * (1 + managerCount * 0.10)) - totalSal - 2000;
+        
+        let statusText = '';
+        if (player.isListed) {
+            statusText += `💹 <b style="color:#2ecc71;">已上市</b><br>`;
+            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()}<br>`;
+            statusText += `💰 每月股息：$${player.dividendPerMonth.toLocaleString()}<br>`;
+            statusText += `<small style="color:#a4b0be;">公司已交由市場管理，你唔使再管員工。</small>`;
+        } else {
+            statusText += `🧑‍💼 員工數量：${player.staffList.length} 人<br>`;
+            statusText += `💸 每月總人工：$${totalSal.toLocaleString()}<br>`;
+            statusText += `📈 基本預期利潤：$${totalProf.toLocaleString()}<br>`;
+            if (managerCount > 0) statusText += `👔 主管加成：+${managerCount * 10}%<br>`;
+            statusText += `🏢 營運費：$2,000<br>`;
+            statusText += `<hr style="border-color:#333; margin:8px 0;">`;
+            statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
+            statusText += `🏦 老闆 MPF 供款：${Math.round((player.bossMpfRate || 0) * 100)}%<br>`;
+            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()} / $5,000,000 (上市門檻)<br>`;
+            statusText += `<small style="color:#a4b0be;">(Sales 的利潤為隨機，需視乎每月結算)</small>`;
+        }
+        
+        document.getElementById('account-status').innerHTML = statusText;
+    }
+
+    function updateActionButtons() {
+        actionsEl.innerHTML = '';
+        if (player.stage !== 'work') return;
+        
+        if (player.isListed) {
+            addActionBtn('💹 收取股息', `每月 $${player.dividendPerMonth.toLocaleString()}`, 'boss', () => {
+                player.money += player.dividendPerMonth;
+                showToast(`💹 收到股息 $${player.dividendPerMonth.toLocaleString()}`);
+                advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+            });
+            addActionBtn('📊 公司資料', '查看上市資訊', 'boss', openAccountModal);
+            addActionBtn('👀 休閒生活', '有錢佬嘅生活', 'rest', () => {
+                player.stress = Math.max(0, player.stress - 20);
+                player.mood = Math.min(100, player.mood + 15);
+                showToast("🏖️ 你去咗遊艇派對，人生勝利組！");
+                advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+            });
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
+            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
+            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
+            addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
+        } else if (player.isBoss) {
+            addActionBtn('💰 公司帳目', '查看每月出糧及盈虧', 'boss', openAccountModal);
+            addActionBtn('👀 巡視業務', '睇住班員工做嘢', 'rest', bossPatrolAction);
+            addActionBtn('🤝 見客傾生意', '手動：隨機大賺或大蝕', 'work', bossBusinessAction);
+            addActionBtn(player.autoBusiness ? '🛑 停止自動' : '🤖 自動見客', player.autoBusiness ? '正在自動接單...' : '每 3 秒自動接單 (收益較低)', 'boss', toggleAutoBusiness);
+            addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
+            addActionBtn('📈 申請上市', player.companyValue >= 5000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $5M`, 'boss', doIPO);
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
+            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
+            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
+            addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
+        } else {
+            addActionBtn('💼 努力工作', `每次 +$${Math.floor(player.salary/3)}`, 'work', () => { 
+                let info = jobDatabase[player.jobType];
+                let earn = Math.floor(player.salary / 3);
+                let stressAdd = info.stressCost;
+                let energyCost = info.energyCost;
+                
+                if (timeOfDay === 0) { earn = Math.floor(earn * 1.2); stressAdd = Math.floor(stressAdd * 0.8); }
+                else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.1); energyCost = Math.floor(energyCost * 1.1); } 
+                
+                if (player.energy < energyCost) { showToast("體力不足，無法工作！請休息或去醫院。"); return; }
+
+                player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
+                
+                advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            });
+            addActionBtn('🐟 摸魚', '放鬆下，有機率被老闆捉', 'rest', () => {
+                let caught = Math.random() < 0.3;
+                if (caught) {
+                    showSlackingCaughtModal();
+                } else {
+                    player.mood = Math.min(100, player.mood + 10);
+                    player.stress = Math.max(0, player.stress - 10);
+                    player.slackCount = (player.slackCount || 0) + 1;
+                    showToast("🐟 成功摸魚！心情 +10，壓力 -10！(但冇計工作次數)");
+                    advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
+                }
+            });
+            addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
+            addActionBtn('🛏️ 睡覺休息', '壓力清零，體力回滿', 'rest', () => { 
+                player.energy = 100; player.stress = 0; player.mood = Math.min(100, player.mood + 5); 
+                if (player.pet) player.mood = Math.min(100, player.mood + 10); 
+                currentDay++; timeOfDay = 0; triggerTicketEvent();
+                showToast("😴 瞓咗個好覺，壓力全消，體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            });
+            addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
+            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
+            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
+            addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
+            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
+            addActionBtn('💸 終極賭徒', '賭馬/波/幣圈', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
+            if (player.money >= 300000 && player.workCount >= 30) { addActionBtn('🚀 開公司', '辭職創業做老闆！', 'boss', () => { document.getElementById('company-modal').style.display = 'flex'; }); }
+        }
+    }
+
+    function addActionBtn(title, desc, cls, onClick) {
+        let btn = document.createElement('button'); btn.className = `action-btn ${cls}`; btn.innerHTML = `${title}<small>${desc}</small>`;
+        if (!onClick) btn.classList.add('disabled'); else btn.onclick = onClick;
+        actionsEl.appendChild(btn);
+    }
+
+    function gameOver(reason) {
+        stopAutoBusiness();
+        player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
+        
+        let title = "人生落幕";
+        if (reason.includes("破產")) title = "💸 破產收場";
+        else if (reason.includes("猝死") || reason.includes("離世") || reason.includes("過勞")) title = "💀 過勞死";
+        else if (reason.includes("停牌")) title = "🚗 停牌收場";
+        else if (reason.includes("100 歲")) title = "👴 壽終正寢";
+        
+        document.getElementById('end-title').innerText = title;
+        
+        let finalMoney = player.money;
+        let mpfText = "";
+        let insuranceText = "";
+        
+        if (reason.includes("100 歲") || reason.includes("猝死") || reason.includes("離世")) {
+            if (player.mpf > 0) { finalMoney += player.mpf; mpfText = `<br>提取 MPF：+$${player.mpf.toLocaleString()}`; }
+            if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
+        }
+
+        let identityStr = player.isListed ? '資本家' : (player.isBoss ? '老闆' : '打工仔');
+        let slackText = player.slackCount ? `<br>摸魚次數：${player.slackCount} 次` : '';
+        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${identityStr}${slackText}`;
+        localStorage.removeItem(SAVE_KEY); speakText(reason);
+    }
+
+    window.onload = () => { 
+        document.getElementById('voice-toggle').innerText = "🔊 粵語";
+        try {
+            if (loadGame() && player.stage === 'work') { 
+                document.getElementById('dialogue-box').style.display = 'none'; 
+                document.getElementById('gender-modal').style.display = 'none';
+                document.getElementById('character').className = player.gender === 'male' ? 'character-male' : 'character-female';
+                
+                if(player.isBoss || player.isListed) sceneEl.className = 'bg-boss'; 
+                else {
+                    if (timeOfDay === 0) sceneEl.className = 'bg-morning';
+                    else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
+                    else sceneEl.className = 'bg-night';
+                }
+                updateActionButtons(); 
+                startStaffStatusTimer();
+                if (player.autoBusiness && player.isBoss && !player.isListed) {
+                    startAutoBusiness();
+                }
+            } else { 
+                player.stage = 'gender_select'; player.money = 0; 
+                document.getElementById('gender-modal').style.display = 'flex'; 
+            }
+            updateHUD();
+        } catch(e) {}
+    };
+</script>
+</body>
+</html>
