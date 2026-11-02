@@ -7,14 +7,16 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-    body {
+    
+    html, body {
+        width: 100%; height: 100%;
         background-color: #000; color: #fff; font-family: 'Orbitron', 'PingFang HK', sans-serif;
-        height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
-        touch-action: none; 
+        overflow: hidden; position: fixed; /* 防止手機網址欄縮放導致黑屏 */
+        touch-action: none;
     }
 
     .back-btn {
-        position: fixed; top: 15px; left: 15px; z-index: 9999;
+        position: absolute; top: 15px; left: 15px; z-index: 9999;
         padding: 8px 16px; background: rgba(10, 10, 20, 0.85);
         color: #c084fc; border: 2px solid #c084fc; border-radius: 8px;
         text-decoration: none; font-weight: bold; font-size: 14px;
@@ -38,9 +40,10 @@
     #combo-text { color: #ff4757; font-size: 12px; display: none; font-weight: bold; animation: pulseRed 0.3s infinite alternate; }
 
     #game-container {
-        flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at center, #0a0a20, #000);
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        overflow: hidden; background: radial-gradient(circle at center, #0a0a20, #000);
     }
-    canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
     /* 技能按鈕 */
     #skill-btn {
@@ -96,7 +99,6 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- 引力技能按鈕 -->
         <div id="skill-btn" onclick="useSkill()">
             <span>引力</span>
             <span id="skill-cd" style="font-size:10px;">準備</span>
@@ -129,6 +131,7 @@
     const skillCd = document.getElementById('skill-cd');
 
     let W, H;
+    // 修正手機畫面尺寸計算
     function resize() {
         W = canvas.parentElement.clientWidth;
         H = canvas.parentElement.clientHeight;
@@ -136,6 +139,7 @@
         canvas.height = H;
     }
     window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
     resize();
 
     // 音效
@@ -162,13 +166,13 @@
 
     // 遊戲狀態
     let player, objects, stars, particles;
-    let mouseX, mouseY;
+    let mouseX = 0, mouseY = 0;
     let score, timeLeft, gameActive, gameLoopId;
     let shakeTime = 0;
     let playerAngle = 0;
     let comboCount = 0;
     let isFrenzy = false;
-    let skillCooldown = 0; // 秒
+    let skillCooldown = 0;
 
     const OBJECT_TYPES = [
         { name: '微塵', minR: 2, maxR: 4, color: '#a4b0be', score: 1 },
@@ -179,6 +183,7 @@
     ];
 
     function startGame() {
+        resize(); // 確保啟動時尺寸正確
         startScreen.style.display = 'none';
         gameActive = true;
         score = 0;
@@ -188,13 +193,14 @@
         isFrenzy = false;
         skillCooldown = 0;
         
-        player = { x: W/2, y: H/2, r: 10, targetX: W/2, targetY: H/2, isBoss: false };
+        player = { x: W/2, y: H/2, r: 10 };
+        mouseX = W/2; mouseY = H/2;
+        
         objects = [];
         particles = [];
-        mouseX = W/2; mouseY = H/2;
 
         stars = [];
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 100; i++) {
             stars.push({ x: Math.random() * W, y: Math.random() * H, size: Math.random() * 2, alpha: Math.random() });
         }
 
@@ -208,6 +214,7 @@
         if (gameLoopId) cancelAnimationFrame(gameLoopId);
         if (window.timerId) clearInterval(window.timerId);
         if (window.skillTimerId) clearInterval(window.skillTimerId);
+        if (window.bossTimerId) clearInterval(window.bossTimerId);
         
         window.timerId = setInterval(() => {
             if (!gameActive) return;
@@ -217,12 +224,10 @@
             if (timeLeft <= 0) endGame(true);
         }, 1000);
 
-        // Boss 生成計時器
         window.bossTimerId = setInterval(() => {
             if (gameActive) spawnBoss();
         }, 15000);
 
-        // 技能冷卻計時器
         window.skillTimerId = setInterval(() => {
             if (skillCooldown > 0) {
                 skillCooldown--;
@@ -281,7 +286,7 @@
     }
 
     function spawnBoss() {
-        let r = player.r * 1.5 + 20; // 比玩家大
+        let r = player.r * 1.5 + 20; 
         let x = Math.random() < 0.5 ? -r : W + r;
         let y = Math.random() < 0.5 ? -r : H + r;
         
@@ -299,9 +304,8 @@
         if (!gameActive || skillCooldown > 0) return;
         playSound('skill');
         shakeTime = 15;
-        skillCooldown = 8; // 8 秒 CD
+        skillCooldown = 8;
         
-        // 引力效果：將畫面內嘅物件拉向自己
         objects.forEach(obj => {
             let dx = player.x - obj.x;
             let dy = player.y - obj.y;
@@ -312,7 +316,6 @@
             }
         });
 
-        // 衝擊波特效
         for(let i=0; i<30; i++) {
             let a = (Math.PI * 2 / 30) * i;
             particles.push({
@@ -343,11 +346,14 @@
         player.x += (mouseX - player.x) * currentSpeed;
         player.y += (mouseY - player.y) * currentSpeed;
 
+        // 限制黑洞唔好飛出畫面
+        player.x = Math.max(player.r, Math.min(W - player.r, player.x));
+        player.y = Math.max(player.r, Math.min(H - player.r, player.y));
+
         for (let i = objects.length - 1; i >= 0; i--) {
             let obj = objects[i];
             
             if (obj.isBoss) {
-                // Boss 追蹤玩家
                 let angle = Math.atan2(player.y - obj.y, player.x - obj.x);
                 let speed = 1.5;
                 obj.x += Math.cos(angle) * speed;
@@ -365,7 +371,6 @@
             let dist = Math.hypot(player.x - obj.x, player.y - obj.y);
             if (dist < player.r + obj.r) {
                 if (player.r > obj.r * 1.1) {
-                    // 吞噬
                     player.r += (obj.r * 0.1);
                     let addScore = obj.score;
                     if (isFrenzy) addScore *= 2;
@@ -377,7 +382,6 @@
                     if (!obj.isBoss) spawnObject();
                     shakeTime = 5;
 
-                    // 連擊
                     comboCount++;
                     if (comboCount >= 10 && !isFrenzy) {
                         isFrenzy = true;
@@ -396,7 +400,7 @@
         }
 
         if (comboCount > 0 && Math.random() < 0.005 && !isFrenzy) {
-            comboCount = 0; // 連擊斷
+            comboCount = 0;
         }
 
         for (let i = particles.length - 1; i >= 0; i--) {
@@ -420,7 +424,8 @@
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        // 用純黑色完全覆蓋背景，防止卡頓導致殘影全黑
+        ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, W, H);
 
         ctx.save();
@@ -455,11 +460,9 @@
         });
         ctx.globalAlpha = 1;
 
-        // 畫黑洞
         ctx.save();
         ctx.translate(player.x, player.y);
         
-        // 暴走紅光
         let glowColor = isFrenzy ? '#ff4757' : '#c084fc';
         let grad = ctx.createRadialGradient(0, 0, player.r * 0.5, 0, 0, player.r * 1.8);
         grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
@@ -469,7 +472,6 @@
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // 旋轉吸積盤
         ctx.rotate(playerAngle);
         ctx.beginPath();
         ctx.ellipse(0, 0, player.r * 1.5, player.r * 0.5, 0, 0, Math.PI * 2);
@@ -507,12 +509,18 @@
         endScreen.style.display = 'flex';
     }
 
-    // 控制事件
+    // 控制事件 (支援手機同電腦)
     canvas.addEventListener('mousemove', e => {
         const rect = canvas.getBoundingClientRect();
         mouseX = e.clientX - rect.left;
         mouseY = e.clientY - rect.top;
     });
+
+    canvas.addEventListener('touchstart', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.touches[0].clientX - rect.left;
+        mouseY = e.touches[0].clientY - rect.top;
+    }, {passive: true});
 
     canvas.addEventListener('touchmove', e => {
         e.preventDefault();
@@ -521,7 +529,6 @@
         mouseY = e.touches[0].clientY - rect.top;
     }, {passive: false});
 
-    // 鍵盤支援
     window.addEventListener('keydown', e => {
         if (e.code === 'Space') useSkill();
     });
