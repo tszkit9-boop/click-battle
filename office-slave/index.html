@@ -97,7 +97,6 @@
     
     #toast { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 16px; border-radius: 20px; font-weight: bold; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; color: #f1c40f; font-size: 13px; max-width: 90%; word-wrap: break-word; white-space: normal; }
     
-    /* 基礎公仔 */
     #character { position: relative; width: 140px; height: 280px; animation: breathe 2s infinite ease-in-out; z-index: 5; transform: scale(0.65); }
     @keyframes breathe { 0%, 100% { transform: scale(0.65) scaleY(1); } 50% { transform: scale(0.65) scaleY(1.02); } }
     .head { position: absolute; top: 0; left: 30px; width: 80px; height: 90px; background: #f5cba7; border-radius: 40px 40px 30px 30px; border: 3px solid #000; z-index: 2; }
@@ -113,16 +112,12 @@
     .leg { position: absolute; top: 210px; width: 30px; height: 70px; background: #34495e; border: 3px solid #000; border-radius: 10px; z-index: 0; }
     .leg-l { left: 30px; } .leg-r { right: 30px; }
 
-    /* 女仔專屬外觀 */
     .character-female .hair { width: 100px; height: 100px; left: -10px; border-radius: 40px 40px 20px 20px; background: #8e44ad; z-index: 0; }
     .character-female .head { z-index: 2; }
     .character-female .body, .character-female .arm { background: #e84393; }
     .character-female .tie { display: none; }
     .character-female .leg { background: #2c3e50; }
-    .character-female::after {
-        content: '👠'; position: absolute; top: 270px; left: 55px; font-size: 24px; z-index: 2;
-    }
-    /* 男仔專屬外觀 */
+    .character-female::after { content: '👠'; position: absolute; top: 270px; left: 55px; font-size: 24px; z-index: 2; }
     .character-male .hair { background: #2c3e50; width: 90px; height: 40px; left: -5px; border-radius: 40px 40px 0 0; }
     .character-male .body, .character-male .arm { background: #2980b9; }
     .character-male .tie { display: block; }
@@ -167,7 +162,6 @@
         <div id="scene" class="bg-morning">
             <div id="staff-area"></div>
             
-            <!-- 角色 -->
             <div id="character" class="character-male">
                 <div class="hair"></div>
                 <div class="head">
@@ -267,10 +261,16 @@
     <div id="car-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #3498db;">
             <h2 style="color: #3498db;">🚗 汽車銷售中心</h2>
-            <p>買車代步，但有機會被抄牌罰款同扣分！</p>
-            <button class="modal-btn primary" onclick="buyCar('二手車', 20000, 320)">🚙 買二手車 ($20,000)<small>抄牌罰款 $320，心情 +10</small></button>
-            <button class="modal-btn primary" onclick="buyCar('私家車', 100000, 500)">🚗 買私家車 ($100,000)<small>抄牌罰款 $500，心情 +20</small></button>
-            <button class="modal-btn primary" onclick="buyCar('跑車', 500000, 800)">🏎️ 買跑車 ($500,000)<small>抄牌罰款 $800，心情 +30</small></button>
+            <p id="car-status">買車代步，但有機會被抄牌罰款同扣分！</p>
+            <div id="car-buy-options">
+                <button class="modal-btn primary" onclick="buyCar('二手車', 20000, 320)">🚙 買二手車 ($20,000)<small>抄牌罰款 $320，心情 +10</small></button>
+                <button class="modal-btn primary" onclick="buyCar('私家車', 100000, 500)">🚗 買私家車 ($100,000)<small>抄牌罰款 $500，心情 +20</small></button>
+                <button class="modal-btn primary" onclick="buyCar('跑車', 500000, 800)">🏎️ 買跑車 ($500,000)<small>抄牌罰款 $800，心情 +30</small></button>
+            </div>
+            <div id="car-parking-options" style="display:none; margin-top:10px; border-top:1px dashed #555; padding-top:10px;">
+                <button class="modal-btn warning" id="btn-monthly-parking" onclick="rentParking('monthly')">🏠 租月租停車場 ($2,500/月)<small>有車位就絕對唔會再被抄牌</small></button>
+                <button class="modal-btn primary" id="btn-daily-parking" onclick="rentParking('daily')">⏱️ 租日租停車場 ($150/日)<small>只限今日有效，聽日要再租</small></button>
+            </div>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('car-modal')">返回</button>
         </div>
     </div>
@@ -416,7 +416,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v43';
+    const SAVE_KEY = 'officeSlaveSave_v45';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select' || player.stage === 'gender_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -444,7 +444,7 @@
         job: '求職中', salary: 0, stage: 'gender_select', isInHospital: false, workCount: 0, hasInsurance: false, 
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
-        car: null, demeritPoints: 0, pet: null,
+        car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
         isDating: false, isMarried: false, hasKid: false, mpf: 0, hasLifeInsurance: false
     };
     
@@ -492,7 +492,6 @@
         } catch(e) { console.log("出聲失敗", e); } 
     }
 
-    // 選擇性別
     function selectGender(g) {
         player.gender = g;
         document.getElementById('character').className = g === 'male' ? 'character-male' : 'character-female';
@@ -566,7 +565,14 @@
 
     function advanceTime() {
         timeOfDay++;
-        if (timeOfDay > 2) { timeOfDay = 0; currentDay++; }
+        if (timeOfDay > 2) { 
+            timeOfDay = 0; 
+            currentDay++; 
+            if (player.hasDailyParking) {
+                player.hasDailyParking = false;
+                showToast("⏱️ 日租停車場已到期！");
+            }
+        }
         updateHUD();
     }
 
@@ -738,14 +744,67 @@
         closeModal('pet-modal'); updateHUD();
     }
 
-    function openCarModal() { document.getElementById('car-modal').style.display = 'flex'; }
+    function openCarModal() {
+        document.getElementById('car-modal').style.display = 'flex';
+        let carStatus = document.getElementById('car-status');
+        let buyOptions = document.getElementById('car-buy-options');
+        let parkingOptions = document.getElementById('car-parking-options');
+
+        if (player.car) {
+            carStatus.innerHTML = `你目前擁有：<b>${player.car.name}</b><br>${player.hasParking ? '✅ 已租用月租停車場' : (player.hasDailyParking ? '✅ 已租用日租停車場 (今日有效)' : '⚠️ 未租停車場，隨時會被抄牌扣分')}`;
+            buyOptions.style.display = 'none';
+            parkingOptions.style.display = 'block';
+
+            let monthlyBtn = document.getElementById('btn-monthly-parking');
+            if (player.hasParking) {
+                monthlyBtn.innerText = '✅ 已租用月租停車場';
+                monthlyBtn.disabled = true;
+                monthlyBtn.style.background = '#555';
+            } else {
+                monthlyBtn.innerText = '🏠 租月租停車場 ($2,500/月)';
+                monthlyBtn.disabled = false;
+                monthlyBtn.style.background = '#f39c12'; 
+            }
+
+            let dailyBtn = document.getElementById('btn-daily-parking');
+            if (player.hasDailyParking) {
+                dailyBtn.innerText = '✅ 已租用日租停車場 (今日有效)';
+                dailyBtn.disabled = true;
+                dailyBtn.style.background = '#555';
+            } else {
+                dailyBtn.innerText = '⏱️ 租日租停車場 ($150/日)';
+                dailyBtn.disabled = false;
+                dailyBtn.style.background = '#3498db';
+            }
+
+        } else {
+            carStatus.innerText = '買車代步，但有機會被抄牌罰款同扣分！';
+            buyOptions.style.display = 'block';
+            parkingOptions.style.display = 'none';
+        }
+    }
     function buyCar(name, cost, fine) {
         if (player.money < cost) { showToast(`連 $${cost} 都冇，學人買車？`); return; }
         player.money -= cost; player.car = { name: name, fine: fine }; player.mood = Math.min(100, player.mood + 20);
-        showToast(`🚗 成功買咗 ${name}！心情大增！`); closeModal('car-modal'); updateHUD(); updateActionButtons();
+        showToast(`🚗 成功買咗 ${name}！心情大增！`); openCarModal(); updateHUD(); updateActionButtons();
+    }
+    function rentParking(type) {
+        if (!player.car) return;
+        if (type === 'monthly') {
+            if (player.money < 2500) { showToast("連 $2,500 租金都冇！"); return; }
+            player.money -= 2500;
+            player.hasParking = true;
+            showToast("🏠 成功租用月租停車場！以後唔使再怕抄牌啦！");
+        } else if (type === 'daily') {
+            if (player.money < 150) { showToast("連 $150 租金都冇！"); return; }
+            player.money -= 150;
+            player.hasDailyParking = true;
+            showToast("⏱️ 成功租用日租停車場！今日唔使怕抄牌！");
+        }
+        openCarModal(); updateHUD(); updateActionButtons();
     }
     function triggerTicketEvent() {
-        if (player.car && !player.isBoss) {
+        if (player.car && !player.isBoss && !player.hasParking && !player.hasDailyParking) {
             if (Math.random() < 0.15) { 
                 let fine = player.car.fine;
                 if (player.money >= fine) { player.money -= fine; } else { player.money = 0; player.stress += 10; } 
@@ -931,6 +990,10 @@
                 player.money += rentInc;
                 showToast(`🏠 扣除供樓 $${player.mortgage}，收租 $${rentInc}`);
             }
+            if (player.hasParking) {
+                player.money -= 2500;
+                showToast(`🚗 扣除停車場月租 $2,500`);
+            }
             if (player.loan > 0) {
                 let interest = Math.floor(player.loan * 0.1);
                 player.money -= interest;
@@ -1060,7 +1123,7 @@
             addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
-            addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
             addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
@@ -1072,7 +1135,7 @@
             addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
             addActionBtn('🏢 員工管理', '請人/炒人擴張版圖', 'boss', openStaffModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
-            addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
             addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
