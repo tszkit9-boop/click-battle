@@ -156,7 +156,7 @@
             <div class="stat-item"><span class="stat-label">😊情</span><div class="stat-bar"><div class="stat-fill fill-mood" id="bar-mood" style="width: 80%;"></div><span class="stat-val" id="val-mood">80</span></div></div>
             <div class="stat-item"><span class="stat-label">🤯壓</span><div class="stat-bar"><div class="stat-fill fill-stress" id="bar-stress" style="width: 10%;"></div><span class="stat-val" id="val-stress">10</span></div></div>
             <div class="stat-item"><span class="stat-label">❤️健</span><div class="stat-bar"><div class="stat-fill fill-health" id="bar-health" style="width: 100%;"></div><span class="stat-val" id="val-health">100</span></div></div>
-            <div id="status-display">💼 求職中</div>
+            <div id="status-display">🎂 22歲 | 第1天 ☀️ 早晨 | 💼 求職中</div>
         </div>
 
         <div id="scene" class="bg-morning">
@@ -300,7 +300,7 @@
         </div>
     </div>
 
-    <!-- 地產、貸款與保險 -->
+    <!-- 地產、貸款與保險 (已加入強積金) -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -416,7 +416,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v45';
+    const SAVE_KEY = 'officeSlaveSave_v47';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select' || player.stage === 'gender_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -445,7 +445,7 @@
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
         car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
-        isDating: false, isMarried: false, hasKid: false, mpf: 0, hasLifeInsurance: false
+        isDating: false, isMarried: false, hasKid: false, mpf: 0, mpfTrend: "", hasLifeInsurance: false
     };
     
     let currentMonth = 0, candidates = [];
@@ -511,8 +511,8 @@
             document.getElementById('bar-health').style.width = `${Math.max(0, player.health)}%`; document.getElementById('val-health').innerText = Math.floor(player.health);
             document.getElementById('char-sweat').style.display = player.stress >= 60 ? 'block' : 'none';
             
-            let timeStr = timeOfDay === 0 ? '☀️ 早晨' : (timeOfDay === 1 ? '🌤️ 中午' : '🌙 晚上');
-            let displayStr = `第${currentDay}天 ${timeStr} | `;
+            let timeStr = timeOfDay === 0 ? '☀️早' : (timeOfDay === 1 ? '🌤️午' : '🌙晚');
+            let displayStr = `🎂 ${player.age}歲 | D${currentDay} ${timeStr} | `;
             
             if (player.isBoss) { statusDisplay.innerText = displayStr + `👑 老闆`; statusDisplay.style.color = '#f1c40f'; }
             else { statusDisplay.innerText = displayStr + `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
@@ -820,7 +820,15 @@
         let propCount = player.properties.length;
         let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
         document.getElementById('property-status').innerHTML = `🏠 持有物業：${propCount} 個<br>💸 每月供款：$${player.mortgage.toLocaleString()}<br>💰 每月收租：$${rentInc.toLocaleString()}<br>🏦 財仔欠款：$${player.loan.toLocaleString()}<br>🛡️ 人壽保險：${player.hasLifeInsurance ? '已購買' : '未購買'}`;
-        document.getElementById('mpf-status').innerHTML = `🏦 強積金 (MPF)：$${player.mpf.toLocaleString()}<br><small style="color:#a4b0be;">*退休 (65歲) 或死亡時可提取</small>`;
+        
+        let mpfHtml = `🏦 強積金 (MPF)：$${player.mpf.toLocaleString()}<br>`;
+        if (player.mpfTrend) {
+            if (player.mpfTrend.includes('升')) mpfHtml += `<span style="color:#2ecc71;">${player.mpfTrend}</span> | `;
+            else if (player.mpfTrend.includes('跌')) mpfHtml += `<span style="color:#e74c3c;">${player.mpfTrend}</span> | `;
+            else mpfHtml += `${player.mpfTrend} | `;
+        }
+        mpfHtml += `<small style="color:#a4b0be;">*退休 (65歲) 或死亡時可提取</small>`;
+        document.getElementById('mpf-status').innerHTML = mpfHtml;
     }
     function drawHousing(type) {
         let cost = type === 'public' ? 50000 : 150000, prob = type === 'public' ? 0.2 : 0.15, mortgage = type === 'public' ? 2000 : 6000, rent = type === 'public' ? 4000 : 10000;
@@ -984,6 +992,20 @@
                 showToast(`💼 老闆出糧啦！袋 $${salaryPay} (另供 $${mpfCost} MPF)`);
             }
             
+            if (player.mpf > 0) {
+                if (Math.random() < 0.7) {
+                    let rate = 0.01 + Math.random() * 0.03; 
+                    let gain = Math.floor(player.mpf * rate);
+                    player.mpf += gain;
+                    player.mpfTrend = `📈 本月回報：+$${gain}`;
+                } else {
+                    let rate = 0.005 + Math.random() * 0.015; 
+                    let loss = Math.floor(player.mpf * rate);
+                    player.mpf -= loss;
+                    player.mpfTrend = `📉 本月回報：-$${loss}`;
+                }
+            }
+
             if (player.mortgage > 0) {
                 player.money -= player.mortgage;
                 let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
@@ -1019,7 +1041,12 @@
             if (player.money < 0) { gameOver("你供唔起樓或無力還債，宣佈破產！"); return; }
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
 
-            if (currentDay % 30 === 0) { player.age++; if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓..."); }
+            // 年齡增長提示
+            if (currentDay % 30 === 0) { 
+                player.age++; 
+                showToast(`🎂 生日快樂！你而家 ${player.age} 歲啦！`);
+                if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓..."); 
+            }
         }
         updateHUD(); 
     }
