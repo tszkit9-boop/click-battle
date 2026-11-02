@@ -33,23 +33,40 @@
         z-index: 10; pointer-events: none;
     }
     .hud-box {
-        background: rgba(0, 0, 0, 0.7); border: 1px solid #333;
-        padding: 10px 15px; border-radius: 8px; backdrop-filter: blur(5px);
-        display: flex; flex-direction: column; gap: 5px;
+        background: rgba(0, 0, 0, 0.8); border: 1px solid #333;
+        padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(5px);
+        display: flex; flex-direction: column; gap: 3px;
     }
-    .hud-box span { font-size: 12px; color: #888; }
-    .hud-box .val { font-size: 20px; font-weight: 900; }
+    .hud-box span { font-size: 10px; color: #888; }
+    .hud-box .val { font-size: 16px; font-weight: 900; }
     #cash-val { color: #2ed573; text-shadow: 0 0 10px rgba(46, 213, 115, 0.5); }
-    #stock-val { color: #00d2d3; text-shadow: 0 0 10px rgba(0, 210, 211, 0.5); }
     #time-val { color: #ff4757; text-shadow: 0 0 10px rgba(255, 71, 87, 0.5); text-align: right; }
-    
+
+    /* 槓桿選擇器 */
+    #leverage-panel {
+        position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 5px; z-index: 10; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 8px; border: 1px solid #444;
+    }
+    .lev-btn {
+        padding: 5px 10px; background: transparent; border: none; color: #888;
+        font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 12px; cursor: pointer; border-radius: 5px; transition: all 0.2s;
+    }
+    .lev-btn.active { background: #00d2d3; color: #000; box-shadow: 0 0 10px #00d2d3; }
+
     /* 遊戲場景 */
     #game-container {
         flex: 1; position: relative; display: flex; flex-direction: column;
         overflow: hidden; background: radial-gradient(circle at 50% 50%, #0a1a2e, #050510);
     }
-    
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+
+    /* 中央大字顯示 */
+    #center-display {
+        position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+        z-index: 5; text-align: center; pointer-events: none; text-shadow: 0 0 10px #000;
+    }
+    #current-price { font-size: 48px; font-weight: 900; color: #fff; transition: color 0.2s; }
+    #profit-loss { font-size: 32px; font-weight: 900; margin-top: 10px; }
 
     /* 隨機新聞彈出 */
     #news-popup {
@@ -59,24 +76,27 @@
         color: #fff; font-weight: bold; font-size: 16px; z-index: 20;
         box-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
         opacity: 0; transition: opacity 0.3s; pointer-events: none;
-        white-space: nowrap;
+        white-space: nowrap; width: 80%;
     }
     #news-popup.show { opacity: 1; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     @keyframes popIn { from { transform: translateX(-50%) scale(0.8); } to { transform: translateX(-50%) scale(1); } }
 
     /* 底部控制區 */
     #controls {
-        position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px;
-        display: flex; gap: 15px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px;
+        display: flex; gap: 10px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
     }
     .trade-btn {
-        flex: 1; padding: 20px; font-size: 24px; font-weight: 900; border: none;
-        border-radius: 12px; cursor: pointer; transition: all 0.1s; font-family: 'Orbitron', sans-serif;
-        touch-action: manipulation; box-shadow: 0 5px 15px rgba(0,0,0,0.5); letter-spacing: 2px;
+        flex: 1; padding: 15px 10px; font-size: 18px; font-weight: 900; border: none;
+        border-radius: 10px; cursor: pointer; transition: all 0.1s; font-family: 'Orbitron', sans-serif;
+        touch-action: manipulation; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
     .trade-btn:active { transform: scale(0.95); }
-    #btn-buy { background: linear-gradient(to bottom, #2ed573, #1e9e50); color: #000; text-shadow: 0 1px 2px rgba(255,255,255,0.4); }
-    #btn-sell { background: linear-gradient(to bottom, #ff4757, #c0392b); color: #fff; }
+    .trade-btn small { font-size: 10px; font-weight: normal; opacity: 0.8; margin-top: 3px; }
+    
+    #btn-long { background: linear-gradient(to bottom, #2ed573, #1e9e50); color: #000; }
+    #btn-short { background: linear-gradient(to bottom, #ff4757, #c0392b); color: #fff; }
+    #btn-close { background: linear-gradient(to bottom, #feca57, #e67e22); color: #000; display: none; } /* 預設隱藏，持倉時顯示 */
 
     /* 結算畫面 */
     #end-screen {
@@ -91,12 +111,16 @@
         border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;
     }
 
-    /* 手機排版優化 */
+    /* 爆倉紅光 */
+    #crash-overlay { position: absolute; inset: 0; background: rgba(255, 0, 0, 0.6); z-index: 40; display: none; pointer-events: none; }
+
     @media (max-width: 600px) {
         .back-btn { font-size: 12px; padding: 6px 12px; }
-        .hud-box .val { font-size: 16px; }
-        .trade-btn { padding: 15px; font-size: 20px; }
-        #news-popup { font-size: 14px; padding: 10px 15px; }
+        #current-price { font-size: 36px; }
+        #profit-loss { font-size: 24px; }
+        .trade-btn { font-size: 16px; padding: 12px 5px; }
+        #news-popup { font-size: 14px; }
+        .lev-btn { padding: 4px 8px; font-size: 10px; }
     }
 </style>
 </head>
@@ -106,12 +130,8 @@
 
     <div id="hud">
         <div class="hud-box">
-            <span>💰 現金</span>
+            <span>💰 總資產</span>
             <span class="val" id="cash-val">$10,000</span>
-        </div>
-        <div class="hud-box">
-            <span>📈 持股</span>
-            <span class="val" id="stock-val">0 股</span>
         </div>
         <div class="hud-box">
             <span>⏳ 剩餘時間</span>
@@ -119,13 +139,28 @@
         </div>
     </div>
 
+    <div id="leverage-panel">
+        <button class="lev-btn active" onclick="setLeverage(1)">1x</button>
+        <button class="lev-btn" onclick="setLeverage(5)">5x</button>
+        <button class="lev-btn" onclick="setLeverage(10)">10x</button>
+        <button class="lev-btn" onclick="setLeverage(100)">100x</button>
+    </div>
+
     <div id="game-container">
         <canvas id="chartCanvas"></canvas>
+        <div id="crash-overlay"></div>
+
+        <div id="center-display">
+            <div id="current-price">$100.00</div>
+            <div id="profit-loss"></div>
+        </div>
+
         <div id="news-popup">📰 新聞</div>
 
         <div id="controls">
-            <button class="trade-btn" id="btn-buy" onclick="trade('buy')">買入</button>
-            <button class="trade-btn" id="btn-sell" onclick="trade('sell')">賣出</button>
+            <button class="trade-btn" id="btn-long" onclick="openPosition('long')">📈 做多 (買升)<small>預計全倉買入</small></button>
+            <button class="trade-btn" id="btn-short" onclick="openPosition('short')">📉 做空 (買跌)<small>預計全倉沽空</small></button>
+            <button class="trade-btn" id="btn-close" onclick="closePosition()">🛑 平倉<small>結算盈虧</small></button>
         </div>
     </div>
 
@@ -140,12 +175,18 @@
     const canvas = document.getElementById('chartCanvas');
     const ctx = canvas.getContext('2d');
     const cashVal = document.getElementById('cash-val');
-    const stockVal = document.getElementById('stock-val');
     const timeVal = document.getElementById('time-val');
+    const currentPriceEl = document.getElementById('current-price');
+    const profitLossEl = document.getElementById('profit-loss');
     const newsPopup = document.getElementById('news-popup');
     const endScreen = document.getElementById('end-screen');
     const endTitle = document.getElementById('end-title');
     const endStats = document.getElementById('end-stats');
+    const btnLong = document.getElementById('btn-long');
+    const btnShort = document.getElementById('btn-short');
+    const btnClose = document.getElementById('btn-close');
+    const crashOverlay = document.getElementById('crash-overlay');
+    const levBtns = document.querySelectorAll('.lev-btn');
 
     let W, H;
     function resize() {
@@ -164,72 +205,76 @@
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         let now = audioCtx.currentTime;
-        if (type === 'buy') {
+        if (type === 'open') {
             osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
             gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
             osc.start(); osc.stop(now + 0.1);
-        } else if (type === 'sell') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(); osc.stop(now + 0.1);
+        } else if (type === 'close-win') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(); osc.stop(now + 0.2);
+        } else if (type === 'close-lose') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(); osc.stop(now + 0.2);
         } else if (type === 'crash') {
             osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
             gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
             osc.start(); osc.stop(now + 0.5);
-        } else if (type === 'boom') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
-            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(); osc.stop(now + 0.2);
+        } else if (type === 'news') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
         }
     }
 
     // --- 遊戲狀態 ---
     let cash = 10000;
-    let stocks = 0;
     let price = 100;
     let timeLeft = 60;
     let gameActive = false;
     let priceHistory = [];
+    
+    // 持倉狀態
+    let position = null; // 'long', 'short', 或 null
+    let entryPrice = 0;
+    let margin = 0; // 保證金
+    let leverage = 1;
+    
     let newsTimer = 0;
     let particles = [];
-    let matrixDrops = [];
     let shakeTime = 0;
-    let isCrashed = false;
 
-    // 初始化數字雨
-    for(let i=0; i<50; i++) {
-        matrixDrops.push({
-            x: Math.random() * W,
-            y: Math.random() * H,
-            speed: Math.random() * 3 + 1,
-            char: Math.random() > 0.5 ? '1' : '0'
-        });
-    }
-
-    // 生成平滑折線圖數據
+    // 初始化折線圖
     function initChart() {
         priceHistory = [];
-        for(let i=0; i<W; i+=5) {
-            priceHistory.push(100);
-        }
+        for(let i=0; i<W; i+=5) { priceHistory.push(100); }
+    }
+
+    function setLeverage(val) {
+        if (position) return alert("持倉期間不能更改槓桿！");
+        leverage = val;
+        levBtns.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
     }
 
     function startGame() {
         cash = 10000;
-        stocks = 0;
         price = 100;
         timeLeft = 60;
         gameActive = true;
-        isCrashed = false;
+        position = null;
         particles = [];
         shakeTime = 0;
         endScreen.style.display = 'none';
+        crashOverlay.style.display = 'none';
         initChart();
         updateHUD();
+        resetButtons();
         newsTimer = 0;
         
         if (window.gameLoopInterval) clearInterval(window.gameLoopInterval);
-        window.gameLoopInterval = setInterval(gameTick, 100); // 每 0.1 秒跳一次價格
+        window.gameLoopInterval = setInterval(gameTick, 100); 
         
         if (window.timerInterval) clearInterval(window.timerInterval);
         window.timerInterval = setInterval(() => {
@@ -246,32 +291,33 @@
     function gameTick() {
         if (!gameActive) return;
 
-        // 隨機價格波動 (-3% 到 +3%)
-        let changePercent = (Math.random() - 0.48) * 0.06; 
+        // 隨機價格波動
+        let changePercent = (Math.random() - 0.48) * 0.05; 
         
-        // 隨機新聞事件 (每 5-10 秒觸發)
+        // 新聞事件
         newsTimer++;
-        if (newsTimer > 50 + Math.random() * 50) {
+        if (newsTimer > 30 + Math.random() * 40) {
             triggerNews();
             newsTimer = 0;
         }
 
         price = price * (1 + changePercent);
-        if (price < 1) price = 1; // 防止跌穿 0
+        if (price < 1) price = 1;
         
         priceHistory.push(price);
         if (priceHistory.length > W / 5) priceHistory.shift();
 
         updateHUD();
+        checkLiquidation();
     }
 
     function triggerNews() {
         let events = [
-            { text: "🚀 外星人宣佈收購！股價暴升！", impact: 0.5 },
-            { text: "🔥 總部大樓發生火災！股價暴跌！", impact: -0.4 },
-            { text: "💻 遭黑客大規模攻擊！市場恐慌！", impact: -0.3 },
-            { text: "🤖 成功研發超級 AI！投資者瘋狂買入！", impact: 0.8 },
-            { text: "📉 財報造假被揭發！股價崩盤！", impact: -0.6 }
+            { text: "🚀 外星人宣佈收購！股價暴升！", impact: 0.3 },
+            { text: "🔥 總部大樓發生火災！股價暴跌！", impact: -0.25 },
+            { text: "💻 遭黑客大規模攻擊！市場恐慌！", impact: -0.15 },
+            { text: "🤖 成功研發超級 AI！投資者瘋狂買入！", impact: 0.4 },
+            { text: "📉 財報造假被揭發！股價崩盤！", impact: -0.3 }
         ];
         let ev = events[Math.floor(Math.random() * events.length)];
         
@@ -281,47 +327,95 @@
         newsPopup.innerText = ev.text;
         newsPopup.classList.add('show');
         setTimeout(() => newsPopup.classList.remove('show'), 2000);
-
-        if (ev.impact > 0) {
-            playSound('boom');
-            spawnParticles('#2ed573', 20);
-        } else {
-            playSound('crash');
-            shakeTime = 15;
-            spawnParticles('#ff4757', 30);
-        }
+        
+        playSound('news');
+        shakeTime = 15;
+        if (ev.impact > 0) spawnParticles('#2ed573', 20);
+        else spawnParticles('#ff4757', 20);
     }
 
-    function trade(action) {
-        if (!gameActive) return;
+    function openPosition(type) {
+        if (!gameActive || position) return;
         
-        if (action === 'buy') {
-            let maxBuy = Math.floor(cash / price);
-            if (maxBuy > 0) {
-                cash -= maxBuy * price;
-                stocks += maxBuy;
-                playSound('buy');
-                spawnParticles('#2ed573', 5);
-            }
-        } else if (action === 'sell') {
-            if (stocks > 0) {
-                cash += stocks * price;
-                stocks = 0;
-                playSound('sell');
-                spawnParticles('#ff4757', 5);
-            }
-        }
+        margin = cash; // 全倉出擊
+        entryPrice = price;
+        position = type;
+        cash = 0; // 現金清零，變為保證金
+        
+        playSound('open');
         updateHUD();
+        
+        btnLong.style.display = 'none';
+        btnShort.style.display = 'none';
+        btnClose.style.display = 'flex';
+    }
+
+    function closePosition() {
+        if (!gameActive || !position) return;
+        
+        let pnl = 0;
+        if (position === 'long') {
+            pnl = (price - entryPrice) / entryPrice * margin * leverage;
+        } else if (position === 'short') {
+            pnl = (entryPrice - price) / entryPrice * margin * leverage;
+        }
+        
+        let finalCash = margin + pnl;
+        if (finalCash < 0) finalCash = 0;
+        
+        cash = finalCash;
+        position = null;
+        updateHUD();
+        
+        if (pnl > 0) {
+            playSound('close-win');
+            spawnParticles('#2ed573', 30);
+        } else {
+            playSound('close-lose');
+            spawnParticles('#ff4757', 30);
+            shakeTime = 10;
+        }
+        
+        resetButtons();
+        checkLiquidation();
+    }
+
+    function resetButtons() {
+        btnLong.style.display = 'flex';
+        btnShort.style.display = 'flex';
+        btnClose.style.display = 'none';
+        profitLossEl.innerText = "";
     }
 
     function updateHUD() {
         cashVal.innerText = `$${Math.floor(cash).toLocaleString()}`;
-        stockVal.innerText = `${stocks.toLocaleString()} 股`;
+        currentPriceEl.innerText = `$${price.toFixed(2)}`;
         
-        // 計算總資產
-        let total = cash + stocks * price;
-        if (total <= 0 && !isCrashed) {
-            endGame(true); // 破產
+        if (position) {
+            let pnl = 0;
+            if (position === 'long') pnl = (price - entryPrice) / entryPrice * margin * leverage;
+            else pnl = (entryPrice - price) / entryPrice * margin * leverage;
+            
+            profitLossEl.innerText = `${pnl >= 0 ? '+' : ''}$${Math.floor(pnl).toLocaleString()}`;
+            profitLossEl.style.color = pnl >= 0 ? '#2ed573' : '#ff4757';
+        }
+    }
+
+    function checkLiquidation() {
+        if (!position) return;
+        let pnl = 0;
+        if (position === 'long') pnl = (price - entryPrice) / entryPrice * margin * leverage;
+        else pnl = (entryPrice - price) / entryPrice * margin * leverage;
+        
+        if (margin + pnl <= 0) {
+            // 爆倉！
+            cash = 0;
+            position = null;
+            playSound('crash');
+            shakeTime = 30;
+            crashOverlay.style.display = 'block';
+            setTimeout(() => { crashOverlay.style.display = 'none'; }, 500);
+            endGame(true);
         }
     }
 
@@ -329,85 +423,66 @@
         for (let i = 0; i < count; i++) {
             particles.push({
                 x: W/2, y: H/2,
-                vx: (Math.random() - 0.5) * 15,
-                vy: (Math.random() - 0.5) * 15,
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 0.5) * 20,
                 life: 1, color: color,
-                size: Math.random() * 4 + 2
+                size: Math.random() * 5 + 2
             });
         }
     }
 
-    function endGame(bankrupt = false) {
+    function endGame(liq = false) {
         gameActive = false;
         clearInterval(window.gameLoopInterval);
         clearInterval(window.timerInterval);
         
-        let finalTotal = cash + stocks * price;
-        
-        if (bankrupt || finalTotal < 1000) {
-            endTitle.innerText = "💀 破產收場";
+        if (liq) {
+            endTitle.innerText = "💥 爆倉！";
             endTitle.style.color = "#ff4757";
-            endStats.innerText = `你輸剩 $${Math.floor(finalTotal).toLocaleString()}，宣佈破產！`;
-            playSound('crash');
-        } else if (finalTotal > 50000) {
+            endStats.innerText = `你被強制平倉，身家清零！\n\n賭徒心態，死路一條！`;
+        } else if (cash > 50000) {
             endTitle.innerText = "🏆 賽博股神";
             endTitle.style.color = "#ffd32a";
-            endStats.innerText = `總資產：$${Math.floor(finalTotal).toLocaleString()}！你完全掌控了市場！`;
-            playSound('boom');
+            endStats.innerText = `最終資產：$${Math.floor(cash).toLocaleString()}！\n\n你完全掌控了市場！`;
+        } else if (cash < 10000) {
+            endTitle.innerText = "📉 韭菜收場";
+            endTitle.style.color = "#ff4757";
+            endStats.innerText = `最終資產：$${Math.floor(cash).toLocaleString()}。\n\n下次記得見好就收。`;
         } else {
             endTitle.innerText = "📊 交易結束";
             endTitle.style.color = "#00d2d3";
-            endStats.innerText = `最終總資產：$${Math.floor(finalTotal).toLocaleString()}。再接再厲！`;
+            endStats.innerText = `最終資產：$${Math.floor(cash).toLocaleString()}。\n\n表現中規中矩。`;
         }
         
         endScreen.style.display = 'flex';
     }
 
-    // --- 渲染系統 ---
+    // --- 渲染 ---
     function draw() {
-        // 清空背景
         ctx.fillStyle = '#050510';
         ctx.fillRect(0, 0, W, H);
 
-        // 畫面震動
         ctx.save();
         if (shakeTime > 0) {
             shakeTime--;
-            ctx.translate((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
-        }
-
-        // 畫 Matrix 數字雨
-        ctx.font = '14px monospace';
-        for (let drop of matrixDrops) {
-            ctx.fillStyle = 'rgba(0, 210, 211, 0.15)';
-            ctx.fillText(drop.char, drop.x, drop.y);
-            drop.y += drop.speed;
-            if (drop.y > H) {
-                drop.y = 0;
-                drop.x = Math.random() * W;
-            }
+            ctx.translate((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15);
         }
 
         // 畫背景網格
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.lineWidth = 1;
-        for(let i=0; i<H; i+=40) {
-            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke();
-        }
-        for(let i=0; i<W; i+=40) {
-            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
-        }
+        for(let i=0; i<H; i+=40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
+        for(let i=0; i<W; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
 
         // 畫折線圖
         if (priceHistory.length > 0) {
             ctx.beginPath();
-            ctx.strokeStyle = '#00d2d3';
+            ctx.strokeStyle = position === 'short' ? '#ff4757' : (position === 'long' ? '#2ed573' : '#00d2d3');
             ctx.lineWidth = 3;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#00d2d3';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = ctx.strokeStyle;
             ctx.lineJoin = 'round';
 
-            // 計算 Y 軸縮放 (將價格映射到畫面中間區域)
             let maxP = Math.max(...priceHistory) * 1.1;
             let minP = Math.min(...priceHistory) * 0.9;
             let range = maxP - minP;
@@ -416,50 +491,51 @@
             for (let i = 0; i < priceHistory.length; i++) {
                 let x = i * 5;
                 let y = H * 0.6 - ((priceHistory[i] - minP) / range) * (H * 0.4);
-                
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             }
             ctx.stroke();
 
-            // 畫發光漸變
-            ctx.lineTo(W, H);
-            ctx.lineTo(0, H);
-            ctx.closePath();
+            // 漸變填充
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
             let grad = ctx.createLinearGradient(0, 0, 0, H);
-            grad.addColorStop(0, 'rgba(0, 210, 211, 0.2)');
-            grad.addColorStop(1, 'rgba(0, 210, 211, 0)');
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+            grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
             ctx.fillStyle = grad;
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            // 畫當前價格點
+            // 當前價格點
             let lastY = H * 0.6 - ((priceHistory[priceHistory.length-1] - minP) / range) * (H * 0.4);
             let lastX = (priceHistory.length - 1) * 5;
-            
-            ctx.beginPath();
-            ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#fff';
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill();
             ctx.shadowBlur = 0;
-
-            // 顯示當前價格
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 24px "Orbitron", sans-serif';
-            ctx.textAlign = 'right';
-            ctx.fillText(`$${price.toFixed(2)}`, W - 20, H * 0.2);
         }
 
-        // 更新並畫粒子
+        // 畫開倉線
+        if (position) {
+            let maxP = Math.max(...priceHistory, entryPrice) * 1.1;
+            let minP = Math.min(...priceHistory, entryPrice) * 0.9;
+            let range = maxP - minP;
+            if (range === 0) range = 1;
+            let entryY = H * 0.6 - ((entryPrice - minP) / range) * (H * 0.4);
+
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, entryY); ctx.lineTo(W, entryY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // 粒子
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
-            p.x += p.vx; p.y += p.vy;
-            p.life -= 0.02;
+            p.x += p.vx; p.y += p.vy; p.life -= 0.02;
             if (p.life <= 0) { particles.splice(i, 1); continue; }
-            ctx.globalAlpha = p.life;
-            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
             ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -468,7 +544,6 @@
         requestAnimationFrame(draw);
     }
 
-    // 啟動
     startGame();
     requestAnimationFrame(draw);
 </script>
