@@ -1872,4 +1872,165 @@
         updateHUD(); updateActionButtons();
     }
 
-    function
+    function openAccountModal() {
+        document.getElementById('account-modal').style.display = 'flex';
+        let totalSal = 0, totalProf = 0, managerCount = 0;
+        player.staffList.forEach(s => { 
+            totalSal += s.salary; 
+            if (s.isManager) managerCount++;
+            else if (s.type !== 'sales') totalProf += s.profit; 
+        });
+        let baseNet = Math.floor(totalProf * (1 + managerCount * 0.10)) - totalSal - 5000;
+        
+        let statusText = '';
+        if (player.isListed) {
+            statusText += `💹 <b style="color:#2ecc71;">已上市</b><br>`;
+            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()}<br>`;
+            statusText += `💰 每月股息：$${player.dividendPerMonth.toLocaleString()}<br>`;
+            statusText += `<small style="color:#a4b0be;">公司已交由市場管理，你唔使再管員工。</small>`;
+        } else {
+            statusText += `🧑‍💼 員工數量：${player.staffList.length} 人<br>`;
+            statusText += `💸 每月總人工：$${totalSal.toLocaleString()}<br>`;
+            statusText += `📈 基本預期利潤：$${totalProf.toLocaleString()}<br>`;
+            if (managerCount > 0) statusText += `👔 主管加成：+${managerCount * 10}%<br>`;
+            statusText += `🏢 營運費：$5,000<br>`;
+            statusText += `<hr style="border-color:#333; margin:8px 0;">`;
+            statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
+            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()} / $5,000,000 (上市門檻)<br>`;
+            statusText += `<small style="color:#a4b0be;">(Sales 的利潤為隨機，需視乎每月結算)</small>`;
+        }
+        
+        document.getElementById('account-status').innerHTML = statusText;
+    }
+
+    function updateActionButtons() {
+        actionsEl.innerHTML = '';
+        if (player.stage !== 'work') return;
+        
+        if (player.isListed) {
+            addActionBtn('💹 收取股息', `每月 $${player.dividendPerMonth.toLocaleString()}`, 'boss', () => {
+                player.money += player.dividendPerMonth;
+                showToast(`💹 收到股息 $${player.dividendPerMonth.toLocaleString()}`);
+                advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+            });
+            addActionBtn('📊 公司資料', '查看上市資訊', 'boss', openAccountModal);
+            addActionBtn('👀 休閒生活', '有錢佬嘅生活', 'rest', () => {
+                player.stress = Math.max(0, player.stress - 20);
+                player.mood = Math.min(100, player.mood + 15);
+                showToast("🏖️ 你去咗遊艇派對，人生勝利組！");
+                advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+            });
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
+            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
+            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
+            addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
+        } else if (player.isBoss) {
+            addActionBtn('💰 公司帳目', '查看每月出糧及盈虧', 'boss', openAccountModal);
+            addActionBtn('👀 巡視業務', '睇住班員工做嘢', 'rest', bossPatrolAction);
+            addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
+            addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
+            addActionBtn('📈 申請上市', player.companyValue >= 5000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $5M`, 'boss', doIPO);
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
+            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
+            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
+            addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
+        } else {
+            addActionBtn('💼 努力工作', `每次 +$${Math.floor(player.salary/3)}`, 'work', () => { 
+                let info = jobDatabase[player.jobType];
+                let earn = Math.floor(player.salary / 3);
+                let stressAdd = info.stressCost;
+                let energyCost = info.energyCost;
+                
+                if (timeOfDay === 0) { earn = Math.floor(earn * 1.2); stressAdd = Math.floor(stressAdd * 0.8); }
+                else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.1); energyCost = Math.floor(energyCost * 1.1); } 
+                
+                if (player.energy < energyCost) { showToast("體力不足，無法工作！請休息或去醫院。"); return; }
+
+                player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
+                
+                advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            });
+            addActionBtn('🐟 摸魚', '放鬆下，有機率被老闆捉', 'rest', () => {
+                let caught = Math.random() < 0.3;
+                if (caught) {
+                    showSlackingCaughtModal();
+                } else {
+                    player.mood = Math.min(100, player.mood + 10);
+                    player.stress = Math.max(0, player.stress - 10);
+                    player.slackCount = (player.slackCount || 0) + 1;
+                    showToast("🐟 成功摸魚！心情 +10，壓力 -10！(但冇計工作次數)");
+                    advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
+                }
+            });
+            addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
+            addActionBtn('🛏️ 睡覺休息', '壓力清零，體力回滿', 'rest', () => { 
+                player.energy = 100; player.stress = 0; player.mood = Math.min(100, player.mood + 5); 
+                if (player.pet) player.mood = Math.min(100, player.mood + 10); 
+                currentDay++; timeOfDay = 0; triggerTicketEvent();
+                showToast("😴 瞓咗個好覺，壓力全消，體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            });
+            addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
+            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
+            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
+            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
+            addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
+            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
+            addActionBtn('💸 終極賭徒', '賭馬/波/幣圈', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
+            if (player.money >= 300000 && player.workCount >= 30) { addActionBtn('🚀 開公司', '辭職創業做老闆！', 'boss', () => { document.getElementById('company-modal').style.display = 'flex'; }); }
+        }
+    }
+
+    function addActionBtn(title, desc, cls, onClick) {
+        let btn = document.createElement('button'); btn.className = `action-btn ${cls}`; btn.innerHTML = `${title}<small>${desc}</small>`;
+        if (!onClick) btn.classList.add('disabled'); else btn.onclick = onClick;
+        actionsEl.appendChild(btn);
+    }
+
+    function gameOver(reason) {
+        player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
+        document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") || reason.includes("離世") ? "💀 過勞死" : (reason.includes("停牌") ? "🚗 停牌收場" : "👴 光榮退休"));
+        
+        let finalMoney = player.money;
+        let mpfText = "";
+        let insuranceText = "";
+        
+        if (player.age >= 65 || reason.includes("猝死") || reason.includes("離世")) {
+            if (player.mpf > 0) { finalMoney += player.mpf; mpfText = `<br>提取 MPF：+$${player.mpf.toLocaleString()}`; }
+            if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
+        }
+
+        let identityStr = player.isListed ? '資本家' : (player.isBoss ? '老闆' : '打工仔');
+        let slackText = player.slackCount ? `<br>摸魚次數：${player.slackCount} 次` : '';
+        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${identityStr}${slackText}`;
+        localStorage.removeItem(SAVE_KEY); speakText(reason);
+    }
+
+    window.onload = () => { 
+        document.getElementById('voice-toggle').innerText = "🔊 粵語";
+        try {
+            if (loadGame() && player.stage === 'work') { 
+                document.getElementById('dialogue-box').style.display = 'none'; 
+                document.getElementById('gender-modal').style.display = 'none';
+                document.getElementById('character').className = player.gender === 'male' ? 'character-male' : 'character-female';
+                
+                if(player.isBoss || player.isListed) sceneEl.className = 'bg-boss'; 
+                else {
+                    if (timeOfDay === 0) sceneEl.className = 'bg-morning';
+                    else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
+                    else sceneEl.className = 'bg-night';
+                }
+                updateActionButtons(); 
+                startStaffStatusTimer();
+            } else { 
+                player.stage = 'gender_select'; player.money = 0; 
+                document.getElementById('gender-modal').style.display = 'flex'; 
+            }
+            updateHUD();
+        } catch(e) {}
+    };
+</script>
+</body>
+</html>
