@@ -16,7 +16,6 @@
             min-height: 100vh; overflow-x: hidden; padding-bottom: 50px;
         }
 
-        /* 動態背景網格 */
         .bg-grid {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
@@ -27,7 +26,6 @@
         }
         @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
 
-        /* 標題區 */
         .header-section {
             display: flex; flex-direction: column; align-items: center;
             margin-top: 50px; margin-bottom: 40px; text-align: center;
@@ -39,7 +37,6 @@
             letter-spacing: 6px; margin: 0; white-space: nowrap;
         }
 
-        /* 霓虹裝飾線 */
         .divider {
             width: 150px; height: 3px;
             background: linear-gradient(90deg, transparent, #00d2d3, transparent);
@@ -50,13 +47,11 @@
             color: #a4b0be; font-size: 14px; letter-spacing: 2px; margin: 0;
         }
 
-        /* 卡片容器 */
         .games-container {
             display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;
             max-width: 1000px; padding: 0 20px;
         }
 
-        /* 單張遊戲卡片 */
         .game-card {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 280px; height: 180px; border-radius: 15px;
@@ -67,7 +62,6 @@
         .game-card h2 { margin: 0; font-size: 22px; z-index: 2; transition: all 0.3s; }
         .game-card p { color: #a4b0be; font-size: 12px; z-index: 2; margin-top: 10px; transition: all 0.3s; text-align: center; padding: 0 10px; }
         
-        /* 卡片專屬顏色光暈 */
         .card-grudge:hover { border-color: #ff4757; box-shadow: 0 0 30px rgba(255, 71, 87, 0.6); transform: translateY(-10px); }
         .card-grudge h2 { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
         
@@ -95,11 +89,13 @@
         .card-trader:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
         .card-trader h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
 
-        /* 黑洞吞噬專屬深紫色 */
         .card-hole:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.6); transform: translateY(-10px); }
         .card-hole h2 { color: #9b59b6; text-shadow: 0 0 10px #9b59b6; }
 
-        /* 發光掃描特效 */
+        /* 社畜人生專屬土黃色 */
+        .card-slave:hover { border-color: #e67e22; box-shadow: 0 0 30px rgba(230, 126, 34, 0.6); transform: translateY(-10px); }
+        .card-slave h2 { color: #e67e22; text-shadow: 0 0 10px #e67e22; }
+
         .game-card::before {
             content: ''; position: absolute; top: -50%; left: -50%;
             width: 200%; height: 200%;
@@ -114,73 +110,57 @@
 
     <div class="bg-grid"></div>
 
-    <!-- 頂部標題區 -->
     <div class="header-section">
         <h1>呀樂</h1>
         <div class="divider"></div>
         <p class="subtitle">原創網頁遊戲工作室</p>
     </div>
 
-    <!-- 遊戲列表 -->
     <div class="games-container">
-        <!-- 遊戲 1 -->
         <a href="./grudge-game/" class="game-card card-grudge">
             <h2>會記仇的遊戲</h2>
             <p>AI 學習你嘅習慣，生成陷阱針對你</p>
         </a>
-
-        <!-- 遊戲 2 -->
         <a href="./one-line-life/" class="game-card card-line">
             <h2>一筆定生死</h2>
             <p>畫一條完美光線，避開致命陷阱</p>
         </a>
-
-        <!-- 遊戲 3 -->
         <a href="./neon-music-box/" class="game-card card-music">
             <h2>霓虹音樂盒</h2>
             <p>自由砌出專屬軌道，彈奏你的音樂</p>
         </a>
-
-        <!-- 遊戲 4 -->
         <a href="./endless-maze/" class="game-card card-maze">
             <h2>無盡迷宮</h2>
             <p>喺變幻莫測嘅迷宮中尋找出口</p>
         </a>
-
-        <!-- 遊戲 5 -->
         <a href="./snowball-game/" class="game-card card-monopoly">
             <h2>香港大富翁</h2>
             <p>擲骰買地，體驗香港版大富翁</p>
         </a>
-
-        <!-- 遊戲 6 -->
         <a href="./deep-miner/" class="game-card card-miner">
             <h2>深淵礦工</h2>
             <p>貪婪與恐懼的極限考驗，掘得越深越危險！</p>
         </a>
-
-        <!-- 遊戲 7 -->
         <a href="./magic-survivor/" class="game-card card-survivor">
             <h2>魔法狂潮</h2>
             <p>自動射擊，無限進化，享受滿屏割草的爽快！</p>
         </a>
-
-        <!-- 遊戲 8 -->
         <a href="./escape-room/" class="game-card card-escape">
             <h2>賽博密室</h2>
             <p>20 關極限挑戰！解謎、逃生，對抗恐怖幻覺</p>
         </a>
-
-        <!-- 遊戲 9 -->
         <a href="./cyber-trader/" class="game-card card-trader">
             <h2>賽博股神</h2>
             <p>做多、做空、100倍槓桿！一撳定生死！</p>
         </a>
-
-        <!-- 遊戲 10 -->
         <a href="./black-hole/" class="game-card card-hole">
             <h2>黑洞吞噬</h2>
             <p>引力爆發、Boss 追擊！由微塵進化成宇宙巨獸！</p>
+        </a>
+        <!-- 遊戲 11 (新增：社畜人生) -->
+        <a href="./office-slave/" class="game-card card-slave">
+            <h2>社畜人生</h2>
+            <p>由見工到退休，體驗打工仔嘅血淚辛酸史</p>
         </a>
     </div>
 
