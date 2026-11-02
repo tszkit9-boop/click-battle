@@ -43,10 +43,24 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    #office-view { display: none; position: absolute; inset: 0; z-index: 6; padding: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-direction: column; align-items: center; justify-content: center; }
+    /* 老闆寫字樓（支援多人滾動） */
+    #office-view { 
+        display: none; 
+        position: absolute; 
+        inset: 0; 
+        z-index: 6; 
+        padding: 15px; 
+        padding-top: 30px;
+        padding-bottom: 30px;
+        overflow-y: auto; 
+        -webkit-overflow-scrolling: touch; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: flex-start; /* 改為頂部對齊，方便向下捲動 */
+    }
     #office-view.active { display: flex; }
     .office-title { text-align: center; color: #f1c40f; font-size: 14px; font-weight: bold; margin-bottom: 12px; text-shadow: 0 0 10px rgba(241,196,15,0.6); }
-    .staff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 480px; width: 100%; }
+    .staff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 480px; width: 100%; padding-bottom: 20px; }
     .staff-desk { background: linear-gradient(135deg, rgba(44,62,80,0.95), rgba(30,39,46,0.95)); border: 2px solid #3498db; border-radius: 12px; padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(52,152,219,0.3); position: relative; overflow: hidden; min-height: 100px; }
     .staff-desk.manager { border-color: #f1c40f; box-shadow: 0 0 15px rgba(241,196,15,0.5); }
     .staff-desk .desk-emoji { font-size: 34px; animation: typing 1s infinite alternate; }
@@ -456,7 +470,7 @@
             <h2 style="color: #00d2d3;">👥 員工管理</h2>
             <div style="background: #111; border-radius: 8px; padding: 8px; margin-bottom: 12px;">
                 <p style="font-size: 12px; margin: 0; text-align: left; color:#fff;">
-                    員工總數：<span id="total-staff">0</span> / 5 人<br>每月總人工：<span id="total-salary" style="color: #e74c3c;">$0</span><br>每月總利潤：<span id="total-profit" style="color: #2ecc71;">$0</span>
+                    員工總數：<span id="total-staff">0</span> / 12 人<br>每月總人工：<span id="total-salary" style="color: #e74c3c;">$0</span><br>每月總利潤：<span id="total-profit" style="color: #2ecc71;">$0</span>
                 </p>
             </div>
             <div id="candidate-list" style="margin-bottom: 12px;"></div>
@@ -586,7 +600,7 @@
     let currentMonth = 0, candidates = [];
     let timeOfDay = 0; let currentDay = 1; let hospitalFlag = false; 
     let interviewStep = 0; 
-    const MAX_STAFF = 5;
+    const MAX_STAFF = 12; // 提升上限至 12 人
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
     let voiceMode = 0; 
@@ -1733,7 +1747,8 @@
 
     function generateCandidates() {
         candidates = []; const types = ['intern', 'it', 'sales', 'cleaner'];
-        for (let i = 0; i < 3; i++) {
+        // 每次出 6 個候選人
+        for (let i = 0; i < 6; i++) {
             let t = types[Math.floor(Math.random() * types.length)], name = '', salary = 0, profit = 0, cost = 0;
             if (t === 'intern') { name = '實習生'; salary = 3000; profit = 5000; cost = 5000; }
             else if (t === 'it') { name = 'IT狗'; salary = 10000; profit = 25000; cost = 15000; }
