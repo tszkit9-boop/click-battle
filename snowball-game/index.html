@@ -23,7 +23,6 @@
   button:disabled{opacity:.38;cursor:not-allowed;transform:none!important;filter:grayscale(.5)}
   .hidden{display:none!important}
 
-  /* --- 全局返回大廳按鈕 --- */
   .global-back-btn {
     position: fixed; top: 15px; left: 15px; z-index: 99999;
     padding: 8px 16px; background: rgba(10, 10, 20, 0.85);
@@ -149,7 +148,6 @@
 </head>
 <body>
 
-<!-- 全局返回大廳按鈕 -->
 <a href="../" class="global-back-btn">⬅ 返回大廳</a>
 
 <div id="lobby">
@@ -216,9 +214,6 @@
 </div>
 
 <script>
-/* ========================================================
-   🔴 已幫你填好嘅 Firebase 設定
-   ======================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyCkk64youdDu9TpEN75BGbe22NirsXqTU",
   authDomain: "snowball-game-a66a8.firebaseapp.com",
@@ -235,7 +230,6 @@ const db = firebase.database();
 const COLORS = ['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C'];
 const ALL_EMOJIS = ['👧','👦','🐱','🐶','🐯','🦊','🐼','🐸'];
 
-// 🦸‍♂️ 角色技能
 const SKILLS = {
   '👧': { name: '交易專家', desc: '與人交易時，對方需額外補 $5,000 俾你。' },
   '👦': { name: '打工達人', desc: '每回合結束時，額外獲得 $5,000。' },
@@ -338,7 +332,7 @@ function startSoloGame() {
     status: 'playing', 
     host: myId, 
     players: playersData,
-    gameState: { currentId: myId, round: 1, totalRounds: 8, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null }
+    gameState: { currentId: myId, round: 1, totalRounds: 15, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null }
   };
 
   roomRef.set(initialData).then(() => {
@@ -419,7 +413,7 @@ function startGameHost() {
   if(myRole !== 'host') return;
   const pIds = Object.keys(localData.players);
   if(pIds.length < 2) return alert('最少要 2 個人先玩到！');
-  roomRef.update({ status: 'playing', gameState: { currentId: pIds[0], round: 1, totalRounds: 8, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null } });
+  roomRef.update({ status: 'playing', gameState: { currentId: pIds[0], round: 1, totalRounds: 15, phase: 'roll', dice1: null, dice2: null, owners: {}, auction: null, lastEvent: null } });
 }
 
 function listenToRoom() {
@@ -438,7 +432,6 @@ function listenToRoom() {
       }
       renderAll();
 
-      // 👇 全局破產檢查：只要有人現金負數且未破產，強制執行破產程序
       if(!data.gameState.auction) {
         Object.keys(data.players).forEach(pid => {
           const p = data.players[pid];
@@ -460,12 +453,11 @@ function listenToRoom() {
         checkBotTurn();
       }
 
-      // 防卡死：如果輪到電腦，而狀態係 action，自動幫佢結束回合
       if(data.gameState.phase === 'action' && !data.gameState.auction) {
         const curP = data.players[data.gameState.currentId];
         if(curP && curP.isBot) {
           setTimeout(() => {
-            if(localData.gameState.phase === 'action' && localData.gameState.currentId === curP.id) {
+            if(localData.gameState.phase === 'action' && localData.gameState.currentId === curP.id && !localData.gameState.auction) {
               endTurn();
             }
           }, 1500);
@@ -713,10 +705,20 @@ setInterval(() => {
         roomRef.update(updates).then(() => {
           addLog(`🔨 拍賣結束：${winP.name} 以 $${price.toLocaleString()} 投得 ${BOARD[auc.pos].n}！`, 'system');
           playSound('buy');
+          
+          const curP = localData.players[localData.gameState.currentId];
+          if (curP && curP.isBot) {
+             setTimeout(() => endTurn(), 1500);
+          }
         });
       } else {
         roomRef.update({ 'gameState/auction': null, 'gameState/phase': 'action' }).then(() => {
           addLog(`📉 拍賣流拍：${BOARD[auc.pos].n} 無人出價。`, 'system');
+          
+          const curP = localData.players[localData.gameState.currentId];
+          if (curP && curP.isBot) {
+             setTimeout(() => endTurn(), 1500);
+          }
         });
       }
     }
@@ -870,7 +872,6 @@ function handleBotLanding(botId, pos) {
         .then(() => { addLog(`🤖 ${p.name} 向 ${ownerP.name} 交租 $${rent.toLocaleString()}`, 'danger'); checkBankrupt(botId); finishTurn(); });
     } else {
       startAuction(pos);
-      setTimeout(() => { roomRef.update({'gameState/phase': 'action'}); }, 1000);
     }
   } else if (cell.t === 'chance') {
     const card = CHANCE_CARDS[Math.floor(Math.random()*CHANCE_CARDS.length)];
@@ -982,9 +983,7 @@ function handleLanding(pos) {
   }
 }
 
-// 👇 重寫破產機制，不再用 localData 的非同步舊數據，強制讀取最新狀態
 function checkBankrupt(pid) {
-  // 防止重複觸發
   if(localData.players[pid] && localData.players[pid].isCheckingBankrupt) return;
 
   db.ref(`rooms/${roomCode}/players/${pid}`).once('value').then(snap => {
@@ -1020,13 +1019,12 @@ function checkBankrupt(pid) {
       }
       
       if (currentCash >= 0) {
-        updates[`players/${pid}/isCheckingBankrupt`] = null; // 解除標記
+        updates[`players/${pid}/isCheckingBankrupt`] = null;
         roomRef.update(updates);
         return;
       }
     }
 
-    // 賣晒地都唔夠，正式破產
     let updates = {
       [`players/${pid}/bankrupt`]: true,
       [`players/${pid}/cash`]: 0,
@@ -1059,9 +1057,11 @@ function endTurn() {
   const pIds = Object.keys(localData.players);
   let nextIndex = (pIds.indexOf(gs.currentId) + 1) % pIds.length;
   
+  let safeCounter = 0;
   while (localData.players[pIds[nextIndex]].bankrupt) {
     nextIndex = (nextIndex + 1) % pIds.length;
-    if (nextIndex === pIds.indexOf(gs.currentId)) {
+    safeCounter++;
+    if (safeCounter > pIds.length) {
       roomRef.update({ status: 'finished' });
       return;
     }
