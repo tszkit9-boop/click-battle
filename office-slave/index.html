@@ -26,6 +26,11 @@
     .fill-stress { background: linear-gradient(90deg, #9b59b6, #8e44ad); box-shadow: 0 0 10px #9b59b6; }
     .fill-health { background: linear-gradient(90deg, #2ecc71, #27ae60); box-shadow: 0 0 10px #2ecc71; }
     .stat-val { position: absolute; right: 2px; top: 0; font-size: 8px; line-height: 10px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
+    
+    /* 警告閃爍特效 */
+    @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .warning-flash { animation: flash 1s infinite; background: #ff0000 !important; box-shadow: 0 0 10px #ff0000 !important; }
+
     #scene { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: background 1s ease; min-height: 0; }
     .bg-street { background: linear-gradient(to bottom, #2c3e50, #1a252f); }
     .bg-office { background: linear-gradient(to bottom, #34495e, #1e272e); }
@@ -139,6 +144,29 @@
         </div>
     </div>
 
+    <!-- 身體到達極限 -->
+    <div id="hospital-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
+            <h2 style="color: #e74c3c;">🏥 身體到達極限！</h2>
+            <p id="hospital-text"></p>
+            <button class="modal-btn primary" onclick="goToHospital('private')">🏥 去私家醫院 ($1,000)<small>即刻回滿體力，大幅減壓</small></button>
+            <button class="modal-btn warning" onclick="goToHospital('public')">🏥 去公立醫院 ($400)<small>排隊排到傻，只回 60% 體力</small></button>
+            <button class="modal-btn danger" onclick="goToHospital('none')">🏠 咩都唔睇 ($0)<small>扣 30 健康值，強制昏迷一日</small></button>
+        </div>
+    </div>
+
+    <!-- 車行 -->
+    <div id="car-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #3498db;">
+            <h2 style="color: #3498db;">🚗 汽車銷售中心</h2>
+            <p>買車代步，但有機會被抄牌罰款同扣分！</p>
+            <button class="modal-btn primary" onclick="buyCar('二手車', 20000, 320)">🚙 買二手車 ($20,000)<small>抄牌罰款 $320，心情 +10</small></button>
+            <button class="modal-btn primary" onclick="buyCar('私家車', 100000, 500)">🚗 買私家車 ($100,000)<small>抄牌罰款 $500，心情 +20</small></button>
+            <button class="modal-btn primary" onclick="buyCar('跑車', 500000, 800)">🏎️ 買跑車 ($500,000)<small>抄牌罰款 $800，心情 +30</small></button>
+            <button class="modal-btn danger" style="background:#555;" onclick="closeModal('car-modal')">返回</button>
+        </div>
+    </div>
+
     <!-- 求職中心 -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
@@ -233,14 +261,6 @@
         </div>
     </div>
 
-    <div id="hospital-modal" class="modal-overlay">
-        <div class="modal-box" style="border-color: #e74c3c;">
-            <h2 style="color: #e74c3c;">🏥 強制送院！</h2>
-            <p id="hospital-text"></p>
-            <button class="modal-btn danger" onclick="closeHospital()">接受現實</button>
-        </div>
-    </div>
-
     <!-- 公司與員工 -->
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
@@ -275,7 +295,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v26';
+    const SAVE_KEY = 'officeSlaveSave_v29';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -302,12 +322,14 @@
         age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100, 
         job: '求職中', salary: 0, stage: 'job_select', isInHospital: false, workCount: 0, hasInsurance: false, 
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
-        properties: [], mortgage: 0, loan: 0, jobType: null
+        properties: [], mortgage: 0, loan: 0, jobType: null,
+        car: null, demeritPoints: 0 // 新增車輛與扣分屬性
     };
     
     let currentMonth = 0, candidates = [];
     let timeOfDay = 0; // 0=早晨, 1=中午, 2=晚上
     let currentDay = 1;
+    let hospitalFlag = false; // 防止重複彈窗
     const MAX_STAFF = 5;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
@@ -332,6 +354,14 @@
             if (player.isBoss) { statusDisplay.innerText = displayStr + `👑 老闆`; statusDisplay.style.color = '#f1c40f'; }
             else { statusDisplay.innerText = displayStr + `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
 
+            // 體力/壓力預警閃爍
+            const barEnergy = document.getElementById('bar-energy');
+            const barStress = document.getElementById('bar-stress');
+            if (!player.isBoss && player.stage === 'work') {
+                if (player.energy <= 20) barEnergy.classList.add('warning-flash'); else barEnergy.classList.remove('warning-flash');
+                if (player.stress >= 80) barStress.classList.add('warning-flash'); else barStress.classList.remove('warning-flash');
+            }
+
             // 改變背景顏色
             if (!player.isBoss && player.stage === 'work') {
                 if (timeOfDay === 0) sceneEl.className = 'bg-morning';
@@ -341,8 +371,11 @@
                 sceneEl.className = 'bg-boss';
             }
             
-            if (player.health <= 0) gameOver("你因為長期過勞，不幸猝死...");
-            else if (!player.isBoss && player.stage === 'work' && (player.energy <= 0 || player.stress >= 100)) triggerHospital();
+            if (player.health <= 0) { gameOver("你因為長期過勞，不幸猝死..."); return; }
+            
+            if (!player.isBoss && player.stage === 'work' && (player.energy <= 0 || player.stress >= 100) && !hospitalFlag) {
+                triggerHospital();
+            }
             saveGame();
         } catch(e) {}
     }
@@ -406,6 +439,29 @@
         updateHUD(); updateActionButtons();
     }
 
+    // === 買車與抄牌扣分系統 ===
+    function openCarModal() { document.getElementById('car-modal').style.display = 'flex'; }
+    function buyCar(name, cost, fine) {
+        if (player.money < cost) { showToast(`連 $${cost} 都冇，學人買車？`); return; }
+        player.money -= cost; 
+        player.car = { name: name, fine: fine }; 
+        player.mood = Math.min(100, player.mood + 20);
+        showToast(`🚗 成功買咗 ${name}！心情大增！`); 
+        closeModal('car-modal'); updateHUD(); updateActionButtons();
+    }
+    function triggerTicketEvent() {
+        if (player.car && !player.isBoss) {
+            if (Math.random() < 0.15) { // 15% 機率被抄牌
+                let fine = player.car.fine;
+                if (player.money >= fine) { player.money -= fine; }
+                else { player.money = 0; player.stress += 20; }
+                player.demeritPoints += 3;
+                showToast(`🚓 違例泊車被抄牌！罰款 $${fine}，扣 3 分！(當前 ${player.demeritPoints} 分)`);
+                if (player.demeritPoints >= 15) { gameOver("你被抄牌扣滿 15 分，法庭判你停牌！心灰意冷下結束營業..."); return; }
+            }
+        }
+    }
+
     // === 地產與貸款系統 ===
     function openPropertyModal() {
         document.getElementById('property-modal').style.display = 'flex';
@@ -447,7 +503,7 @@
         player.money += money; player.energy -= energyCost; player.stress += stressCost;
         showToast(`🛵 做完${name}，賺咗 $${money}，就快攰死...`);
         closeModal('parttime-modal'); 
-        advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+        advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
     // === 監獄與律師系統 ===
@@ -466,7 +522,7 @@
         checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 ===
+    // === 隨機事件 (只保留日常好壞事) ===
     function triggerRandomEvent() {
         if (Math.random() > 0.2) return;
         let events = [
@@ -476,7 +532,7 @@
             { msg: "😡 被麻煩客投訴！扣 $1000 人工！", effect: () => { player.money = Math.max(0, player.money - 1000); player.stress += 10; } },
             { msg: "🤕 行路仆街！扣 20 體力！", effect: () => { player.energy = Math.max(1, player.energy - 20); } },
             { msg: "⛈️ 打風交通癱瘓！心情大跌！", effect: () => { player.mood = Math.max(0, player.mood - 20); } },
-            { msg: "🚓 偷雞非法賭波被警察放蛇拉咗！", effect: () => { openJail(); } }
+            { msg: "🥤 飲珍珠奶茶濁親，咳到死！扣 10 體力！", effect: () => { player.energy = Math.max(1, player.energy - 10); } }
         ];
         let ev = events[Math.floor(Math.random() * events.length)];
         ev.effect(); showToast(ev.msg);
@@ -491,22 +547,65 @@
         closeModal('invest-modal'); updateHUD();
     }
     function openHorseBet() { closeModal('invest-modal'); document.getElementById('horse-modal').style.display = 'flex'; document.getElementById('racing-anim').style.display = 'none'; document.getElementById('horse-buttons').style.display = 'grid'; }
-    function betHorse(num) { if (player.money < 500) { showToast("連 $500 都冇！"); return; } player.money -= 500; document.getElementById('horse-buttons').style.display = 'none'; document.getElementById('racing-anim').style.display = 'block'; setTimeout(() => { if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); } else { showToast(`🐎 ${num}號馬跑輸咗...`); } document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); updateHUD(); updateActionButtons(); }, 1000); }
+    function betHorse(num) { 
+        if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
+        player.money -= 500; 
+        document.getElementById('horse-buttons').style.display = 'none'; 
+        document.getElementById('racing-anim').style.display = 'block'; 
+        setTimeout(() => { 
+            if (Math.random() < 0.15) { document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); openJail(); return; }
+            if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); } 
+            else { showToast(`🐎 ${num}號馬跑輸咗...`); } 
+            document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); updateHUD(); updateActionButtons(); 
+        }, 1000); 
+    }
     function openFootballBet() { closeModal('invest-modal'); document.getElementById('football-modal').style.display = 'flex'; document.getElementById('football-anim').style.display = 'none'; document.getElementById('football-buttons').style.display = 'grid'; }
-    function betFootball(choice) { if (player.money < 500) { showToast("連 $500 都冇！"); return; } player.money -= 500; document.getElementById('football-buttons').style.display = 'none'; document.getElementById('football-anim').style.display = 'block'; setTimeout(() => { let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away'); if (choice === actual) { let winAmt = choice === 'draw' ? 1500 : 1000; player.money += winAmt; showToast(`⚽ 買中咗！贏 $${winAmt}！`); } else { showToast(`⚽ 買錯咗，輸 $500...`); } document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons(); }, 1000); }
+    function betFootball(choice) { 
+        if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
+        player.money -= 500; 
+        document.getElementById('football-buttons').style.display = 'none'; 
+        document.getElementById('football-anim').style.display = 'block'; 
+        setTimeout(() => { 
+            if (Math.random() < 0.15) { document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); openJail(); return; }
+            let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away'); 
+            if (choice === actual) { let winAmt = choice === 'draw' ? 1500 : 1000; player.money += winAmt; showToast(`⚽ 買中咗！贏 $${winAmt}！`); } 
+            else { showToast(`⚽ 買錯咗，輸 $500...`); } 
+            document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons(); 
+        }, 1000); 
+    }
     function playLottery() { if (player.money < 100) { showToast("連 $100 都冇！"); return; } player.money -= 100; if (Math.random() < 0.01) { player.money += 5000000; showToast("🎉 中咗頭獎！500萬！"); } else { showToast("😢 又做善事。"); } closeModal('invest-modal'); updateHUD(); }
     function playStock() { if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; } if (Math.random() < 0.5) { let l = Math.floor(Math.random() * 8000) + 2000; player.money -= l; showToast(`📉 股市大跌！蝕咗 $${l}`); } else { let w = Math.floor(Math.random() * 15000) + 5000; player.money += w; showToast(`📈 股市大升！賺咗 $${w}`); } closeModal('invest-modal'); updateHUD(); }
     function buyInsurance() { if (player.hasInsurance) { showToast("你已經買咗醫保啦！"); closeModal('invest-modal'); return; } if (player.money < 5000) { showToast("唔夠錢！"); return; } player.money -= 5000; player.hasInsurance = true; showToast("🛡️ 成功購買自願醫保！"); closeModal('invest-modal'); updateHUD(); }
 
-    // === 醫院與月結算 ===
+    // === 醫院系統 (明碼實價) ===
     function triggerHospital() {
-        if (player.isInHospital) return; player.isInHospital = true;
-        let loss = player.hasInsurance ? 0.2 : 0.5; let medFee = Math.floor(player.money * loss);
-        player.money -= medFee; player.energy = 100; player.stress = 20; player.health = Math.max(10, player.health - 20);
-        document.getElementById('hospital-text').innerHTML = `你暈低咗送院。<br>${player.hasInsurance ? '🛡️ 醫保報銷！扣 20% 身家。' : '⚠️ 無醫保！扣 50% 身家。'}<br><span style="color:#f1c40f;">損失：$${medFee}</span>`;
-        document.getElementById('hospital-modal').style.display = 'flex'; speakText("你暈低咗，被強制送院。");
+        if (hospitalFlag) return; 
+        hospitalFlag = true;
+        let reason = player.energy <= 0 ? '體力透支' : '壓力爆煲';
+        document.getElementById('hospital-text').innerHTML = `你因為${reason}暈低咗！<br>你需要即刻作出決定：<br><br>去邊度睇醫生？`;
+        document.getElementById('hospital-modal').style.display = 'flex';
+        speakText("你暈低咗！去私家、公立、定係唔睇？");
     }
-    function closeHospital() { document.getElementById('hospital-modal').style.display = 'none'; player.isInHospital = false; showToast("出院了，保重身體..."); updateHUD(); updateActionButtons(); }
+    function goToHospital(type) {
+        closeModal('hospital-modal');
+        hospitalFlag = false;
+        
+        if (type === 'private') {
+            if (player.money < 1000) { showToast("連 $1,000 都冇，去唔到私家醫院！"); triggerHospital(); return; }
+            player.money -= 1000; player.energy = 100; player.stress = Math.max(0, player.stress - 30); player.health = Math.max(10, player.health - 5);
+            showToast("🏥 私家醫院服務一流，體力全滿，出院！");
+        } else if (type === 'public') {
+            if (player.money < 400) { showToast("連 $400 都冇，公立醫院都睇唔起！"); triggerHospital(); return; }
+            player.money -= 400; player.energy = 60; player.stress = Math.max(0, player.stress - 15); player.health = Math.max(10, player.health - 15);
+            showToast("🏥 公立醫院排咗 8 個鐘，體力回復，出院！");
+        } else {
+            player.energy = 20; player.stress = Math.max(0, player.stress + 10); player.health -= 30;
+            currentDay++; timeOfDay = 0;
+            showToast("🏠 你無錢睇醫生，死頂返屋企昏迷咗一日，健康大跌 30！");
+            if (player.health <= 0) { gameOver("你延誤治療，最終不幸離世..."); return; }
+        }
+        advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+    }
 
     function checkMonthEnd() {
         currentMonth++;
@@ -535,7 +634,6 @@
 
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
             
-            // 每 30 天長一歲
             if (currentDay % 30 === 0) {
                 player.age++;
                 if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
@@ -544,8 +642,8 @@
         updateHUD(); 
     }
 
-    function bossPatrolAction() { player.stress = Math.max(0, player.stress - 30); player.mood = Math.min(100, player.mood + 15); showToast("👀 巡視業務，心情舒暢！"); advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
-    function bossBusinessAction() { if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
+    function bossPatrolAction() { player.stress = Math.max(0, player.stress - 30); player.mood = Math.min(100, player.mood + 15); showToast("👀 巡視業務，心情舒暢！"); advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
+    function bossBusinessAction() { if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
 
     function startCompany() {
         if (player.money < 300000) { showToast("資本不足 $300,000！"); return; }
@@ -603,27 +701,24 @@
                 let stressAdd = info.stressCost;
                 let energyCost = info.energyCost;
                 
-                // 時段加成
                 if (timeOfDay === 0) { earn = Math.floor(earn * 1.2); stressAdd = Math.floor(stressAdd * 0.8); }
                 else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.2); energyCost = Math.floor(energyCost * 1.1); }
                 
                 player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
                 
-                advanceTime(); triggerRandomEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+                advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
             addActionBtn('🛏️ 睡觉休息', '跳至明早回滿體力', 'rest', () => { 
                 player.energy = 100; 
                 player.stress = Math.max(0, player.stress - 15); 
                 player.mood = Math.min(100, player.mood + 5); 
-                
-                // 強制跳轉
-                currentDay++;
-                timeOfDay = 0;
-                
+                currentDay++; timeOfDay = 0;
+                triggerTicketEvent();
                 showToast("😴 瞓咗個好覺，第二朝體力回滿！"); 
                 checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
+            addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
@@ -633,6 +728,7 @@
             addActionBtn('👀 巡視業務', '減壓，視察員工', 'rest', bossPatrolAction);
             addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
             addActionBtn('🏢 員工管理', '請人/炒人擴張版圖', 'boss', openStaffModal);
+            addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
         }
@@ -646,7 +742,7 @@
 
     function gameOver(reason) {
         player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
-        document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") ? "💀 過勞死" : "👴 光榮退休");
+        document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") || reason.includes("離世") ? "💀 過勞死" : (reason.includes("停牌") ? "🚗 停牌收場" : "👴 光榮退休"));
         document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${player.money.toLocaleString()}<br>最終身份：${player.isBoss ? '老闆' : '打工仔'}`;
         localStorage.removeItem(SAVE_KEY); speakText(reason);
     }
