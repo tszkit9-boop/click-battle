@@ -19,7 +19,6 @@
 
     #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
     
-    /* 放大版 HUD 狀態欄 */
     #hud { background: rgba(10, 10, 20, 0.95); padding: 12px 8px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 14px; z-index: 10; backdrop-filter: blur(5px); flex-shrink: 0; }
     .stat-item { display: flex; align-items: center; gap: 4px; }
     .stat-label { width: 26px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 12px; white-space: nowrap; }
@@ -44,7 +43,6 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    /* 員工工作區 */
     #staff-area { display: none; position: absolute; top: 15%; width: 100%; justify-content: center; flex-wrap: wrap; gap: 15px; z-index: 4; }
     .staff-desk { display: flex; flex-direction: column; align-items: center; font-size: 24px; animation: typing 1s infinite alternate; }
     .staff-desk small { font-size: 10px; color: #fff; margin-top: 5px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; }
@@ -99,20 +97,35 @@
     
     #toast { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 16px; border-radius: 20px; font-weight: bold; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; color: #f1c40f; font-size: 13px; max-width: 90%; word-wrap: break-word; white-space: normal; }
     
+    /* 基礎公仔 */
     #character { position: relative; width: 140px; height: 280px; animation: breathe 2s infinite ease-in-out; z-index: 5; transform: scale(0.65); }
     @keyframes breathe { 0%, 100% { transform: scale(0.65) scaleY(1); } 50% { transform: scale(0.65) scaleY(1.02); } }
     .head { position: absolute; top: 0; left: 30px; width: 80px; height: 90px; background: #f5cba7; border-radius: 40px 40px 30px 30px; border: 3px solid #000; z-index: 2; }
-    .hair { position: absolute; top: -5px; left: -5px; width: 90px; height: 40px; background: #2c3e50; border-radius: 40px 40px 0 0; border-bottom: 2px solid #000; }
+    .hair { position: absolute; top: -5px; left: -5px; width: 90px; height: 40px; background: #2c3e50; border-radius: 40px 40px 0 0; border-bottom: 2px solid #000; z-index: 3; transition: all 0.3s; }
     .eye { position: absolute; top: 45px; width: 10px; height: 10px; background: #000; border-radius: 50%; }
     .eye-l { left: 20px; } .eye-r { right: 20px; }
     .mouth { position: absolute; top: 70px; left: 35px; width: 10px; height: 4px; background: #000; border-radius: 2px; }
     .sweat { position: absolute; top: 20px; right: -15px; font-size: 20px; display: none; }
-    .body { position: absolute; top: 90px; left: 20px; width: 100px; height: 120px; background: #2980b9; border-radius: 20px 20px 10px 10px; border: 3px solid #000; z-index: 1; }
-    .tie { position: absolute; top: 0; left: 45px; width: 10px; height: 70px; background: #c0392b; border: 1px solid #000; }
-    .arm { position: absolute; top: 100px; width: 25px; height: 90px; background: #2980b9; border: 3px solid #000; border-radius: 15px; z-index: 0; }
+    .body { position: absolute; top: 90px; left: 20px; width: 100px; height: 120px; background: #2980b9; border-radius: 20px 20px 10px 10px; border: 3px solid #000; z-index: 1; transition: all 0.3s; }
+    .tie { position: absolute; top: 0; left: 45px; width: 10px; height: 70px; background: #c0392b; border: 1px solid #000; transition: all 0.3s; }
+    .arm { position: absolute; top: 100px; width: 25px; height: 90px; background: #2980b9; border: 3px solid #000; border-radius: 15px; z-index: 0; transition: all 0.3s; }
     .arm-l { left: -10px; } .arm-r { right: -10px; }
     .leg { position: absolute; top: 210px; width: 30px; height: 70px; background: #34495e; border: 3px solid #000; border-radius: 10px; z-index: 0; }
     .leg-l { left: 30px; } .leg-r { right: 30px; }
+
+    /* 女仔專屬外觀 */
+    .character-female .hair { width: 100px; height: 100px; left: -10px; border-radius: 40px 40px 20px 20px; background: #8e44ad; z-index: 0; }
+    .character-female .head { z-index: 2; }
+    .character-female .body, .character-female .arm { background: #e84393; }
+    .character-female .tie { display: none; }
+    .character-female .leg { background: #2c3e50; }
+    .character-female::after {
+        content: '👠'; position: absolute; top: 270px; left: 55px; font-size: 24px; z-index: 2;
+    }
+    /* 男仔專屬外觀 */
+    .character-male .hair { background: #2c3e50; width: 90px; height: 40px; left: -5px; border-radius: 40px 40px 0 0; }
+    .character-male .body, .character-male .arm { background: #2980b9; }
+    .character-male .tie { display: block; }
 
     @media (max-width: 600px) {
         .voice-btn, .reset-btn, .back-btn { padding: 4px 8px; font-size: 11px; }
@@ -152,10 +165,10 @@
         </div>
 
         <div id="scene" class="bg-morning">
-            <!-- 員工工作畫面 -->
             <div id="staff-area"></div>
             
-            <div id="character">
+            <!-- 角色 -->
+            <div id="character" class="character-male">
                 <div class="hair"></div>
                 <div class="head">
                     <div class="eye eye-l"></div><div class="eye eye-r"></div><div class="mouth" id="char-mouth"></div>
@@ -165,6 +178,7 @@
                 <div class="body" id="char-body"><div class="tie" id="char-tie"></div></div>
                 <div class="leg leg-l"></div><div class="leg leg-r"></div>
             </div>
+            
             <div id="dialogue-box">
                 <div id="speaker-name">面試官</div>
                 <div id="dialogue-text"></div>
@@ -172,6 +186,16 @@
             </div>
         </div>
         <div id="actions"></div>
+    </div>
+
+    <!-- 性別選擇 -->
+    <div id="gender-modal" class="modal-overlay" style="display: flex;">
+        <div class="modal-box" style="border-color: #00d2d3;">
+            <h2 style="color: #00d2d3;">👤 選擇性別</h2>
+            <p>你想以咩身份開始你嘅社畜人生？</p>
+            <button class="modal-btn primary" onclick="selectGender('male')" style="background:#2980b9;">👨 男社畜<small>短頭髮、藍色恤衫、紅色領帶</small></button>
+            <button class="modal-btn primary" onclick="selectGender('female')" style="background:#e84393;">👩 女社畜<small>長頭髮、粉紫套裝、高跟鞋</small></button>
+        </div>
     </div>
 
     <!-- 休閒減壓 -->
@@ -252,7 +276,7 @@
     </div>
 
     <!-- 求職中心 -->
-    <div id="job-modal" class="modal-overlay" style="display: flex;">
+    <div id="job-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
             <p>請選擇你想從事的工種：</p>
@@ -276,7 +300,7 @@
         </div>
     </div>
 
-    <!-- 地產、貸款與保險 (已加入強積金) -->
+    <!-- 地產、貸款與保險 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -392,8 +416,8 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v42';
-    function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
+    const SAVE_KEY = 'officeSlaveSave_v43';
+    function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select' || player.stage === 'gender_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
 
@@ -416,8 +440,8 @@
     };
 
     let player = { 
-        age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100, 
-        job: '求職中', salary: 0, stage: 'job_select', isInHospital: false, workCount: 0, hasInsurance: false, 
+        gender: 'male', age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100, 
+        job: '求職中', salary: 0, stage: 'gender_select', isInHospital: false, workCount: 0, hasInsurance: false, 
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
         car: null, demeritPoints: 0, pet: null,
@@ -430,7 +454,7 @@
     const MAX_STAFF = 5;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
-    // 🌟 三態語音系統 (粵語 -> 國語 -> 靜音) 🌟
+    // 三態語音
     let voiceMode = 0; // 0=粵語, 1=國語, 2=靜音
     let voices = [];
     function loadVoices() {
@@ -445,18 +469,10 @@
     function toggleVoice() { 
         voiceMode++;
         if (voiceMode > 2) voiceMode = 0;
-        
         let btn = document.getElementById('voice-toggle');
-        if (voiceMode === 0) {
-            btn.innerText = "🔊 粵語";
-            speakText("已切換至廣東話");
-        } else if (voiceMode === 1) {
-            btn.innerText = "🔊 國語";
-            speakText("已切换至普通话");
-        } else {
-            btn.innerText = "🔇 靜音";
-            if(window.speechSynthesis) window.speechSynthesis.cancel();
-        }
+        if (voiceMode === 0) { btn.innerText = "🔊 粵語"; speakText("已切換至廣東話"); }
+        else if (voiceMode === 1) { btn.innerText = "🔊 國語"; speakText("已切换至普通话"); }
+        else { btn.innerText = "🔇 靜音"; if(window.speechSynthesis) window.speechSynthesis.cancel(); }
     }
     
     function speakText(text) { 
@@ -464,33 +480,26 @@
             if (voiceMode === 2 || !('speechSynthesis' in window)) return; 
             window.speechSynthesis.cancel(); 
             const ut = new SpeechSynthesisUtterance(text); 
-
-            if (voiceMode === 0) { // 粵語
+            if (voiceMode === 0) { 
                 let v = voices.find(v => v.lang.includes('zh-HK') || v.lang.includes('yue'));
-                if (v) {
-                    ut.voice = v;
-                    ut.lang = 'zh-HK';
-                } else {
-                    ut.lang = 'zh-HK'; // 就算冇專屬包都叫佢試讀
-                }
-            } else if (voiceMode === 1) { // 國語
+                if (v) { ut.voice = v; ut.lang = 'zh-HK'; } else { ut.lang = 'zh-HK'; }
+            } else if (voiceMode === 1) { 
                 let v = voices.find(v => v.lang.includes('zh-CN'));
-                if (v) {
-                    ut.voice = v;
-                    ut.lang = 'zh-CN';
-                } else {
-                    let vTW = voices.find(v => v.lang.includes('zh-TW'));
-                    if (vTW) {
-                        ut.voice = vTW;
-                        ut.lang = 'zh-TW';
-                    } else {
-                        ut.lang = 'zh-CN';
-                    }
-                }
+                if (v) { ut.voice = v; ut.lang = 'zh-CN'; } else { ut.lang = 'zh-CN'; }
             }
             ut.rate = 1.1; 
             window.speechSynthesis.speak(ut); 
         } catch(e) { console.log("出聲失敗", e); } 
+    }
+
+    // 選擇性別
+    function selectGender(g) {
+        player.gender = g;
+        document.getElementById('character').className = g === 'male' ? 'character-male' : 'character-female';
+        closeModal('gender-modal');
+        player.stage = 'job_select';
+        document.getElementById('job-modal').style.display = 'flex';
+        showToast(g === 'male' ? "👨 男社畜，準備接受社會毒打！" : "👩 女社畜，準備接受社會毒打！");
     }
 
     function updateHUD() {
@@ -1098,6 +1107,9 @@
         try {
             if (loadGame() && player.stage === 'work') { 
                 document.getElementById('dialogue-box').style.display = 'none'; 
+                document.getElementById('gender-modal').style.display = 'none';
+                document.getElementById('character').className = player.gender === 'male' ? 'character-male' : 'character-female';
+                
                 if(player.isBoss) sceneEl.className = 'bg-boss'; 
                 else {
                     if (timeOfDay === 0) sceneEl.className = 'bg-morning';
@@ -1105,7 +1117,10 @@
                     else sceneEl.className = 'bg-night';
                 }
                 updateActionButtons(); 
-            } else { player.stage = 'job_select'; player.money = 0; document.getElementById('job-modal').style.display = 'flex'; }
+            } else { 
+                player.stage = 'gender_select'; player.money = 0; 
+                document.getElementById('gender-modal').style.display = 'flex'; 
+            }
             updateHUD();
         } catch(e) {}
     };
