@@ -11,24 +11,17 @@
             margin: 0; padding: 0; background-color: #050505; color: #c5c6c7;
             font-family: 'Press Start 2P', monospace; display: flex; flex-direction: column;
             align-items: center; justify-content: center; height: 100dvh; height: 100vh; overflow: hidden;
-            touch-action: none; /* 防止手機滑動/縮放 */
+            touch-action: none;
         }
         
-        /* 遊戲容器，設定最大闊度並置中 */
-        #game-container { 
-            position: relative; 
-            width: 100%; 
-            max-width: 900px; 
-        }
+        #game-container { position: relative; width: 100%; max-width: 900px; }
         
-        /* Canvas 自動縮放 */
         canvas {
             background-color: #111; border: 4px solid #ff4757;
             box-shadow: 0 0 30px rgba(255, 71, 87, 0.6);
             width: 100%; height: auto; display: block; box-sizing: border-box;
         }
         
-        /* 彈窗通用樣式 */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10, 0, 0, 0.95); display: flex; flex-direction: column;
@@ -53,6 +46,12 @@
         #ui { margin-top: 10px; text-align: center; font-size: 12px; }
         #system-msg { margin-top: 5px; font-size: 12px; min-height: 20px; color: #fff; }
 
+        /* 全屏紅光特效 */
+        #damage-flash {
+            position: fixed; inset: 0; background: rgba(255, 0, 0, 0.6);
+            z-index: 9998; display: none; pointer-events: none;
+        }
+
         /* --- 手機虛擬按鍵 --- */
         #mobile-controls {
             position: absolute; bottom: 10px; left: 0; width: 100%;
@@ -69,9 +68,10 @@
         .touch-btn:active { background: rgba(255, 255, 255, 0.4); }
         #btn-left { float: left; }
         #btn-right { float: left; margin-left: 15px; }
-        #btn-jump { float: right; width: 75px; height: 75px; font-size: 18px; }
+        .right-btns { display: flex; gap: 10px; align-items: flex-end; }
+        #btn-dash { width: 50px; height: 50px; font-size: 14px; margin-bottom: 5px; background: rgba(241,196,15,0.2); border-color: #f1c40f; }
+        #btn-jump { width: 75px; height: 75px; font-size: 18px; }
 
-        /* --- 返回大廳按鈕 --- */
         .back-btn {
             position: fixed; top: 15px; left: 15px; z-index: 99999;
             padding: 8px 16px; background: rgba(5, 5, 5, 0.8);
@@ -82,7 +82,6 @@
         }
         .back-btn:hover { background: #ff4757; color: #000; }
 
-        /* 針對手機屏幕嘅字體縮放 */
         @media (max-width: 600px) {
             .overlay h2 { font-size: 16px; }
             .overlay p { font-size: 8px; }
@@ -91,43 +90,45 @@
             #system-msg { font-size: 10px; }
             #btn-left, #btn-right { width: 50px; height: 50px; font-size: 18px; }
             #btn-jump { width: 65px; height: 65px; font-size: 14px; }
+            #btn-dash { width: 45px; height: 45px; font-size: 12px; }
             .back-btn { font-size: 10px; padding: 6px 12px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 返回大廳按鈕 -->
     <a href="../" class="back-btn">⬅ 返回大廳</a>
+    <div id="damage-flash"></div>
 
     <div id="game-container">
         <canvas id="gameCanvas" width="900" height="450"></canvas>
         
-        <!-- 手機虛擬按鍵 (放喺 Canvas 上面) -->
         <div id="mobile-controls">
             <div>
                 <div id="btn-left" class="touch-btn">◀</div>
                 <div id="btn-right" class="touch-btn">▶</div>
             </div>
-            <div id="btn-jump" class="touch-btn">跳</div>
+            <div class="right-btns">
+                <div id="btn-dash" class="touch-btn">衝</div>
+                <div id="btn-jump" class="touch-btn">跳</div>
+            </div>
         </div>
 
-        <!-- 開始說明彈窗 -->
         <div id="start-overlay" class="overlay">
             <h2>系統已啟動</h2>
-            <p style="color: #66fcf1; font-size: 10px; margin-bottom: 10px;">《會記仇嘅遊戲 v2.1》</p>
-            <p class="hide-mobile"><span class="highlight">[←][→]</span> 移動 | <span class="highlight">[Space]</span> 跳躍</p>
-            <p class="show-mobile" style="display:none;">點按下方按鍵移動及跳躍</p>
+            <p style="color: #66fcf1; font-size: 10px; margin-bottom: 10px;">《會記仇嘅遊戲 v2.2》</p>
+            <p class="hide-mobile"><span class="highlight">[←][→]</span> 移動 | <span class="highlight">[Space]</span> 跳躍 (可二段跳) | <span class="highlight">[Shift]</span> 衝刺</p>
+            <p class="show-mobile" style="display:none;">點按下方按鍵移動、跳躍及衝刺</p>
             <p style="margin-top: 10px;">目標：收集 <span class="highlight">3 把黃色鎖匙</span>，解鎖右側大門逃生。</p>
-            <p class="danger" style="margin-top: 10px;">警告：你只有 1 滴血。</p>
-            <p class="danger">碰到地刺、雷射、死神紅眼，<br>即刻死亡。</p>
+            <p class="danger" style="margin-top: 10px;">警告：你只有 1 滴血。碰到任何嘢都會死。</p>
+            <p class="danger">我會一直盯著你。</p>
             <button onclick="startGame()">我準備好受死</button>
         </div>
 
-        <!-- 結算彈窗 -->
         <div id="end-overlay" class="overlay">
             <h2>系統：你失敗了。</h2>
-            <p id="report-text"></p>
+            <p id="report-text" style="color:#fff; font-size:12px; margin-bottom:10px;"></p>
+            <p id="taunt-text" class="danger" style="font-size:10px; margin-bottom:10px;"></p>
             <p id="high-score-text" style="color: #ffd32a;"></p>
             <button onclick="restartGame()">再俾機會你挑戰我</button>
         </div>
@@ -138,7 +139,6 @@
     </div>
 
     <script>
-        // 判斷係咪手機，切換說明文字
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             document.querySelector('.hide-mobile').style.display = 'none';
             document.querySelector('.show-mobile').style.display = 'block';
@@ -150,44 +150,23 @@
         const startOverlay = document.getElementById('start-overlay');
         const endOverlay = document.getElementById('end-overlay');
         const reportText = document.getElementById('report-text');
+        const tauntText = document.getElementById('taunt-text');
         const highScoreText = document.getElementById('high-score-text');
+        const damageFlash = document.getElementById('damage-flash');
 
-        // --- 音效 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            if (type === 'jump') {
-                osc.type = 'square'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'hit') {
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'pickup') {
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'laser') {
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-            }
+            if (type === 'jump') { osc.type = 'square'; osc.frequency.setValueAtTime(400, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if (type === 'hit') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'pickup') { osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if (type === 'laser') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+            else if (type === 'dash') { osc.type = 'sine'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.15); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); osc.start(); osc.stop(audioCtx.currentTime + 0.15); }
         }
 
-        // --- 遊戲狀態 ---
-        let player, obstacles, particles, keys, chaser, lasers;
+        let player, obstacles, particles, keys, chaser, lasers, platforms;
         let keysInput = {};
         let score, highScore, timeAlive, isGameOver, gameStarted;
         let shakeTime = 0;
@@ -199,9 +178,16 @@
         const gravity = 0.6;
         const floorY = 400; 
 
+        let deathCount = parseInt(localStorage.getItem('grudgeDeathCount') || '0');
+        let deathReasons = JSON.parse(localStorage.getItem('grudgeDeathReasons') || '{"laser":0,"chaser":0,"spike":0}');
+
         function initGame() {
-            player = { x: 50, y: floorY - 36, width: 24, height: 36, vy: 0, speed: 6, jumpPower: -12, isGrounded: true, facingRight: true, walkTimer: 0 };
-            obstacles = []; particles = []; keys = []; lasers = [];
+            player = { 
+                x: 50, y: floorY - 36, width: 24, height: 36, vy: 0, speed: 6, 
+                jumpPower: -12, isGrounded: true, facingRight: true, walkTimer: 0,
+                jumpCount: 0, dashTimer: 0, dashCooldown: 0, isDashing: false, trail: []
+            };
+            obstacles = []; particles = []; keys = []; lasers = []; platforms = [];
             chaser = { x: -100, y: 200, speed: 2.5, radius: 20 };
             
             score = 0; timeAlive = 0; shakeTime = 0; isGameOver = false;
@@ -216,6 +202,18 @@
                     width: 20, height: 20, collected: false
                 });
             }
+
+            // 生成移動平台
+            for(let i=0; i<3; i++) {
+                platforms.push({
+                    x: 150 + i * 250,
+                    y: floorY - 80 - (i%2)*50,
+                    width: 100, height: 15,
+                    vx: (Math.random() > 0.5 ? 1 : -1) * 1.5,
+                    range: 150,
+                    originX: 150 + i * 250
+                });
+            }
         }
 
         function startGame() {
@@ -225,26 +223,38 @@
             initGame();
         }
 
-        // --- 鍵盤與觸控共通邏輯 ---
         function handleJump() {
             if (!gameStarted || isGameOver) return;
             if (player.isGrounded) {
                 player.vy = player.jumpPower;
                 player.isGrounded = false;
+                player.jumpCount = 1;
                 playSound('jump');
                 createParticles(player.x + player.width/2, player.y + player.height, '#66fcf1', 5);
-                
-                if(Math.random() < 0.3) {
-                    obstacles.push({ x: player.x + 50, y: floorY - 20, width: 30, height: 20 });
-                    systemMsg.innerHTML = `系統：我知你想跳去邊。`;
-                }
+            } else if (player.jumpCount < 2) {
+                // 二段跳
+                player.vy = player.jumpPower * 0.85;
+                player.jumpCount = 2;
+                playSound('jump');
+                createParticles(player.x + player.width/2, player.y + player.height, '#f1c40f', 8);
             }
         }
 
-        // 鍵盤監聽
+        function handleDash() {
+            if (!gameStarted || isGameOver) return;
+            if (player.dashCooldown <= 0 && !player.isDashing) {
+                player.isDashing = true;
+                player.dashTimer = 10; 
+                player.dashCooldown = 60; 
+                playSound('dash');
+                createParticles(player.x + player.width/2, player.y + player.height/2, '#ffd32a', 15);
+            }
+        }
+
         window.addEventListener('keydown', (e) => {
             if (!gameStarted || isGameOver) return;
             if (e.code === 'Space' || e.code === 'ArrowUp') handleJump();
+            if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') handleDash();
             if (e.code === 'ArrowLeft') { keysInput.left = true; player.facingRight = false; }
             if (e.code === 'ArrowRight') { keysInput.right = true; player.facingRight = true; }
         });
@@ -254,7 +264,6 @@
             if (e.code === 'ArrowRight') keysInput.right = false;
         });
 
-        // 觸控監聽 (支援 touch 同 mouse)
         const bindBtn = (id, downFn, upFn) => {
             const btn = document.getElementById(id);
             btn.addEventListener('touchstart', (e) => { e.preventDefault(); downFn(); }, {passive: false});
@@ -265,18 +274,10 @@
             btn.addEventListener('mouseleave', (e) => { e.preventDefault(); if(upFn) upFn(); });
         };
 
-        bindBtn('btn-left', 
-            () => { if(gameStarted && !isGameOver) { keysInput.left = true; player.facingRight = false; } },
-            () => { keysInput.left = false; }
-        );
-        bindBtn('btn-right', 
-            () => { if(gameStarted && !isGameOver) { keysInput.right = true; player.facingRight = true; } },
-            () => { keysInput.right = false; }
-        );
-        bindBtn('btn-jump', 
-            () => { handleJump(); },
-            null
-        );
+        bindBtn('btn-left', () => { if(gameStarted && !isGameOver) { keysInput.left = true; player.facingRight = false; } }, () => { keysInput.left = false; });
+        bindBtn('btn-right', () => { if(gameStarted && !isGameOver) { keysInput.right = true; player.facingRight = true; } }, () => { keysInput.right = false; });
+        bindBtn('btn-jump', () => { handleJump(); }, null);
+        bindBtn('btn-dash', () => { handleDash(); }, null);
 
         function createParticles(x, y, color, count) {
             for(let i=0; i<count; i++) {
@@ -284,13 +285,30 @@
             }
         }
 
-        function takeDamage(reason) {
+        function takeDamage(reason, type='spike') {
             if(isGameOver) return;
             isGameOver = true;
             shakeTime = 30;
             playSound('hit');
             createParticles(player.x + player.width/2, player.y + player.height/2, '#ff4757', 40); 
             
+            damageFlash.style.display = 'block';
+            setTimeout(() => damageFlash.style.display = 'none', 100);
+
+            deathCount++;
+            deathReasons[type] = (deathReasons[type] || 0) + 1;
+            localStorage.setItem('grudgeDeathCount', deathCount);
+            localStorage.setItem('grudgeDeathReasons', JSON.stringify(deathReasons));
+
+            let taunts = [
+                "你已經死咗 " + deathCount + " 次。你仲未放棄？",
+                "又係你？我閉上眼都識閃避你嘅動作。",
+                "垃圾，你嘅走位比我嘅亂數生成仲要容易預測。",
+                "你以為二段跳好叻？我早就預判咗你啦。",
+                "歷史紀錄：死於雷射 " + deathReasons.laser + " 次，被死神捉 " + deathReasons.chaser + " 次。"
+            ];
+            tauntText.innerText = taunts[Math.floor(Math.random() * taunts.length)];
+
             reportText.innerHTML = `生存時間：${(timeAlive/60).toFixed(1)} 秒<br>死因：<span style="color:#ff4757">${reason}</span>`;
             
             if (Math.floor(score) > highScore) {
@@ -314,21 +332,71 @@
             timeAlive++;
             score += 0.5;
             if (shakeTime > 0) shakeTime--;
+            if (player.dashCooldown > 0) player.dashCooldown--;
+            
+            // 衝刺與移動
+            if (player.isDashing) {
+                player.dashTimer--;
+                player.x += (player.facingRight ? 1 : -1) * 15; 
+                player.trail.push({x: player.x, y: player.y, life: 1});
+                if (player.dashTimer <= 0) player.isDashing = false;
+            } else {
+                if (keysInput.left) player.x -= player.speed;
+                if (keysInput.right) player.x += player.speed;
+                if (keysInput.left || keysInput.right) player.walkTimer += 0.2;
+            }
 
-            if (keysInput.left) player.x -= player.speed;
-            if (keysInput.right) player.x += player.speed;
-            if (keysInput.left || keysInput.right) player.walkTimer += 0.2;
+            // 殘影更新
+            for(let i=player.trail.length-1; i>=0; i--) {
+                player.trail[i].life -= 0.05;
+                if(player.trail[i].life <= 0) player.trail.splice(i, 1);
+            }
 
             if (player.x < 0) player.x = 0;
             if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
+            // 重力與平台碰撞
             player.vy += gravity;
             player.y += player.vy;
+            let onPlatform = false;
+
+            platforms.forEach(p => {
+                p.x += p.vx;
+                if (p.x < p.originX - p.range || p.x > p.originX + p.range) p.vx *= -1;
+                
+                // 從上方落下
+                if (player.vy >= 0 &&
+                    player.x + player.width > p.x && player.x < p.x + p.width &&
+                    player.y + player.height >= p.y && player.y + player.height <= p.y + p.vy + 10) {
+                    player.y = p.y - player.height;
+                    player.vy = 0;
+                    player.isGrounded = true;
+                    player.jumpCount = 0;
+                    onPlatform = true;
+                }
+            });
+
             if (player.y + player.height >= floorY) {
-                if (!player.isGrounded) createParticles(player.x + player.width/2, floorY, '#66fcf1', 5); 
+                if (!player.isGrounded && !onPlatform) createParticles(player.x + player.width/2, floorY, '#66fcf1', 5); 
                 player.y = floorY - player.height;
                 player.vy = 0;
                 player.isGrounded = true;
+                player.jumpCount = 0;
+            } else if (!onPlatform) {
+                player.isGrounded = false;
+            }
+
+            // 系統針對：在同一個地方待太久
+            if (!player._idleTimer) player._idleTimer = 0;
+            if (!keysInput.left && !keysInput.right && player.isGrounded) {
+                player._idleTimer++;
+                if (player._idleTimer > 180) { // 3秒
+                    obstacles.push({ x: player.x, y: player.y - 100, width: 30, height: 20, vy: 5 });
+                    systemMsg.innerHTML = `系統：站喺度發呆？送個驚喜俾你。`;
+                    player._idleTimer = 0;
+                }
+            } else {
+                player._idleTimer = 0;
             }
 
             // 死神
@@ -337,11 +405,11 @@
             chaser.speed += 0.001;
 
             let dist = Math.hypot((player.x+player.width/2) - chaser.x, (player.y+player.height/2) - chaser.y);
-            if (dist < chaser.radius + 15) takeDamage("被死神紅眼吞噬。");
+            if (dist < chaser.radius + 15) takeDamage("被死神紅眼吞噬。", "chaser");
 
             // 雷射
             laserTimer++;
-            if (laserTimer > 120) {
+            if (laserTimer > 100) {
                 let lx = Math.random() * (canvas.width - 40) + 20;
                 lasers.push({ x: lx, state: 'warning', timer: 60 });
                 playSound('laser');
@@ -358,7 +426,10 @@
                 }
                 
                 if (l.state === 'firing') {
-                    if (player.x + player.width > l.x - 15 && player.x < l.x + 15) takeDamage("被高溫雷射蒸發。");
+                    if (player.x + player.width > l.x - 15 && player.x < l.x + 15) {
+                        // 衝刺期間無敵
+                        if (!player.isDashing) takeDamage("被高溫雷射蒸發。", "laser");
+                    }
                 }
             }
 
@@ -375,20 +446,25 @@
                 }
             });
 
-            // 陷阱
-            obstacles.forEach((obs) => {
+            // 陷阱 (地刺與天上掉下來的刺)
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                if (obs.vy) {
+                    obs.y += obs.vy;
+                    if (obs.y > floorY) obstacles.splice(i, 1);
+                }
                 if (player.x < obs.x + obs.width && player.x + player.width > obs.x &&
                     player.y < obs.y + obs.height && player.y + player.height > obs.y) {
-                    takeDamage("踩中咗系統預判你走位嘅地刺。");
+                    if (!player.isDashing) takeDamage("踩中咗系統預判你走位嘅地刺。", "spike");
                 }
-            });
+            }
 
             // 過關
             if (player.x >= goalX) {
                 if (keysCollected >= totalKeys) {
                     systemMsg.innerHTML = `系統：可惡...你竟然贏咗...`;
                     score += 5000;
-                    takeDamage("你成功逃脫了！ (算你狠)"); 
+                    takeDamage("你成功逃脫了！ (算你狠)", "win"); 
                 } else {
                     if (player.x + player.width > canvas.width) {
                         player.x = canvas.width - player.width;
@@ -403,12 +479,15 @@
             }
         }
 
-        function drawCharacter(x, y, w, h, facingRight, walkTimer, isGrounded) {
+        function drawCharacter(x, y, w, h, facingRight, walkTimer, isGrounded, isDashing) {
             ctx.save(); ctx.translate(x + w/2, y + h);
             if (!facingRight) ctx.scale(-1, 1);
             let legOffset = Math.sin(walkTimer) * 6;
+            if (isDashing) ctx.rotate(0.2);
+            
             ctx.fillStyle = '#1f2833'; ctx.fillRect(-8 + legOffset, -8, 6, 8); ctx.fillRect(2 - legOffset, -8, 6, 8);
-            ctx.fillStyle = '#66fcf1'; ctx.fillRect(-10, -26, 20, 18);
+            ctx.fillStyle = isDashing ? '#ffd32a' : '#66fcf1'; 
+            ctx.fillRect(-10, -26, 20, 18);
             ctx.fillStyle = '#f1f2f6'; ctx.fillRect(-12, -42, 24, 16);
             ctx.fillStyle = '#000'; ctx.fillRect(2, -36, 3, 3); ctx.fillRect(8, -36, 3, 3);
             if (!isGrounded) { ctx.fillStyle = '#ff4757'; ctx.fillRect(4, -32, 5, 4); } 
@@ -427,6 +506,23 @@
             ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
             ctx.fillStyle = '#ff4757'; ctx.fillRect(0, floorY, canvas.width, 3);
             
+            // 死神靠近警告邊緣泛紅
+            let distToChaser = Math.hypot((player.x) - chaser.x, (player.y) - chaser.y);
+            if (distToChaser < 200 && gameStarted && !isGameOver) {
+                ctx.strokeStyle = `rgba(255, 71, 87, ${(200 - distToChaser)/200 * 0.8})`;
+                ctx.lineWidth = 20;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 畫移動平台
+            platforms.forEach(p => {
+                ctx.fillStyle = '#34495e';
+                ctx.fillRect(p.x, p.y, p.width, p.height);
+                ctx.fillStyle = '#66fcf1';
+                ctx.fillRect(p.x, p.y, p.width, 3);
+            });
+
+            // 畫大門
             ctx.fillStyle = keysCollected >= totalKeys ? '#2ed573' : '#ff4757';
             ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle;
             ctx.fillRect(goalX, 0, 10, canvas.height); 
@@ -436,6 +532,7 @@
                 ctx.fillText('LOCKED', goalX - 15, floorY / 2);
             }
 
+            // 畫鎖匙
             keys.forEach(k => {
                 if (!k.collected) {
                     ctx.fillStyle = '#ffd32a'; ctx.shadowBlur = 15; ctx.shadowColor = '#ffd32a';
@@ -445,6 +542,7 @@
                 }
             });
 
+            // 畫雷射
             lasers.forEach(l => {
                 if (l.state === 'warning') {
                     ctx.fillStyle = 'rgba(255, 71, 87, 0.4)';
@@ -456,29 +554,47 @@
                 }
             });
 
+            // 畫死神
             ctx.fillStyle = '#ff4757'; ctx.shadowBlur = 20; ctx.shadowColor = '#ff0000';
             ctx.beginPath(); ctx.arc(chaser.x, chaser.y, chaser.radius, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(chaser.x + (player.x - chaser.x)*0.05, chaser.y + (player.y - chaser.y)*0.05, 8, 0, Math.PI*2); ctx.fill();
             ctx.shadowBlur = 0;
 
+            // 畫地刺
             ctx.fillStyle = '#ff4757';
             obstacles.forEach(obs => {
                 ctx.beginPath(); ctx.moveTo(obs.x, obs.y + obs.height); ctx.lineTo(obs.x + obs.width / 2, obs.y); ctx.lineTo(obs.x + obs.width, obs.y + obs.height); ctx.fill();
             });
 
+            // 畫粒子
             particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
             ctx.globalAlpha = 1;
 
+            // 畫衝刺殘影
+            player.trail.forEach(t => {
+                ctx.globalAlpha = t.life * 0.3;
+                ctx.fillStyle = '#ffd32a';
+                ctx.fillRect(t.x, t.y, player.width, player.height);
+            });
+            ctx.globalAlpha = 1;
+
             if(gameStarted && !isGameOver) {
-                let drawY = player.y + (player.height - player.height * player.squash);
-                let drawH = player.height * player.squash;
-                drawCharacter(player.x, drawY, player.width, drawH, player.facingRight, player.walkTimer, player.isGrounded);
+                drawCharacter(player.x, player.y, player.width, player.height, player.facingRight, player.walkTimer, player.isGrounded, player.isDashing);
             }
 
+            // UI 文字
             ctx.fillStyle = '#fff'; ctx.font = '16px "Press Start 2P", monospace';
             ctx.fillText(`SCORE: ${Math.floor(score)}`, 20, 40);
             ctx.fillStyle = '#ffd32a';
             ctx.fillText(`KEYS: ${keysCollected}/3`, 20, 70);
+            
+            if (player.dashCooldown > 0) {
+                ctx.fillStyle = '#ff4757';
+                ctx.fillText(`DASH CD`, 20, 100);
+            } else {
+                ctx.fillStyle = '#2ed573';
+                ctx.fillText(`DASH READY`, 20, 100);
+            }
 
             ctx.restore();
         }
