@@ -25,15 +25,18 @@
     }
     .back-btn:hover { background: #00d2d3; color: #000; }
 
-    /* 語音開關 */
-    .voice-btn {
+    .top-right-btns {
         position: absolute; top: 10px; right: 10px; z-index: 9999;
-        padding: 6px 12px; background: rgba(0, 0, 0, 0.8);
-        color: #f1c40f; border: 2px solid #f1c40f; border-radius: 8px;
-        text-decoration: none; font-weight: bold; font-size: 16px;
-        box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); transition: all 0.2s;
-        backdrop-filter: blur(5px); cursor: pointer;
+        display: flex; gap: 10px;
     }
+
+    .voice-btn, .reset-btn {
+        padding: 6px 12px; background: rgba(0, 0, 0, 0.8);
+        border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;
+        transition: all 0.2s; backdrop-filter: blur(5px); cursor: pointer;
+    }
+    .voice-btn { color: #f1c40f; border: 2px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+    .reset-btn { color: #e74c3c; border: 2px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
 
     #game-container {
         flex: 1; position: relative; display: flex; flex-direction: column;
@@ -136,7 +139,11 @@
 <body>
 
     <a href="../" class="back-btn">⬅ 返回大廳</a>
-    <div class="voice-btn" id="voice-toggle" onclick="toggleVoice()">🔊 語音開啟</div>
+    
+    <div class="top-right-btns">
+        <div class="voice-btn" id="voice-toggle" onclick="toggleVoice()">🔊 語音</div>
+        <div class="reset-btn" onclick="resetGame()">🗑️ 重玩</div>
+    </div>
 
     <div id="game-container">
         <div id="hud">
@@ -191,17 +198,49 @@
     <div id="end-screen">
         <h1 id="end-title">人生落幕</h1>
         <p id="end-stats"></p>
-        <button onclick="location.reload()">重新投胎</button>
+        <button onclick="resetGame()">重新投胎</button>
     </div>
 
 <script>
-    // --- 語音系統 (TTS) ---
+    // --- 存檔系統 ---
+    const SAVE_KEY = 'officeSlaveSave_v1';
+
+    function saveGame() {
+        if (player.stage === 'end') {
+            localStorage.removeItem(SAVE_KEY); // 死咗就刪除存檔
+            return;
+        }
+        const saveData = { player, currentMonth, interviewStep };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+    }
+
+    function loadGame() {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                player = data.player;
+                currentMonth = data.currentMonth;
+                interviewStep = data.interviewStep;
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function resetGame() {
+        if (confirm("確定要清除所有進度，重新投胎嗎？")) {
+            localStorage.removeItem(SAVE_KEY);
+            location.reload();
+        }
+    }
+
+    // --- 語音系統 ---
     let isVoiceOn = true;
     let voices = [];
-    
-    function loadVoices() {
-        voices = window.speechSynthesis.getVoices();
-    }
+    function loadVoices() { voices = window.speechSynthesis.getVoices(); }
     if ('speechSynthesis' in window) {
         speechSynthesis.onvoiceschanged = loadVoices;
         loadVoices();
@@ -211,45 +250,28 @@
         isVoiceOn = !isVoiceOn;
         const btn = document.getElementById('voice-toggle');
         if (isVoiceOn) {
-            btn.innerText = "🔊 語音開啟";
-            btn.style.color = "#f1c40f";
-            btn.style.borderColor = "#f1c40f";
+            btn.innerText = "🔊 語音";
+            btn.style.color = "#f1c40f"; btn.style.borderColor = "#f1c40f";
         } else {
-            btn.innerText = "🔇 語音關閉";
-            btn.style.color = "#7f8c8d";
-            btn.style.borderColor = "#7f8c8d";
-            window.speechSynthesis.cancel(); // 即刻停止講嘢
+            btn.innerText = "🔇 靜音";
+            btn.style.color = "#7f8c8d"; btn.style.borderColor = "#7f8c8d";
+            window.speechSynthesis.cancel();
         }
     }
 
     function speakText(text, type = 'normal') {
         if (!isVoiceOn || !('speechSynthesis' in window)) return;
-        
-        window.speechSynthesis.cancel(); // 停止上一句
-        
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        
-        // 優先揀選粵語/廣東話聲音
         let selectedVoice = voices.find(v => v.lang.includes('zh-HK') || v.lang.includes('yue') || v.name.includes('Cantonese'));
-        
-        // 如果冇粵語，退而求其次揀台灣或大陸中文
-        if (!selectedVoice) {
-            selectedVoice = voices.find(v => v.lang.includes('zh-TW') || v.lang.includes('zh-CN'));
-        }
-        
+        if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('zh-TW') || v.lang.includes('zh-CN'));
         if (selectedVoice) utterance.voice = selectedVoice;
         
-        // 設定語氣
         if (type === 'boss') {
-            utterance.pitch = 1.5; // 老細把聲高音啲、激動啲
-            utterance.rate = 1.1;  // 語速快
-            utterance.volume = 1;
+            utterance.pitch = 1.5; utterance.rate = 1.1; utterance.volume = 1;
         } else {
-            utterance.pitch = 1.0;
-            utterance.rate = 0.9;
-            utterance.volume = 1;
+            utterance.pitch = 1.0; utterance.rate = 0.9; utterance.volume = 1;
         }
-
         window.speechSynthesis.speak(utterance);
     }
 
@@ -304,7 +326,6 @@
         isTyping = true;
         let i = 0;
         
-        // 一打字就同步發聲
         speakText(text, voiceType);
         
         function type() {
@@ -354,7 +375,10 @@
             charMouth.style.width = '10px'; charMouth.style.height = '4px'; charMouth.style.borderRadius = '2px';
         }
         if (player.stress > 80) charSweat.style.opacity = 1; else charSweat.style.opacity = 0;
+        
         if (player.energy <= 0 || player.stress >= 100) gameOver("你因為過度勞累/壓力爆煲，暈低咗送院...");
+        
+        saveGame(); // 每次更新狀態都自動存檔
     }
 
     function showFloatText(text, color) {
@@ -393,7 +417,9 @@
             player.stage = 'work'; player.money += 5000; player.house = '深水埗劏房 ($4000/月)';
             sceneEl.className = 'bg-office'; showToast(`恭喜你成為「${player.job}」！月薪 $${player.salary}`);
             speakText(`恭喜你成為${player.job}，月薪${player.salary}元！`, 'normal');
-            updateActionButtons(); return;
+            updateActionButtons(); 
+            saveGame();
+            return;
         }
         let data = interviewData[interviewStep];
         speakerName.innerText = data.speaker; 
@@ -402,6 +428,7 @@
         typeWriter(dialogueText, data.text, 40, () => {
             showChoices(data.choices);
         }, 'normal');
+        saveGame(); // 面試進度自動存檔
     }
 
     function showChoices(choices) {
@@ -411,7 +438,7 @@
             btn.onclick = (e) => { 
                 e.stopPropagation(); 
                 playSound('click'); 
-                speakText(choice.text, 'normal'); // 你答嘢把聲
+                speakText(choice.text, 'normal'); 
                 setTimeout(() => { choice.effect(); interviewStep++; showInterviewStep(); }, 800);
             };
             choicesEl.appendChild(btn);
@@ -451,10 +478,8 @@
             "我出糧俾你係叫你返嚟玩㗎？"
         ];
         let line = bossLines[Math.floor(Math.random() * bossLines.length)];
-        
         bossOverlay.style.display = 'flex';
         typeWriter(document.getElementById('boss-dialogue'), line, 50, null, 'boss');
-        
         playSound('bad');
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     }
@@ -519,7 +544,8 @@
     function payRentAction() {
         if (player.money < 4000) {
             showToast("業主趕你走！你變咗無家可歸...");
-            player.money = 0; player.house = '無家可歸'; player.stress += 50; return;
+            player.money = 0; player.house = '無家可歸'; player.stress += 50; 
+            updateHUD(); updateActionButtons(); return;
         }
         player.money -= 4000; playSound('bad'); showFloatText(`- $4000 租`, '#e74c3c');
         updateHUD(); updateActionButtons();
@@ -553,6 +579,7 @@
             else if (rand < 0.5) { showToast("💸 同事借錢唔還！"); player.money = Math.max(0, player.money - 500); }
             if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
         }
+        saveGame();
     }
 
     function gameOver(reason) {
@@ -570,9 +597,27 @@
             ${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${player.money.toLocaleString()}<br>
             居住：${houseText}<br>感情：${partnerText}<br>家庭：${kidText}<br>職位：${player.job}
         `;
+        localStorage.removeItem(SAVE_KEY); // 遊戲結束刪除存檔
     }
 
-    window.onload = () => { updateHUD(); startInterview(); };
+    // 初始化遊戲
+    window.onload = () => { 
+        const hasSave = loadGame();
+        if (hasSave) {
+            showToast("📂 已載入上次進度");
+            if (player.stage === 'interview') {
+                startInterview();
+            } else if (player.stage === 'work') {
+                sceneEl.className = 'bg-office';
+                actionsEl.style.display = 'grid';
+                updateActionButtons();
+            }
+            updateHUD();
+        } else {
+            updateHUD(); 
+            startInterview();
+        }
+    };
 </script>
 </body>
 </html>
