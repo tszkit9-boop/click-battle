@@ -318,6 +318,22 @@
         </div>
     </div>
 
+    <!-- 慈善系統 -->
+    <div id="charity-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #e67e22;">
+            <h2 style="color: #e67e22;">🏛️ 慈善與社會地位</h2>
+            <div style="background: #111; border-radius: 8px; padding: 8px; margin-bottom: 12px;">
+                <p style="font-size: 13px; margin: 0; text-align: left; color:#fff;" id="charity-status">
+                    目前聲望：0<br>稱號：平民
+                </p>
+            </div>
+            <button class="modal-btn primary" onclick="doDonate('school', 500000, 100, 20)">🏫 捐建希望小學 ($500k)<small>聲望 +100，心情 +20</small></button>
+            <button class="modal-btn primary" onclick="doDonate('football', 5000000, 500, 30)">⚽ 收購本地足球隊 ($5M)<small>聲望 +500，心情 +30</small></button>
+            <button class="modal-btn warning" onclick="doDonate('jp', 1000000, 200, 10)">🎖️ 買太平紳士銜頭 ($1M)<small>聲望 +200，心情 +10</small></button>
+            <button class="modal-btn danger" style="background:#555; margin-top:10px;" onclick="closeModal('charity-modal')">離開</button>
+        </div>
+    </div>
+
     <!-- 感情與家庭 -->
     <div id="family-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #ff9ff3;">
@@ -593,6 +609,7 @@
                 if (player.creditScore === undefined) player.creditScore = 100;
                 if (player.divorceWarnings === undefined) player.divorceWarnings = 0;
                 if (player.sideHustles === undefined) player.sideHustles = [];
+                if (player.reputation === undefined) player.reputation = 0; // 兼容舊存檔
                 return true; 
             } 
         } catch(e){} 
@@ -634,7 +651,8 @@
         isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false,
         companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1,
         slackCount: 0, autoBusiness: false, bossMpfRate: 0.05,
-        sideHustles: [], fixedDeposit: 0, creditCardDebt: 0, creditScore: 100, divorceWarnings: 0
+        sideHustles: [], fixedDeposit: 0, creditCardDebt: 0, creditScore: 100, divorceWarnings: 0,
+        reputation: 0 // 新增聲望
     };
     
     let currentMonth = 0, candidates = [];
@@ -703,9 +721,18 @@
             let timeStr = timeOfDay === 0 ? '☀️早' : (timeOfDay === 1 ? '🌤️午' : '🌙晚');
             let displayStr = `🎂 ${player.age}歲 | D${currentDay} ${timeStr} | `;
             
-            if (player.isListed) { statusDisplay.innerText = displayStr + `💹 資本家`; statusDisplay.style.color = '#2ecc71'; }
-            else if (player.isBoss) { statusDisplay.innerText = displayStr + `👑 老闆`; statusDisplay.style.color = '#f1c40f'; }
-            else { statusDisplay.innerText = displayStr + `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
+            // 稱號優先級判定
+            if (player.reputation >= 5000) { 
+                statusDisplay.innerText = displayStr + `🌟 大慈善家`; statusDisplay.style.color = '#e67e22'; 
+            } else if (player.reputation >= 1000) { 
+                statusDisplay.innerText = displayStr + `🏛️ 慈善家`; statusDisplay.style.color = '#2ecc71'; 
+            } else if (player.isListed) { 
+                statusDisplay.innerText = displayStr + `💹 資本家`; statusDisplay.style.color = '#2ecc71'; 
+            } else if (player.isBoss) { 
+                statusDisplay.innerText = displayStr + `👑 老闆`; statusDisplay.style.color = '#f1c40f'; 
+            } else { 
+                statusDisplay.innerText = displayStr + `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; 
+            }
 
             const barEnergy = document.getElementById('bar-energy');
             const barStress = document.getElementById('bar-stress');
@@ -1138,6 +1165,25 @@
         player.creditCardDebt = 0;
         showToast("✅ 成功還清卡數！");
         updateBankUI(); updateHUD();
+    }
+
+    // === 慈善系統 ===
+    function openCharityModal() {
+        document.getElementById('charity-modal').style.display = 'flex';
+        let title = "平民";
+        if (player.reputation >= 5000) title = "🌟 大慈善家";
+        else if (player.reputation >= 1000) title = "🏛️ 慈善家";
+        document.getElementById('charity-status').innerHTML = `目前聲望：${player.reputation}<br>稱號：${title}`;
+    }
+
+    function doDonate(type, cost, repAdd, moodAdd) {
+        if (player.money < cost) { showToast("你連咁多錢都冇，學人做慈善？"); return; }
+        player.money -= cost;
+        player.reputation += repAdd;
+        player.mood = Math.min(100, player.mood + moodAdd);
+        showToast(`🏛️ 捐款成功！聲望 +${repAdd}，心情 +${moodAdd}`);
+        openCharityModal();
+        updateHUD();
     }
 
     // === 家庭與離婚 ===
@@ -1742,6 +1788,13 @@
             }
         }
 
+        // 聲望每月被動收入
+        if (player.reputation > 0) {
+            let repIncome = player.reputation * 10;
+            player.money += repIncome;
+            showToast(`🏛️ 慈善家名氣被動收入：+$${repIncome.toLocaleString()}`);
+        }
+
         if (player.fixedDeposit > 0) {
             let interest = Math.floor(player.fixedDeposit * 0.003);
             player.fixedDeposit += interest;
@@ -2050,7 +2103,6 @@
         updateHUD(); openStaffModal();
     }
 
-    // 🔥 已將上市門檻由 500 萬大幅降低到 100 萬
     function doIPO() {
         if (player.isListed) { showToast("公司已經上市啦！"); return; }
         if (player.companyValue < 1000000) {
@@ -2121,6 +2173,7 @@
                 showToast("🏖️ 你去咗遊艇派對，人生勝利組！");
                 advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
             });
+            addActionBtn('🏛️ 慈善', '捐錢做善事', 'buy', openCharityModal);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
@@ -2134,6 +2187,7 @@
             addActionBtn(player.autoBusiness ? '🛑 停止自動' : '🤖 自動見客', player.autoBusiness ? '正在自動接單...' : '每 3 秒自動接單 (收益較低)', 'boss', toggleAutoBusiness);
             addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
             addActionBtn('📈 申請上市', player.companyValue >= 1000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $1M`, 'boss', doIPO);
+            addActionBtn('🏛️ 慈善', '捐錢做善事', 'buy', openCharityModal);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
@@ -2178,6 +2232,7 @@
             addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('💼 副業', '被動收入來源', 'buy', openSideHustleModal);
+            addActionBtn('🏛️ 慈善', '捐錢做善事', 'buy', openCharityModal);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
@@ -2216,9 +2271,9 @@
             if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
         }
 
-        let identityStr = player.isListed ? '資本家' : (player.isBoss ? '老闆' : '打工仔');
+        let identityStr = player.reputation >= 5000 ? '🌟 大慈善家' : (player.reputation >= 1000 ? '🏛️ 慈善家' : (player.isListed ? '資本家' : (player.isBoss ? '老闆' : '打工仔')));
         let slackText = player.slackCount ? `<br>摸魚次數：${player.slackCount} 次` : '';
-        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${identityStr}${slackText}`;
+        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${identityStr}<br>最終聲望：${player.reputation}${slackText}`;
         localStorage.removeItem(SAVE_KEY); speakText(reason);
     }
 
