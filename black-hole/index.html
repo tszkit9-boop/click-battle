@@ -13,7 +13,6 @@
         touch-action: none; 
     }
 
-    /* 返回大廳 */
     .back-btn {
         position: fixed; top: 15px; left: 15px; z-index: 9999;
         padding: 8px 16px; background: rgba(10, 10, 20, 0.85);
@@ -24,7 +23,6 @@
     }
     .back-btn:hover { background: #c084fc; color: #000; }
 
-    /* 頂部 UI */
     #hud {
         position: absolute; top: 0; left: 0; width: 100%; padding: 15px 20px;
         display: flex; justify-content: space-between; align-items: flex-start;
@@ -37,44 +35,45 @@
     }
     .hud-box span { font-size: 10px; color: #888; }
     .hud-box .val { font-size: 18px; font-weight: 900; color: #c084fc; text-shadow: 0 0 10px #c084fc; }
+    #combo-text { color: #ff4757; font-size: 12px; display: none; font-weight: bold; animation: pulseRed 0.3s infinite alternate; }
 
-    /* 遊戲場景 */
     #game-container {
         flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at center, #0a0a20, #000);
     }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-    /* 開始畫面 */
-    #start-screen {
+    /* 技能按鈕 */
+    #skill-btn {
+        position: absolute; bottom: 30px; right: 30px; z-index: 10;
+        width: 80px; height: 80px; border-radius: 50%;
+        background: rgba(192, 132, 252, 0.2); border: 2px solid #c084fc;
+        color: #c084fc; font-weight: 900; font-size: 14px;
+        display: flex; align-items: center; justify-content: center; flex-direction: column;
+        box-shadow: 0 0 20px rgba(192, 132, 252, 0.4); cursor: pointer;
+        transition: all 0.1s; touch-action: manipulation;
+    }
+    #skill-btn:active { transform: scale(0.9); }
+    #skill-btn.cooldown { background: rgba(50, 50, 50, 0.8); border-color: #555; color: #555; box-shadow: none; }
+
+    #start-screen, #end-screen {
         position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 50;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         text-align: center; padding: 20px; backdrop-filter: blur(5px);
     }
-    #start-screen h1 { font-size: 40px; color: #c084fc; text-shadow: 0 0 20px #c084fc; margin-bottom: 10px; }
-    #start-screen p { font-size: 14px; color: #ccc; margin-bottom: 30px; line-height: 1.6; }
-    #start-screen button {
+    #end-screen { display: none; }
+    h1 { font-size: 40px; color: #c084fc; text-shadow: 0 0 20px #c084fc; margin-bottom: 10px; }
+    p { font-size: 14px; color: #ccc; margin-bottom: 30px; line-height: 1.6; }
+    button {
         padding: 15px 40px; background: #c084fc; color: #000; border: none;
         border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;
-        box-shadow: 0 0 20px #c084fc; transition: all 0.2s;
+        box-shadow: 0 0 20px #c084fc; transition: all 0.2s; font-family: 'Orbitron', sans-serif;
     }
-    #start-screen button:hover { transform: scale(1.05); }
-
-    /* 結算畫面 */
-    #end-screen {
-        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 50;
-        display: none; flex-direction: column; align-items: center; justify-content: center;
-        text-align: center; padding: 20px; backdrop-filter: blur(5px);
-    }
-    #end-screen h1 { font-size: 40px; margin-bottom: 10px; }
-    #end-screen p { font-size: 18px; color: #ccc; margin-bottom: 30px; line-height: 1.6; }
-    #end-screen button {
-        padding: 15px 40px; background: #c084fc; color: #000; border: none;
-        border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;
-    }
+    button:hover { transform: scale(1.05); }
 
     @media (max-width: 600px) {
-        #start-screen h1, #end-screen h1 { font-size: 28px; }
-        #start-screen p, #end-screen p { font-size: 12px; }
+        h1 { font-size: 28px; }
+        p { font-size: 12px; }
+        #skill-btn { width: 70px; height: 70px; bottom: 20px; right: 20px; font-size: 12px; }
     }
 </style>
 </head>
@@ -86,6 +85,7 @@
         <div class="hud-box">
             <span>🌌 質量 (分數)</span>
             <span class="val" id="score-val">0</span>
+            <span id="combo-text">🔥 COMBO x2</span>
         </div>
         <div class="hud-box" style="text-align:right;">
             <span>⏳ 剩餘時間</span>
@@ -95,16 +95,20 @@
 
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
+        
+        <!-- 引力技能按鈕 -->
+        <div id="skill-btn" onclick="useSkill()">
+            <span>引力</span>
+            <span id="skill-cd" style="font-size:10px;">準備</span>
+        </div>
     </div>
 
-    <!-- 開始畫面 -->
     <div id="start-screen">
         <h1>黑洞吞噬</h1>
-        <p>拖動滑鼠或手指控制黑洞。<br>吞噬比你細嘅物件變大，避開比你大嘅黑洞！</p>
+        <p>拖動滑鼠或手指移動。<br>吞噬比你細嘅物件變大，避開大黑洞！<br>撳「引力」或 <b>Space</b> 可吸入周圍物件。</p>
         <button onclick="startGame()">開始吞噬</button>
     </div>
 
-    <!-- 結算畫面 -->
     <div id="end-screen">
         <h1 id="end-title">宇宙毀滅</h1>
         <p id="end-stats"></p>
@@ -116,10 +120,13 @@
     const ctx = canvas.getContext('2d');
     const scoreVal = document.getElementById('score-val');
     const timeVal = document.getElementById('time-val');
+    const comboText = document.getElementById('combo-text');
     const startScreen = document.getElementById('start-screen');
     const endScreen = document.getElementById('end-screen');
     const endTitle = document.getElementById('end-title');
     const endStats = document.getElementById('end-stats');
+    const skillBtn = document.getElementById('skill-btn');
+    const skillCd = document.getElementById('skill-cd');
 
     let W, H;
     function resize() {
@@ -146,6 +153,10 @@
             osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
             gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
             osc.start(); osc.stop(now + 0.5);
+        } else if (type === 'skill') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
         }
     }
 
@@ -154,6 +165,10 @@
     let mouseX, mouseY;
     let score, timeLeft, gameActive, gameLoopId;
     let shakeTime = 0;
+    let playerAngle = 0;
+    let comboCount = 0;
+    let isFrenzy = false;
+    let skillCooldown = 0; // 秒
 
     const OBJECT_TYPES = [
         { name: '微塵', minR: 2, maxR: 4, color: '#a4b0be', score: 1 },
@@ -169,28 +184,31 @@
         score = 0;
         timeLeft = 60;
         shakeTime = 0;
+        comboCount = 0;
+        isFrenzy = false;
+        skillCooldown = 0;
         
-        player = { x: W/2, y: H/2, r: 10, vx: 0, vy: 0, targetX: W/2, targetY: H/2 };
+        player = { x: W/2, y: H/2, r: 10, targetX: W/2, targetY: H/2, isBoss: false };
         objects = [];
         particles = [];
         mouseX = W/2; mouseY = H/2;
 
-        // 生成背景星星
         stars = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 150; i++) {
             stars.push({ x: Math.random() * W, y: Math.random() * H, size: Math.random() * 2, alpha: Math.random() });
         }
 
-        // 生成初始物件
-        for (let i = 0; i < 30; i++) spawnObject();
+        for (let i = 0; i < 40; i++) spawnObject();
 
         scoreVal.innerText = score;
         timeVal.innerText = timeLeft + 's';
         timeVal.style.color = '#ffd32a';
+        updateSkillUI();
 
-        if (gameLoopId) clearInterval(gameLoopId);
+        if (gameLoopId) cancelAnimationFrame(gameLoopId);
+        if (window.timerId) clearInterval(window.timerId);
+        if (window.skillTimerId) clearInterval(window.skillTimerId);
         
-        // 計時器
         window.timerId = setInterval(() => {
             if (!gameActive) return;
             timeLeft--;
@@ -199,7 +217,19 @@
             if (timeLeft <= 0) endGame(true);
         }, 1000);
 
-        // 遊戲主循環
+        // Boss 生成計時器
+        window.bossTimerId = setInterval(() => {
+            if (gameActive) spawnBoss();
+        }, 15000);
+
+        // 技能冷卻計時器
+        window.skillTimerId = setInterval(() => {
+            if (skillCooldown > 0) {
+                skillCooldown--;
+                updateSkillUI();
+            }
+        }, 1000);
+
         function loop() {
             if (!gameActive) return;
             update();
@@ -213,13 +243,12 @@
         let type;
         let rand = Math.random();
         
-        // 根據玩家大小決定生成咩物件
         if (player.r < 20) {
             if (rand < 0.7) type = OBJECT_TYPES[0];
             else if (rand < 0.95) type = OBJECT_TYPES[1];
             else type = OBJECT_TYPES[2];
         } else if (player.r < 50) {
-            if (rand < 0.4) type = OBJECT_TYPES[1];
+            if (rand < 0.3) type = OBJECT_TYPES[1];
             else if (rand < 0.7) type = OBJECT_TYPES[2];
             else if (rand < 0.95) type = OBJECT_TYPES[3];
             else type = OBJECT_TYPES[4];
@@ -231,7 +260,6 @@
 
         let r = Math.random() * (type.maxR - type.minR) + type.minR;
         
-        // 隨機生成在畫面外
         let x, y;
         if (Math.random() < 0.5) {
             x = Math.random() < 0.5 ? -r : W + r;
@@ -241,7 +269,6 @@
             y = Math.random() < 0.5 ? -r : H + r;
         }
 
-        // 隨機速度
         let angle = Math.atan2(H/2 - y, W/2 - x);
         let speed = Math.random() * 1.5 + 0.5;
 
@@ -249,51 +276,129 @@
             x: x, y: y, r: r,
             vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
             color: type.color, score: type.score,
-            type: type.name
+            type: type.name, isBoss: false
         });
+    }
+
+    function spawnBoss() {
+        let r = player.r * 1.5 + 20; // 比玩家大
+        let x = Math.random() < 0.5 ? -r : W + r;
+        let y = Math.random() < 0.5 ? -r : H + r;
+        
+        objects.push({
+            x: x, y: y, r: r,
+            vx: 0, vy: 0,
+            color: '#ff0000', score: 1000,
+            type: 'Boss黑洞', isBoss: true
+        });
+        
+        playSound('skill');
+    }
+
+    function useSkill() {
+        if (!gameActive || skillCooldown > 0) return;
+        playSound('skill');
+        shakeTime = 15;
+        skillCooldown = 8; // 8 秒 CD
+        
+        // 引力效果：將畫面內嘅物件拉向自己
+        objects.forEach(obj => {
+            let dx = player.x - obj.x;
+            let dy = player.y - obj.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist < 400) {
+                obj.x += dx * 0.3;
+                obj.y += dy * 0.3;
+            }
+        });
+
+        // 衝擊波特效
+        for(let i=0; i<30; i++) {
+            let a = (Math.PI * 2 / 30) * i;
+            particles.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(a) * 15, vy: Math.sin(a) * 15,
+                life: 1, color: '#c084fc', size: 4
+            });
+        }
+        
+        updateSkillUI();
+    }
+
+    function updateSkillUI() {
+        if (skillCooldown > 0) {
+            skillBtn.classList.add('cooldown');
+            skillCd.innerText = `${skillCooldown}s`;
+        } else {
+            skillBtn.classList.remove('cooldown');
+            skillCd.innerText = '準備';
+        }
     }
 
     function update() {
         if (shakeTime > 0) shakeTime--;
+        playerAngle += 0.05;
 
-        // 平滑跟隨滑鼠
-        player.x += (mouseX - player.x) * 0.1;
-        player.y += (mouseY - player.y) * 0.1;
+        let currentSpeed = isFrenzy ? 0.2 : 0.1;
+        player.x += (mouseX - player.x) * currentSpeed;
+        player.y += (mouseY - player.y) * currentSpeed;
 
-        // 更新物件
         for (let i = objects.length - 1; i >= 0; i--) {
             let obj = objects[i];
-            obj.x += obj.vx; obj.y += obj.vy;
+            
+            if (obj.isBoss) {
+                // Boss 追蹤玩家
+                let angle = Math.atan2(player.y - obj.y, player.x - obj.x);
+                let speed = 1.5;
+                obj.x += Math.cos(angle) * speed;
+                obj.y += Math.sin(angle) * speed;
+            } else {
+                obj.x += obj.vx; obj.y += obj.vy;
+            }
 
-            // 出界銷毀
-            if (obj.x < -200 || obj.x > W + 200 || obj.y < -200 || obj.y > H + 200) {
+            if (!obj.isBoss && (obj.x < -300 || obj.x > W + 300 || obj.y < -300 || obj.y > H + 300)) {
                 objects.splice(i, 1);
                 spawnObject();
                 continue;
             }
 
-            // 碰撞檢測
             let dist = Math.hypot(player.x - obj.x, player.y - obj.y);
             if (dist < player.r + obj.r) {
                 if (player.r > obj.r * 1.1) {
                     // 吞噬
                     player.r += (obj.r * 0.1);
-                    score += obj.score;
+                    let addScore = obj.score;
+                    if (isFrenzy) addScore *= 2;
+                    score += addScore;
                     scoreVal.innerText = score;
                     playSound('eat');
                     createParticles(obj.x, obj.y, obj.color);
                     objects.splice(i, 1);
-                    spawnObject();
+                    if (!obj.isBoss) spawnObject();
                     shakeTime = 5;
+
+                    // 連擊
+                    comboCount++;
+                    if (comboCount >= 10 && !isFrenzy) {
+                        isFrenzy = true;
+                        comboText.style.display = 'block';
+                        setTimeout(() => { isFrenzy = false; comboText.style.display = 'none'; comboCount = 0; }, 5000);
+                    }
                 } else if (obj.r > player.r * 1.1) {
-                    // 被吞噬
-                    endGame(false);
+                    if (obj.isBoss) {
+                        endGame(false, "你被宇宙大 Boss 吞噬了！");
+                    } else {
+                        endGame(false, "你被更大的黑洞反噬了。");
+                    }
                     return;
                 }
             }
         }
 
-        // 更新粒子
+        if (comboCount > 0 && Math.random() < 0.005 && !isFrenzy) {
+            comboCount = 0; // 連擊斷
+        }
+
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             p.x += p.vx; p.y += p.vy;
@@ -303,7 +408,7 @@
     }
 
     function createParticles(x, y, color) {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 8; i++) {
             let angle = Math.random() * Math.PI * 2;
             let speed = Math.random() * 5 + 1;
             particles.push({
@@ -315,32 +420,34 @@
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // 拖尾效果
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.fillRect(0, 0, W, H);
 
         ctx.save();
-        if (shakeTime > 0) {
-            ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
-        }
+        if (shakeTime > 0) ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
 
-        // 畫星星
         stars.forEach(s => {
             ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
             ctx.fillRect(s.x, s.y, s.size, s.size);
         });
 
-        // 畫物件
         objects.forEach(obj => {
             ctx.beginPath();
             ctx.arc(obj.x, obj.y, obj.r, 0, Math.PI * 2);
             ctx.fillStyle = obj.color;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = obj.isBoss ? 30 : 10;
             ctx.shadowColor = obj.color;
             ctx.fill();
             ctx.shadowBlur = 0;
+            
+            if (obj.isBoss) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 20px "Orbitron"';
+                ctx.textAlign = 'center';
+                ctx.fillText('BOSS', obj.x, obj.y - obj.r - 10);
+            }
         });
 
-        // 畫粒子
         particles.forEach(p => {
             ctx.globalAlpha = p.life;
             ctx.fillStyle = p.color;
@@ -348,42 +455,53 @@
         });
         ctx.globalAlpha = 1;
 
-        // 畫黑洞 (玩家)
+        // 畫黑洞
         ctx.save();
         ctx.translate(player.x, player.y);
         
-        // 吸積盤 (光環)
-        let grad = ctx.createRadialGradient(0, 0, player.r * 0.5, 0, 0, player.r * 1.5);
+        // 暴走紅光
+        let glowColor = isFrenzy ? '#ff4757' : '#c084fc';
+        let grad = ctx.createRadialGradient(0, 0, player.r * 0.5, 0, 0, player.r * 1.8);
         grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        grad.addColorStop(0.5, 'rgba(192, 132, 252, 0.8)');
-        grad.addColorStop(1, 'rgba(192, 132, 252, 0)');
-        ctx.beginPath(); ctx.arc(0, 0, player.r * 1.5, 0, Math.PI * 2);
+        grad.addColorStop(0.4, glowColor);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.beginPath(); ctx.arc(0, 0, player.r * 1.8, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // 黑洞核心
+        // 旋轉吸積盤
+        ctx.rotate(playerAngle);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, player.r * 1.5, player.r * 0.5, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 15; ctx.shadowColor = glowColor;
+        ctx.stroke();
+
         ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2);
         ctx.fillStyle = '#000';
         ctx.shadowBlur = 20;
-        ctx.shadowColor = '#c084fc';
+        ctx.shadowColor = glowColor;
         ctx.fill();
         ctx.restore();
 
         ctx.restore();
     }
 
-    function endGame(survived) {
+    function endGame(survived, reason) {
         gameActive = false;
         clearInterval(window.timerId);
+        clearInterval(window.bossTimerId);
+        clearInterval(window.skillTimerId);
         
         if (survived) {
             endTitle.innerText = "⏳ 時間到！";
             endTitle.style.color = "#ffd32a";
             endStats.innerText = `最終質量：${score}\n你成功喺宇宙中生存下來！`;
         } else {
-            endTitle.innerText = "💀 被反噬！";
+            endTitle.innerText = "💀 宇宙毀滅";
             endTitle.style.color = "#ff4757";
-            endStats.innerText = `最終質量：${score}\n你被更大的黑洞吞噬了。`;
+            endStats.innerText = `最終質量：${score}\n${reason}`;
             playSound('die');
         }
         endScreen.style.display = 'flex';
@@ -402,6 +520,11 @@
         mouseX = e.touches[0].clientX - rect.left;
         mouseY = e.touches[0].clientY - rect.top;
     }, {passive: false});
+
+    // 鍵盤支援
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space') useSkill();
+    });
 
 </script>
 </body>
