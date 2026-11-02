@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>黑洞吞噬：進化</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+    body {
+        background-color: #000; color: #fff; font-family: 'Orbitron', 'PingFang HK', sans-serif;
+        height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+        touch-action: none; 
+    }
+
+    /* 返回大廳 */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 9999;
+        padding: 8px 16px; background: rgba(10, 10, 20, 0.85);
+        color: #c084fc; border: 2px solid #c084fc; border-radius: 8px;
+        text-decoration: none; font-weight: bold; font-size: 14px;
+        box-shadow: 0 0 10px rgba(192, 132, 252, 0.5); transition: all 0.2s;
+        backdrop-filter: blur(5px);
+    }
+    .back-btn:hover { background: #c084fc; color: #000; }
+
+    /* 頂部 UI */
+    #hud {
+        position: absolute; top: 0; left: 0; width: 100%; padding: 15px 20px;
+        display: flex; justify-content: space-between; align-items: flex-start;
+        z-index: 10; pointer-events: none;
+    }
+    .hud-box {
+        background: rgba(0, 0, 0, 0.6); border: 1px solid #333;
+        padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(5px);
+        display: flex; flex-direction: column; gap: 3px;
+    }
+    .hud-box span { font-size: 10px; color: #888; }
+    .hud-box .val { font-size: 18px; font-weight: 900; color: #c084fc; text-shadow: 0 0 10px #c084fc; }
+
+    /* 遊戲場景 */
+    #game-container {
+        flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at center, #0a0a20, #000);
+    }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* 開始畫面 */
+    #start-screen {
+        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 50;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 20px; backdrop-filter: blur(5px);
+    }
+    #start-screen h1 { font-size: 40px; color: #c084fc; text-shadow: 0 0 20px #c084fc; margin-bottom: 10px; }
+    #start-screen p { font-size: 14px; color: #ccc; margin-bottom: 30px; line-height: 1.6; }
+    #start-screen button {
+        padding: 15px 40px; background: #c084fc; color: #000; border: none;
+        border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;
+        box-shadow: 0 0 20px #c084fc; transition: all 0.2s;
+    }
+    #start-screen button:hover { transform: scale(1.05); }
+
+    /* 結算畫面 */
+    #end-screen {
+        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 50;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 20px; backdrop-filter: blur(5px);
+    }
+    #end-screen h1 { font-size: 40px; margin-bottom: 10px; }
+    #end-screen p { font-size: 18px; color: #ccc; margin-bottom: 30px; line-height: 1.6; }
+    #end-screen button {
+        padding: 15px 40px; background: #c084fc; color: #000; border: none;
+        border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+        #start-screen h1, #end-screen h1 { font-size: 28px; }
+        #start-screen p, #end-screen p { font-size: 12px; }
+    }
+</style>
+</head>
+<body>
+
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <div id="hud">
+        <div class="hud-box">
+            <span>🌌 質量 (分數)</span>
+            <span class="val" id="score-val">0</span>
+        </div>
+        <div class="hud-box" style="text-align:right;">
+            <span>⏳ 剩餘時間</span>
+            <span class="val" id="time-val" style="color:#ffd32a; text-shadow:0 0 10px #ffd32a;">60s</span>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- 開始畫面 -->
+    <div id="start-screen">
+        <h1>黑洞吞噬</h1>
+        <p>拖動滑鼠或手指控制黑洞。<br>吞噬比你細嘅物件變大，避開比你大嘅黑洞！</p>
+        <button onclick="startGame()">開始吞噬</button>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="end-screen">
+        <h1 id="end-title">宇宙毀滅</h1>
+        <p id="end-stats"></p>
+        <button onclick="location.reload()">再玩一次</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreVal = document.getElementById('score-val');
+    const timeVal = document.getElementById('time-val');
+    const startScreen = document.getElementById('start-screen');
+    const endScreen = document.getElementById('end-screen');
+    const endTitle = document.getElementById('end-title');
+    const endStats = document.getElementById('end-stats');
+
+    let W, H;
+    function resize() {
+        W = canvas.parentElement.clientWidth;
+        H = canvas.parentElement.clientHeight;
+        canvas.width = W;
+        canvas.height = H;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 音效
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        let now = audioCtx.currentTime;
+        if (type === 'eat') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(); osc.stop(now + 0.1);
+        } else if (type === 'die') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(); osc.stop(now + 0.5);
+        }
+    }
+
+    // 遊戲狀態
+    let player, objects, stars, particles;
+    let mouseX, mouseY;
+    let score, timeLeft, gameActive, gameLoopId;
+    let shakeTime = 0;
+
+    const OBJECT_TYPES = [
+        { name: '微塵', minR: 2, maxR: 4, color: '#a4b0be', score: 1 },
+        { name: '隕石', minR: 5, maxR: 10, color: '#8a8478', score: 5 },
+        { name: '衛星', minR: 10, maxR: 15, color: '#00d2d3', score: 20 },
+        { name: '星球', minR: 20, maxR: 30, color: '#2ed573', score: 100 },
+        { name: '巨型恆星', minR: 40, maxR: 60, color: '#ff4757', score: 500 }
+    ];
+
+    function startGame() {
+        startScreen.style.display = 'none';
+        gameActive = true;
+        score = 0;
+        timeLeft = 60;
+        shakeTime = 0;
+        
+        player = { x: W/2, y: H/2, r: 10, vx: 0, vy: 0, targetX: W/2, targetY: H/2 };
+        objects = [];
+        particles = [];
+        mouseX = W/2; mouseY = H/2;
+
+        // 生成背景星星
+        stars = [];
+        for (let i = 0; i < 100; i++) {
+            stars.push({ x: Math.random() * W, y: Math.random() * H, size: Math.random() * 2, alpha: Math.random() });
+        }
+
+        // 生成初始物件
+        for (let i = 0; i < 30; i++) spawnObject();
+
+        scoreVal.innerText = score;
+        timeVal.innerText = timeLeft + 's';
+        timeVal.style.color = '#ffd32a';
+
+        if (gameLoopId) clearInterval(gameLoopId);
+        
+        // 計時器
+        window.timerId = setInterval(() => {
+            if (!gameActive) return;
+            timeLeft--;
+            timeVal.innerText = timeLeft + 's';
+            if (timeLeft <= 10) timeVal.style.color = '#ff4757';
+            if (timeLeft <= 0) endGame(true);
+        }, 1000);
+
+        // 遊戲主循環
+        function loop() {
+            if (!gameActive) return;
+            update();
+            draw();
+            gameLoopId = requestAnimationFrame(loop);
+        }
+        loop();
+    }
+
+    function spawnObject() {
+        let type;
+        let rand = Math.random();
+        
+        // 根據玩家大小決定生成咩物件
+        if (player.r < 20) {
+            if (rand < 0.7) type = OBJECT_TYPES[0];
+            else if (rand < 0.95) type = OBJECT_TYPES[1];
+            else type = OBJECT_TYPES[2];
+        } else if (player.r < 50) {
+            if (rand < 0.4) type = OBJECT_TYPES[1];
+            else if (rand < 0.7) type = OBJECT_TYPES[2];
+            else if (rand < 0.95) type = OBJECT_TYPES[3];
+            else type = OBJECT_TYPES[4];
+        } else {
+            if (rand < 0.2) type = OBJECT_TYPES[2];
+            else if (rand < 0.6) type = OBJECT_TYPES[3];
+            else type = OBJECT_TYPES[4];
+        }
+
+        let r = Math.random() * (type.maxR - type.minR) + type.minR;
+        
+        // 隨機生成在畫面外
+        let x, y;
+        if (Math.random() < 0.5) {
+            x = Math.random() < 0.5 ? -r : W + r;
+            y = Math.random() * H;
+        } else {
+            x = Math.random() * W;
+            y = Math.random() < 0.5 ? -r : H + r;
+        }
+
+        // 隨機速度
+        let angle = Math.atan2(H/2 - y, W/2 - x);
+        let speed = Math.random() * 1.5 + 0.5;
+
+        objects.push({
+            x: x, y: y, r: r,
+            vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+            color: type.color, score: type.score,
+            type: type.name
+        });
+    }
+
+    function update() {
+        if (shakeTime > 0) shakeTime--;
+
+        // 平滑跟隨滑鼠
+        player.x += (mouseX - player.x) * 0.1;
+        player.y += (mouseY - player.y) * 0.1;
+
+        // 更新物件
+        for (let i = objects.length - 1; i >= 0; i--) {
+            let obj = objects[i];
+            obj.x += obj.vx; obj.y += obj.vy;
+
+            // 出界銷毀
+            if (obj.x < -200 || obj.x > W + 200 || obj.y < -200 || obj.y > H + 200) {
+                objects.splice(i, 1);
+                spawnObject();
+                continue;
+            }
+
+            // 碰撞檢測
+            let dist = Math.hypot(player.x - obj.x, player.y - obj.y);
+            if (dist < player.r + obj.r) {
+                if (player.r > obj.r * 1.1) {
+                    // 吞噬
+                    player.r += (obj.r * 0.1);
+                    score += obj.score;
+                    scoreVal.innerText = score;
+                    playSound('eat');
+                    createParticles(obj.x, obj.y, obj.color);
+                    objects.splice(i, 1);
+                    spawnObject();
+                    shakeTime = 5;
+                } else if (obj.r > player.r * 1.1) {
+                    // 被吞噬
+                    endGame(false);
+                    return;
+                }
+            }
+        }
+
+        // 更新粒子
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy;
+            p.life -= 0.02;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+    }
+
+    function createParticles(x, y, color) {
+        for (let i = 0; i < 10; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let speed = Math.random() * 5 + 1;
+            particles.push({
+                x: x, y: y,
+                vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                life: 1, color: color, size: Math.random() * 3 + 1
+            });
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // 拖尾效果
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        if (shakeTime > 0) {
+            ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+        }
+
+        // 畫星星
+        stars.forEach(s => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+            ctx.fillRect(s.x, s.y, s.size, s.size);
+        });
+
+        // 畫物件
+        objects.forEach(obj => {
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, obj.r, 0, Math.PI * 2);
+            ctx.fillStyle = obj.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = obj.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+
+        // 畫粒子
+        particles.forEach(p => {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // 畫黑洞 (玩家)
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        // 吸積盤 (光環)
+        let grad = ctx.createRadialGradient(0, 0, player.r * 0.5, 0, 0, player.r * 1.5);
+        grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        grad.addColorStop(0.5, 'rgba(192, 132, 252, 0.8)');
+        grad.addColorStop(1, 'rgba(192, 132, 252, 0)');
+        ctx.beginPath(); ctx.arc(0, 0, player.r * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // 黑洞核心
+        ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#000';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#c084fc';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.restore();
+    }
+
+    function endGame(survived) {
+        gameActive = false;
+        clearInterval(window.timerId);
+        
+        if (survived) {
+            endTitle.innerText = "⏳ 時間到！";
+            endTitle.style.color = "#ffd32a";
+            endStats.innerText = `最終質量：${score}\n你成功喺宇宙中生存下來！`;
+        } else {
+            endTitle.innerText = "💀 被反噬！";
+            endTitle.style.color = "#ff4757";
+            endStats.innerText = `最終質量：${score}\n你被更大的黑洞吞噬了。`;
+            playSound('die');
+        }
+        endScreen.style.display = 'flex';
+    }
+
+    // 控制事件
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.touches[0].clientX - rect.left;
+        mouseY = e.touches[0].clientY - rect.top;
+    }, {passive: false});
+
+</script>
+</body>
+</html>
