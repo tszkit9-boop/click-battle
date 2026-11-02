@@ -1810,6 +1810,24 @@
                 player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
                 
                 advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            });            
+            addActionBtn('🐟 摸魚', '放鬆下，有機率被老闆捉', 'rest', () => {
+                let caught = Math.random() < 0.3;
+                if (caught) {
+                    player.stress = Math.min(100, player.stress + 15);
+                    player.mood = Math.max(0, player.mood - 5);
+                    if (player.money >= 1000) {
+                        player.money -= 1000;
+                        showToast("😱 被老闆捉到摸魚！罰款 $1,000，壓力 +15！");
+                    } else {
+                        showToast("😱 被老闆捉到摸魚！壓力 +15！");
+                    }
+                } else {
+                    player.mood = Math.min(100, player.mood + 10);
+                    player.stress = Math.max(0, player.stress - 10);
+                    showToast("🐟 成功摸魚！心情 +10，壓力 -10！(但冇計工作次數)");
+                }
+                advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
             addActionBtn('🛏️ 睡覺休息', '壓力清零，體力回滿', 'rest', () => { 
