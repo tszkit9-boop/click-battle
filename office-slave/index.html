@@ -204,7 +204,7 @@
         </div>
     </div>
 
-    <!-- 警署 -->
+    <!-- 警署與坐監 -->
     <div id="jail-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
@@ -214,7 +214,7 @@
         </div>
     </div>
 
-    <!-- 醫院 -->
+    <!-- 身體到達極限 -->
     <div id="hospital-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🏥 身體到達極限！</h2>
@@ -237,7 +237,7 @@
         </div>
     </div>
 
-    <!-- 求職 -->
+    <!-- 求職中心 -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
@@ -262,7 +262,7 @@
         </div>
     </div>
 
-    <!-- 地產與貸款 -->
+    <!-- 地產、貸款與保險 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -279,7 +279,7 @@
         </div>
     </div>
 
-    <!-- 兼職 -->
+    <!-- 副業兼職 -->
     <div id="parttime-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #2ecc71;">
             <h2 style="color: #2ecc71;">🛵 放工搵外快</h2>
@@ -367,7 +367,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v35';
+    const SAVE_KEY = 'officeSlaveSave_v36';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -870,8 +870,7 @@
                 advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
-            // 🌟 改為壓力清零 🌟
-            addActionBtn('🛏️ 訓教休息', '壓力清零，體力回滿', 'rest', () => { 
+            addActionBtn('🛏️ 睡覺休息', '壓力清零，體力回滿', 'rest', () => { 
                 player.energy = 100; player.stress = 0; player.mood = Math.min(100, player.mood + 5); 
                 if (player.pet) player.mood = Math.min(100, player.mood + 10); 
                 currentDay++; timeOfDay = 0; triggerTicketEvent();
