@@ -367,7 +367,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v36';
+    const SAVE_KEY = 'officeSlaveSave_v37';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -401,6 +401,7 @@
     
     let currentMonth = 0, candidates = [];
     let timeOfDay = 0; let currentDay = 1; let hospitalFlag = false; 
+    let interviewStep = 0; // 面試進度
     const MAX_STAFF = 5;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
@@ -458,31 +459,72 @@
     function showToast(msg) { if(!toastEl) return; toastEl.innerText = msg; toastEl.style.opacity = 1; clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => { toastEl.style.opacity = 0; }, 3000); speakText(msg); }
     function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 
-    function selectJob(type) { player.jobType = type; closeModal('job-modal'); startInterview(); }
+    function selectJob(type) { 
+        player.jobType = type; 
+        interviewStep = 0; 
+        closeModal('job-modal'); 
+        startInterview(); 
+    }
+
+    // === 全新 5 條問題面試系統 ===
+    const questionBank = [
+        { q: "第一題：先自我介紹一下，你覺得自己有咩優點？", opts: [
+            { t: "我勤力、聽話、唔怕蝕底！", m: 10, s: 5 },
+            { t: "我優點係無缺點，快啲請我啦。", m: -10, s: 15 },
+            { t: "我優點係準時收工，絕不OT。", m: -20, s: 30 }
+        ]},
+        { q: "第二題：我哋公司成日要加班，你點睇OT（加班）？", opts: [
+            { t: "OT係社畜嘅光榮！我樂意奉獻！", m: 5, s: 20 },
+            { t: "有補水就OT，無補水免談。", m: 10, s: 10 },
+            { t: "OT？犯法㗎喎，我報勞工處。", m: -30, s: 40 }
+        ]},
+        { q: "第三題：如果你嘅工作量多到做唔完，你會點做？", opts: [
+            { t: "死頂，通宵都要做完佢！", m: -10, s: 30 },
+            { t: "同老闆反映，尋求協助。", m: 5, s: 10 },
+            { t: "直接辭職，唔做最大。", m: -20, s: 20 }
+        ]},
+        { q: "第四題：遇到無理取鬧嘅客/老細，你會點應對？", opts: [
+            { t: "笑住道歉，將所有錯攬上身。", m: -10, s: 20 },
+            { t: "據理力爭，同佢死過！", m: 10, s: 30 },
+            { t: "左耳入右耳出，當佢唱歌。", m: 5, s: 5 }
+        ]},
+        { q: "第五題（終極）：如果有更好嘅公司挖角你，你會走嗎？", opts: [
+            { t: "我對公司絕對忠誠，誓死追隨！", m: 20, s: 10 },
+            { t: "睇錢份上，邊度人工高就去邊度。", m: 5, s: 15 },
+            { t: "我會帶埋成個Team一齊走！", m: -20, s: 40 }
+        ]}
+    ];
 
     function startInterview() {
         player.stage = 'interview';
         const db = document.getElementById('dialogue-box'); db.style.display = 'flex';
         const speaker = document.getElementById('speaker-name'), text = document.getElementById('dialogue-text'), choices = document.getElementById('choices');
+        
         let jobInfo = jobDatabase[player.jobType];
         speaker.innerText = `${jobInfo.name}面試官`;
-        let questions = {
-            clerk: "我哋請文員要對數字好敏感，你覺得自己細心嗎？", it: "我哋IT部成日要OT通宵，你頂唔頂得順？", sales: "做Sales最緊要面皮厚，一個月跑唔跑到數？", security: "做保安要成日行嚟行去，仲要對住個門口發呆，你悶唔悶？",
-            cleaner: "清潔好辛苦㗎，要洗廁所，你制唔制？", delivery: "打風落雨都要送外賣，你搏唔搏盡？", driver: "香港地塞車塞到傻，你脾氣好唔好？", chef: "廚房又熱又嘈，師傅鬧人好惡，你頂唔頂得順？",
-            waiter: "啲客好麻煩，成日催單，你會唔會黑面？", agent: "開唔到單就食穀種，你有無信心跑數？", safety: "地盤好多危險嘢，你見唔見到人無戴安全帽會點做？", construction: "地盤日曬雨淋，仲要搬搬抬抬，你捱唔捱得？",
-            surveyor: "測量師要成日對住啲圖紙同數字，你對眼頂唔頂得順？", engineer: "工程師要孭飛，起錯樓好大件事，你壓力大唔大？", kol: "做KOL要面對網民負評，你心臟夠唔夠強大？"
-        };
-        text.innerText = questions[player.jobType]; speakText(text.innerText); choices.innerHTML = '';
-        const opts = [
-            { t: "無問題！我準備好捱騾仔！(心情+5, 壓力+10)", m: 5, s: 10, msg: "好！有熱誠！聽日開始返工。" },
-            { t: "吓？咁辛苦？(心情-10, 壓力+5)", m: -10, s: 5, msg: "香港地邊個唔辛苦呀？請你啦。" },
-            { t: "我淨係想賺錢！(心情-5, 壓力+15)", m: -5, s: 15, msg: "夠坦白，我鍾意！下星期見。" }
-        ];
-        opts.forEach(o => {
-            let btn = document.createElement('button'); btn.className = 'choice-btn'; btn.innerText = o.t;
+        
+        let currentQ = questionBank[interviewStep];
+        text.innerText = currentQ.q;
+        speakText(currentQ.q);
+        
+        choices.innerHTML = '';
+        currentQ.opts.forEach(o => {
+            let btn = document.createElement('button'); 
+            btn.className = 'choice-btn'; 
+            btn.innerText = o.t;
             btn.onclick = () => {
-                player.mood += o.m; player.stress += o.s; text.innerText = o.msg; speakText(o.msg);
-                choices.innerHTML = '<button class="choice-btn" onclick="finishInterview()" style="text-align:center;border-color:#f1c40f;">接受 Offer，開始社畜人生</button>';
+                player.mood += o.m; 
+                player.stress += o.s;
+                interviewStep++;
+                
+                if (interviewStep < 5) {
+                    startInterview(); // 進入下一題
+                } else {
+                    // 問完 5 條
+                    text.innerText = "好！見你答得咁有誠意，聽日開始返工啦！";
+                    speakText(text.innerText);
+                    choices.innerHTML = '<button class="choice-btn" onclick="finishInterview()" style="text-align:center;border-color:#f1c40f;">接受 Offer，開始社畜人生</button>';
+                }
                 updateHUD();
             };
             choices.appendChild(btn);
