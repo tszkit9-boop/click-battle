@@ -43,113 +43,20 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    #office-view {
-        display: none;
-        position: absolute;
-        inset: 0;
-        z-index: 6;
-        padding: 15px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
+    #office-view { display: none; position: absolute; inset: 0; z-index: 6; padding: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-direction: column; align-items: center; justify-content: center; }
     #office-view.active { display: flex; }
-    .office-title {
-        text-align: center;
-        color: #f1c40f;
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 12px;
-        text-shadow: 0 0 10px rgba(241,196,15,0.6);
-    }
-    .staff-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        max-width: 480px;
-        width: 100%;
-    }
-    .staff-desk {
-        background: linear-gradient(135deg, rgba(44,62,80,0.95), rgba(30,39,46,0.95));
-        border: 2px solid #3498db;
-        border-radius: 12px;
-        padding: 10px 8px 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        box-shadow: 0 0 15px rgba(52,152,219,0.3);
-        position: relative;
-        overflow: hidden;
-        min-height: 100px;
-    }
-    .staff-desk.manager {
-        border-color: #f1c40f;
-        box-shadow: 0 0 15px rgba(241,196,15,0.5);
-    }
-    .staff-desk .desk-emoji {
-        font-size: 34px;
-        animation: typing 1s infinite alternate;
-    }
-    .staff-desk .desk-name {
-        font-size: 12px;
-        color: #fff;
-        font-weight: bold;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-    .staff-desk .desk-status {
-        font-size: 10px;
-        color: #a4b0be;
-        background: rgba(0,0,0,0.5);
-        padding: 2px 8px;
-        border-radius: 8px;
-        margin-top: 2px;
-    }
-    .staff-desk .desk-level {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        font-size: 9px;
-        color: #f1c40f;
-        background: rgba(0,0,0,0.6);
-        padding: 1px 5px;
-        border-radius: 4px;
-    }
-    .staff-desk.slacking {
-        border-color: #e74c3c;
-        box-shadow: 0 0 15px rgba(231,76,60,0.6);
-        cursor: pointer;
-        animation: slackingPulse 1.5s infinite;
-    }
-    @keyframes slackingPulse {
-        0%, 100% { box-shadow: 0 0 15px rgba(231,76,60,0.6); }
-        50% { box-shadow: 0 0 25px rgba(231,76,60,1); }
-    }
-    .catch-hint {
-        font-size: 9px;
-        color: #fff;
-        background: #e74c3c;
-        padding: 2px 8px;
-        border-radius: 8px;
-        margin-top: 3px;
-        animation: flash 1s infinite;
-    }
-    .empty-desk {
-        background: rgba(44,62,80,0.35);
-        border: 2px dashed #555;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #666;
-        font-size: 12px;
-        min-height: 100px;
-    }
+    .office-title { text-align: center; color: #f1c40f; font-size: 14px; font-weight: bold; margin-bottom: 12px; text-shadow: 0 0 10px rgba(241,196,15,0.6); }
+    .staff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 480px; width: 100%; }
+    .staff-desk { background: linear-gradient(135deg, rgba(44,62,80,0.95), rgba(30,39,46,0.95)); border: 2px solid #3498db; border-radius: 12px; padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(52,152,219,0.3); position: relative; overflow: hidden; min-height: 100px; }
+    .staff-desk.manager { border-color: #f1c40f; box-shadow: 0 0 15px rgba(241,196,15,0.5); }
+    .staff-desk .desk-emoji { font-size: 34px; animation: typing 1s infinite alternate; }
+    .staff-desk .desk-name { font-size: 12px; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .staff-desk .desk-status { font-size: 10px; color: #a4b0be; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 8px; margin-top: 2px; }
+    .staff-desk .desk-level { position: absolute; top: 6px; right: 6px; font-size: 9px; color: #f1c40f; background: rgba(0,0,0,0.6); padding: 1px 5px; border-radius: 4px; }
+    .staff-desk.slacking { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231,76,60,0.6); cursor: pointer; animation: slackingPulse 1.5s infinite; }
+    @keyframes slackingPulse { 0%, 100% { box-shadow: 0 0 15px rgba(231,76,60,0.6); } 50% { box-shadow: 0 0 25px rgba(231,76,60,1); } }
+    .catch-hint { font-size: 9px; color: #fff; background: #e74c3c; padding: 2px 8px; border-radius: 8px; margin-top: 3px; animation: flash 1s infinite; }
+    .empty-desk { background: rgba(44,62,80,0.35); border: 2px dashed #555; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px; min-height: 100px; }
     @keyframes typing { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
 
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -244,41 +151,11 @@
     .interact-avatar { font-size: 80px; margin-bottom: 10px; animation: float 2s infinite ease-in-out; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-    /* 打字狡辯 */
     #slacking-caught-modal .modal-box { border-color: #e74c3c; border-width: 4px; }
-    #slacking-excuse-input {
-        width: 100%;
-        height: 100px;
-        background: #111;
-        color: #fff;
-        border: 2px solid #555;
-        border-radius: 8px;
-        padding: 10px;
-        font-family: 'Noto Sans HK', sans-serif;
-        font-size: 13px;
-        resize: none;
-        margin-bottom: 10px;
-        outline: none;
-        user-select: text;
-        -webkit-user-select: text;
-    }
+    #slacking-excuse-input { width: 100%; height: 100px; background: #111; color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; resize: none; margin-bottom: 10px; outline: none; user-select: text; -webkit-user-select: text; }
     #slacking-excuse-input:focus { border-color: #f1c40f; }
-    .excuse-tip {
-        font-size: 11px;
-        color: #a4b0be;
-        text-align: left;
-        margin-bottom: 10px;
-        line-height: 1.5;
-    }
-    #boss-verdict {
-        display: none;
-        font-size: 13px;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        line-height: 1.6;
-        text-align: left;
-    }
+    .excuse-tip { font-size: 11px; color: #a4b0be; text-align: left; margin-bottom: 10px; line-height: 1.5; }
+    #boss-verdict { display: none; font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 10px; line-height: 1.6; text-align: left; }
     #boss-verdict.success { background: rgba(46,204,113,0.2); border: 2px solid #2ecc71; color: #2ecc71; }
     #boss-verdict.fail { background: rgba(231,76,60,0.2); border: 2px solid #e74c3c; color: #e74c3c; }
 
@@ -592,8 +469,11 @@
     <div id="company-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🚀 創業做老闆</h2>
-            <p>用 $300,000 積蓄成立自己嘅公司！</p>
-            <button class="modal-btn boss" onclick="startCompany()">確認成立公司</button>
+            <p>用 $300,000 積蓄成立自己嘅公司！<br><br>請選擇你以後每月嘅老闆強積金 (MPF) 供款比例：</p>
+            <button class="modal-btn warning" onclick="startCompany(0)">0% (唔供)<small>賺幾多袋幾多</small></button>
+            <button class="modal-btn primary" onclick="startCompany(0.05)">5% (正常)<small>跟足打工仔標準</small></button>
+            <button class="modal-btn primary" onclick="startCompany(0.10)" style="background:#3498db;">10% (進取)<small>為未來退休鋪路</small></button>
+            <button class="modal-btn primary" onclick="startCompany(0.15)" style="background:#9b59b6;">15% (激進)<small>全力儲錢！</small></button>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('company-modal')">繼續打工</button>
         </div>
     </div>
@@ -666,6 +546,7 @@
                 currentMonth = d.currentMonth; 
                 timeOfDay = d.timeOfDay || 0; 
                 currentDay = d.currentDay || 1; 
+                if (player.bossMpfRate === undefined) player.bossMpfRate = 0.05; // 兼容舊存檔
                 return true; 
             } 
         } catch(e){} 
@@ -699,7 +580,7 @@
         car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
         isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false,
         companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1,
-        slackCount: 0
+        slackCount: 0, autoBusiness: false, bossMpfRate: 0.05
     };
     
     let currentMonth = 0, candidates = [];
@@ -774,7 +655,7 @@
 
             const barEnergy = document.getElementById('bar-energy');
             const barStress = document.getElementById('bar-stress');
-            if (!player.isBoss && player.stage === 'work') {
+            if (player.stage === 'work') {
                 if (player.energy <= 20) barEnergy.classList.add('warning-flash'); else barEnergy.classList.remove('warning-flash');
                 if (player.stress >= 80) barStress.classList.add('warning-flash'); else barStress.classList.remove('warning-flash');
             }
@@ -789,7 +670,7 @@
             
             if (player.health <= 0) { gameOver("你因為長期過勞，不幸猝死..."); return; }
             
-            if (!player.isBoss && player.stage === 'work' && (player.energy <= 0 || player.stress >= 100) && !hospitalFlag) {
+            if (player.stage === 'work' && (player.energy <= 0 || player.stress >= 100) && !hospitalFlag) {
                 triggerHospital();
             }
             renderStaffScene();
@@ -1635,12 +1516,17 @@
             let net = totalProfit - totalSalary - 5000;
 
             if (net > 0) {
-                let mpfCost = Math.floor(net * 0.05);
+                let mpfRate = player.bossMpfRate !== undefined ? player.bossMpfRate : 0.05;
+                let mpfCost = Math.floor(net * mpfRate);
                 player.mpf += mpfCost;
                 net -= mpfCost;
                 player.money += net;
                 player.companyValue += Math.floor(net * 0.5);
-                showToast(`📈 月結淨賺：$${net} (已扣 $${mpfCost} 老闆 MPF)`);
+                if (mpfCost > 0) {
+                    showToast(`📈 月結淨賺：$${net} (已扣 $${mpfCost} 老闆 MPF ${Math.round(mpfRate*100)}%)`);
+                } else {
+                    showToast(`📈 月結淨賺：$${net} (無供 MPF)`);
+                }
             } else {
                 player.money += net;
                 showToast(`📉 公司月結：蝕錢 $${Math.abs(net)}！(老闆冇糧出仲要貼錢)`);
@@ -1763,11 +1649,68 @@
     }
     function bossBusinessAction() { if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
 
-    function startCompany() {
+    // === 自動見客系統 ===
+    let autoBusinessTimer = null;
+    function toggleAutoBusiness() {
+        player.autoBusiness = !player.autoBusiness;
+        if (player.autoBusiness) {
+            showToast("🤖 已開啟自動見客！每 3 秒自動接單 (收益略減)。");
+            startAutoBusiness();
+        } else {
+            showToast("🛑 已關閉自動見客。");
+            stopAutoBusiness();
+        }
+        updateActionButtons();
+    }
+
+    function startAutoBusiness() {
+        if (autoBusinessTimer) clearInterval(autoBusinessTimer);
+        autoBusinessTimer = setInterval(() => {
+            if (!player.autoBusiness || !player.isBoss || player.isListed || player.stage !== 'work') return;
+            if (document.getElementById('end-screen').style.display === 'flex') return;
+            let hasModal = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex' || m.style.display === 'block');
+            if (hasModal) return;
+
+            let roll = Math.random();
+            let msg = "";
+            if (roll < 0.45) {
+                let p = Math.floor((Math.random() * 15000) + 5000);
+                player.money += p;
+                msg = `🤖 自動見客：簽細單，賺 $${p}`;
+            } else if (roll < 0.90) {
+                let l = Math.floor((Math.random() * 10000) + 2000);
+                player.money = Math.max(0, player.money - l);
+                msg = `🤖 自動見客：被客走數，蝕 $${l}`;
+            } else {
+                let p = Math.floor((Math.random() * 30000) + 20000);
+                player.money += p;
+                msg = `🤖 自動見客：中大單！賺 $${p}`;
+            }
+            showToast(msg);
+            updateHUD();
+        }, 3000);
+    }
+
+    function stopAutoBusiness() {
+        if (autoBusinessTimer) {
+            clearInterval(autoBusinessTimer);
+            autoBusinessTimer = null;
+        }
+    }
+
+    function startCompany(mpfRate) {
         if (player.money < 300000) { showToast("資本不足 $300,000！"); return; }
-        player.money -= 300000; player.isBoss = true; player.job = '老闆';
+        player.money -= 300000; 
+        player.isBoss = true; 
+        player.job = '老闆';
         player.companyValue = 300000;
-        closeModal('company-modal'); sceneEl.className = 'bg-boss'; showToast("🚀 恭喜！你成立咗自己嘅公司！淨資產 $300,000"); startStaffStatusTimer(); updateHUD(); updateActionButtons();
+        player.bossMpfRate = mpfRate;
+        closeModal('company-modal'); 
+        sceneEl.className = 'bg-boss'; 
+        showToast(`🚀 恭喜！你成立咗自己嘅公司！(MPF供款：${Math.round(mpfRate * 100)}%)`); 
+        startStaffStatusTimer(); 
+        updateHUD(); 
+        updateActionButtons();
     }
 
     function generateCandidates() {
@@ -1864,6 +1807,8 @@
         let ipoMoney = player.companyValue * 2;
         player.money += ipoMoney;
         player.isListed = true;
+        player.autoBusiness = false;
+        stopAutoBusiness();
         player.job = '資本家';
         player.dividendPerMonth = Math.floor(player.companyValue * 0.05);
         player.staffList = [];
@@ -1896,6 +1841,7 @@
             statusText += `🏢 營運費：$5,000<br>`;
             statusText += `<hr style="border-color:#333; margin:8px 0;">`;
             statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
+            statusText += `🏦 老闆 MPF 供款：${Math.round((player.bossMpfRate || 0) * 100)}%<br>`;
             statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()} / $5,000,000 (上市門檻)<br>`;
             statusText += `<small style="color:#a4b0be;">(Sales 的利潤為隨機，需視乎每月結算)</small>`;
         }
@@ -1928,7 +1874,8 @@
         } else if (player.isBoss) {
             addActionBtn('💰 公司帳目', '查看每月出糧及盈虧', 'boss', openAccountModal);
             addActionBtn('👀 巡視業務', '睇住班員工做嘢', 'rest', bossPatrolAction);
-            addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
+            addActionBtn('🤝 見客傾生意', '手動：隨機大賺或大蝕', 'work', bossBusinessAction);
+            addActionBtn(player.autoBusiness ? '🛑 停止自動' : '🤖 自動見客', player.autoBusiness ? '正在自動接單...' : '每 3 秒自動接單 (收益較低)', 'boss', toggleAutoBusiness);
             addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
             addActionBtn('📈 申請上市', player.companyValue >= 5000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $5M`, 'boss', doIPO);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
@@ -1990,6 +1937,7 @@
     }
 
     function gameOver(reason) {
+        stopAutoBusiness();
         player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
         document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") || reason.includes("離世") ? "💀 過勞死" : (reason.includes("停牌") ? "🚗 停牌收場" : "👴 光榮退休"));
         
@@ -2024,6 +1972,9 @@
                 }
                 updateActionButtons(); 
                 startStaffStatusTimer();
+                if (player.autoBusiness && player.isBoss && !player.isListed) {
+                    startAutoBusiness();
+                }
             } else { 
                 player.stage = 'gender_select'; player.money = 0; 
                 document.getElementById('gender-modal').style.display = 'flex'; 
