@@ -43,7 +43,6 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    /* 老闆寫字樓 */
     #office-view {
         display: none;
         position: absolute;
@@ -244,6 +243,44 @@
     #family-interact-screen h1 { color: #f1c40f; font-size: 24px; margin-bottom: 10px; }
     .interact-avatar { font-size: 80px; margin-bottom: 10px; animation: float 2s infinite ease-in-out; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    /* 打字狡辯 */
+    #slacking-caught-modal .modal-box { border-color: #e74c3c; border-width: 4px; }
+    #slacking-excuse-input {
+        width: 100%;
+        height: 100px;
+        background: #111;
+        color: #fff;
+        border: 2px solid #555;
+        border-radius: 8px;
+        padding: 10px;
+        font-family: 'Noto Sans HK', sans-serif;
+        font-size: 13px;
+        resize: none;
+        margin-bottom: 10px;
+        outline: none;
+        user-select: text;
+        -webkit-user-select: text;
+    }
+    #slacking-excuse-input:focus { border-color: #f1c40f; }
+    .excuse-tip {
+        font-size: 11px;
+        color: #a4b0be;
+        text-align: left;
+        margin-bottom: 10px;
+        line-height: 1.5;
+    }
+    #boss-verdict {
+        display: none;
+        font-size: 13px;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        line-height: 1.6;
+        text-align: left;
+    }
+    #boss-verdict.success { background: rgba(46,204,113,0.2); border: 2px solid #2ecc71; color: #2ecc71; }
+    #boss-verdict.fail { background: rgba(231,76,60,0.2); border: 2px solid #e74c3c; color: #e74c3c; }
 
     @media (max-width: 600px) {
         .voice-btn, .reset-btn, .back-btn { padding: 4px 8px; font-size: 11px; }
@@ -580,7 +617,7 @@
         </div>
     </div>
 
-    <!-- 抓摸魚 -->
+    <!-- 抓摸魚（老闆） -->
     <div id="slacking-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c;">
             <h2 style="color: #e74c3c;">🚨 捉到摸魚！</h2>
@@ -590,6 +627,22 @@
             <button class="modal-btn primary" onclick="resolveSlacking('fine')">💰 罰款 $5,000<small>心情 +10，袋 $5,000</small></button>
             <button class="modal-btn danger" onclick="resolveSlacking('fire')">🔥 直接解僱<small>心情 -10，殺一儆百</small></button>
             <button class="modal-btn primary" onclick="resolveSlacking('forgive')" style="background:#9b59b6;">😌 原諒佢<small>心情 +10，壓力 -5</small></button>
+        </div>
+    </div>
+
+    <!-- 摸魚被捉：打字狡辯（打工仔） -->
+    <div id="slacking-caught-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="color: #e74c3c;">😱 被老闆捉到摸魚！</h2>
+            <p id="boss-catch-text">老闆行埋你身邊：「你喺度做咩？」<br>你要點解釋？</p>
+            <textarea id="slacking-excuse-input" maxlength="100" placeholder="打字求情...例如：老闆，我啱啱做完晒啲嘢，諗住唞一唞再繼續搏殺！"></textarea>
+            <div class="excuse-tip">
+                💡 貼士：寫得越多、越有誠意，成功機會越高。<br>
+                關鍵詞：老闆、辛苦、加班、公司、努力、貢獻、體諒、業績、跟進、交貨
+            </div>
+            <div id="boss-verdict"></div>
+            <button id="slacking-submit-btn" class="modal-btn danger" onclick="submitSlackingExcuse()">🗣️ 解釋！</button>
+            <button id="slacking-close-btn" class="modal-btn primary" style="display:none;" onclick="closeSlackingCaught()">繼續做社畜</button>
         </div>
     </div>
 
@@ -645,7 +698,8 @@
         properties: [], mortgage: 0, loan: 0, jobType: null,
         car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
         isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false,
-        companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1
+        companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1,
+        slackCount: 0
     };
     
     let currentMonth = 0, candidates = [];
@@ -818,7 +872,7 @@
         }, 4000);
     }
 
-    // === 抓摸魚 ===
+    // === 抓摸魚（老闆） ===
     function catchSlacking(idx) {
         const s = player.staffList[idx];
         if (!s) return;
@@ -856,6 +910,93 @@
         }
         renderStaffScene();
         updateHUD();
+    }
+
+    // === 摸魚被捉：打字狡辯（打工仔） ===
+    const EXCUSE_KEYWORDS = ['老闆', '辛苦', '加班', '公司', '努力', '貢獻', '體諒', '業績', '跟進', '交貨', '搏殺', '做嘢', '完成'];
+
+    function showSlackingCaughtModal() {
+        document.getElementById('slacking-excuse-input').value = '';
+        document.getElementById('boss-verdict').style.display = 'none';
+        document.getElementById('boss-verdict').className = '';
+        document.getElementById('slacking-submit-btn').style.display = 'block';
+        document.getElementById('slacking-close-btn').style.display = 'none';
+        document.getElementById('slacking-caught-modal').style.display = 'flex';
+        speakText("你被老闆捉到摸魚！快啲解釋！");
+    }
+
+    function submitSlackingExcuse() {
+        const input = document.getElementById('slacking-excuse-input');
+        const text = input.value.trim();
+        const submitBtn = document.getElementById('slacking-submit-btn');
+        const closeBtn = document.getElementById('slacking-close-btn');
+        const verdict = document.getElementById('boss-verdict');
+
+        if (text.length < 5) {
+            verdict.className = 'fail';
+            verdict.style.display = 'block';
+            verdict.innerHTML = '😠 老闆：「你連解釋都懶得打？罰 $1,000！」';
+            applySlackingCaughtPenalty();
+            submitBtn.style.display = 'none';
+            closeBtn.style.display = 'block';
+            return;
+        }
+
+        let chance = 0.15;
+        if (text.length >= 15) chance += 0.20;
+        if (text.length >= 30) chance += 0.15;
+        if (text.length >= 60) chance += 0.10;
+
+        let hitKeywords = 0;
+        EXCUSE_KEYWORDS.forEach(k => { if (text.includes(k)) hitKeywords++; });
+        chance += Math.min(3, hitKeywords) * 0.10;
+
+        chance = Math.min(0.90, chance);
+
+        const success = Math.random() < chance;
+
+        if (success) {
+            player.mood = Math.min(100, player.mood + 15);
+            player.stress = Math.max(0, player.stress - 5);
+            const lines = [
+                `😅 老闆：「算你講得有道理，下次唔好咁明目張膽。」<br><span style="color:#2ecc71;">免罰！心情 +15，壓力 -5</span>`,
+                `🤔 老闆：「...你講嘢都幾有道理，今次放過你。」<br><span style="color:#2ecc71;">免罰！心情 +15，壓力 -5</span>`,
+                `😌 老闆：「見你平時都勤力，今次當睇唔到。」<br><span style="color:#2ecc71;">免罰！心情 +15，壓力 -5</span>`
+            ];
+            verdict.className = 'success';
+            verdict.innerHTML = lines[Math.floor(Math.random() * lines.length)];
+            showToast("🎉 成功狡辯！老闆放過你！");
+        } else {
+            const lines = [
+                `😡 老闆：「你當我傻嘅？罰 $1,000！」`,
+                `🙄 老闆：「咁都叫解釋？罰 $1,000！」`,
+                `😤 老闆：「再狡辯就炒你！罰 $1,000！」`
+            ];
+            verdict.className = 'fail';
+            verdict.innerHTML = lines[Math.floor(Math.random() * lines.length)];
+            applySlackingCaughtPenalty();
+        }
+
+        verdict.style.display = 'block';
+        submitBtn.style.display = 'none';
+        closeBtn.style.display = 'block';
+
+        advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
+    }
+
+    function applySlackingCaughtPenalty() {
+        player.stress = Math.min(100, player.stress + 15);
+        player.mood = Math.max(0, player.mood - 5);
+        if (player.money >= 1000) {
+            player.money -= 1000;
+        } else {
+            player.money = 0;
+            player.stress = Math.min(100, player.stress + 10);
+        }
+    }
+
+    function closeSlackingCaught() {
+        document.getElementById('slacking-caught-modal').style.display = 'none';
     }
 
     function advanceTime() {
@@ -1731,170 +1872,4 @@
         updateHUD(); updateActionButtons();
     }
 
-    function openAccountModal() {
-        document.getElementById('account-modal').style.display = 'flex';
-        let totalSal = 0, totalProf = 0, managerCount = 0;
-        player.staffList.forEach(s => { 
-            totalSal += s.salary; 
-            if (s.isManager) managerCount++;
-            else if (s.type !== 'sales') totalProf += s.profit; 
-        });
-        let baseNet = Math.floor(totalProf * (1 + managerCount * 0.10)) - totalSal - 5000;
-        
-        let statusText = '';
-        if (player.isListed) {
-            statusText += `💹 <b style="color:#2ecc71;">已上市</b><br>`;
-            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()}<br>`;
-            statusText += `💰 每月股息：$${player.dividendPerMonth.toLocaleString()}<br>`;
-            statusText += `<small style="color:#a4b0be;">公司已交由市場管理，你唔使再管員工。</small>`;
-        } else {
-            statusText += `🧑‍💼 員工數量：${player.staffList.length} 人<br>`;
-            statusText += `💸 每月總人工：$${totalSal.toLocaleString()}<br>`;
-            statusText += `📈 基本預期利潤：$${totalProf.toLocaleString()}<br>`;
-            if (managerCount > 0) statusText += `👔 主管加成：+${managerCount * 10}%<br>`;
-            statusText += `🏢 營運費：$5,000<br>`;
-            statusText += `<hr style="border-color:#333; margin:8px 0;">`;
-            statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
-            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()} / $5,000,000 (上市門檻)<br>`;
-            statusText += `<small style="color:#a4b0be;">(Sales 的利潤為隨機，需視乎每月結算)</small>`;
-        }
-        
-        document.getElementById('account-status').innerHTML = statusText;
-    }
-
-    function updateActionButtons() {
-        actionsEl.innerHTML = '';
-        if (player.stage !== 'work') return;
-        
-        if (player.isListed) {
-            addActionBtn('💹 收取股息', `每月 $${player.dividendPerMonth.toLocaleString()}`, 'boss', () => {
-                player.money += player.dividendPerMonth;
-                showToast(`💹 收到股息 $${player.dividendPerMonth.toLocaleString()}`);
-                advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
-            });
-            addActionBtn('📊 公司資料', '查看上市資訊', 'boss', openAccountModal);
-            addActionBtn('👀 休閒生活', '有錢佬嘅生活', 'rest', () => {
-                player.stress = Math.max(0, player.stress - 20);
-                player.mood = Math.min(100, player.mood + 15);
-                showToast("🏖️ 你去咗遊艇派對，人生勝利組！");
-                advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
-            });
-            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
-            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
-            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
-            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
-            addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
-        } else if (player.isBoss) {
-            addActionBtn('💰 公司帳目', '查看每月出糧及盈虧', 'boss', openAccountModal);
-            addActionBtn('👀 巡視業務', '睇住班員工做嘢', 'rest', bossPatrolAction);
-            addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
-            addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
-            addActionBtn('📈 申請上市', player.companyValue >= 5000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $5M`, 'boss', doIPO);
-            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
-            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
-            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
-            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
-            addActionBtn('💸 終極賭徒', '有錢佬嘅玩意', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
-        } else {
-            addActionBtn('💼 努力工作', `每次 +$${Math.floor(player.salary/3)}`, 'work', () => { 
-                let info = jobDatabase[player.jobType];
-                let earn = Math.floor(player.salary / 3);
-                let stressAdd = info.stressCost;
-                let energyCost = info.energyCost;
-                
-                if (timeOfDay === 0) { earn = Math.floor(earn * 1.2); stressAdd = Math.floor(stressAdd * 0.8); }
-                else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.1); energyCost = Math.floor(energyCost * 1.1); } 
-                
-                if (player.energy < energyCost) { showToast("體力不足，無法工作！請休息或去醫院。"); return; }
-
-                player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
-                
-                advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
-            });            
-            addActionBtn('🐟 摸魚', '放鬆下，有機率被老闆捉', 'rest', () => {
-                let caught = Math.random() < 0.3;
-                if (caught) {
-                    player.stress = Math.min(100, player.stress + 15);
-                    player.mood = Math.max(0, player.mood - 5);
-                    if (player.money >= 1000) {
-                        player.money -= 1000;
-                        showToast("😱 被老闆捉到摸魚！罰款 $1,000，壓力 +15！");
-                    } else {
-                        showToast("😱 被老闆捉到摸魚！壓力 +15！");
-                    }
-                } else {
-                    player.mood = Math.min(100, player.mood + 10);
-                    player.stress = Math.max(0, player.stress - 10);
-                    showToast("🐟 成功摸魚！心情 +10，壓力 -10！(但冇計工作次數)");
-                }
-                advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
-            });
-            addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
-            addActionBtn('🛏️ 睡覺休息', '壓力清零，體力回滿', 'rest', () => { 
-                player.energy = 100; player.stress = 0; player.mood = Math.min(100, player.mood + 5); 
-                if (player.pet) player.mood = Math.min(100, player.mood + 10); 
-                currentDay++; timeOfDay = 0; triggerTicketEvent();
-                showToast("😴 瞓咗個好覺，壓力全消，體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
-            });
-            addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
-            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
-            addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
-            addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
-            addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
-            addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
-            addActionBtn('🐱 寵物', player.pet ? `主子: ${player.pet.name}` : '領養主子', 'buy', openPetModal);
-            addActionBtn('💸 終極賭徒', '賭馬/波/幣圈', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
-            if (player.money >= 300000 && player.workCount >= 30) { addActionBtn('🚀 開公司', '辭職創業做老闆！', 'boss', () => { document.getElementById('company-modal').style.display = 'flex'; }); }
-        }
-    }
-
-    function addActionBtn(title, desc, cls, onClick) {
-        let btn = document.createElement('button'); btn.className = `action-btn ${cls}`; btn.innerHTML = `${title}<small>${desc}</small>`;
-        if (!onClick) btn.classList.add('disabled'); else btn.onclick = onClick;
-        actionsEl.appendChild(btn);
-    }
-
-    function gameOver(reason) {
-        player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
-        document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") || reason.includes("離世") ? "💀 過勞死" : (reason.includes("停牌") ? "🚗 停牌收場" : "👴 光榮退休"));
-        
-        let finalMoney = player.money;
-        let mpfText = "";
-        let insuranceText = "";
-        
-        if (player.age >= 65 || reason.includes("猝死") || reason.includes("離世")) {
-            if (player.mpf > 0) { finalMoney += player.mpf; mpfText = `<br>提取 MPF：+$${player.mpf.toLocaleString()}`; }
-            if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
-        }
-
-        let identityStr = player.isListed ? '資本家' : (player.isBoss ? '老闆' : '打工仔');
-        document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${identityStr}`;
-        localStorage.removeItem(SAVE_KEY); speakText(reason);
-    }
-
-    window.onload = () => { 
-        document.getElementById('voice-toggle').innerText = "🔊 粵語";
-        try {
-            if (loadGame() && player.stage === 'work') { 
-                document.getElementById('dialogue-box').style.display = 'none'; 
-                document.getElementById('gender-modal').style.display = 'none';
-                document.getElementById('character').className = player.gender === 'male' ? 'character-male' : 'character-female';
-                
-                if(player.isBoss || player.isListed) sceneEl.className = 'bg-boss'; 
-                else {
-                    if (timeOfDay === 0) sceneEl.className = 'bg-morning';
-                    else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
-                    else sceneEl.className = 'bg-night';
-                }
-                updateActionButtons(); 
-                startStaffStatusTimer();
-            } else { 
-                player.stage = 'gender_select'; player.money = 0; 
-                document.getElementById('gender-modal').style.display = 'flex'; 
-            }
-            updateHUD();
-        } catch(e) {}
-    };
-</script>
-</body>
-</html>
+    function
