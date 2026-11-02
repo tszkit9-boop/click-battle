@@ -7,25 +7,30 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+    html, body { overscroll-behavior: none; } /* 防止手機下拉刷新 */
     body { background-color: #050510; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1a2e, #050510); }
+    
     .back-btn { position: absolute; top: 10px; left: 10px; z-index: 9999; padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); transition: all 0.2s; backdrop-filter: blur(5px); }
     .back-btn:hover { background: #00d2d3; color: #000; }
+    
     .top-right-btns { position: absolute; top: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; }
     .voice-btn, .reset-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: all 0.2s; backdrop-filter: blur(5px); cursor: pointer; }
     .voice-btn { color: #f1c40f; border: 2px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
     .reset-btn { color: #e74c3c; border: 2px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
+
     #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
-    #hud { background: rgba(10, 10, 20, 0.9); padding: 10px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px; z-index: 10; backdrop-filter: blur(5px); }
-    .stat-item { display: flex; align-items: center; gap: 5px; }
-    .stat-label { width: 30px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 10px;}
-    .stat-bar { flex: 1; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #333; position: relative; }
-    .stat-fill { height: 100%; transition: width 0.3s; border-radius: 4px; }
+    
+    #hud { background: rgba(10, 10, 20, 0.9); padding: 10px 6px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px; z-index: 10; backdrop-filter: blur(5px); }
+    .stat-item { display: flex; align-items: center; gap: 3px; }
+    .stat-label { width: 22px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 9px; white-space: nowrap; }
+    .stat-bar { flex: 1; height: 8px; background: #111; border-radius: 4px; overflow: hidden; border: 1px solid #333; position: relative; }
+    .stat-fill { height: 100%; transition: width 0.3s; border-radius: 3px; }
     .fill-money { background: linear-gradient(90deg, #f1c40f, #f39c12); box-shadow: 0 0 10px #f1c40f; }
     .fill-energy { background: linear-gradient(90deg, #e74c3c, #c0392b); box-shadow: 0 0 10px #e74c3c; }
     .fill-mood { background: linear-gradient(90deg, #3498db, #2980b9); box-shadow: 0 0 10px #3498db; }
     .fill-stress { background: linear-gradient(90deg, #9b59b6, #8e44ad); box-shadow: 0 0 10px #9b59b6; }
     .fill-health { background: linear-gradient(90deg, #2ecc71, #27ae60); box-shadow: 0 0 10px #2ecc71; }
-    .stat-val { position: absolute; right: 2px; top: 0; font-size: 8px; line-height: 10px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
+    .stat-val { position: absolute; right: 2px; top: 0; font-size: 7px; line-height: 8px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
     
     /* 警告閃爍特效 */
     @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -38,40 +43,48 @@
     .bg-morning { background: linear-gradient(to bottom, #87CEEB, #4682B4); }
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
-    .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 20px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto;}
-    .modal-box h2 { color: #f1c40f; margin-bottom: 15px; font-size: 20px; }
-    .modal-box p { color: #ccc; font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
-    .modal-btn { width: 100%; padding: 12px; margin-bottom: 8px; border: none; border-radius: 8px; font-family: 'Noto Sans HK', sans-serif; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.2s; touch-action: manipulation; text-align: left; }
+    
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px 10px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; margin: auto 0; max-height: none; }
+    .modal-box h2 { color: #f1c40f; margin-bottom: 12px; font-size: 18px; }
+    .modal-box p { color: #ccc; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+    .modal-btn { width: 100%; padding: 12px 10px; margin-bottom: 8px; border: none; border-radius: 8px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; touch-action: manipulation; text-align: left; }
     .modal-btn.primary { background: #3498db; color: #fff; }
     .modal-btn.danger { background: #e74c3c; color: #fff; }
     .modal-btn.warning { background: #f39c12; color: #fff; }
     .modal-btn.casino { background: #e84393; color: #fff; }
     .modal-btn.boss { background: #f1c40f; color: #000; }
-    .modal-btn small { display: block; font-size: 11px; font-weight: normal; margin-top: 3px; opacity: 0.8; }
-    .staff-card { background: #2c3e50; border: 2px solid #555; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .staff-info { text-align: left; }
-    .staff-info b { font-size: 14px; color: #f1c40f; }
-    .staff-info small { font-size: 11px; color: #bbb; display: block; margin-top: 2px; }
-    .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-    .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 12px 8px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .modal-btn small { display: block; font-size: 10px; font-weight: normal; margin-top: 3px; opacity: 0.8; }
+    
+    .staff-card { background: #2c3e50; border: 2px solid #555; border-radius: 8px; padding: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .staff-info { text-align: left; flex: 1; }
+    .staff-info b { font-size: 13px; color: #f1c40f; }
+    .staff-info small { font-size: 10px; color: #bbb; display: block; margin-top: 2px; }
+    .staff-card button { padding: 6px 10px; font-size: 12px; }
+    
+    .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 12px 6px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: all 0.2s; }
     .bet-btn:active { transform: scale(0.95); background: #f39c12; color: #000; }
     .bet-btn .odds { display: block; font-size: 11px; color: #f1c40f; margin-top: 3px; }
-    .job-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 15px; }
-    .job-btn { background: #2c3e50; border: 2px solid #3498db; color: #fff; padding: 8px 4px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    
+    .job-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .job-btn { background: #2c3e50; border: 2px solid #3498db; color: #fff; padding: 8px 4px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s; text-align: center; }
     .job-btn:hover { background: #3498db; }
     .job-btn small { display: block; font-size: 9px; font-weight: normal; margin-top: 2px; color: #f1c40f; }
+    
     #end-screen { position: absolute; inset: 0; background: rgba(5,5,10,0.98); z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-    #end-screen h1 { color: #f1c40f; font-size: 36px; margin-bottom: 20px; }
-    #end-screen p { font-size: 15px; line-height: 2; margin-bottom: 30px; color: #ccc; }
-    #end-screen button { padding: 15px 40px; background: #f1c40f; color: #000; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
-    #dialogue-box { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 80%, transparent 100%); padding: 20px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
-    #speaker-name { color: #f1c40f; font-weight: bold; font-size: 15px; }
-    #dialogue-text { font-size: 16px; line-height: 1.5; min-height: 35px; }
+    #end-screen h1 { color: #f1c40f; font-size: 32px; margin-bottom: 15px; }
+    #end-screen p { font-size: 14px; line-height: 1.8; margin-bottom: 25px; color: #ccc; }
+    #end-screen button { padding: 12px 30px; background: #f1c40f; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    
+    #dialogue-box { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 80%, transparent 100%); padding: 15px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
+    #speaker-name { color: #f1c40f; font-weight: bold; font-size: 14px; }
+    #dialogue-text { font-size: 15px; line-height: 1.5; min-height: 35px; }
     #choices { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 35vh; overflow-y: auto; }
-    .choice-btn { background: rgba(30, 30, 47, 0.9); color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px 12px; font-size: 13px; text-align: left; cursor: pointer; }
-    #actions { background: #111; padding: 8px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; z-index: 10; max-height: 40vh; overflow-y: auto; flex-shrink: 0; }
-    .action-btn { background: linear-gradient(to bottom, #3498db, #2980b9); color: #fff; border: 2px solid #000; border-radius: 8px; padding: 10px 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .choice-btn { background: rgba(30, 30, 47, 0.9); color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-size: 13px; text-align: left; cursor: pointer; }
+    
+    #actions { background: #111; padding: 8px 6px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; z-index: 10; max-height: 42vh; overflow-y: auto; flex-shrink: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+    .action-btn { background: linear-gradient(to bottom, #3498db, #2980b9); color: #fff; border: 2px solid #000; border-radius: 8px; padding: 10px 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; }
     .action-btn:active { transform: translateY(4px); box-shadow: none; }
     .action-btn.work { background: linear-gradient(to bottom, #e67e22, #d35400); box-shadow: 0 3px 0 #a04000; }
     .action-btn.rest { background: linear-gradient(to bottom, #2ecc71, #27ae60); box-shadow: 0 3px 0 #196f3d; }
@@ -79,9 +92,11 @@
     .action-btn.casino { background: linear-gradient(to bottom, #e84393, #c2185b); box-shadow: 0 3px 0 #7b1fa2; }
     .action-btn.boss { background: linear-gradient(to bottom, #f1c40f, #f39c12); box-shadow: 0 3px 0 #b38f00; color: #000; }
     .action-btn small { font-size: 9px; font-weight: normal; opacity: 0.8; }
-    #toast { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 20px; border-radius: 20px; font-weight: bold; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; color: #f1c40f; white-space: nowrap; }
-    #character { position: relative; width: 140px; height: 280px; animation: breathe 2s infinite ease-in-out; z-index: 5; transform: scale(0.8); }
-    @keyframes breathe { 0%, 100% { transform: scale(0.8) scaleY(1); } 50% { transform: scale(0.8) scaleY(1.02); } }
+    
+    #toast { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 16px; border-radius: 20px; font-weight: bold; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; color: #f1c40f; font-size: 13px; max-width: 90%; word-wrap: break-word; white-space: normal; }
+    
+    #character { position: relative; width: 140px; height: 280px; animation: breathe 2s infinite ease-in-out; z-index: 5; transform: scale(0.65); }
+    @keyframes breathe { 0%, 100% { transform: scale(0.65) scaleY(1); } 50% { transform: scale(0.65) scaleY(1.02); } }
     .head { position: absolute; top: 0; left: 30px; width: 80px; height: 90px; background: #f5cba7; border-radius: 40px 40px 30px 30px; border: 3px solid #000; z-index: 2; }
     .hair { position: absolute; top: -5px; left: -5px; width: 90px; height: 40px; background: #2c3e50; border-radius: 40px 40px 0 0; border-bottom: 2px solid #000; }
     .eye { position: absolute; top: 45px; width: 10px; height: 10px; background: #000; border-radius: 50%; }
@@ -94,6 +109,23 @@
     .arm-l { left: -10px; } .arm-r { right: -10px; }
     .leg { position: absolute; top: 210px; width: 30px; height: 70px; background: #34495e; border: 3px solid #000; border-radius: 10px; z-index: 0; }
     .leg-l { left: 30px; } .leg-r { right: 30px; }
+
+    /* 🌟 手機專用排版修復 🌟 */
+    @media (max-width: 600px) {
+        .top-right-btns { top: 8px; right: 8px; gap: 6px; }
+        .back-btn { top: 8px; left: 8px; padding: 4px 8px; font-size: 11px; }
+        .voice-btn, .reset-btn { padding: 4px 8px; font-size: 12px; }
+        #hud { padding: 6px 4px; gap: 4px; }
+        .stat-label { font-size: 8px; width: 18px; }
+        .stat-val { font-size: 7px; }
+        #actions { padding: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); max-height: 45vh; gap: 4px; }
+        .action-btn { padding: 8px 2px; font-size: 11px; min-height: 44px; }
+        .action-btn small { font-size: 8px; }
+        .modal-box { padding: 15px; width: 95%; max-width: none; }
+        .modal-btn { padding: 10px; font-size: 12px; }
+        .job-btn { padding: 6px 2px; font-size: 11px; }
+        #character { transform: scale(0.6); animation: none; }
+    }
 </style>
 </head>
 <body>
@@ -173,20 +205,20 @@
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
             <p>請選擇你想從事的工種：</p>
             <div class="job-grid">
-                <button class="job-btn" onclick="selectJob('clerk')">📁 文員<small>$15k / 穩陣</small></button>
-                <button class="job-btn" onclick="selectJob('it')">💻 IT狗<small>$25k / 爆肝</small></button>
-                <button class="job-btn" onclick="selectJob('sales')">💼 金融Sales<small>$18k / 靠口才</small></button>
-                <button class="job-btn" onclick="selectJob('security')">👮 保安<small>$14k / 極hea</small></button>
-                <button class="job-btn" onclick="selectJob('cleaner')">🧹 清潔姐姐<small>$13k / 勞動</small></button>
-                <button class="job-btn" onclick="selectJob('delivery')">🛵 外賣仔<small>$16k / 搵命搏</small></button>
-                <button class="job-btn" onclick="selectJob('driver')">🚕 的士司機<small>$18k / 自由</small></button>
-                <button class="job-btn" onclick="selectJob('chef')">🍳 廚房佬<small>$20k / 高壓</small></button>
-                <button class="job-btn" onclick="selectJob('waiter')">🍽️ 侍應<small>$15k / 受氣</small></button>
-                <button class="job-btn" onclick="selectJob('agent')">🏠 地產經紀<small>$10k+ / 開單</small></button>
-                <button class="job-btn" onclick="selectJob('safety')">🦺 安全督導員<small>$22k / 地盤</small></button>
-                <button class="job-btn" onclick="selectJob('construction')">🏗️ 地盤佬<small>$20k / 體力</small></button>
-                <button class="job-btn" onclick="selectJob('surveyor')">📐 測量師<small>$24k / 專業</small></button>
-                <button class="job-btn" onclick="selectJob('engineer')">⚙️ 工程師<small>$26k / 孭飛</small></button>
+                <button class="job-btn" onclick="selectJob('clerk')">📁 文員<small>$15k</small></button>
+                <button class="job-btn" onclick="selectJob('it')">💻 IT狗<small>$25k</small></button>
+                <button class="job-btn" onclick="selectJob('sales')">💼 金融Sales<small>$18k</small></button>
+                <button class="job-btn" onclick="selectJob('security')">👮 保安<small>$14k</small></button>
+                <button class="job-btn" onclick="selectJob('cleaner')">🧹 清潔姐姐<small>$13k</small></button>
+                <button class="job-btn" onclick="selectJob('delivery')">🛵 外賣仔<small>$16k</small></button>
+                <button class="job-btn" onclick="selectJob('driver')">🚕 的士司機<small>$18k</small></button>
+                <button class="job-btn" onclick="selectJob('chef')">🍳 廚房佬<small>$20k</small></button>
+                <button class="job-btn" onclick="selectJob('waiter')">🍽️ 侍應<small>$15k</small></button>
+                <button class="job-btn" onclick="selectJob('agent')">🏠 地產經紀<small>$10k+</small></button>
+                <button class="job-btn" onclick="selectJob('safety')">🦺 安全督導員<small>$22k</small></button>
+                <button class="job-btn" onclick="selectJob('construction')">🏗️ 地盤佬<small>$20k</small></button>
+                <button class="job-btn" onclick="selectJob('surveyor')">📐 測量師<small>$24k</small></button>
+                <button class="job-btn" onclick="selectJob('engineer')">⚙️ 工程師<small>$26k</small></button>
                 <button class="job-btn" style="grid-column: span 2;" onclick="selectJob('kol')">📱 KOL 網紅<small>$5k底薪 / 靠流量</small></button>
             </div>
         </div>
@@ -196,12 +228,12 @@
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
-            <p id="property-status" style="color:#fff; font-size:13px; text-align:left; background:#111; padding:10px; border-radius:8px;">載入中...</p>
-            <button class="modal-btn warning" onclick="drawHousing('public')">🎲 抽公屋 (首期 $50,000 / 月供 $2,000)<small>中籤率 20%，租出可收 $4,000</small></button>
-            <button class="modal-btn warning" onclick="drawHousing('subsidized')">🎲 抽居屋 (首期 $150,000 / 月供 $6,000)<small>中籤率 15%，租出可收 $10,000</small></button>
-            <button class="modal-btn primary" onclick="buyProperty('private', 500000, 15000, 20000)">🏢 買私樓 (首期 $500,000)<small>月供 $15,000，租出可收 $20,000</small></button>
-            <button class="modal-btn primary" onclick="buyProperty('luxury', 1500000, 40000, 55000)">🏰 買豪宅 (首期 $1,500,000)<small>月供 $40,000，租出可收 $55,000</small></button>
-            <hr style="border-color:#333; margin:15px 0;">
+            <p id="property-status" style="color:#fff; font-size:12px; text-align:left; background:#111; padding:8px; border-radius:8px;">載入中...</p>
+            <button class="modal-btn warning" onclick="drawHousing('public')">🎲 抽公屋 (首期 $50k / 月供 $2k)<small>中籤率 20%，租出收 $4k</small></button>
+            <button class="modal-btn warning" onclick="drawHousing('subsidized')">🎲 抽居屋 (首期 $150k / 月供 $6k)<small>中籤率 15%，租出收 $10k</small></button>
+            <button class="modal-btn primary" onclick="buyProperty('private', 500000, 15000, 20000)">🏢 買私樓 (首期 $500k)<small>月供 $15k，租出收 $20k</small></button>
+            <button class="modal-btn primary" onclick="buyProperty('luxury', 1500000, 40000, 55000)">🏰 買豪宅 (首期 $1.5m)<small>月供 $40k，租出收 $55k</small></button>
+            <hr style="border-color:#333; margin:10px 0;">
             <button class="modal-btn danger" onclick="takeLoan()">💸 向財仔借 $100,000<small>每月 10% 利息，還唔到即破產</small></button>
             <button class="modal-btn primary" onclick="repayLoan()">💰 還清貸款<small>清還所有本金及利息</small></button>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('property-modal')">離開</button>
@@ -265,13 +297,13 @@
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👥 員工管理</h2>
-            <div style="background: #111; border-radius: 8px; padding: 10px; margin-bottom: 15px;">
+            <div style="background: #111; border-radius: 8px; padding: 8px; margin-bottom: 12px;">
                 <p style="font-size: 12px; margin: 0; text-align: left; color:#fff;">
                     員工總數：<span id="total-staff">0</span> / 5 人<br>每月總人工：<span id="total-salary" style="color: #e74c3c;">$0</span><br>每月總利潤：<span id="total-profit" style="color: #2ecc71;">$0</span>
                 </p>
             </div>
-            <div id="candidate-list" style="margin-bottom: 15px;"></div>
-            <div id="current-staff-list" style="margin-bottom: 15px;"></div>
+            <div id="candidate-list" style="margin-bottom: 12px;"></div>
+            <div id="current-staff-list" style="margin-bottom: 12px;"></div>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('staff-modal')">關閉</button>
         </div>
     </div>
@@ -295,7 +327,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v29';
+    const SAVE_KEY = 'officeSlaveSave_v30';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -323,13 +355,11 @@
         job: '求職中', salary: 0, stage: 'job_select', isInHospital: false, workCount: 0, hasInsurance: false, 
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
-        car: null, demeritPoints: 0 // 新增車輛與扣分屬性
+        car: null, demeritPoints: 0
     };
     
     let currentMonth = 0, candidates = [];
-    let timeOfDay = 0; // 0=早晨, 1=中午, 2=晚上
-    let currentDay = 1;
-    let hospitalFlag = false; // 防止重複彈窗
+    let timeOfDay = 0; let currentDay = 1; let hospitalFlag = false; 
     const MAX_STAFF = 5;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
@@ -354,7 +384,6 @@
             if (player.isBoss) { statusDisplay.innerText = displayStr + `👑 老闆`; statusDisplay.style.color = '#f1c40f'; }
             else { statusDisplay.innerText = displayStr + `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
 
-            // 體力/壓力預警閃爍
             const barEnergy = document.getElementById('bar-energy');
             const barStress = document.getElementById('bar-stress');
             if (!player.isBoss && player.stage === 'work') {
@@ -362,7 +391,6 @@
                 if (player.stress >= 80) barStress.classList.add('warning-flash'); else barStress.classList.remove('warning-flash');
             }
 
-            // 改變背景顏色
             if (!player.isBoss && player.stage === 'work') {
                 if (timeOfDay === 0) sceneEl.className = 'bg-morning';
                 else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
@@ -382,10 +410,7 @@
 
     function advanceTime() {
         timeOfDay++;
-        if (timeOfDay > 2) {
-            timeOfDay = 0;
-            currentDay++;
-        }
+        if (timeOfDay > 2) { timeOfDay = 0; currentDay++; }
         updateHUD();
     }
 
@@ -443,18 +468,14 @@
     function openCarModal() { document.getElementById('car-modal').style.display = 'flex'; }
     function buyCar(name, cost, fine) {
         if (player.money < cost) { showToast(`連 $${cost} 都冇，學人買車？`); return; }
-        player.money -= cost; 
-        player.car = { name: name, fine: fine }; 
-        player.mood = Math.min(100, player.mood + 20);
-        showToast(`🚗 成功買咗 ${name}！心情大增！`); 
-        closeModal('car-modal'); updateHUD(); updateActionButtons();
+        player.money -= cost; player.car = { name: name, fine: fine }; player.mood = Math.min(100, player.mood + 20);
+        showToast(`🚗 成功買咗 ${name}！心情大增！`); closeModal('car-modal'); updateHUD(); updateActionButtons();
     }
     function triggerTicketEvent() {
         if (player.car && !player.isBoss) {
-            if (Math.random() < 0.15) { // 15% 機率被抄牌
+            if (Math.random() < 0.15) { 
                 let fine = player.car.fine;
-                if (player.money >= fine) { player.money -= fine; }
-                else { player.money = 0; player.stress += 20; }
+                if (player.money >= fine) { player.money -= fine; } else { player.money = 0; player.stress += 20; }
                 player.demeritPoints += 3;
                 showToast(`🚓 違例泊車被抄牌！罰款 $${fine}，扣 3 分！(當前 ${player.demeritPoints} 分)`);
                 if (player.demeritPoints >= 15) { gameOver("你被抄牌扣滿 15 分，法庭判你停牌！心灰意冷下結束營業..."); return; }
@@ -522,7 +543,7 @@
         checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 (只保留日常好壞事) ===
+    // === 隨機事件 ===
     function triggerRandomEvent() {
         if (Math.random() > 0.2) return;
         let events = [
@@ -549,9 +570,7 @@
     function openHorseBet() { closeModal('invest-modal'); document.getElementById('horse-modal').style.display = 'flex'; document.getElementById('racing-anim').style.display = 'none'; document.getElementById('horse-buttons').style.display = 'grid'; }
     function betHorse(num) { 
         if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
-        player.money -= 500; 
-        document.getElementById('horse-buttons').style.display = 'none'; 
-        document.getElementById('racing-anim').style.display = 'block'; 
+        player.money -= 500; document.getElementById('horse-buttons').style.display = 'none'; document.getElementById('racing-anim').style.display = 'block'; 
         setTimeout(() => { 
             if (Math.random() < 0.15) { document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); openJail(); return; }
             if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); } 
@@ -562,9 +581,7 @@
     function openFootballBet() { closeModal('invest-modal'); document.getElementById('football-modal').style.display = 'flex'; document.getElementById('football-anim').style.display = 'none'; document.getElementById('football-buttons').style.display = 'grid'; }
     function betFootball(choice) { 
         if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
-        player.money -= 500; 
-        document.getElementById('football-buttons').style.display = 'none'; 
-        document.getElementById('football-anim').style.display = 'block'; 
+        player.money -= 500; document.getElementById('football-buttons').style.display = 'none'; document.getElementById('football-anim').style.display = 'block'; 
         setTimeout(() => { 
             if (Math.random() < 0.15) { document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); openJail(); return; }
             let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away'); 
@@ -577,19 +594,16 @@
     function playStock() { if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; } if (Math.random() < 0.5) { let l = Math.floor(Math.random() * 8000) + 2000; player.money -= l; showToast(`📉 股市大跌！蝕咗 $${l}`); } else { let w = Math.floor(Math.random() * 15000) + 5000; player.money += w; showToast(`📈 股市大升！賺咗 $${w}`); } closeModal('invest-modal'); updateHUD(); }
     function buyInsurance() { if (player.hasInsurance) { showToast("你已經買咗醫保啦！"); closeModal('invest-modal'); return; } if (player.money < 5000) { showToast("唔夠錢！"); return; } player.money -= 5000; player.hasInsurance = true; showToast("🛡️ 成功購買自願醫保！"); closeModal('invest-modal'); updateHUD(); }
 
-    // === 醫院系統 (明碼實價) ===
+    // === 醫院系統 ===
     function triggerHospital() {
-        if (hospitalFlag) return; 
-        hospitalFlag = true;
+        if (hospitalFlag) return; hospitalFlag = true;
         let reason = player.energy <= 0 ? '體力透支' : '壓力爆煲';
         document.getElementById('hospital-text').innerHTML = `你因為${reason}暈低咗！<br>你需要即刻作出決定：<br><br>去邊度睇醫生？`;
         document.getElementById('hospital-modal').style.display = 'flex';
         speakText("你暈低咗！去私家、公立、定係唔睇？");
     }
     function goToHospital(type) {
-        closeModal('hospital-modal');
-        hospitalFlag = false;
-        
+        closeModal('hospital-modal'); hospitalFlag = false;
         if (type === 'private') {
             if (player.money < 1000) { showToast("連 $1,000 都冇，去唔到私家醫院！"); triggerHospital(); return; }
             player.money -= 1000; player.energy = 100; player.stress = Math.max(0, player.stress - 30); player.health = Math.max(10, player.health - 5);
@@ -609,7 +623,7 @@
 
     function checkMonthEnd() {
         currentMonth++;
-        if (currentMonth % 3 === 0) { // 每 3 次行動結算一次生活費
+        if (currentMonth % 3 === 0) { 
             if (player.isBoss) {
                 let totalSalary = 0, totalProfit = 0;
                 player.staffList.forEach(s => { totalSalary += s.salary; if (s.type === 'sales') totalProfit += (Math.random() < 0.5 ? Math.floor(Math.random() * 40000) : 0); else totalProfit += s.profit; });
@@ -631,13 +645,8 @@
                 if (player.money < 0) { gameOver("你欠落大耳窿巨債，無力償還，被破產收場！"); return; }
             }
             if (player.money < 0) { gameOver("你供唔起樓，被銀行收樓，宣佈破產！"); return; }
-
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
-            
-            if (currentDay % 30 === 0) {
-                player.age++;
-                if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
-            }
+            if (currentDay % 30 === 0) { player.age++; if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓..."); }
         }
         updateHUD(); 
     }
@@ -710,13 +719,9 @@
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
             addActionBtn('🛏️ 睡觉休息', '跳至明早回滿體力', 'rest', () => { 
-                player.energy = 100; 
-                player.stress = Math.max(0, player.stress - 15); 
-                player.mood = Math.min(100, player.mood + 5); 
-                currentDay++; timeOfDay = 0;
-                triggerTicketEvent();
-                showToast("😴 瞓咗個好覺，第二朝體力回滿！"); 
-                checkMonthEnd(); updateHUD(); updateActionButtons(); 
+                player.energy = 100; player.stress = Math.max(0, player.stress - 15); player.mood = Math.min(100, player.mood + 5); 
+                currentDay++; timeOfDay = 0; triggerTicketEvent();
+                showToast("😴 瞓咗個好覺，第二朝體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
