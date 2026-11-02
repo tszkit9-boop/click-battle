@@ -180,7 +180,6 @@
     .float-text { position: absolute; font-weight: bold; font-size: 20px; pointer-events: none; animation: floatUp 1s forwards; z-index: 20; text-shadow: 2px 2px 0 #000; }
     @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 1; } 100% { transform: translateY(-80px) scale(1.2); opacity: 0; } }
     
-    /* 小遊戲修復版 */
     #minigame-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
     #minigame-btn { 
         width: 160px; height: 160px; border-radius: 50%; background: #e67e22; border: 6px solid #fff; 
@@ -251,14 +250,12 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 老細鬧人 -->
     <div id="boss-overlay">
         <div class="boss-face">👹</div>
         <div class="boss-text" id="boss-dialogue"></div>
         <button class="boss-btn" onclick="closeBossOverlay()">知錯喇老細...</button>
     </div>
 
-    <!-- 抄牌彈窗 -->
     <div id="police-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c;">
             <h2 style="color: #e74c3c;">🚨 阿 Sir 抄牌！</h2>
@@ -267,7 +264,6 @@
         </div>
     </div>
 
-    <!-- 被捕彈窗 -->
     <div id="jail-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #3498db;">
             <h2 style="color: #3498db;">🚔 你被拘捕了！</h2>
@@ -277,7 +273,6 @@
         </div>
     </div>
 
-    <!-- 買車彈窗 -->
     <div id="car-modal" class="modal-overlay">
         <div class="modal-box">
             <h2>🚗 汽車展銷廳</h2>
@@ -288,7 +283,6 @@
         </div>
     </div>
 
-    <!-- 泊車彈窗 -->
     <div id="parking-modal" class="modal-overlay">
         <div class="modal-box">
             <h2>🅿️ 停車場</h2>
@@ -299,7 +293,14 @@
         </div>
     </div>
 
-    <!-- 小遊戲 -->
+    <div id="hospital-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #e74c3c;">
+            <h2 style="color: #e74c3c;">🏥 強制送院！</h2>
+            <p>你因為過度勞累/壓力爆煲暈低咗。<br>醫生強制你休息 3 個月，並收取了一半醫療費。<br><br><span style="color: #f1c40f;">扣除 50% 資產，年齡 +1</span></p>
+            <button class="modal-btn danger" onclick="closeHospital()">接受現實</button>
+        </div>
+    </div>
+
     <div id="minigame-overlay">
         <h2 id="mg-title" style="color:#fff; margin-bottom:20px; font-size:24px;">瘋狂連點賺錢！</h2>
         <div id="minigame-btn">撳！</div>
@@ -315,7 +316,7 @@
     </div>
 
 <script>
-    const SAVE_KEY = 'officeSlaveSave_v6';
+    const SAVE_KEY = 'officeSlaveSave_v7';
     function saveGame() {
         if (player.stage === 'end') { localStorage.removeItem(SAVE_KEY); return; }
         localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, interviewStep }));
@@ -351,7 +352,7 @@
         job: '無業', jobType: '', salary: 0, 
         house: '街邊', partner: false, kids: 0, stage: 'interview',
         hasCar: false, carType: '', parkingType: 'none', parkingTimeLeft: 0, licensePoints: 15,
-        isInJail: false
+        isInJail: false, isInHospital: false
     };
     let currentMonth = 0; let interviewStep = 0; let isMinigameActive = false;
     let isTyping = false; let typingTimeout; let fullText = ""; let typingEl = null;
@@ -449,8 +450,30 @@
         
         updateCarHUD();
 
-        if (player.energy <= 0 || player.stress >= 100) gameOver("你因為過度勞累/壓力爆煲，暈低咗送院...");
+        // 唔再直接 Game Over，改為強制送院
+        if ((player.energy <= 0 || player.stress >= 100) && !player.isInHospital && player.stage === 'work') {
+            triggerHospital();
+        }
+        
         saveGame();
+    }
+
+    function triggerHospital() {
+        player.isInHospital = true;
+        player.money = Math.floor(player.money * 0.5); // 扣一半錢
+        player.energy = 100;
+        player.stress = 20;
+        player.age += 1; // 浪費一年時間
+        document.getElementById('hospital-modal').style.display = 'flex';
+        playSound('bad');
+    }
+
+    function closeHospital() {
+        document.getElementById('hospital-modal').style.display = 'none';
+        player.isInHospital = false;
+        showToast("你出院了，以後要保重身體...");
+        updateHUD();
+        updateActionButtons();
     }
 
     function showFloatText(text, color) {
@@ -612,14 +635,22 @@
 
     function updateActionButtons() {
         actionsEl.innerHTML = '';
-        if (player.stage === 'work' && !player.isInJail) {
+        if (player.stage === 'work' && !player.isInJail && !player.isInHospital) {
             
             let workDesc = (player.jobType === 'safety_officer' || player.jobType === 'safety_inspector') ? '巡地盤捉違規' : '連點賺錢';
             addActionBtn('💼 努力工作', workDesc, 'work', player.energy > 10 ? () => startMinigame() : null);
-            addActionBtn('🐟 帶薪摸魚', '回復心情', 'rest', player.stress > 0 ? () => fishAction() : null);
             
-            if (player.energy > 20) addActionBtn('🍜 食頹飯', '花 $50 回體力', 'buy', () => eatAction());
-            else addActionBtn('😴 瞓街邊', '無錢，瞓街回體力', 'buy', () => sleepStreetAction());
+            // 休息 / 摸魚
+            addActionBtn('🐟 帶薪摸魚', '減壓回體力 (有風險)', 'rest', player.stress > 0 ? () => fishAction() : null);
+            
+            // 食飯 / 診所
+            if (player.money >= 2000) {
+                addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => goClinicAction());
+            } else if (player.energy > 20) {
+                addActionBtn('🍜 食頹飯', '花 $50 回體力', 'buy', () => eatAction());
+            } else {
+                addActionBtn('😴 瞓街邊', '無錢，瞓街回體力', 'buy', () => sleepStreetAction());
+            }
             
             if (player.money >= 4000) addActionBtn('🏠 交租', '每月必須支出', 'buy', () => payRentAction());
             if (!player.partner && player.money >= 10000 && player.mood > 50) addActionBtn('💖 去聯誼', '花 $10000 脫單', 'buy', () => findPartnerAction());
@@ -677,17 +708,13 @@
 
     function closeBossOverlay() { bossOverlay.style.display = 'none'; playSound('click'); }
 
-    // 修復後的小遊戲
     function startMinigame() {
         if (isMinigameActive) return; 
         isMinigameActive = true; 
         minigameOverlay.style.display = 'flex';
         
-        if (player.jobType === 'safety_officer' || player.jobType === 'safety_inspector') {
-            mgTitle.innerText = "🚨 落現場捉違規！";
-        } else {
-            mgTitle.innerText = "瘋狂連點賺錢！";
-        }
+        if (player.jobType === 'safety_officer' || player.jobType === 'safety_inspector') mgTitle.innerText = "🚨 落現場捉違規！";
+        else mgTitle.innerText = "瘋狂連點賺錢！";
 
         let clicks = 0; 
         let timeLeft = 3.0;
@@ -697,7 +724,6 @@
         mgTime.innerText = "3.0";
         mgBtn.style.transform = 'scale(1)';
 
-        // 使用 mousedown / touchstart 取代 onclick，反應更快
         const handlePress = (e) => {
             if(e) e.preventDefault();
             if(!isMinigameActive) return;
@@ -710,7 +736,6 @@
         mgBtn.onmousedown = handlePress;
         mgBtn.ontouchstart = handlePress;
 
-        // 精準計時器
         let startTime = Date.now();
         let timer = setInterval(() => {
             let elapsed = (Date.now() - startTime) / 1000;
@@ -752,8 +777,17 @@
             earn *= 0.5; 
         }
         
-        player.money += earn; player.energy -= 30; player.stress += 20; player.mood -= 10;
-        playSound('money'); showFloatText(`+$${earn}`, '#f1c40f'); showFloatText(`-30 🔋`, '#e74c3c');
+        player.money += earn; 
+        // 職業專屬消耗
+        if (player.jobType === 'safety_officer' || player.jobType === 'safety_inspector') {
+            player.energy -= 10; 
+        } else {
+            player.energy -= 15; 
+        }
+        player.stress += 10; 
+        player.mood -= 5;
+        
+        playSound('money'); showFloatText(`+$${earn}`, '#f1c40f'); showFloatText(`-15 🔋`, '#e74c3c');
         
         checkParking(); 
         checkMonthEnd(); updateHUD(); updateActionButtons();
@@ -771,10 +805,22 @@
             triggerBossAnger(); player.money = Math.max(0, player.money - 1000); player.stress += 30; player.mood -= 20;
             showFloatText(`- $1000`, '#e74c3c');
         } else {
-            player.stress = Math.max(0, player.stress - 30); player.mood = Math.min(100, player.mood + 20); player.energy = Math.min(100, player.energy + 10);
-            showToast("🐟 帶薪摸魚成功！真爽！"); showFloatText(`-30 🤯`, '#9b59b6');
+            player.stress = Math.max(0, player.stress - 40); 
+            player.mood = Math.min(100, player.mood + 20); 
+            player.energy = Math.min(100, player.energy + 20);
+            showToast("🐟 帶薪摸魚成功！真爽！"); showFloatText(`-40 🤯`, '#9b59b6');
         }
         checkParking(); checkMonthEnd(); updateHUD(); updateActionButtons();
+    }
+
+    function goClinicAction() {
+        if (player.money < 2000) return;
+        player.money -= 2000;
+        player.energy = 100;
+        player.stress = Math.max(0, player.stress - 50);
+        playSound('money'); showFloatText(`- $2000`, '#f1c40f'); showFloatText(`+100 🔋`, '#e74c3c');
+        showToast("睇完醫生，精神晒！");
+        updateHUD(); updateActionButtons();
     }
 
     function eatAction() {
@@ -859,7 +905,6 @@
         player.stage = 'end'; dialogueBox.style.display = 'none'; actionsEl.style.display = 'none';
         document.getElementById('end-screen').style.display = 'flex';
         let endingTitle = "👴 光榮退休";
-        if (player.stress >= 100 || player.energy <= 0) endingTitle = "💀 過勞死";
         if (player.money < 0) endingTitle = "💸 破產邊緣";
         if (player.mood < 20) endingTitle = "😔 抑鬱終老";
         document.getElementById('end-title').innerText = endingTitle;
