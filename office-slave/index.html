@@ -587,7 +587,6 @@
                 timeOfDay = d.timeOfDay || 0; 
                 currentDay = d.currentDay || 1; 
                 
-                // 兼容舊存檔
                 if (player.bossMpfRate === undefined) player.bossMpfRate = 0.05;
                 if (player.fixedDeposit === undefined) player.fixedDeposit = 0;
                 if (player.creditCardDebt === undefined) player.creditCardDebt = 0;
@@ -635,7 +634,6 @@
         isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false,
         companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1,
         slackCount: 0, autoBusiness: false, bossMpfRate: 0.05,
-        // 新系統
         sideHustles: [], fixedDeposit: 0, creditCardDebt: 0, creditScore: 100, divorceWarnings: 0
     };
     
@@ -817,7 +815,7 @@
     // === 抓摸魚（老闆） ===
     function catchSlacking(idx) {
         const s = player.staffList[idx];
-        if (!s || s.hasOptions) return; // 有期權唔摸魚
+        if (!s || s.hasOptions) return; 
         document.getElementById('slacking-name').innerText = s.name;
         document.getElementById('slacking-emoji').innerText = getStaffEmoji(s);
         document.getElementById('slacking-modal').style.display = 'flex';
@@ -1177,7 +1175,7 @@
         player.money -= 3000;
         player.mood = Math.min(100, player.mood + 25);
         player.stress = Math.max(0, player.stress - 15);
-        player.divorceWarnings = Math.max(0, player.divorceWarnings - 1); // 約會可以減少警告
+        player.divorceWarnings = Math.max(0, player.divorceWarnings - 1); 
         
         closeModal('family-modal');
         const screen = document.getElementById('family-interact-screen');
@@ -1374,7 +1372,6 @@
                 if (opt.money) player.money += opt.money;
                 if (opt.energy) player.energy = Math.max(0, player.energy + opt.energy);
                 
-                // 離婚警告累積
                 if (opt.divorce) {
                     player.divorceWarnings++;
                     if (player.divorceWarnings >= 3) {
@@ -1670,7 +1667,6 @@
     }
 
     function doMonthSettle() {
-        // 1. 收入結算
         if (player.isListed) {
             player.money += player.dividendPerMonth;
             showToast(`💹 收到上市股息 $${player.dividendPerMonth.toLocaleString()}`);
@@ -1688,7 +1684,6 @@
                 }
             });
             
-            // 期權分薄利潤
             if (hasOptions) totalProfit = Math.floor(totalProfit * 0.9);
             
             totalProfit = Math.floor(totalProfit * 1.5);
@@ -1724,7 +1719,6 @@
             player.mpf += mpfCost;
             showToast(`💼 老闆出糧啦！袋 $${salaryPay} (另供 $${mpfCost} MPF)`);
             
-            // 打工仔副業收入
             if (player.sideHustles.length > 0) {
                 let sideIncome = 0;
                 let sideEnergy = 0;
@@ -1737,7 +1731,6 @@
                         sideStress += sh.stress;
                     }
                 });
-                // 體力足夠先有收入
                 if (player.energy >= sideEnergy) {
                     player.money += sideIncome;
                     player.energy -= sideEnergy;
@@ -1749,14 +1742,12 @@
             }
         }
 
-        // 2. 銀行定期利息
         if (player.fixedDeposit > 0) {
-            let interest = Math.floor(player.fixedDeposit * 0.003); // 每月 0.3%
+            let interest = Math.floor(player.fixedDeposit * 0.003);
             player.fixedDeposit += interest;
             showToast(`🏦 銀行定期利息：+$${interest}`);
         }
 
-        // 3. 信用卡欠款
         if (player.creditCardDebt > 0) {
             let interest = Math.floor(player.creditCardDebt * 0.05);
             player.creditCardDebt += interest;
@@ -1764,7 +1755,6 @@
             showToast(`💳 信用卡欠款：+$${interest} 利息，信用分 -10`);
         }
 
-        // 4. MPF 回報
         if (player.mpf > 0) {
             if (Math.random() < 0.7) {
                 let rate = 0.01 + Math.random() * 0.03;
@@ -1779,7 +1769,6 @@
             }
         }
 
-        // 5. 供樓收租
         if (player.mortgage > 0) {
             player.money -= player.mortgage;
             let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
@@ -1787,13 +1776,11 @@
             showToast(`🏠 扣除供樓 $${player.mortgage}，收租 $${rentInc}`);
         }
 
-        // 6. 停車場
         if (player.hasParking) {
             player.money -= 2500;
             showToast(`🚗 扣除停車場月租 $2,500`);
         }
 
-        // 7. 財仔利息
         if (player.loan > 0) {
             let interest = Math.floor(player.loan * 0.1);
             player.money -= interest;
@@ -1801,7 +1788,6 @@
             if (player.money < 0) { gameOver("你欠落大耳窿巨債，無力償還，被破產收場！"); return; }
         }
 
-        // 8. 寵物
         if (player.pet) {
             player.money -= player.pet.cost;
             player.pet.health -= 10;
@@ -1813,14 +1799,12 @@
             }
         }
 
-        // 9. 小朋友
         if (player.hasKid) {
             let kidCost = 8000;
             player.money -= kidCost;
             showToast(`👶 扣除小朋友奶粉錢及補習費 $${kidCost}`);
         }
 
-        // 10. 離婚危機判定
         if (player.isMarried) {
             if (player.stress > 80) {
                 player.divorceWarnings++;
@@ -1828,11 +1812,10 @@
             }
             if (player.divorceWarnings >= 3) {
                 triggerDivorce();
-                return; // 離婚優先，直接返回
+                return; 
             }
         }
 
-        // 11. 破產與生日
         if (player.money < 0) { gameOver("你供唔起樓或無力還債，宣佈破產！"); return; }
         if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
 
@@ -2062,15 +2045,16 @@
         let s = player.staffList[index];
         if (!s || s.isManager || s.hasOptions) return;
         s.hasOptions = true;
-        s.status = STAFF_STATUSES[0]; // 永遠打字中
+        s.status = STAFF_STATUSES[0]; 
         showToast(`🚀 ${s.name} 獲發期權！以後唔會摸魚，但公司利潤 -10%`);
         updateHUD(); openStaffModal();
     }
 
+    // 🔥 已將上市門檻由 500 萬大幅降低到 100 萬
     function doIPO() {
         if (player.isListed) { showToast("公司已經上市啦！"); return; }
-        if (player.companyValue < 5000000) {
-            showToast(`公司淨資產要 $5,000,000 先可以上市！目前 $${player.companyValue.toLocaleString()}`);
+        if (player.companyValue < 1000000) {
+            showToast(`公司淨資產要 $1,000,000 先可以上市！目前 $${player.companyValue.toLocaleString()}`);
             return;
         }
         let ipoMoney = player.companyValue * 2;
@@ -2113,7 +2097,7 @@
             statusText += `<hr style="border-color:#333; margin:8px 0;">`;
             statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
             statusText += `🏦 老闆 MPF 供款：${Math.round((player.bossMpfRate || 0) * 100)}%<br>`;
-            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()} / $5,000,000 (上市門檻)<br>`;
+            statusText += `🏦 公司淨資產：$${player.companyValue.toLocaleString()} / $1,000,000 (上市門檻)<br>`;
             statusText += `<small style="color:#a4b0be;">(Sales 的利潤為隨機，需視乎每月結算)</small>`;
         }
         
@@ -2149,7 +2133,7 @@
             addActionBtn('🤝 見客傾生意', '手動：隨機大賺或大蝕', 'work', bossBusinessAction);
             addActionBtn(player.autoBusiness ? '🛑 停止自動' : '🤖 自動見客', player.autoBusiness ? '正在自動接單...' : '每 3 秒自動接單 (收益較低)', 'boss', toggleAutoBusiness);
             addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
-            addActionBtn('📈 申請上市', player.companyValue >= 5000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $5M`, 'boss', doIPO);
+            addActionBtn('📈 申請上市', player.companyValue >= 1000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $1M`, 'boss', doIPO);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
