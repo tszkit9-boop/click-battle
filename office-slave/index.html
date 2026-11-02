@@ -43,26 +43,13 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    /* 老闆寫字樓（支援多人滾動） */
-    #office-view { 
-        display: none; 
-        position: absolute; 
-        inset: 0; 
-        z-index: 6; 
-        padding: 15px; 
-        padding-top: 30px;
-        padding-bottom: 30px;
-        overflow-y: auto; 
-        -webkit-overflow-scrolling: touch; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: flex-start; /* 改為頂部對齊，方便向下捲動 */
-    }
+    #office-view { display: none; position: absolute; inset: 0; z-index: 6; padding: 15px; padding-top: 30px; padding-bottom: 30px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-direction: column; align-items: center; justify-content: flex-start; }
     #office-view.active { display: flex; }
     .office-title { text-align: center; color: #f1c40f; font-size: 14px; font-weight: bold; margin-bottom: 12px; text-shadow: 0 0 10px rgba(241,196,15,0.6); }
     .staff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 480px; width: 100%; padding-bottom: 20px; }
     .staff-desk { background: linear-gradient(135deg, rgba(44,62,80,0.95), rgba(30,39,46,0.95)); border: 2px solid #3498db; border-radius: 12px; padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(52,152,219,0.3); position: relative; overflow: hidden; min-height: 100px; }
     .staff-desk.manager { border-color: #f1c40f; box-shadow: 0 0 15px rgba(241,196,15,0.5); }
+    .staff-desk.optioned { border-color: #e84393; box-shadow: 0 0 15px rgba(232,67,147,0.5); }
     .staff-desk .desk-emoji { font-size: 34px; animation: typing 1s infinite alternate; }
     .staff-desk .desk-name { font-size: 12px; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     .staff-desk .desk-status { font-size: 10px; color: #a4b0be; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 8px; margin-top: 2px; }
@@ -262,6 +249,15 @@
         <button class="modal-btn primary" style="max-width:200px; text-align:center;" onclick="closeEventScreen('baby-screen')">繼續</button>
     </div>
 
+    <!-- 離婚畫面 -->
+    <div id="divorce-screen" class="event-screen" style="background: rgba(100, 100, 100, 0.95);">
+        <div class="event-icon">💔</div>
+        <h1 style="color:#e74c3c;">離婚收場</h1>
+        <p style="color:#fff; font-size:18px; font-weight:bold; margin-bottom:20px;">因為長期爭執同壓力，另一半決定離開你...</p>
+        <p style="color:#ccc; font-size:14px; margin-bottom:20px;">你被分走了一半財產！</p>
+        <button class="modal-btn danger" style="max-width:200px; text-align:center;" onclick="closeDivorceScreen()">繼續做社畜</button>
+    </div>
+
     <!-- 家庭互動 -->
     <div id="family-interact-screen" class="event-screen">
         <div class="interact-avatar" id="family-interact-avatar">👨‍👩‍👦</div>
@@ -289,6 +285,36 @@
             <button class="modal-btn warning" onclick="doRelax(1000, 20, 5, '食大餐')">🍣 食大餐 ($1,000)<small>減 20 壓力，加 5 心情</small></button>
             <button class="modal-btn casino" onclick="doRelax(2000, 30, 15, '唱K')">🎤 唱K ($2,000)<small>減 30 壓力，加 15 心情</small></button>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('relax-modal')">返回</button>
+        </div>
+    </div>
+
+    <!-- 副業 -->
+    <div id="sidehustle-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #00d2d3;">
+            <h2 style="color: #00d2d3;">💼 副業 / 被動收入</h2>
+            <p id="sidehustle-status">投資副業，每月自動賺取外快！</p>
+            <div id="sidehustle-list" style="text-align:left; margin-bottom:10px;"></div>
+            <button class="modal-btn danger" style="background:#555;" onclick="closeModal('sidehustle-modal')">離開</button>
+        </div>
+    </div>
+
+    <!-- 銀行 -->
+    <div id="bank-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #f1c40f;">
+            <h2 style="color: #f1c40f;">🏦 銀行系統</h2>
+            <div style="background: #111; border-radius: 8px; padding: 8px; margin-bottom: 12px;">
+                <p style="font-size: 12px; margin: 0; text-align: left; color:#fff;" id="bank-status">
+                    定期存款：$0<br>信用卡欠款：$0<br>信用評分：100 分
+                </p>
+            </div>
+            <button class="modal-btn primary" onclick="depositFD(10000)">💰 存入定期 $10,000<small>每月收 0.3% 利息</small></button>
+            <button class="modal-btn primary" onclick="depositFD(50000)">💰 存入定期 $50,000<small>每月收 0.3% 利息</small></button>
+            <button class="modal-btn warning" onclick="withdrawFD()">💸 提取所有定期<small>取回本金及已累積利息</small></button>
+            <hr style="border-color:#333; margin:10px 0;">
+            <button class="modal-btn casino" onclick="useCreditCard(10000)">💳 碌卡套現 $10,000<small>每月 5% 利息，不還扣信用分</small></button>
+            <button class="modal-btn casino" onclick="useCreditCard(30000)">💳 碌卡套現 $30,000<small>每月 5% 利息</small></button>
+            <button class="modal-btn danger" onclick="repayCreditCard()">💳 還清卡數<small>還清所有欠款</small></button>
+            <button class="modal-btn danger" style="background:#555; margin-top:10px;" onclick="closeModal('bank-modal')">離開</button>
         </div>
     </div>
 
@@ -560,7 +586,14 @@
                 currentMonth = d.currentMonth; 
                 timeOfDay = d.timeOfDay || 0; 
                 currentDay = d.currentDay || 1; 
+                
+                // 兼容舊存檔
                 if (player.bossMpfRate === undefined) player.bossMpfRate = 0.05;
+                if (player.fixedDeposit === undefined) player.fixedDeposit = 0;
+                if (player.creditCardDebt === undefined) player.creditCardDebt = 0;
+                if (player.creditScore === undefined) player.creditScore = 100;
+                if (player.divorceWarnings === undefined) player.divorceWarnings = 0;
+                if (player.sideHustles === undefined) player.sideHustles = [];
                 return true; 
             } 
         } catch(e){} 
@@ -586,6 +619,13 @@
         kol: { name: 'KOL', baseSalary: 5000, energyCost: 10, stressCost: 12, levels: ['素人', '小網紅', '帶貨主播', '百萬KOL', 'MCN老闆'] }
     };
 
+    const SIDE_HUSTLES = [
+        { id: 'shop', name: '網店', cost: 50000, income: 3000, energy: 5, stress: 5 },
+        { id: 'youtuber', name: 'YouTuber', cost: 20000, income: 1500, energy: 10, stress: 10 },
+        { id: 'novel', name: '寫小說', cost: 10000, income: 800, energy: 5, stress: 5 },
+        { id: 'miner', name: '加密礦機', cost: 100000, income: 6000, energy: 2, stress: 2 }
+    ];
+
     let player = { 
         gender: 'male', age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100, 
         job: '求職中', salary: 0, stage: 'gender_select', isInHospital: false, workCount: 0, hasInsurance: false, 
@@ -594,13 +634,15 @@
         car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
         isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false,
         companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1,
-        slackCount: 0, autoBusiness: false, bossMpfRate: 0.05
+        slackCount: 0, autoBusiness: false, bossMpfRate: 0.05,
+        // 新系統
+        sideHustles: [], fixedDeposit: 0, creditCardDebt: 0, creditScore: 100, divorceWarnings: 0
     };
     
     let currentMonth = 0, candidates = [];
     let timeOfDay = 0; let currentDay = 1; let hospitalFlag = false; 
     let interviewStep = 0; 
-    const MAX_STAFF = 12; // 提升上限至 12 人
+    const MAX_STAFF = 12;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
     let voiceMode = 0; 
@@ -708,6 +750,7 @@
 
     function getStaffEmoji(s) {
         if (s.isManager) return '👔';
+        if (s.hasOptions) return '🚀';
         if (s.type === 'intern') return '👨‍🎓';
         if (s.type === 'sales') return '🕴️';
         if (s.type === 'cleaner') return '🧹';
@@ -734,9 +777,9 @@
             if (!s.status) s.status = STAFF_STATUSES[0];
             let isSlacking = (s.status.text === '摸魚中' || s.status.text === '偷懶中');
             let div = document.createElement('div');
-            div.className = 'staff-desk' + (s.isManager ? ' manager' : '') + (isSlacking ? ' slacking' : '');
+            div.className = 'staff-desk' + (s.isManager ? ' manager' : '') + (s.hasOptions ? ' optioned' : '') + (isSlacking ? ' slacking' : '');
             div.innerHTML = `
-                <div class="desk-level">${s.isManager ? '👔 主管' : 'Lv.' + (s.level || 1)}</div>
+                <div class="desk-level">${s.isManager ? '👔 主管' : (s.hasOptions ? '🚀 期權' : 'Lv.' + (s.level || 1))}</div>
                 <div class="desk-emoji">${getStaffEmoji(s)}</div>
                 <div class="desk-name">${s.name}</div>
                 <div class="desk-status">${s.status.emoji} ${s.status.text}</div>
@@ -761,7 +804,11 @@
         if (staffStatusTimer) return;
         staffStatusTimer = setInterval(() => {
             if (!player.isBoss || player.isListed || !player.staffList || player.staffList.length === 0) return;
-            let idx = Math.floor(Math.random() * player.staffList.length);
+            
+            let canSlackList = player.staffList.filter(s => !s.hasOptions);
+            if (canSlackList.length === 0) return;
+            
+            let idx = player.staffList.indexOf(canSlackList[Math.floor(Math.random() * canSlackList.length)]);
             player.staffList[idx].status = STAFF_STATUSES[Math.floor(Math.random() * STAFF_STATUSES.length)];
             renderStaffScene();
         }, 4000);
@@ -770,7 +817,7 @@
     // === 抓摸魚（老闆） ===
     function catchSlacking(idx) {
         const s = player.staffList[idx];
-        if (!s) return;
+        if (!s || s.hasOptions) return; // 有期權唔摸魚
         document.getElementById('slacking-name').innerText = s.name;
         document.getElementById('slacking-emoji').innerText = getStaffEmoji(s);
         document.getElementById('slacking-modal').style.display = 'flex';
@@ -1012,6 +1059,90 @@
         closeModal('relax-modal'); advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
+    // === 副業系統 ===
+    function openSideHustleModal() {
+        document.getElementById('sidehustle-modal').style.display = 'flex';
+        renderSideHustles();
+    }
+
+    function renderSideHustles() {
+        let list = document.getElementById('sidehustle-list');
+        list.innerHTML = '';
+        
+        SIDE_HUSTLES.forEach(sh => {
+            let owned = player.sideHustles.includes(sh.id);
+            let div = document.createElement('div');
+            div.className = 'staff-card';
+            div.innerHTML = `<div class="staff-info"><b>${sh.name}</b><small>月入: $${sh.income} | 體力: -${sh.energy} | 壓力: +${sh.stress}</small></div>
+                <button ${owned ? 'disabled style="background:#555;"' : `onclick="buySideHustle('${sh.id}', ${sh.cost})"`} style="background:#2ecc71; border:none; color:#fff; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:12px;">
+                ${owned ? '已開設' : `開設 $${sh.cost}`}
+                </button>`;
+            list.appendChild(div);
+        });
+    }
+
+    function buySideHustle(id, cost) {
+        if (player.money < cost) { showToast("錢唔夠！"); return; }
+        player.money -= cost;
+        player.sideHustles.push(id);
+        showToast("✅ 成功開設副業！");
+        renderSideHustles();
+        updateHUD();
+    }
+
+    // === 銀行系統 ===
+    function openBankModal() {
+        document.getElementById('bank-modal').style.display = 'flex';
+        updateBankUI();
+    }
+
+    function updateBankUI() {
+        document.getElementById('bank-status').innerHTML = `
+            定期存款：$${player.fixedDeposit.toLocaleString()}<br>
+            信用卡欠款：$${player.creditCardDebt.toLocaleString()}<br>
+            信用評分：${player.creditScore} 分
+        `;
+    }
+
+    function depositFD(amount) {
+        if (player.money < amount) { showToast("錢唔夠！"); return; }
+        player.money -= amount;
+        player.fixedDeposit += amount;
+        showToast(`💰 成功存入 $${amount} 定期！`);
+        updateBankUI(); updateHUD();
+    }
+
+    function withdrawFD() {
+        if (player.fixedDeposit === 0) { showToast("你冇定期存款！"); return; }
+        let amt = player.fixedDeposit;
+        player.money += amt;
+        player.fixedDeposit = 0;
+        showToast(`💸 成功提取 $${amt} 定期！`);
+        updateBankUI(); updateHUD();
+    }
+
+    function useCreditCard(amount) {
+        let maxLimit = 50000 + (player.creditScore * 500);
+        if (player.creditCardDebt + amount > maxLimit) {
+            showToast(`超出信用額度！上限為 $${maxLimit}`);
+            return;
+        }
+        player.money += amount;
+        player.creditCardDebt += amount;
+        showToast(`💳 成功碌卡套現 $${amount}！`);
+        updateBankUI(); updateHUD();
+    }
+
+    function repayCreditCard() {
+        if (player.creditCardDebt === 0) { showToast("你冇卡數要還！"); return; }
+        if (player.money < player.creditCardDebt) { showToast("錢唔夠還！"); return; }
+        player.money -= player.creditCardDebt;
+        player.creditCardDebt = 0;
+        showToast("✅ 成功還清卡數！");
+        updateBankUI(); updateHUD();
+    }
+
+    // === 家庭與離婚 ===
     function openFamilyModal() {
         document.getElementById('family-modal').style.display = 'flex';
         let status = "你目前單身，專心做社畜。";
@@ -1046,6 +1177,7 @@
         player.money -= 3000;
         player.mood = Math.min(100, player.mood + 25);
         player.stress = Math.max(0, player.stress - 15);
+        player.divorceWarnings = Math.max(0, player.divorceWarnings - 1); // 約會可以減少警告
         
         closeModal('family-modal');
         const screen = document.getElementById('family-interact-screen');
@@ -1087,6 +1219,7 @@
         if (player.money < 100000) { showToast("連 $100,000 擺酒錢都冇，學人結婚？"); return; }
         player.money -= 100000; 
         player.isMarried = true; 
+        player.divorceWarnings = 0;
         player.mood = Math.min(100, player.mood + 50);
         closeModal('family-modal');
         
@@ -1140,6 +1273,26 @@
         updateHUD();
     }
 
+    function triggerDivorce() {
+        player.isDating = false;
+        player.isMarried = false;
+        player.hasKid = false;
+        player.divorceWarnings = 0;
+        let lostMoney = Math.floor(player.money * 0.5);
+        player.money -= lostMoney;
+        player.mood = Math.max(0, player.mood - 50);
+        player.stress = Math.min(100, player.stress + 30);
+        
+        document.getElementById('divorce-screen').style.display = 'flex';
+        speakText("你離婚啦！分身家！");
+        updateHUD();
+    }
+
+    function closeDivorceScreen() {
+        document.getElementById('divorce-screen').style.display = 'none';
+        advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+    }
+
     function triggerFamilyEvent(isManual = false) {
         if (!player.isMarried) { showToast("你都未結婚，邊有家庭互動呀？"); return; }
         if (isManual) closeModal('family-modal');
@@ -1167,7 +1320,7 @@
                 opts: [
                     { t: "「因為我想賺多啲錢買玩具俾你呀！」", m: -5, s: 5, msg: "小朋友似懂非懂咁點點頭。" },
                     { t: "「對唔住，我今晚早啲收工陪你玩！」(扣體力)", m: 20, s: -10, msg: "小朋友開心到彈起！", energy: -20 },
-                    { t: "「你大個就明㗎啦，行開啦！」", m: -20, s: 10, msg: "小朋友喊住跑開咗..." }
+                    { t: "「你大個就明㗎啦，行開啦！」", m: -20, s: 10, msg: "小朋友喊住跑開咗...", divorce: true }
                 ]
             });
             if (player.kidAge > 3) {
@@ -1177,7 +1330,7 @@
                     text: `你個${kidTitle}功課做唔完，喊住同你講：「好難呀，我唔識做...」`,
                     opts: [
                         { t: "耐心教佢做功課。(扣體力)", m: 10, s: 5, msg: "教咗兩個鐘，終於做完。", energy: -20 },
-                        { t: "「你自己諗下啦，唔好咩都靠人。」", m: -10, s: 10, msg: "小朋友覺得好委屈..." },
+                        { t: "「你自己諗下啦，唔好咩都靠人。」", m: -10, s: 10, msg: "小朋友覺得好委屈...", divorce: true },
                         { t: "「算啦，我幫你寫埋佢！」", m: 5, s: -5, msg: "你偷雞幫佢寫功課，好彩冇俾老師發現。" }
                     ]
                 });
@@ -1191,7 +1344,7 @@
             opts: [
                 { t: "「對唔住，今個週末我哋去旅行啦！」(扣錢)", m: 30, s: -10, msg: "另一半即刻笑返！", money: -10000 },
                 { t: "「我都係為咗頭家啫，體諒下啦。」", m: 0, s: 0, msg: "對方嘆咗口氣，冇再出聲。" },
-                { t: "「你知唔知我返工好辛苦㗎！」(嗌交)", m: -20, s: 20, msg: "兩人冷戰咗成晚..." }
+                { t: "「你知唔知我返工好辛苦㗎！」(嗌交)", m: -20, s: 20, msg: "兩人冷戰咗成晚...", divorce: true }
             ]
         });
 
@@ -1220,6 +1373,16 @@
                 player.stress = Math.max(0, Math.min(100, player.stress + opt.s));
                 if (opt.money) player.money += opt.money;
                 if (opt.energy) player.energy = Math.max(0, player.energy + opt.energy);
+                
+                // 離婚警告累積
+                if (opt.divorce) {
+                    player.divorceWarnings++;
+                    if (player.divorceWarnings >= 3) {
+                        screen.style.display = 'none';
+                        triggerDivorce();
+                        return;
+                    }
+                }
                 
                 showToast(opt.msg);
                 screen.style.display = 'none';
@@ -1507,13 +1670,15 @@
     }
 
     function doMonthSettle() {
+        // 1. 收入結算
         if (player.isListed) {
             player.money += player.dividendPerMonth;
             showToast(`💹 收到上市股息 $${player.dividendPerMonth.toLocaleString()}`);
         } else if (player.isBoss) {
-            let totalSalary = 0, totalProfit = 0, managerCount = 0;
+            let totalSalary = 0, totalProfit = 0, managerCount = 0, hasOptions = false;
             player.staffList.forEach(s => {
                 totalSalary += s.salary;
+                if (s.hasOptions) hasOptions = true;
                 if (s.isManager) {
                     managerCount++;
                 } else if (s.type === 'sales') {
@@ -1522,14 +1687,17 @@
                     totalProfit += s.profit;
                 }
             });
-            // 老闆賺錢加速：利潤直接乘 1.5 倍
+            
+            // 期權分薄利潤
+            if (hasOptions) totalProfit = Math.floor(totalProfit * 0.9);
+            
             totalProfit = Math.floor(totalProfit * 1.5);
             totalProfit = Math.floor(totalProfit * (player.competitorMultiplier || 1));
             totalProfit = Math.floor(totalProfit * (player.permanentProfitBonus || 1));
             totalProfit = Math.floor(totalProfit * (1 + managerCount * 0.10));
             player.competitorMultiplier = 1;
 
-            let net = totalProfit - totalSalary - 2000; // 營運費減至 2000
+            let net = totalProfit - totalSalary - 2000;
 
             if (net > 0) {
                 let mpfRate = player.bossMpfRate !== undefined ? player.bossMpfRate : 0.05;
@@ -1537,7 +1705,7 @@
                 player.mpf += mpfCost;
                 net -= mpfCost;
                 player.money += net;
-                player.companyValue += Math.floor(net * 0.8); // 淨資產累積加速
+                player.companyValue += Math.floor(net * 0.8);
                 if (mpfCost > 0) {
                     showToast(`📈 月結淨賺：$${net} (已扣 $${mpfCost} 老闆 MPF ${Math.round(mpfRate*100)}%)`);
                 } else {
@@ -1555,8 +1723,48 @@
             player.money += salaryPay;
             player.mpf += mpfCost;
             showToast(`💼 老闆出糧啦！袋 $${salaryPay} (另供 $${mpfCost} MPF)`);
+            
+            // 打工仔副業收入
+            if (player.sideHustles.length > 0) {
+                let sideIncome = 0;
+                let sideEnergy = 0;
+                let sideStress = 0;
+                player.sideHustles.forEach(id => {
+                    let sh = SIDE_HUSTLES.find(x => x.id === id);
+                    if (sh) {
+                        sideIncome += sh.income;
+                        sideEnergy += sh.energy;
+                        sideStress += sh.stress;
+                    }
+                });
+                // 體力足夠先有收入
+                if (player.energy >= sideEnergy) {
+                    player.money += sideIncome;
+                    player.energy -= sideEnergy;
+                    player.stress = Math.min(100, player.stress + sideStress);
+                    showToast(`💼 副業收入：+$${sideIncome} (扣 ${sideEnergy} 體力)`);
+                } else {
+                    showToast(`💼 體力不足，副業停擺！`);
+                }
+            }
         }
 
+        // 2. 銀行定期利息
+        if (player.fixedDeposit > 0) {
+            let interest = Math.floor(player.fixedDeposit * 0.003); // 每月 0.3%
+            player.fixedDeposit += interest;
+            showToast(`🏦 銀行定期利息：+$${interest}`);
+        }
+
+        // 3. 信用卡欠款
+        if (player.creditCardDebt > 0) {
+            let interest = Math.floor(player.creditCardDebt * 0.05);
+            player.creditCardDebt += interest;
+            player.creditScore = Math.max(0, player.creditScore - 10);
+            showToast(`💳 信用卡欠款：+$${interest} 利息，信用分 -10`);
+        }
+
+        // 4. MPF 回報
         if (player.mpf > 0) {
             if (Math.random() < 0.7) {
                 let rate = 0.01 + Math.random() * 0.03;
@@ -1571,6 +1779,7 @@
             }
         }
 
+        // 5. 供樓收租
         if (player.mortgage > 0) {
             player.money -= player.mortgage;
             let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
@@ -1578,11 +1787,13 @@
             showToast(`🏠 扣除供樓 $${player.mortgage}，收租 $${rentInc}`);
         }
 
+        // 6. 停車場
         if (player.hasParking) {
             player.money -= 2500;
             showToast(`🚗 扣除停車場月租 $2,500`);
         }
 
+        // 7. 財仔利息
         if (player.loan > 0) {
             let interest = Math.floor(player.loan * 0.1);
             player.money -= interest;
@@ -1590,6 +1801,7 @@
             if (player.money < 0) { gameOver("你欠落大耳窿巨債，無力償還，被破產收場！"); return; }
         }
 
+        // 8. 寵物
         if (player.pet) {
             player.money -= player.pet.cost;
             player.pet.health -= 10;
@@ -1601,12 +1813,26 @@
             }
         }
 
+        // 9. 小朋友
         if (player.hasKid) {
             let kidCost = 8000;
             player.money -= kidCost;
             showToast(`👶 扣除小朋友奶粉錢及補習費 $${kidCost}`);
         }
 
+        // 10. 離婚危機判定
+        if (player.isMarried) {
+            if (player.stress > 80) {
+                player.divorceWarnings++;
+                showToast(`⚠️ 壓力太大，另一半非常不滿！(離婚警告 ${player.divorceWarnings}/3)`);
+            }
+            if (player.divorceWarnings >= 3) {
+                triggerDivorce();
+                return; // 離婚優先，直接返回
+            }
+        }
+
+        // 11. 破產與生日
         if (player.money < 0) { gameOver("你供唔起樓或無力還債，宣佈破產！"); return; }
         if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
 
@@ -1667,20 +1893,19 @@
         advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
     }
     function bossBusinessAction() { 
-        // 賺錢加速：贏錢機會 60%，賺得更多
         if (Math.random() < 0.6) { 
-            let p = Math.floor(Math.random() * 50000) + 20000; // 20k ~ 70k
+            let p = Math.floor(Math.random() * 50000) + 20000; 
             player.money += p; 
             showToast(`🤝 簽大單！賺咗 $${p}！`); 
         } else { 
-            let l = Math.floor(Math.random() * 10000) + 2000; // 2k ~ 12k
+            let l = Math.floor(Math.random() * 10000) + 2000; 
             player.money = Math.max(0, player.money - l); 
             showToast(`📉 被客走數！蝕咗 $${l}...`); 
         } 
         advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
     }
 
-    // === 自動見客系統（收益大幅提高） ===
+    // === 自動見客系統 ===
     let autoBusinessTimer = null;
     function toggleAutoBusiness() {
         player.autoBusiness = !player.autoBusiness;
@@ -1702,19 +1927,18 @@
             let hasModal = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex' || m.style.display === 'block');
             if (hasModal) return;
 
-            // 自動見客收益大幅提高
             let roll = Math.random();
             let msg = "";
-            if (roll < 0.80) { // 80% 賺錢
-                let p = Math.floor((Math.random() * 30000) + 15000); // 15k ~ 45k
+            if (roll < 0.80) {
+                let p = Math.floor((Math.random() * 30000) + 15000);
                 player.money += p;
                 msg = `🤖 自動見客：簽單成功，賺 $${p}`;
-            } else if (roll < 0.95) { // 15% 蝕錢
-                let l = Math.floor((Math.random() * 2000) + 1000); // 1k ~ 3k
+            } else if (roll < 0.95) {
+                let l = Math.floor((Math.random() * 2000) + 1000);
                 player.money = Math.max(0, player.money - l);
                 msg = `🤖 自動見客：被客走數，蝕 $${l}`;
-            } else { // 5% 大賺
-                let p = Math.floor((Math.random() * 60000) + 40000); // 40k ~ 100k
+            } else {
+                let p = Math.floor((Math.random() * 60000) + 40000);
                 player.money += p;
                 msg = `🤖 自動見客：中大單！賺 $${p}`;
             }
@@ -1747,7 +1971,6 @@
 
     function generateCandidates() {
         candidates = []; const types = ['intern', 'it', 'sales', 'cleaner'];
-        // 每次出 6 個候選人
         for (let i = 0; i < 6; i++) {
             let t = types[Math.floor(Math.random() * types.length)], name = '', salary = 0, profit = 0, cost = 0;
             if (t === 'intern') { name = '實習生'; salary = 3000; profit = 5000; cost = 5000; }
@@ -1763,7 +1986,7 @@
         player.staffList.forEach(s => { 
             totalSal += s.salary; 
             if (s.isManager) managerCount++;
-            else if (s.type !== 'sales') totalProf += s.profit; 
+            else if (s.type !== 'sales' && !s.hasOptions) totalProf += s.profit; 
         });
         document.getElementById('total-staff').innerText = player.staffList.length;
         document.getElementById('total-salary').innerText = `$${totalSal.toLocaleString()}`;
@@ -1781,33 +2004,37 @@
         player.staffList.forEach((s, i) => {
             let div = document.createElement('div'); div.className = 'staff-card';
             let isManager = s.isManager;
+            let hasOptions = s.hasOptions;
             let trainCost = isManager ? 0 : Math.floor(10000 * Math.pow(2, (s.level || 1) - 1));
-            let status = isManager ? '👔 主管' : `Lv.${s.level || 1}`;
+            let status = isManager ? '👔 主管' : (hasOptions ? '🚀 期權' : `Lv.${s.level || 1}`);
             
             let btnHtml = '';
-            if (!isManager && (s.level || 1) < 5) {
+            if (!isManager && !hasOptions && (s.level || 1) < 5) {
                 btnHtml += `<button onclick="trainStaff(${i})" style="background:#3498db; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">培訓<br>$${trainCost.toLocaleString()}</button>`;
             }
-            if (!isManager && (s.level || 1) >= 3) {
+            if (!isManager && !hasOptions && (s.level || 1) >= 3) {
                 btnHtml += `<button onclick="promoteToManager(${i})" style="background:#f39c12; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">升職<br>$50k</button>`;
+            }
+            if (!isManager && !hasOptions) {
+                btnHtml += `<button onclick="giveOptions(${i})" style="background:#e84393; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">發期權</button>`;
             }
             btnHtml += `<button onclick="fireStaff(${i})" style="background:#e74c3c; border:none; color:#fff; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:10px; white-space:nowrap;">解僱</button>`;
             
-            div.innerHTML = `<div class="staff-info"><b>${s.name}</b> <small style="color:#f1c40f; display:inline;">[${status}]</small><small>月薪: $${s.salary} | ${isManager ? '全公司 +10% 利潤' : '利潤: $' + s.profit}</small></div><div style="display:flex; flex-direction:column; gap:4px; flex-shrink:0;">${btnHtml}</div>`;
+            div.innerHTML = `<div class="staff-info"><b>${s.name}</b> <small style="color:#f1c40f; display:inline;">[${status}]</small><small>月薪: $${s.salary} | ${isManager ? '全公司 +10% 利潤' : (hasOptions ? '不摸魚，但利潤 -10%' : '利潤: $' + s.profit)}</small></div><div style="display:flex; flex-direction:column; gap:4px; flex-shrink:0;">${btnHtml}</div>`;
             staffList.appendChild(div);
         });
     }
     function hireCandidate(index) {
         if (player.staffList.length >= MAX_STAFF) { showToast("公司座位滿咗啦！"); return; }
         let c = candidates[index]; if (player.money < c.cost) { showToast("唔夠錢俾招聘費！"); return; }
-        player.money -= c.cost; player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit, level: 1, isManager: false, status: STAFF_STATUSES[0] });
+        player.money -= c.cost; player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit, level: 1, isManager: false, hasOptions: false, status: STAFF_STATUSES[0] });
         showToast(`✅ 成功請咗個 ${c.name}！`); updateHUD(); openStaffModal();
     }
     function fireStaff(index) { let staff = player.staffList[index]; player.staffList.splice(index, 1); showToast(`🔥 你炒咗 ${staff.name} 魷魚！`); updateHUD(); openStaffModal(); }
 
     function trainStaff(index) {
         let s = player.staffList[index];
-        if (!s || s.isManager) return;
+        if (!s || s.isManager || s.hasOptions) return;
         if ((s.level || 1) >= 5) { showToast("已經滿級啦！"); return; }
         let cost = Math.floor(10000 * Math.pow(2, (s.level || 1) - 1));
         if (player.money < cost) { showToast(`培訓費 $${cost.toLocaleString()} 唔夠！`); return; }
@@ -1820,7 +2047,7 @@
 
     function promoteToManager(index) {
         let s = player.staffList[index];
-        if (!s || s.isManager) return;
+        if (!s || s.isManager || s.hasOptions) return;
         if ((s.level || 1) < 3) { showToast("要 Lv.3 以上先可以升做主管！"); return; }
         if (player.money < 50000) { showToast("升職費 $50,000 唔夠！"); return; }
         player.money -= 50000;
@@ -1828,6 +2055,15 @@
         s.profit = 0;
         s.salary = Math.floor(s.salary * 1.5);
         showToast(`👔 ${s.name} 升做主管！全公司利潤 +10%，但人工加到 $${s.salary.toLocaleString()}`);
+        updateHUD(); openStaffModal();
+    }
+
+    function giveOptions(index) {
+        let s = player.staffList[index];
+        if (!s || s.isManager || s.hasOptions) return;
+        s.hasOptions = true;
+        s.status = STAFF_STATUSES[0]; // 永遠打字中
+        showToast(`🚀 ${s.name} 獲發期權！以後唔會摸魚，但公司利潤 -10%`);
         updateHUD(); openStaffModal();
     }
 
@@ -1852,11 +2088,12 @@
 
     function openAccountModal() {
         document.getElementById('account-modal').style.display = 'flex';
-        let totalSal = 0, totalProf = 0, managerCount = 0;
+        let totalSal = 0, totalProf = 0, managerCount = 0, hasOptions = false;
         player.staffList.forEach(s => { 
             totalSal += s.salary; 
+            if (s.hasOptions) hasOptions = true;
             if (s.isManager) managerCount++;
-            else if (s.type !== 'sales') totalProf += s.profit; 
+            else if (s.type !== 'sales' && !s.hasOptions) totalProf += s.profit; 
         });
         let baseNet = Math.floor(totalProf * (1 + managerCount * 0.10)) - totalSal - 2000;
         
@@ -1871,6 +2108,7 @@
             statusText += `💸 每月總人工：$${totalSal.toLocaleString()}<br>`;
             statusText += `📈 基本預期利潤：$${totalProf.toLocaleString()}<br>`;
             if (managerCount > 0) statusText += `👔 主管加成：+${managerCount * 10}%<br>`;
+            if (hasOptions) statusText += `🚀 員工期權分薄：-10% 利潤<br>`;
             statusText += `🏢 營運費：$2,000<br>`;
             statusText += `<hr style="border-color:#333; margin:8px 0;">`;
             statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
@@ -1899,6 +2137,7 @@
                 showToast("🏖️ 你去咗遊艇派對，人生勝利組！");
                 advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
             });
+            addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
@@ -1911,6 +2150,7 @@
             addActionBtn(player.autoBusiness ? '🛑 停止自動' : '🤖 自動見客', player.autoBusiness ? '正在自動接單...' : '每 3 秒自動接單 (收益較低)', 'boss', toggleAutoBusiness);
             addActionBtn('🏢 員工管理', '請人/培訓/升職/炒人', 'boss', openStaffModal);
             addActionBtn('📈 申請上市', player.companyValue >= 5000000 ? '已達標！可 IPO 套現' : `淨資產 $${player.companyValue.toLocaleString()} / $5M`, 'boss', doIPO);
+            addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
@@ -1953,6 +2193,8 @@
             });
             addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('💼 副業', '被動收入來源', 'buy', openSideHustleModal);
+            addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
