@@ -122,7 +122,6 @@
     .character-male .body, .character-male .arm { background: #2980b9; }
     .character-male .tie { display: block; }
 
-    /* 結婚同生仔專用畫面 */
     .event-screen { position: absolute; inset: 0; z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); }
     .event-screen h1 { font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 20px currentColor; }
     .event-icon { font-size: 100px; margin-bottom: 20px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -136,7 +135,6 @@
     .confetti { position: absolute; font-size: 24px; animation: fall 2s linear infinite; top: -50px; }
     @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
 
-    /* 家庭小劇場專用 */
     #family-interact-screen { background: rgba(44, 62, 80, 0.95); z-index: 160; }
     #family-interact-screen h1 { color: #f1c40f; font-size: 24px; margin-bottom: 10px; }
     .interact-avatar { font-size: 80px; margin-bottom: 10px; animation: float 2s infinite ease-in-out; }
@@ -181,7 +179,6 @@
 
         <div id="scene" class="bg-morning">
             <div id="staff-area"></div>
-            
             <div id="character" class="character-male">
                 <div class="hair"></div>
                 <div class="head">
@@ -192,7 +189,6 @@
                 <div class="body" id="char-body"><div class="tie" id="char-tie"></div></div>
                 <div class="leg leg-l"></div><div class="leg leg-r"></div>
             </div>
-            
             <div id="dialogue-box">
                 <div id="speaker-name">面試官</div>
                 <div id="dialogue-text"></div>
@@ -202,15 +198,15 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 結婚專屬畫面 -->
+    <!-- 結婚畫面 -->
     <div id="wedding-screen" class="event-screen">
         <div class="event-icon">👰‍♀️🤵‍♂️</div>
         <h1>💒 恭喜晒！</h1>
-        <p style="color:#fff; font-size:18px; font-weight:bold; margin-bottom:20px; text-shadow:0 2px 4px #000;">你成功結婚啦！展開人生新一頁！</p>
+        <p style="color:#fff; font-size:18px; font-weight:bold; margin-bottom:20px;">你成功結婚啦！展開人生新一頁！</p>
         <button class="modal-btn boss" style="max-width:200px; text-align:center;" onclick="closeEventScreen('wedding-screen')">繼續</button>
     </div>
 
-    <!-- 生仔性別選擇畫面 -->
+    <!-- 生仔性別選擇 -->
     <div id="baby-gender-screen" class="event-screen" style="background: rgba(135, 206, 235, 0.95);">
         <h1 style="color:#1e1e2f;">👶 BB 出世啦！</h1>
         <p style="color:#1e1e2f; font-size:18px; font-weight:bold; margin-bottom:20px;">你生咗個男仔定女仔？</p>
@@ -220,7 +216,15 @@
         </div>
     </div>
 
-    <!-- 家庭互動畫面 -->
+    <!-- 生仔完成畫面 -->
+    <div id="baby-screen" class="event-screen">
+        <div class="event-icon">👶🍼</div>
+        <h1>👶 BB 出世啦！</h1>
+        <p style="color:#1e1e2f; font-size:18px; font-weight:bold; margin-bottom:20px;">恭喜你組織咗一個完整嘅家庭！</p>
+        <button class="modal-btn primary" style="max-width:200px; text-align:center;" onclick="closeEventScreen('baby-screen')">繼續</button>
+    </div>
+
+    <!-- 家庭互動 -->
     <div id="family-interact-screen" class="event-screen">
         <div class="interact-avatar" id="family-interact-avatar">👨‍👩‍👦</div>
         <h1 id="family-interact-title">家庭小劇場</h1>
@@ -262,7 +266,6 @@
                 <button class="modal-btn danger" onclick="getMarried()" id="btn-marry" style="display:none;">💒 結婚擺酒 ($100,000)<small>人生大事，但會大出血</small></button>
                 <button class="modal-btn warning" onclick="haveBaby()" id="btn-baby" style="display:none;">👶 生仔 ($50,000)<small>傳宗接代，但每月要畀大筆奶粉錢</small></button>
                 
-                <!-- 新增拍拖約會按鈕 -->
                 <button class="modal-btn primary" onclick="goDate()" style="background:#e84393;">💖 浪漫約會 ($3,000)<small>同另一半去拍拖，大增心情減壓力</small></button>
                 
                 <button class="modal-btn primary" onclick="triggerFamilyEvent(true)" style="background:#9b59b6;">🏠 家庭互動<small>陪伴家人，處理家庭大小事</small></button>
@@ -271,7 +274,7 @@
         </div>
     </div>
 
-    <!-- 寵物系統 -->
+    <!-- 寵物 -->
     <div id="pet-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">🐱 寵物領養中心</h2>
@@ -287,7 +290,7 @@
         </div>
     </div>
 
-    <!-- 警署與坐監 -->
+    <!-- 警署 -->
     <div id="jail-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
@@ -297,7 +300,7 @@
         </div>
     </div>
 
-    <!-- 身體到達極限 -->
+    <!-- 醫院 -->
     <div id="hospital-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🏥 身體到達極限！</h2>
@@ -351,7 +354,7 @@
         </div>
     </div>
 
-    <!-- 地產、貸款與保險 -->
+    <!-- 地產 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -369,7 +372,7 @@
         </div>
     </div>
 
-    <!-- 副業兼職 -->
+    <!-- 兼職 -->
     <div id="parttime-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #2ecc71;">
             <h2 style="color: #2ecc71;">🛵 放工搵外快</h2>
@@ -422,7 +425,7 @@
         </div>
     </div>
 
-    <!-- 員工管理 -->
+    <!-- 員工 -->
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👥 員工管理</h2>
@@ -447,18 +450,17 @@
         </div>
     </div>
 
-    <!-- 老闆帳目 -->
+    <!-- 公司帳目 -->
     <div id="account-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">💰 公司帳目</h2>
             <p id="account-status" style="color:#fff; font-size:13px; text-align:left; background:#111; padding:10px; border-radius:8px;">載入中...</p>
-            <p style="font-size:11px; color:#a4b0be; text-align:left; margin-top:10px;">*註：公司每月淨利潤（扣除所有人工及營運費）將直接入你袋，作為老闆嘅出糧。</p>
+            <p style="font-size:11px; color:#a4b0be; text-align:left; margin-top:10px;">*註：公司每月淨利潤將直接入你袋，作為老闆出糧。</p>
             <button class="modal-btn danger" style="background:#555;" onclick="closeModal('account-modal')">關閉</button>
         </div>
     </div>
 
     <div id="toast">提示訊息</div>
-
     <div id="end-screen">
         <h1 id="end-title">人生落幕</h1>
         <p id="end-stats"></p>
@@ -467,7 +469,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v50';
+    const SAVE_KEY = 'officeSlaveSave_v52';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select' || player.stage === 'gender_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -496,7 +498,7 @@
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
         car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
-        isDating: false, isMarried: false, hasKid: false, kidGender: null, mpf: 0, mpfTrend: "", hasLifeInsurance: false
+        isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false
     };
     
     let currentMonth = 0, candidates = [];
@@ -505,7 +507,6 @@
     const MAX_STAFF = 5;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
-    // 三態語音
     let voiceMode = 0; 
     let voices = [];
     function loadVoices() {
@@ -542,6 +543,7 @@
             window.speechSynthesis.speak(ut); 
         } catch(e) { console.log("出聲失敗", e); } 
     }
+    // === 核心邏輯開始 ===
 
     function selectGender(g) {
         player.gender = g;
@@ -747,7 +749,6 @@
             document.getElementById('family-options').style.display = 'none';
             document.getElementById('partner-actions').style.display = 'block';
             
-            // 控制顯示不同按鈕
             if (player.isMarried) {
                 document.getElementById('btn-marry').style.display = 'none';
                 if (!player.hasKid) document.getElementById('btn-baby').style.display = 'block';
@@ -762,7 +763,6 @@
         }
     }
 
-    // 新加：主動約會拍拖
     function goDate() {
         if (player.money < 3000) { showToast("連 $3,000 拍拖錢都冇！"); return; }
         player.money -= 3000;
@@ -862,7 +862,6 @@
         updateHUD();
     }
 
-    // === 家庭互動事件 ===
     function triggerFamilyEvent(isManual = false) {
         if (!player.isMarried) { showToast("你都未結婚，邊有家庭互動呀？"); return; }
         if (isManual) closeModal('family-modal');
@@ -879,8 +878,8 @@
         let events = [];
         let spouseGender = player.gender === 'male' ? '老婆' : '老公';
         let spouseEmoji = player.gender === 'male' ? '👩' : '👨';
-        let kidEmoji = player.kidGender === 'boy' ? '👦' : (player.kidGender === 'girl' ? '👧' : '👶');
         let kidTitle = player.kidGender === 'boy' ? '仔仔' : '女女';
+        let kidEmoji = player.kidGender === 'boy' ? '👦' : '👧';
 
         if (player.hasKid) {
             events.push({
@@ -907,7 +906,6 @@
             }
         }
         
-        // 老婆/老公互動（一定有）
         events.push({
             avatar: `${spouseEmoji}`,
             title: `${spouseGender}抱怨`,
@@ -919,7 +917,6 @@
             ]
         });
 
-        // 新加：老婆讚賞事件
         events.push({
             avatar: `💖`,
             title: `${spouseGender}錫錫`,
@@ -1061,7 +1058,19 @@
         document.getElementById('property-modal').style.display = 'flex';
         let propCount = player.properties.length;
         let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
-        document.getElementById('property-status').innerHTML = `🏠 持有物業：${propCount} 個<br>💸 每月供款：$${player.mortgage.toLocaleString()}<br>💰 每月收租：$${rentInc.toLocaleString()}<br>🏦 財仔欠款：$${player.loan.toLocaleString()}<br>🛡️ 人壽保險：${player.hasLifeInsurance ? '已購買' : '未購買'}`;
+        
+        let propListHtml = '';
+        if (propCount > 0) {
+            player.properties.forEach((p, index) => {
+                propListHtml += `<div style="border-bottom:1px solid #333; padding:4px 0; color:#fff;">${index+1}. ${p.name} (收租 $${p.rent.toLocaleString()})</div>`;
+            });
+        } else {
+            propListHtml = '<div style="color:#888;">暫時未持有任何物業</div>';
+        }
+
+        document.getElementById('property-status').innerHTML = `🏠 持有物業：${propCount} 個<br>💸 每月總供款：$${player.mortgage.toLocaleString()}<br>💰 每月總收租：$${rentInc.toLocaleString()}<br>🏦 財仔欠款：$${player.loan.toLocaleString()}<br>🛡️ 人壽保險：${player.hasLifeInsurance ? '已購買' : '未購買'}`;
+        
+        document.getElementById('property-list').innerHTML = `<b>📜 物業清單：</b><br>${propListHtml}`;
         
         let mpfHtml = `🏦 強積金 (MPF)：$${player.mpf.toLocaleString()}<br>`;
         if (player.mpfTrend) {
