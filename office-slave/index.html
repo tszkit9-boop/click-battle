@@ -132,7 +132,7 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 求職中心 (全職業) -->
+    <!-- 求職中心 (15種職業) -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
@@ -148,6 +148,10 @@
                 <button class="job-btn" onclick="selectJob('chef')">🍳 廚房佬<small>$20k / 高壓</small></button>
                 <button class="job-btn" onclick="selectJob('waiter')">🍽️ 侍應<small>$15k / 受氣</small></button>
                 <button class="job-btn" onclick="selectJob('agent')">🏠 地產經紀<small>$10k+ / 開單</small></button>
+                <button class="job-btn" onclick="selectJob('safety')">🦺 安全督導員<small>$22k / 地盤巡邏</small></button>
+                <button class="job-btn" onclick="selectJob('construction')">🏗️ 地盤佬<small>$20k / 體力活</small></button>
+                <button class="job-btn" onclick="selectJob('surveyor')">📐 測量師<small>$24k / 專業</small></button>
+                <button class="job-btn" onclick="selectJob('engineer')">⚙️ 工程師<small>$26k / 孭飛</small></button>
                 <button class="job-btn" style="grid-column: span 2;" onclick="selectJob('kol')">📱 KOL 網紅<small>$5k底薪 / 靠流量</small></button>
             </div>
         </div>
@@ -249,12 +253,12 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v21';
+    const SAVE_KEY = 'officeSlaveSave_v22';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
 
-    // === 11 種工種資料庫 ===
+    // === 15 種工種資料庫 ===
     const jobDatabase = {
         clerk: { name: '文員', baseSalary: 15000, energyCost: 15, stressCost: 10, levels: ['見習文員', '初級文員', '高級文員', '部門主管', '總經理'] },
         it: { name: 'IT狗', baseSalary: 25000, energyCost: 25, stressCost: 20, levels: ['Junior IT', 'IT狗', 'Senior IT', 'IT經理', 'CTO'] },
@@ -266,6 +270,10 @@
         chef: { name: '廚房佬', baseSalary: 20000, energyCost: 25, stressCost: 18, levels: ['打荷', '砧板', '炒鑊', '大廚', '行政總廚'] },
         waiter: { name: '侍應', baseSalary: 15000, energyCost: 20, stressCost: 12, levels: ['樓面', '侍應', '部長', '經理', '店長'] },
         agent: { name: '地產經紀', baseSalary: 10000, energyCost: 15, stressCost: 20, levels: ['見習經紀', '地產代理', '高級代理', '分行經理', '樓神'] },
+        safety: { name: '安全督導員', baseSalary: 22000, energyCost: 15, stressCost: 15, levels: ['安全助理', '安全督導員', '註冊安全主任', '安全經理', '集團安全總監'] },
+        construction: { name: '地盤佬', baseSalary: 20000, energyCost: 35, stressCost: 15, levels: ['地盤雜工', '扎鐵/釘板', '地盤判頭', '地盤主管', '建築大亨'] },
+        surveyor: { name: '測量師', baseSalary: 24000, energyCost: 15, stressCost: 18, levels: ['測量助理', '測量師', '高級測量師', '首席測量師', '發展局局長'] },
+        engineer: { name: '工程師', baseSalary: 26000, energyCost: 20, stressCost: 20, levels: ['見習工程師', '助理工程師', '註冊工程師', '總工程師', '工程總監'] },
         kol: { name: 'KOL', baseSalary: 5000, energyCost: 10, stressCost: 25, levels: ['素人', '小網紅', '帶貨主播', '百萬KOL', 'MCN老闆'] }
     };
 
@@ -333,6 +341,10 @@
             chef: "廚房又熱又嘈，師傅鬧人好惡，你頂唔頂得順？",
             waiter: "啲客好麻煩，成日催單，你會唔會黑面？",
             agent: "開唔到單就食穀種，你有無信心跑數？",
+            safety: "地盤好多危險嘢，你見唔見到人無戴安全帽會點做？",
+            construction: "地盤日曬雨淋，仲要搬搬抬抬，你捱唔捱得？",
+            surveyor: "測量師要成日對住啲圖紙同數字，你對眼頂唔頂得順？",
+            engineer: "工程師要孭飛，起錯樓好大件事，你壓力大唔大？",
             kol: "做KOL要面對網民負評，你心臟夠唔夠強大？"
         };
         
