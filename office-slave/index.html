@@ -160,7 +160,19 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 感情與家庭彈窗 -->
+    <!-- 休閒減壓 -->
+    <div id="relax-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #3498db;">
+            <h2 style="color: #3498db;">🎮 休閒減壓</h2>
+            <p>打工咁辛苦，要識得放鬆下！</p>
+            <button class="modal-btn primary" onclick="doRelax(1500, 40, 10, '去按摩')">💆 去按摩 ($1,500)<small>大幅減 40 壓力，加 10 心情</small></button>
+            <button class="modal-btn warning" onclick="doRelax(1000, 20, 5, '食大餐')">🍣 食大餐 ($1,000)<small>減 20 壓力，加 5 心情</small></button>
+            <button class="modal-btn casino" onclick="doRelax(2000, 30, 15, '唱K')">🎤 唱K ($2,000)<small>減 30 壓力，加 15 心情</small></button>
+            <button class="modal-btn danger" style="background:#555;" onclick="closeModal('relax-modal')">返回</button>
+        </div>
+    </div>
+
+    <!-- 感情與家庭 -->
     <div id="family-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #ff9ff3;">
             <h2 style="color: #ff9ff3;">💍 感情與家庭</h2>
@@ -176,7 +188,7 @@
         </div>
     </div>
 
-    <!-- 寵物系統彈窗 -->
+    <!-- 寵物系統 -->
     <div id="pet-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">🐱 寵物領養中心</h2>
@@ -192,7 +204,7 @@
         </div>
     </div>
 
-    <!-- 警署與坐監 -->
+    <!-- 警署 -->
     <div id="jail-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
@@ -202,7 +214,7 @@
         </div>
     </div>
 
-    <!-- 身體到達極限 -->
+    <!-- 醫院 -->
     <div id="hospital-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🏥 身體到達極限！</h2>
@@ -225,7 +237,7 @@
         </div>
     </div>
 
-    <!-- 求職中心 -->
+    <!-- 求職 -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
@@ -250,7 +262,7 @@
         </div>
     </div>
 
-    <!-- 地產霸權、貸款與保險 -->
+    <!-- 地產與貸款 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -267,7 +279,7 @@
         </div>
     </div>
 
-    <!-- 副業兼職 -->
+    <!-- 兼職 -->
     <div id="parttime-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #2ecc71;">
             <h2 style="color: #2ecc71;">🛵 放工搵外快</h2>
@@ -320,6 +332,7 @@
         </div>
     </div>
 
+    <!-- 員工管理 -->
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👥 員工管理</h2>
@@ -334,6 +347,7 @@
         </div>
     </div>
 
+    <!-- 開公司 -->
     <div id="company-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🚀 創業做老闆</h2>
@@ -353,7 +367,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v34';
+    const SAVE_KEY = 'officeSlaveSave_v35';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -382,7 +396,7 @@
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0, 
         properties: [], mortgage: 0, loan: 0, jobType: null,
         car: null, demeritPoints: 0, pet: null,
-        isDating: false, isMarried: false, hasKid: false, mpf: 0, hasLifeInsurance: false // 新增屬性
+        isDating: false, isMarried: false, hasKid: false, mpf: 0, hasLifeInsurance: false
     };
     
     let currentMonth = 0, candidates = [];
@@ -491,7 +505,16 @@
         updateHUD(); updateActionButtons();
     }
 
-    // === 感情與家庭系統 ===
+    // === 休閒減壓 ===
+    function openRelaxModal() { document.getElementById('relax-modal').style.display = 'flex'; }
+    function doRelax(cost, stressReduce, moodAdd, name) {
+        if (player.money < cost) { showToast(`連 $${cost} 都冇，學人減壓？`); return; }
+        player.money -= cost; player.stress = Math.max(0, player.stress - stressReduce); player.mood = Math.min(100, player.mood + moodAdd);
+        showToast(`🎮 去咗${name}，壓力減少 ${stressReduce}，心情增加 ${moodAdd}！`);
+        closeModal('relax-modal'); advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+    }
+
+    // === 感情與家庭 ===
     function openFamilyModal() {
         document.getElementById('family-modal').style.display = 'flex';
         let status = "你目前單身，專心做社畜。";
@@ -564,7 +587,7 @@
         closeModal('pet-modal'); updateHUD();
     }
 
-    // === 買車與抄牌扣分系統 ===
+    // === 買車與抄牌 ===
     function openCarModal() { document.getElementById('car-modal').style.display = 'flex'; }
     function buyCar(name, cost, fine) {
         if (player.money < cost) { showToast(`連 $${cost} 都冇，學人買車？`); return; }
@@ -624,7 +647,7 @@
         showToast("🛡️ 成功購買人壽保險！死後有筆錢留俾家人..."); closeModal('property-modal'); updateHUD();
     }
 
-    // === 副業兼職 ===
+    // === 兼職 ===
     function doPartTime(money, energyCost, stressCost, name) {
         if (player.energy < energyCost) { showToast("體力不足，無法做兼職！"); return; } 
         player.money += money; player.energy -= energyCost; player.stress += stressCost;
@@ -633,7 +656,7 @@
         advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 監獄與律師系統 ===
+    // === 監獄 ===
     function openJail() { document.getElementById('jail-modal').style.display = 'flex'; }
     function hireLawyer() {
         if (player.money < 30000) { showToast("你連 $30,000 律師費都俾唔起，自己頂啦！"); goToJail("你無錢請律師，被迫認罪。"); return; }
@@ -649,7 +672,7 @@
         checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 (新增天災人禍) ===
+    // === 隨機事件 ===
     function triggerRandomEvent() {
         if (Math.random() > 0.2) return;
         let events = [
@@ -667,7 +690,7 @@
         ev.effect(); showToast(ev.msg);
     }
 
-    // === 賭博與投資 ===
+    // === 賭博 ===
     function playCrypto() {
         if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; }
         player.money -= 10000;
@@ -702,7 +725,7 @@
     function playStock() { if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; } if (Math.random() < 0.5) { let l = Math.floor(Math.random() * 8000) + 2000; player.money -= l; showToast(`📉 股市大跌！蝕咗 $${l}`); } else { let w = Math.floor(Math.random() * 15000) + 5000; player.money += w; showToast(`📈 股市大升！賺咗 $${w}`); } closeModal('invest-modal'); updateHUD(); }
     function buyInsurance() { if (player.hasInsurance) { showToast("你已經買咗醫保啦！"); closeModal('invest-modal'); return; } if (player.money < 5000) { showToast("唔夠錢！"); return; } player.money -= 5000; player.hasInsurance = true; showToast("🛡️ 成功購買自願醫保！"); closeModal('invest-modal'); updateHUD(); }
 
-    // === 醫院系統 ===
+    // === 醫院 ===
     function triggerHospital() {
         if (hospitalFlag) return; hospitalFlag = true;
         let reason = player.energy <= 0 ? '體力透支' : '壓力爆煲';
@@ -740,21 +763,18 @@
                 if (player.money < 0) { gameOver("公司資金鏈斷裂，你宣佈破產！"); return; }
             } else { if (player.stress > 80) player.health -= 15; }
             
-            // 供樓與收租
             if (player.mortgage > 0) {
                 player.money -= player.mortgage;
                 let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
                 player.money += rentInc;
                 showToast(`🏠 扣除供樓 $${player.mortgage}，收租 $${rentInc}`);
             }
-            // 財仔利息
             if (player.loan > 0) {
                 let interest = Math.floor(player.loan * 0.1);
                 player.money -= interest;
                 showToast(`💸 財仔扣除利息 $${interest}...`);
                 if (player.money < 0) { gameOver("你欠落大耳窿巨債，無力償還，被破產收場！"); return; }
             }
-            // 寵物開支
             if (player.pet) {
                 player.money -= player.pet.cost;
                 player.pet.health -= 10;
@@ -765,7 +785,6 @@
                     showToast(`🐱 扣除主子開支 $${player.pet.cost}`);
                 }
             }
-            // 家庭開支 (生仔)
             if (player.hasKid) {
                 let kidCost = 8000;
                 player.money -= kidCost;
@@ -775,7 +794,6 @@
             if (player.money < 0) { gameOver("你供唔起樓或無力還債，宣佈破產！"); return; }
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
             
-            // 強積金 (每月自動儲蓄)
             if (!player.isBoss) player.mpf += Math.floor(player.salary * 0.05);
 
             if (currentDay % 30 === 0) { player.age++; if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓..."); }
@@ -852,12 +870,14 @@
                 advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
-            addActionBtn('🛏️ 睡觉休息', '跳至明早回滿體力', 'rest', () => { 
-                player.energy = 100; player.stress = Math.max(0, player.stress - 15); player.mood = Math.min(100, player.mood + 5); 
-                if (player.pet) player.mood = Math.min(100, player.mood + 10); // 主子加成
+            // 🌟 改為壓力清零 🌟
+            addActionBtn('🛏️ 訓教休息', '壓力清零，體力回滿', 'rest', () => { 
+                player.energy = 100; player.stress = 0; player.mood = Math.min(100, player.mood + 5); 
+                if (player.pet) player.mood = Math.min(100, player.mood + 10); 
                 currentDay++; timeOfDay = 0; triggerTicketEvent();
-                showToast("😴 瞓咗個好覺，第二朝體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+                showToast("😴 瞓咗個好覺，壓力全消，體力回滿！"); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
+            addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車代步/抄牌扣分', 'buy', openCarModal);
@@ -892,7 +912,6 @@
         let mpfText = "";
         let insuranceText = "";
         
-        // 結算 MPF 及保險
         if (player.age >= 65 || reason.includes("猝死") || reason.includes("離世")) {
             if (player.mpf > 0) { finalMoney += player.mpf; mpfText = `<br>提取 MPF：+$${player.mpf.toLocaleString()}`; }
             if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
