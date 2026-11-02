@@ -3,37 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<!-- 遊戲名已移除，保持介面乾淨 -->
-<title></title>
+<title>社畜人生</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
     html, body { overscroll-behavior: none; }
     body { background-color: #050510; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1a2e, #050510); }
     
-    /* 保留返回大廳按鈕 */
-    .back-btn { position: absolute; top: 10px; left: 10px; z-index: 9999; padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); transition: all 0.2s; backdrop-filter: blur(5px); }
-    .back-btn:hover { background: #00d2d3; color: #000; }
-    
-    .top-right-btns { position: absolute; top: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; }
-    .voice-btn, .reset-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: all 0.2s; backdrop-filter: blur(5px); cursor: pointer; }
+    #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
+
+    /* 🌟 獨立頂部按鈕區，絕對唔會遮住數值 🌟 */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(10, 10, 20, 0.95); border-bottom: 1px solid #333; z-index: 20; flex-shrink: 0; }
+    .back-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); }
+    .top-right-btns { display: flex; gap: 8px; }
+    .voice-btn, .reset-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; }
     .voice-btn { color: #f1c40f; border: 2px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
     .reset-btn { color: #e74c3c; border: 2px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
 
-    #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
-    
-    /* 手機完美適配 HUD */
-    #hud { background: rgba(10, 10, 20, 0.9); padding: 10px 6px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px; z-index: 10; backdrop-filter: blur(5px); }
-    .stat-item { display: flex; align-items: center; gap: 3px; }
-    .stat-label { width: 22px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 9px; white-space: nowrap; }
-    .stat-bar { flex: 1; height: 8px; background: #111; border-radius: 4px; overflow: hidden; border: 1px solid #333; position: relative; }
-    .stat-fill { height: 100%; transition: width 0.3s; border-radius: 3px; }
+    /* HUD 狀態欄改為 2 欄，確保唔會迫爆 */
+    #hud { background: rgba(10, 10, 20, 0.9); padding: 8px 10px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; z-index: 10; backdrop-filter: blur(5px); flex-shrink: 0; }
+    .stat-item { display: flex; align-items: center; gap: 5px; }
+    .stat-label { width: 25px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 10px; white-space: nowrap; }
+    .stat-bar { flex: 1; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #333; position: relative; }
+    .stat-fill { height: 100%; transition: width 0.3s; border-radius: 4px; }
     .fill-money { background: linear-gradient(90deg, #f1c40f, #f39c12); box-shadow: 0 0 10px #f1c40f; }
     .fill-energy { background: linear-gradient(90deg, #e74c3c, #c0392b); box-shadow: 0 0 10px #e74c3c; }
     .fill-mood { background: linear-gradient(90deg, #3498db, #2980b9); box-shadow: 0 0 10px #3498db; }
     .fill-stress { background: linear-gradient(90deg, #9b59b6, #8e44ad); box-shadow: 0 0 10px #9b59b6; }
     .fill-health { background: linear-gradient(90deg, #2ecc71, #27ae60); box-shadow: 0 0 10px #2ecc71; }
-    .stat-val { position: absolute; right: 2px; top: 0; font-size: 7px; line-height: 8px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
+    .stat-val { position: absolute; right: 3px; top: 0; font-size: 8px; line-height: 10px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
+    
+    /* 身份列獨佔一行 */
+    #status-display { grid-column: span 2; text-align: center; color: #a4b0be; font-size: 11px; font-weight: bold; margin-top: 2px; padding-top: 6px; border-top: 1px dashed #333; }
     
     /* 警告閃爍特效 */
     @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -47,8 +48,8 @@
     .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
     .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; padding: 20px 10px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; margin: auto 0; }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto; margin: auto; }
     .modal-box h2 { color: #f1c40f; margin-bottom: 12px; font-size: 18px; }
     .modal-box p { color: #ccc; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
     .modal-btn { width: 100%; padding: 12px 10px; margin-bottom: 8px; border: none; border-radius: 8px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; touch-action: manipulation; text-align: left; }
@@ -63,16 +64,14 @@
     .staff-info { text-align: left; flex: 1; }
     .staff-info b { font-size: 13px; color: #f1c40f; }
     .staff-info small { font-size: 10px; color: #bbb; display: block; margin-top: 2px; }
-    .staff-card button { padding: 6px 10px; font-size: 12px; }
     
     .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 12px 6px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 12px 6px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
     .bet-btn:active { transform: scale(0.95); background: #f39c12; color: #000; }
     .bet-btn .odds { display: block; font-size: 11px; color: #f1c40f; margin-top: 3px; }
     
     .job-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-    .job-btn { background: #2c3e50; border: 2px solid #3498db; color: #fff; padding: 8px 4px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .job-btn:hover { background: #3498db; }
+    .job-btn { background: #2c3e50; border: 2px solid #3498db; color: #fff; padding: 8px 4px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; text-align: center; }
     .job-btn small { display: block; font-size: 9px; font-weight: normal; margin-top: 2px; color: #f1c40f; }
     
     #end-screen { position: absolute; inset: 0; background: rgba(5,5,10,0.98); z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
@@ -86,7 +85,6 @@
     #choices { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 35vh; overflow-y: auto; }
     .choice-btn { background: rgba(30, 30, 47, 0.9); color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-size: 13px; text-align: left; cursor: pointer; }
     
-    /* 底部按鈕區，使用 env 確保安全區域 */
     #actions { background: #111; padding: 8px 6px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; z-index: 10; max-height: 42vh; overflow-y: auto; flex-shrink: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
     .action-btn { background: linear-gradient(to bottom, #3498db, #2980b9); color: #fff; border: 2px solid #000; border-radius: 8px; padding: 10px 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; }
     .action-btn:active { transform: translateY(4px); box-shadow: none; }
@@ -114,15 +112,10 @@
     .leg { position: absolute; top: 210px; width: 30px; height: 70px; background: #34495e; border: 3px solid #000; border-radius: 10px; z-index: 0; }
     .leg-l { left: 30px; } .leg-r { right: 30px; }
 
-    /* 手機專用微調 */
     @media (max-width: 600px) {
-        .top-right-btns { top: 8px; right: 8px; gap: 6px; }
-        .back-btn { top: 8px; left: 8px; padding: 4px 8px; font-size: 11px; }
-        .voice-btn, .reset-btn { padding: 4px 8px; font-size: 12px; }
-        #hud { padding: 6px 4px; gap: 4px; }
-        .stat-label { font-size: 8px; width: 18px; }
-        .stat-val { font-size: 7px; }
-        #actions { padding: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); max-height: 45vh; gap: 4px; }
+        .voice-btn, .reset-btn, .back-btn { padding: 4px 8px; font-size: 11px; }
+        #hud { padding: 6px 8px; gap: 6px; }
+        #actions { padding: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); gap: 4px; }
         .action-btn { padding: 8px 2px; font-size: 11px; min-height: 44px; }
         .action-btn small { font-size: 8px; }
         .modal-box { padding: 15px; width: 95%; max-width: none; }
@@ -134,22 +127,23 @@
 </head>
 <body>
 
-    <!-- 保留返回大廳按鈕 -->
-    <a href="../" class="back-btn">⬅ 返回大廳</a>
-    
-    <div class="top-right-btns">
-        <div class="voice-btn" id="voice-toggle" onclick="toggleVoice()">🔊 語音</div>
-        <div class="reset-btn" onclick="resetGame()">🗑️ 重玩</div>
-    </div>
-
     <div id="game-container">
+        <!-- 獨立頂部按鈕區 -->
+        <div class="top-bar">
+            <a href="../" class="back-btn">⬅ 返回大廳</a>
+            <div class="top-right-btns">
+                <div class="voice-btn" id="voice-toggle" onclick="toggleVoice()">🔊 語音</div>
+                <div class="reset-btn" onclick="resetGame()">🗑️ 重玩</div>
+            </div>
+        </div>
+
         <div id="hud">
             <div class="stat-item"><span class="stat-label">💰錢</span><div class="stat-bar"><div class="stat-fill fill-money" id="bar-money" style="width: 0%;"></div><span class="stat-val" id="val-money">$0</span></div></div>
             <div class="stat-item"><span class="stat-label">🔋體</span><div class="stat-bar"><div class="stat-fill fill-energy" id="bar-energy" style="width: 100%;"></div><span class="stat-val" id="val-energy">100</span></div></div>
             <div class="stat-item"><span class="stat-label">😊情</span><div class="stat-bar"><div class="stat-fill fill-mood" id="bar-mood" style="width: 80%;"></div><span class="stat-val" id="val-mood">80</span></div></div>
             <div class="stat-item"><span class="stat-label">🤯壓</span><div class="stat-bar"><div class="stat-fill fill-stress" id="bar-stress" style="width: 10%;"></div><span class="stat-val" id="val-stress">10</span></div></div>
             <div class="stat-item"><span class="stat-label">❤️健</span><div class="stat-bar"><div class="stat-fill fill-health" id="bar-health" style="width: 100%;"></div><span class="stat-val" id="val-health">100</span></div></div>
-            <div class="stat-item" style="justify-content: center; color: #a4b0be; font-size: 10px;" id="status-display">💼 求職中</div>
+            <div id="status-display">💼 求職中</div>
         </div>
 
         <div id="scene" class="bg-morning">
@@ -172,7 +166,7 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 警署與坐監 -->
+    <!-- 彈窗們 -->
     <div id="jail-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
@@ -182,7 +176,6 @@
         </div>
     </div>
 
-    <!-- 身體到達極限 -->
     <div id="hospital-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🏥 身體到達極限！</h2>
@@ -193,7 +186,6 @@
         </div>
     </div>
 
-    <!-- 車行 -->
     <div id="car-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #3498db;">
             <h2 style="color: #3498db;">🚗 汽車銷售中心</h2>
@@ -205,7 +197,6 @@
         </div>
     </div>
 
-    <!-- 求職中心 -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
@@ -230,7 +221,6 @@
         </div>
     </div>
 
-    <!-- 地產霸權與貸款 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -246,7 +236,6 @@
         </div>
     </div>
 
-    <!-- 副業兼職 -->
     <div id="parttime-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #2ecc71;">
             <h2 style="color: #2ecc71;">🛵 放工搵外快</h2>
@@ -258,7 +247,6 @@
         </div>
     </div>
 
-    <!-- 賭博 -->
     <div id="invest-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">💸 終極賭徒</h2>
@@ -299,7 +287,6 @@
         </div>
     </div>
 
-    <!-- 公司與員工 -->
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👥 員工管理</h2>
@@ -333,7 +320,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v31';
+    const SAVE_KEY = 'officeSlaveSave_v32'; // 更新版本號確保強制重載
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -470,7 +457,6 @@
         updateHUD(); updateActionButtons();
     }
 
-    // === 買車與抄牌扣分系統 ===
     function openCarModal() { document.getElementById('car-modal').style.display = 'flex'; }
     function buyCar(name, cost, fine) {
         if (player.money < cost) { showToast(`連 $${cost} 都冇，學人買車？`); return; }
@@ -489,7 +475,6 @@
         }
     }
 
-    // === 地產與貸款系統 ===
     function openPropertyModal() {
         document.getElementById('property-modal').style.display = 'flex';
         let propCount = player.properties.length;
@@ -524,16 +509,14 @@
         showToast("✅ 成功還清所有財仔數！一身鬆晒！"); closeModal('property-modal'); updateHUD();
     }
 
-    // === 副業兼職 ===
     function doPartTime(money, energyCost, stressCost, name) {
-        if (player.energy < energyCost) { showToast("體力唔夠做兼職！去瞓覺啦！"); return; }
+        if (player.energy < energyCost) { showToast("體力不足，無法做兼職！"); return; } // 修復：體力不足攔截
         player.money += money; player.energy -= energyCost; player.stress += stressCost;
         showToast(`🛵 做完${name}，賺咗 $${money}，就快攰死...`);
         closeModal('parttime-modal'); 
         advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 監獄與律師系統 ===
     function openJail() { document.getElementById('jail-modal').style.display = 'flex'; }
     function hireLawyer() {
         if (player.money < 30000) { showToast("你連 $30,000 律師費都俾唔起，自己頂啦！"); goToJail("你無錢請律師，被迫認罪。"); return; }
@@ -549,7 +532,6 @@
         checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 ===
     function triggerRandomEvent() {
         if (Math.random() > 0.2) return;
         let events = [
@@ -565,42 +547,15 @@
         ev.effect(); showToast(ev.msg);
     }
 
-    // === 賭博與投資 ===
-    function playCrypto() {
-        if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; }
-        player.money -= 10000;
-        if (Math.random() < 0.1) { player.money += 100000; showToast("🚀 幣圈暴漲！你賺咗 $100,000！"); }
-        else { showToast("📉 迷因幣歸零！你輸咗 $10,000..."); }
-        closeModal('invest-modal'); updateHUD();
-    }
+    function playCrypto() { if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; } player.money -= 10000; if (Math.random() < 0.1) { player.money += 100000; showToast("🚀 幣圈暴漲！你賺咗 $100,000！"); } else { showToast("📉 迷因幣歸零！你輸咗 $10,000..."); } closeModal('invest-modal'); updateHUD(); }
     function openHorseBet() { closeModal('invest-modal'); document.getElementById('horse-modal').style.display = 'flex'; document.getElementById('racing-anim').style.display = 'none'; document.getElementById('horse-buttons').style.display = 'grid'; }
-    function betHorse(num) { 
-        if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
-        player.money -= 500; document.getElementById('horse-buttons').style.display = 'none'; document.getElementById('racing-anim').style.display = 'block'; 
-        setTimeout(() => { 
-            if (Math.random() < 0.15) { document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); openJail(); return; }
-            if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); } 
-            else { showToast(`🐎 ${num}號馬跑輸咗...`); } 
-            document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); updateHUD(); updateActionButtons(); 
-        }, 1000); 
-    }
+    function betHorse(num) { if (player.money < 500) { showToast("連 $500 都冇！"); return; } player.money -= 500; document.getElementById('horse-buttons').style.display = 'none'; document.getElementById('racing-anim').style.display = 'block'; setTimeout(() => { if (Math.random() < 0.15) { document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); openJail(); return; } if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); } else { showToast(`🐎 ${num}號馬跑輸咗...`); } document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); updateHUD(); updateActionButtons(); }, 1000); }
     function openFootballBet() { closeModal('invest-modal'); document.getElementById('football-modal').style.display = 'flex'; document.getElementById('football-anim').style.display = 'none'; document.getElementById('football-buttons').style.display = 'grid'; }
-    function betFootball(choice) { 
-        if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
-        player.money -= 500; document.getElementById('football-buttons').style.display = 'none'; document.getElementById('football-anim').style.display = 'block'; 
-        setTimeout(() => { 
-            if (Math.random() < 0.15) { document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); openJail(); return; }
-            let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away'); 
-            if (choice === actual) { let winAmt = choice === 'draw' ? 1500 : 1000; player.money += winAmt; showToast(`⚽ 買中咗！贏 $${winAmt}！`); } 
-            else { showToast(`⚽ 買錯咗，輸 $500...`); } 
-            document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons(); 
-        }, 1000); 
-    }
+    function betFootball(choice) { if (player.money < 500) { showToast("連 $500 都冇！"); return; } player.money -= 500; document.getElementById('football-buttons').style.display = 'none'; document.getElementById('football-anim').style.display = 'block'; setTimeout(() => { if (Math.random() < 0.15) { document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); openJail(); return; } let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away'); if (choice === actual) { let winAmt = choice === 'draw' ? 1500 : 1000; player.money += winAmt; showToast(`⚽ 買中咗！贏 $${winAmt}！`); } else { showToast(`⚽ 買錯咗，輸 $500...`); } document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons(); }, 1000); }
     function playLottery() { if (player.money < 100) { showToast("連 $100 都冇！"); return; } player.money -= 100; if (Math.random() < 0.01) { player.money += 5000000; showToast("🎉 中咗頭獎！500萬！"); } else { showToast("😢 又做善事。"); } closeModal('invest-modal'); updateHUD(); }
     function playStock() { if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; } if (Math.random() < 0.5) { let l = Math.floor(Math.random() * 8000) + 2000; player.money -= l; showToast(`📉 股市大跌！蝕咗 $${l}`); } else { let w = Math.floor(Math.random() * 15000) + 5000; player.money += w; showToast(`📈 股市大升！賺咗 $${w}`); } closeModal('invest-modal'); updateHUD(); }
     function buyInsurance() { if (player.hasInsurance) { showToast("你已經買咗醫保啦！"); closeModal('invest-modal'); return; } if (player.money < 5000) { showToast("唔夠錢！"); return; } player.money -= 5000; player.hasInsurance = true; showToast("🛡️ 成功購買自願醫保！"); closeModal('invest-modal'); updateHUD(); }
 
-    // === 醫院系統 ===
     function triggerHospital() {
         if (hospitalFlag) return; hospitalFlag = true;
         let reason = player.energy <= 0 ? '體力透支' : '壓力爆煲';
@@ -719,6 +674,12 @@
                 if (timeOfDay === 0) { earn = Math.floor(earn * 1.2); stressAdd = Math.floor(stressAdd * 0.8); }
                 else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.2); energyCost = Math.floor(energyCost * 1.1); }
                 
+                // 🌟 修復：體力不足時阻止並提示，防止直接送院 🌟
+                if (player.energy < energyCost) {
+                    showToast("體力不足，無法工作！請休息或去醫院。");
+                    return;
+                }
+
                 player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
                 
                 advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
