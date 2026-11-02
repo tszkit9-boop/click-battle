@@ -126,6 +126,16 @@
         <div id="actions"></div>
     </div>
 
+    <!-- 警署與坐監 -->
+    <div id="jail-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
+            <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
+            <p>你因為參與非法外圍賭博被警察拘捕！<br><br>你想點做？</p>
+            <button class="modal-btn primary" onclick="hireLawyer()">👨‍⚖️ 請大律師 ($30,000)<small>有 60% 機率打甩，40% 機率敗訴入獄</small></button>
+            <button class="modal-btn danger" onclick="goToJail('你自己認罪，放棄抗辯。')">🙇‍♂️ 自己認罪<small>直接坐監，罰款 $50,000</small></button>
+        </div>
+    </div>
+
     <!-- 求職中心 -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
@@ -262,7 +272,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v24';
+    const SAVE_KEY = 'officeSlaveSave_v25';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -413,7 +423,34 @@
         closeModal('parttime-modal'); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 (包含抄牌) ===
+    // === 監獄與律師系統 ===
+    function openJail() {
+        document.getElementById('jail-modal').style.display = 'flex';
+    }
+    function hireLawyer() {
+        if (player.money < 30000) { showToast("你連 $30,000 律師費都俾唔起，自己頂啦！"); goToJail("你無錢請律師，被迫認罪。"); return; }
+        player.money -= 30000;
+        if (Math.random() < 0.6) {
+            showToast("👨‍⚖️ 律師成功幫你打甩官司！無罪釋放！");
+            closeModal('jail-modal');
+        } else {
+            goToJail("大律師盡咗力，但證據確鑿，你敗訴入獄。");
+        }
+    }
+    function goToJail(msg) {
+        closeModal('jail-modal');
+        let fine = 50000;
+        player.money -= fine;
+        player.mood = Math.max(0, player.mood - 50);
+        player.stress = Math.min(100, player.stress + 50);
+        player.age += 1; // 坐監浪費一年青春
+        showToast(`🚓 ${msg} 罰款 $50,000，監禁一年！`);
+        if (player.money < 0) { gameOver("你連罰款都交唔起，破產收場！"); return; }
+        checkMonthEnd(); // 強制推進一個月結
+        updateHUD(); updateActionButtons();
+    }
+
+    // === 隨機事件 (包含被捕) ===
     function triggerRandomEvent() {
         if (Math.random() > 0.2) return; // 20% 機率觸發
         let events = [
@@ -423,12 +460,8 @@
             { msg: "😡 被麻煩客投訴！扣 $1000 人工！", effect: () => { player.money = Math.max(0, player.money - 1000); player.stress += 10; } },
             { msg: "🤕 行路仆街！扣 20 體力！", effect: () => { player.energy = Math.max(1, player.energy - 20); } },
             { msg: "⛈️ 打風交通癱瘓！心情大跌！", effect: () => { player.mood = Math.max(0, player.mood - 20); } },
-            { msg: "🚓 偷雞非法賭波被警察拉！罰款 $5000！", effect: () => { player.money = Math.max(0, player.money - 5000); player.mood -= 30; } }
+            { msg: "🚓 偷雞非法賭波被警察放蛇拉咗！", effect: () => { openJail(); } }
         ];
-        // 如果有車，加入抄牌事件
-        if (player.properties && player.properties.length === 0 && player.jobType !== 'delivery') {
-            events.push({ msg: "🚗 違例泊車被抄牌！罰款 $320！", effect: () => { player.money = Math.max(0, player.money - 320); } });
-        }
         let ev = events[Math.floor(Math.random() * events.length)];
         ev.effect(); showToast(ev.msg);
     }
@@ -471,21 +504,18 @@
                 if (player.money < 0) { gameOver("公司資金鏈斷裂，你宣佈破產！"); return; }
             } else { if (player.stress > 80) player.health -= 15; }
             
-            // 供樓與收租
             if (player.mortgage > 0) {
                 player.money -= player.mortgage;
                 let rentInc = player.properties.reduce((a,b) => a + b.rent, 0);
                 player.money += rentInc;
                 showToast(`🏠 扣除供樓 $${player.mortgage}，收租 $${rentInc}`);
             }
-            // 財仔利息
             if (player.loan > 0) {
                 let interest = Math.floor(player.loan * 0.1);
                 player.money -= interest;
                 showToast(`💸 財仔扣除利息 $${interest}...`);
                 if (player.money < 0) { gameOver("你欠落大耳窿巨債，無力償還，被破產收場！"); return; }
             }
-            // 供樓破產判定
             if (player.money < 0) { gameOver("你供唔起樓，被銀行收樓，宣佈破產！"); return; }
 
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
