@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>社畜人生：打工仔辛酸史</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+        background-color: #1a1a1a; color: #fff; font-family: 'Noto Sans HK', sans-serif;
+        height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+        background-image: linear-gradient(45deg, #111 25%, transparent 25%), linear-gradient(-45deg, #111 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111 75%), linear-gradient(-45deg, transparent 75%, #111 75%);
+        background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    .back-btn {
+        position: absolute; top: 10px; left: 10px; z-index: 9999;
+        padding: 6px 12px; background: rgba(0, 0, 0, 0.8);
+        color: #fff; border: 2px solid #fff; border-radius: 8px;
+        text-decoration: none; font-weight: bold; font-size: 12px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); transition: all 0.2s;
+        touch-action: manipulation;
+    }
+    .back-btn:hover { background: #fff; color: #000; }
+
+    #game-container {
+        flex: 1; position: relative; display: flex; flex-direction: column;
+        max-width: 600px; width: 100%; margin: 0 auto; background: #2c3e50;
+        box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden;
+    }
+
+    /* 頂部狀態欄 */
+    #hud {
+        background: #1a252f; padding: 10px; border-bottom: 4px solid #000;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px;
+    }
+    .stat-item { display: flex; align-items: center; gap: 5px; }
+    .stat-bar { flex: 1; height: 10px; background: #333; border-radius: 5px; overflow: hidden; border: 1px solid #000; }
+    .stat-fill { height: 100%; transition: width 0.3s; }
+    .fill-money { background: #f1c40f; }
+    .fill-energy { background: #e74c3c; }
+    .fill-mood { background: #3498db; }
+    .fill-stress { background: #9b59b6; }
+    
+    /* 角色與場景 */
+    #scene {
+        flex: 1; position: relative; display: flex; flex-direction: column;
+        align-items: center; justify-content: flex-end; overflow: hidden; padding-bottom: 20px;
+        transition: background 0.5s;
+    }
+    .bg-office { background: linear-gradient(to bottom, #34495e, #2c3e50); }
+    .bg-home { background: linear-gradient(to bottom, #8e44ad, #2c3e50); }
+    .bg-street { background: linear-gradient(to bottom, #3498db, #2c3e50); }
+
+    /* CSS 真人比例小人 */
+    #character {
+        position: relative; width: 120px; height: 250px; margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+    .head {
+        position: absolute; top: 0; left: 30px; width: 60px; height: 70px;
+        background: #f5cba7; border-radius: 30px 30px 25px 25px; border: 2px solid #000;
+        z-index: 2; transition: all 0.3s;
+    }
+    .hair {
+        position: absolute; top: -5px; left: -2px; width: 64px; height: 35px;
+        background: #2c3e50; border-radius: 30px 30px 0 0; border-bottom: 2px solid #000;
+    }
+    .eye { position: absolute; top: 35px; width: 10px; height: 10px; background: #000; border-radius: 50%; }
+    .eye-l { left: 12px; } .eye-r { right: 12px; }
+    .mouth { position: absolute; top: 55px; left: 25px; width: 10px; height: 4px; background: #000; border-radius: 2px; transition: all 0.3s; }
+    
+    .body {
+        position: absolute; top: 70px; left: 20px; width: 80px; height: 110px;
+        background: #2980b9; border-radius: 15px 15px 5px 5px; border: 2px solid #000; z-index: 1;
+    }
+    .tie { position: absolute; top: 0; left: 35px; width: 10px; height: 60px; background: #c0392b; border: 1px solid #000; }
+    .arm { position: absolute; top: 85px; width: 20px; height: 70px; background: #2980b9; border: 2px solid #000; border-radius: 10px; z-index: 0; }
+    .arm-l { left: 0; } .arm-r { right: 0; }
+    .leg { position: absolute; top: 180px; width: 25px; height: 70px; background: #34495e; border: 2px solid #000; border-radius: 5px; z-index: 0; }
+    .leg-l { left: 30px; } .leg-r { right: 30px; }
+    
+    /* 對話框 */
+    #dialogue-box {
+        position: absolute; bottom: 10px; left: 10px; right: 10px;
+        background: rgba(0, 0, 0, 0.9); border: 4px solid #fff; border-radius: 15px;
+        padding: 15px; z-index: 10; display: none; flex-direction: column; gap: 10px;
+    }
+    #speaker-name { color: #f1c40f; font-weight: bold; font-size: 14px; }
+    #dialogue-text { font-size: 14px; line-height: 1.5; min-height: 40px; }
+    #choices { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .choice-btn {
+        background: #34495e; color: #fff; border: 2px solid #fff; border-radius: 8px;
+        padding: 10px; font-size: 14px; text-align: left; cursor: pointer; transition: all 0.1s;
+        font-family: 'Noto Sans HK', sans-serif;
+    }
+    .choice-btn:active { background: #fff; color: #000; }
+
+    /* 底部操作區 */
+    #actions {
+        background: #1a252f; padding: 15px; border-top: 4px solid #000;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; z-index: 10;
+    }
+    .action-btn {
+        background: #e67e22; color: #fff; border: 2px solid #000; border-radius: 8px;
+        padding: 15px 10px; font-size: 14px; font-weight: bold; cursor: pointer;
+        font-family: 'Noto Sans HK', sans-serif; box-shadow: 0 4px 0 #b8651b;
+        transition: all 0.1s; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    }
+    .action-btn:active { transform: translateY(4px); box-shadow: none; }
+    .action-btn.disabled { background: #7f8c8d; box-shadow: 0 4px 0 #555; cursor: not-allowed; }
+    .action-btn small { font-size: 10px; font-weight: normal; opacity: 0.8; }
+
+    /* 浮動提示 */
+    .float-text {
+        position: absolute; font-weight: bold; font-size: 16px; pointer-events: none;
+        animation: floatUp 1s forwards; z-index: 20; text-shadow: 1px 1px 2px #000;
+    }
+    @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
+    
+    /* 結算畫面 */
+    #end-screen {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 50;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 20px;
+    }
+    #end-screen h1 { color: #f1c40f; font-size: 32px; margin-bottom: 20px; }
+    #end-screen p { font-size: 16px; line-height: 1.8; margin-bottom: 30px; }
+    #end-screen button {
+        padding: 15px 30px; background: #f1c40f; color: #000; border: none;
+        border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+        #character { transform: scale(0.85); transform-origin: bottom center; }
+        #dialogue-box { bottom: 5px; left: 5px; right: 5px; padding: 10px; }
+        #actions { padding: 10px; }
+        .action-btn { padding: 12px 5px; font-size: 12px; }
+    }
+</style>
+</head>
+<body>
+
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <div id="game-container">
+        <!-- 狀態欄 -->
+        <div id="hud">
+            <div class="stat-item">💰 <div class="stat-bar"><div class="stat-fill fill-money" id="bar-money" style="width: 20%;"></div></div></div>
+            <div class="stat-item">🔋 <div class="stat-bar"><div class="stat-fill fill-energy" id="bar-energy" style="width: 100%;"></div></div></div>
+            <div class="stat-item">😊 <div class="stat-bar"><div class="stat-fill fill-mood" id="bar-mood" style="width: 80%;"></div></div></div>
+            <div class="stat-item">🤯 <div class="stat-bar"><div class="stat-fill fill-stress" id="bar-stress" style="width: 10%;"></div></div></div>
+        </div>
+
+        <!-- 遊戲場景 -->
+        <div id="scene" class="bg-street">
+            <!-- CSS 小人 -->
+            <div id="character">
+                <div class="hair"></div>
+                <div class="head">
+                    <div class="eye eye-l"></div>
+                    <div class="eye eye-r"></div>
+                    <div class="mouth" id="char-mouth"></div>
+                </div>
+                <div class="arm arm-l"></div>
+                <div class="arm arm-r"></div>
+                <div class="body"><div class="tie"></div></div>
+                <div class="leg leg-l"></div>
+                <div class="leg leg-r"></div>
+            </div>
+
+            <!-- 對話框 (面試/事件用) -->
+            <div id="dialogue-box">
+                <div id="speaker-name">面試官</div>
+                <div id="dialogue-text">你好，請坐。先介紹一下你自己吧。</div>
+                <div id="choices"></div>
+            </div>
+        </div>
+
+        <!-- 底部按鈕 -->
+        <div id="actions">
+            <!-- 按鈕由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="end-screen">
+        <h1 id="end-title">人生落幕</h1>
+        <p id="end-stats"></p>
+        <button onclick="location.reload()">重新投胎</button>
+    </div>
+
+<script>
+    // --- 遊戲狀態 ---
+    let player = {
+        age: 22,
+        money: 0,
+        energy: 100,
+        mood: 80,
+        stress: 10,
+        job: '無業',
+        salary: 0,
+        house: '無家可歸 (街邊)',
+        partner: false,
+        kids: 0,
+        stage: 'interview' // interview, work, end
+    };
+
+    let currentMonth = 0;
+    let interviewStep = 0;
+    let interviewAnswers = [];
+
+    const sceneEl = document.getElementById('scene');
+    const dialogueBox = document.getElementById('dialogue-box');
+    const speakerName = document.getElementById('speaker-name');
+    const dialogueText = document.getElementById('dialogue-text');
+    const choicesEl = document.getElementById('choices');
+    const actionsEl = document.getElementById('actions');
+    const charMouth = document.getElementById('char-mouth');
+
+    // --- 音效 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        let now = audioCtx.currentTime;
+        if (type === 'click') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.start(); osc.stop(now + 0.05);
+        } else if (type === 'money') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(); osc.stop(now + 0.2);
+        } else if (type === 'bad') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        }
+    }
+
+    // 更新狀態條
+    function updateHUD() {
+        document.getElementById('bar-money').style.width = `${Math.min(100, (player.money / 100000) * 100)}%`;
+        document.getElementById('bar-energy').style.width = `${player.energy}%`;
+        document.getElementById('bar-mood').style.width = `${player.mood}%`;
+        document.getElementById('bar-stress').style.width = `${player.stress}%`;
+
+        // 狀態改變影響小人口部
+        if (player.stress > 80 || player.mood < 20) {
+            charMouth.style.width = '15px';
+            charMouth.style.height = '10px';
+            charMouth.style.borderRadius = '0 0 10px 10px';
+            charMouth.style.background = '#000';
+        } else {
+            charMouth.style.width = '10px';
+            charMouth.style.height = '4px';
+            charMouth.style.borderRadius = '2px';
+        }
+
+        if (player.energy <= 0 || player.stress >= 100) {
+            gameOver("你因為過度勞累/壓力爆煲，暈低咗送院...");
+        }
+    }
+
+    function showFloatText(text, color) {
+        let el = document.createElement('div');
+        el.className = 'float-text';
+        el.innerText = text;
+        el.style.color = color;
+        el.style.left = '50%';
+        el.style.top = '50%';
+        sceneEl.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    // --- 階段一：面試系統 ---
+    const interviewData = [
+        {
+            speaker: "面試官",
+            text: "你好，請坐。我看你履歷寫住剛畢業。你覺得你最大嘅優點係咩？",
+            choices: [
+                { text: "我好捱得！可以通宵加班！", effect: () => { player.job = "初級社畜"; player.salary = 12000; interviewAnswers.push('捱得'); } },
+                { text: "我學習能力強，好快上手。", effect: () => { player.job = "見習生"; player.salary = 14000; interviewAnswers.push('好學'); } },
+                { text: "我要求好低，有份工就得。", effect: () => { player.job = "廉價勞工"; player.salary = 10000; interviewAnswers.push('卑微'); } }
+            ]
+        },
+        {
+            speaker: "面試官",
+            text: "如果公司要求你今個星期六日返嚟無薪加班，你會點做？",
+            choices: [
+                { text: "義不容辭！公司就係我第二個家！", effect: () => { player.salary += 2000; player.stress += 20; interviewAnswers.push('賣命'); } },
+                { text: "如果有迫切需要，我可以配合。", effect: () => { player.salary += 1000; player.stress += 10; interviewAnswers.push('妥協'); } },
+                { text: "我會按勞工法例爭取應有權益。", effect: () => { player.salary -= 2000; player.mood += 20; interviewAnswers.push('反抗'); } }
+            ]
+        }
+    ];
+
+    function startInterview() {
+        player.stage = 'interview';
+        sceneEl.className = 'bg-street';
+        dialogueBox.style.display = 'flex';
+        actionsEl.style.display = 'none';
+        interviewStep = 0;
+        showInterviewStep();
+    }
+
+    function showInterviewStep() {
+        if (interviewStep >= interviewData.length) {
+            // 面試結束
+            dialogueBox.style.display = 'none';
+            actionsEl.style.display = 'grid';
+            player.stage = 'work';
+            player.money += 5000; // 父母俾嘅啟動資金
+            player.house = '深水埗劏房 ($4000/月)';
+            alert(`恭喜你！你成功獲聘為「${player.job}」，月薪 $${player.salary}！\n你帶住 $5000 啟動資金，開始咗你嘅社畜人生。`);
+            updateActionButtons();
+            return;
+        }
+
+        let data = interviewData[interviewStep];
+        speakerName.innerText = data.speaker;
+        dialogueText.innerText = data.text;
+        choicesEl.innerHTML = '';
+
+        data.choices.forEach(choice => {
+            let btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = choice.text;
+            btn.onclick = () => {
+                playSound('click');
+                choice.effect();
+                interviewStep++;
+                showInterviewStep();
+            };
+            choicesEl.appendChild(btn);
+        });
+    }
+
+    // --- 階段二：打工生存系統 ---
+    function updateActionButtons() {
+        actionsEl.innerHTML = '';
+        
+        if (player.stage === 'work') {
+            // 工作按鈕
+            addActionBtn('💼 努力工作', '消耗體力，賺取金錢', player.energy > 10 ? () => workAction() : null);
+            // 摸魚按鈕
+            addActionBtn('🐟 帶薪摸魚', '回復心情，減少壓力', player.stress > 0 ? () => fishAction() : null);
+            // 生活按鈕
+            if (player.energy > 20) {
+                addActionBtn('🍜 食頹飯', '花 $50 回復體力', () => eatAction());
+            } else {
+                addActionBtn('😴 瞓街邊', '無錢開飯，瞓街回復少少體力', () => sleepStreetAction());
+            }
+            
+            // 消費/人生進度
+            if (player.money >= 4000) {
+                addActionBtn('🏠 交租', '每月必須支出', () => payRentAction());
+            }
+            if (!player.partner && player.money >= 10000 && player.mood > 50) {
+                addActionBtn('💖 去聯誼', '花費 $10000 結識另一半', () => findPartnerAction());
+            }
+            if (player.partner && player.kids === 0 && player.money >= 50000) {
+                addActionBtn('👶 生仔', '組織家庭，花費 $50000', () => haveKidAction());
+            }
+            if (player.money >= 100000 && player.house === '深水埗劏房 ($4000/月)') {
+                addActionBtn('🏡 買樓', '上車做業主！花費 $100000', () => buyHouseAction());
+            }
+        }
+    }
+
+    function addActionBtn(title, desc, onClick) {
+        let btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.innerHTML = `${title}<small>${desc}</small>`;
+        if (!onClick) {
+            btn.classList.add('disabled');
+        } else {
+            btn.onclick = () => { playSound('click'); onClick(); };
+        }
+        actionsEl.appendChild(btn);
+    }
+
+    function workAction() {
+        let earn = Math.floor(player.salary / 2);
+        player.money += earn;
+        player.energy -= 30;
+        player.stress += 20;
+        player.mood -= 10;
+        playSound('money');
+        showFloatText(`+$${earn}`, '#f1c40f');
+        showFloatText(`-30 🔋`, '#e74c3c');
+        checkMonthEnd();
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function fishAction() {
+        player.stress = Math.max(0, player.stress - 30);
+        player.mood = Math.min(100, player.mood + 20);
+        player.energy = Math.min(100, player.energy + 10);
+        playSound('click');
+        showFloatText(`-30 🤯`, '#9b59b6');
+        checkMonthEnd();
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function eatAction() {
+        if (player.money < 50) return;
+        player.money -= 50;
+        player.energy = Math.min(100, player.energy + 40);
+        player.mood += 5;
+        playSound('click');
+        showFloatText(`- $50`, '#f1c40f');
+        showFloatText(`+40 🔋`, '#e74c3c');
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function sleepStreetAction() {
+        player.energy = Math.min(100, player.energy + 15);
+        player.mood -= 10;
+        player.stress += 10;
+        playSound('bad');
+        showFloatText(`+15 🔋`, '#e74c3c');
+        checkMonthEnd();
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function payRentAction() {
+        if (player.money < 4000) {
+            alert("你冇錢交租，被業主趕走咗！你變成無家可歸...");
+            player.money = 0;
+            player.house = '無家可歸 (街邊)';
+            player.stress += 50;
+            return;
+        }
+        player.money -= 4000;
+        playSound('bad');
+        showFloatText(`- $4000 租`, '#e74c3c');
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function findPartnerAction() {
+        player.money -= 10000;
+        player.partner = true;
+        player.mood = 100;
+        player.stress = Math.max(0, player.stress - 20);
+        playSound('money');
+        alert("恭喜！你喺聯誼活動中識到另一半，成功脫單！");
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function haveKidAction() {
+        player.money -= 50000;
+        player.kids++;
+        player.stress += 30;
+        player.mood += 20;
+        playSound('money');
+        alert("恭喜！你生咗個小朋友！不過養育開支好大，你要繼續努力賺錢喇...");
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function buyHouseAction() {
+        player.money -= 100000;
+        player.house = '私人屋苑 (業主)';
+        player.mood += 50;
+        player.stress = Math.max(0, player.stress - 50);
+        playSound('money');
+        alert("太感動啦！你終於上車買樓做業主！");
+        updateHUD();
+        updateActionButtons();
+    }
+
+    function checkMonthEnd() {
+        currentMonth++;
+        if (currentMonth % 3 === 0) { // 每 3 次行動當一個月
+            player.age++;
+            // 隨機事件
+            let rand = Math.random();
+            if (rand < 0.2 && player.stage === 'work') {
+                alert("⚠️ 老闆突然要求你週末返工，你嘅壓力大增！");
+                player.stress += 20;
+                player.mood -= 15;
+            } else if (rand < 0.4 && player.stage === 'work') {
+                alert("🎉 公司派咗少少花紅！");
+                player.money += 2000;
+            }
+            
+            if (player.age >= 65) {
+                gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
+            }
+        }
+    }
+
+    function gameOver(reason) {
+        player.stage = 'end';
+        dialogueBox.style.display = 'none';
+        actionsEl.style.display = 'none';
+        document.getElementById('end-screen').style.display = 'flex';
+        
+        let endingTitle = "👴 光榮退休";
+        if (player.stress >= 100 || player.energy <= 0) endingTitle = "💀 過勞死";
+        if (player.money < 0) endingTitle = "💸 破產邊緣";
+        if (player.mood < 20) endingTitle = "😔 抑鬱終老";
+
+        document.getElementById('end-title').innerText = endingTitle;
+        
+        let partnerText = player.partner ? "有老伴陪伴" : "孤獨終老";
+        let houseText = player.house.includes('業主') ? "成功上車做業主" : "一生租樓/露宿街頭";
+        let kidText = player.kids > 0 ? `有 ${player.kids} 個仔女` : "無兒無女";
+
+        document.getElementById('end-stats').innerHTML = `
+            ${reason}<br><br>
+            終年：${player.age} 歲<br>
+            最終資產：$${player.money.toLocaleString()}<br>
+            居住狀況：${houseText}<br>
+            感情狀況：${partnerText}<br>
+            家庭：${kidText}<br>
+            最終職位：${player.job}
+        `;
+    }
+
+    // 初始化遊戲
+    window.onload = () => {
+        updateHUD();
+        startInterview();
+    };
+
+</script>
+</body>
+</html>
