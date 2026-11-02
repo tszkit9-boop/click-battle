@@ -984,40 +984,95 @@ function showCellInfo(pos) {
 }
 function upgradeProperty(pos) { const cell = BOARD[pos], p = localData.players[myId]; const ownerData = localData.gameState.owners[pos]; if(!ownerData || ownerData.owner !== myId) return; if(p.cash < cell.price / 2) return alert('現金不足！'); roomRef.update({ [`gameState/owners/${pos}/level`]: (ownerData.level || 0) + 1, [`players/${myId}/cash`]: p.cash - (cell.price / 2) }).then(() => { closeModal(); }); }
 
+// 👇 重寫：玩家主動交易 (可選擇對象，AI 會判斷盈虧)
 function openTradeModal() {
   const others = Object.keys(localData.players).filter(id => id !== myId && !localData.players[id].bankrupt);
-  if(others.length === 0) return;
-  const targetId = others[0];
-  const targetP = localData.players[targetId];
-  const myP = localData.players[myId];
-  if(!myP.props || myP.props.length === 0) return alert('你冇地可以換！');
+  if(others.length === 0) return alert('冇人可以交易！');
   
-  const myOpts = myP.props.map(i => `<option value="${i}">${BOARD[i].n}</option>`).join('');
-  const targetOpts = targetP.props.map(i => `<option value="${i}">${BOARD[i].n}</option>`).join('');
+  let targetOpts = others.map(id => `<option value="${id}">${localData.players[id].emoji} ${localData.players[id].name}</option>`).join('');
   
-  showModal(`<h3>🤝 提出交易</h3><p>向 ${targetP.emoji} ${targetP.name} 提出交易：</p>
-  <div class="loan-row"><label>我的地</label><select id="tradeMyProp"><option value="">唔出地</option>${myOpts}</select></div>
-  <div class="loan-row"><label>我補現金</label><input type="number" id="tradeMyCash" value="0" step="10000"></div>
-  <div class="loan-row"><label>換對方地</label><select id="tradeTargetProp"><option value="">唔要地</option>${targetOpts}</select></div>
-  <div class="loan-row"><label>對方補現金</label><input type="number" id="tradeTargetCash" value="0" step="10000"></div>
-  <button class="btn primary" onclick="submitTrade('${targetId}')">發送交易</button><button class="btn" onclick="closeModal()">取消</button>`); 
+  showModal(`
+    <h3>🤝 主動交易</h3>
+    <div class="loan-row">
+      <label>交易對象</label>
+      <select id="tradeTarget" onchange="updateTradeOptions()">${targetOpts}</select>
+    </div>
+    <div id="tradeDetails"></div>
+    <button class="btn primary" onclick="submitTradeRequest()">提出交易</button>
+    <button class="btn" onclick="closeModal()">取消</button>
+  `);
+  updateTradeOptions();
 }
 
-function submitTrade(targetId) { 
-  const myProp = document.getElementById('tradeMyProp').value; 
-  let myCash = +document.getElementById('tradeMyCash').value; 
-  let targetCash = +document.getElementById('tradeTargetCash').value; 
+function updateTradeOptions() {
+  const targetId = document.getElementById('tradeTarget').value;
+  const targetP = localData.players[targetId];
+  const myP = localData.players[myId];
+  
+  const myOpts = myP.props && myP.props.length > 0 ? myP.props.map(i => `<option value="${i}">${BOARD[i].n}</option>`).join('') : '<option value="">無</option>';
+  const targetOpts = targetP.props && targetP.props.length > 0 ? targetP.props.map(i => `<option value="${i}">${BOARD[i].n}</option>`).join('') : '<option value="">無</option>';
+  
+  document.getElementById('tradeDetails').innerHTML = `
+    <div class="loan-row"><label>我出嘅地</label><select id="tradeMyProp"><option value="">唔出地</option>${myOpts}</select></div>
+    <div class="loan-row"><label>我補現金</label><input type="number" id="tradeMyCash" value="0" step="10000"></div>
+    <div class="loan-row"><label>要求對方地</label><select id="tradeTargetProp"><option value="">唔要地</option>${targetOpts}</select></div>
+    <div class="loan-row"><label>要求補現金</label><input type="number" id="tradeTargetCash" value="0" step="10000"></div>
+  `;
+}
+
+function submitTradeRequest() {
+  const targetId = document.getElementById('tradeTarget').value;
+  const myProp = document.getElementById('tradeMyProp').value;
+  const myCash = +document.getElementById('tradeMyCash').value;
   const targetProp = document.getElementById('tradeTargetProp').value;
-  const myP = localData.players[myId]; 
-  const targetP = localData.players[targetId]; 
-  if (myCash > myP.cash) return alert('你現金不足！'); 
-  if (myP.emoji === '👧') { targetCash += 5000; } 
-  const updates = {}; 
-  updates[`players/${myId}/cash`] = myP.cash - myCash + targetCash; 
-  updates[`players/${targetId}/cash`] = targetP.cash - targetCash + myCash; 
-  if(myProp) updates[`gameState/owners/${myProp}/owner`] = targetId; 
-  if(targetProp) updates[`gameState/owners/${targetProp}/owner`] = myId; 
-  roomRef.update(updates).then(() => { addLog(`🤝 交易完成！`, 'system'); closeModal(); }); 
+  let targetCash = +document.getElementById('tradeTargetCash').value;
+  
+  const myP = localData.players[myId];
+  const targetP = localData.players[targetId];
+  
+  if (myCash > myP.cash) return alert('你現金不足！');
+  if (targetCash > targetP.cash) return alert('對方現金不足！');
+  if (!myProp && !targetProp && myCash === 0 && targetCash === 0) return alert('你冇提出任何交易內容！');
+  
+  if (myP.emoji === '👧') { targetCash += 5000; alert('👧 交易專家技能：自動要求額外 $5,000！'); }
+  
+  if (targetP.isBot) {
+    let targetValue = (targetProp ? BOARD[targetProp].price : 0) + targetCash;
+    let myValue = (myProp ? BOARD[myProp].price : 0) + myCash;
+    
+    // 電腦判斷：如果換出去嘅價值 大於 收到嘅價值 1.5倍，就拒絕
+    if (targetValue > myValue * 1.5) {
+      alert(`🤖 ${targetP.name} 拒絕了交易！\n(電腦覺得自己太蝕底)`);
+      closeModal();
+      return;
+    }
+  }
+  
+  const updates = {};
+  updates[`players/${myId}/cash`] = myP.cash - myCash + targetCash;
+  updates[`players/${targetId}/cash`] = targetP.cash - targetCash + myCash;
+  
+  let myNewProps = [...(myP.props||[])];
+  let targetNewProps = [...(targetP.props||[])];
+  
+  if (myProp) {
+    updates[`gameState/owners/${myProp}/owner`] = targetId;
+    myNewProps = myNewProps.filter(i => i !== myProp);
+    targetNewProps.push(myProp);
+  }
+  if (targetProp) {
+    updates[`gameState/owners/${targetProp}/owner`] = myId;
+    targetNewProps = targetNewProps.filter(i => i !== targetProp);
+    myNewProps.push(targetProp);
+  }
+  
+  updates[`players/${myId}/props`] = myNewProps;
+  updates[`players/${targetId}/props`] = targetNewProps;
+  
+  roomRef.update(updates).then(() => {
+    addLog(`🤝 ${myP.name} 和 ${targetP.name} 完成了交易！`, 'system');
+    closeModal();
+  });
 }
 
 function openLoanModal() { showModal(`<h3>💸 借款</h3><div class="loan-row"><label>借款額</label><input type="number" id="loanAmount" value="20000" step="5000"></div><div class="loan-row"><label>每回合息</label><select id="loanRate"><option value="0.05">5%</option><option value="0.1">10%</option><option value="0.2">20%</option></select></div><button class="btn primary" onclick="confirmLoan()">確認</button><button class="btn" onclick="closeModal()">取消</button>`); }
