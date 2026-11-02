@@ -132,7 +132,7 @@
         <div id="actions"></div>
     </div>
 
-    <!-- 求職中心 (15種職業) -->
+    <!-- 求職中心 -->
     <div id="job-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
@@ -253,7 +253,7 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v22';
+    const SAVE_KEY = 'officeSlaveSave_v23';
     function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth })); } catch(e){} }
     function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
@@ -515,6 +515,14 @@
                 checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
+            // 🌟 新增：睡覺回體力 🌟
+            addActionBtn('🛏️ 睡覺休息', '免費回滿體力/減壓', 'rest', () => { 
+                player.energy = 100; 
+                player.stress = Math.max(0, player.stress - 15); 
+                player.mood = Math.min(100, player.mood + 5); 
+                showToast("😴 瞓咗個好覺，體力回滿！"); 
+                checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            });
             addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('🚗 車行', '買車/換車', 'buy', openCarModal);
             addActionBtn('💸 終極賭徒', '賭馬/波/六合彩', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
