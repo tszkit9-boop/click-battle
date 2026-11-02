@@ -121,6 +121,25 @@
         padding: 1px 5px;
         border-radius: 4px;
     }
+    .staff-desk.slacking {
+        border-color: #e74c3c;
+        box-shadow: 0 0 15px rgba(231,76,60,0.6);
+        cursor: pointer;
+        animation: slackingPulse 1.5s infinite;
+    }
+    @keyframes slackingPulse {
+        0%, 100% { box-shadow: 0 0 15px rgba(231,76,60,0.6); }
+        50% { box-shadow: 0 0 25px rgba(231,76,60,1); }
+    }
+    .catch-hint {
+        font-size: 9px;
+        color: #fff;
+        background: #e74c3c;
+        padding: 2px 8px;
+        border-radius: 8px;
+        margin-top: 3px;
+        animation: flash 1s infinite;
+    }
     .empty-desk {
         background: rgba(44,62,80,0.35);
         border: 2px dashed #555;
@@ -561,6 +580,19 @@
         </div>
     </div>
 
+    <!-- 抓摸魚 -->
+    <div id="slacking-modal" class="modal-overlay">
+        <div class="modal-box" style="border-color: #e74c3c;">
+            <h2 style="color: #e74c3c;">🚨 捉到摸魚！</h2>
+            <div style="font-size: 50px; margin-bottom: 10px;" id="slacking-emoji">😴</div>
+            <p><b id="slacking-name" style="color:#f1c40f;">員工</b> 正在偷懶！你要點處理？</p>
+            <button class="modal-btn warning" onclick="resolveSlacking('warn')">⚠️ 口頭警告<small>心情 +5，員工即刻扮工</small></button>
+            <button class="modal-btn primary" onclick="resolveSlacking('fine')">💰 罰款 $5,000<small>心情 +10，袋 $5,000</small></button>
+            <button class="modal-btn danger" onclick="resolveSlacking('fire')">🔥 直接解僱<small>心情 -10，殺一儆百</small></button>
+            <button class="modal-btn primary" onclick="resolveSlacking('forgive')" style="background:#9b59b6;">😌 原諒佢<small>心情 +10，壓力 -5</small></button>
+        </div>
+    </div>
+
     <div id="toast">提示訊息</div>
     <div id="end-screen">
         <h1 id="end-title">人生落幕</h1>
@@ -749,16 +781,21 @@
         if (char) char.style.display = 'none';
         staffGrid.innerHTML = '';
 
-        player.staffList.forEach(s => {
+        player.staffList.forEach((s, idx) => {
             if (!s.status) s.status = STAFF_STATUSES[0];
+            let isSlacking = (s.status.text === '摸魚中' || s.status.text === '偷懶中');
             let div = document.createElement('div');
-            div.className = 'staff-desk' + (s.isManager ? ' manager' : '');
+            div.className = 'staff-desk' + (s.isManager ? ' manager' : '') + (isSlacking ? ' slacking' : '');
             div.innerHTML = `
                 <div class="desk-level">${s.isManager ? '👔 主管' : 'Lv.' + (s.level || 1)}</div>
                 <div class="desk-emoji">${getStaffEmoji(s)}</div>
                 <div class="desk-name">${s.name}</div>
                 <div class="desk-status">${s.status.emoji} ${s.status.text}</div>
+                ${isSlacking ? '<div class="catch-hint">👆 點擊抓摸魚</div>' : ''}
             `;
+            if (isSlacking) {
+                div.onclick = () => catchSlacking(idx);
+            }
             staffGrid.appendChild(div);
         });
 
@@ -779,6 +816,46 @@
             player.staffList[idx].status = STAFF_STATUSES[Math.floor(Math.random() * STAFF_STATUSES.length)];
             renderStaffScene();
         }, 4000);
+    }
+
+    // === 抓摸魚 ===
+    function catchSlacking(idx) {
+        const s = player.staffList[idx];
+        if (!s) return;
+        document.getElementById('slacking-name').innerText = s.name;
+        document.getElementById('slacking-emoji').innerText = getStaffEmoji(s);
+        document.getElementById('slacking-modal').style.display = 'flex';
+        window._slackingIdx = idx;
+    }
+
+    function resolveSlacking(action) {
+        const idx = window._slackingIdx;
+        const s = player.staffList[idx];
+        document.getElementById('slacking-modal').style.display = 'none';
+        if (!s) return;
+
+        if (action === 'warn') {
+            player.mood = Math.min(100, player.mood + 5);
+            showToast(`⚠️ 你口頭警告咗 ${s.name}，佢即刻扮工！`);
+        } else if (action === 'fine') {
+            player.money += 5000;
+            player.mood = Math.min(100, player.mood + 10);
+            showToast(`💰 你罰咗 ${s.name} $5,000，佢喊住扮工！`);
+        } else if (action === 'fire') {
+            player.staffList.splice(idx, 1);
+            player.mood = Math.max(0, player.mood - 10);
+            showToast(`🔥 你即場炒咗 ${s.name} 魷魚！其他員工嚇到唔敢偷懶。`);
+        } else if (action === 'forgive') {
+            player.mood = Math.min(100, player.mood + 10);
+            player.stress = Math.max(0, player.stress - 5);
+            showToast(`😌 你原諒咗 ${s.name}，佢好感動，話以後唔會再偷懶。`);
+        }
+
+        if (s && player.staffList.includes(s)) {
+            s.status = STAFF_STATUSES[0];
+        }
+        renderStaffScene();
+        updateHUD();
     }
 
     function advanceTime() {
@@ -1791,4 +1868,15 @@
                     else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
                     else sceneEl.className = 'bg-night';
                 }
-                updateActionButtons();
+                updateActionButtons(); 
+                startStaffStatusTimer();
+            } else { 
+                player.stage = 'gender_select'; player.money = 0; 
+                document.getElementById('gender-modal').style.display = 'flex'; 
+            }
+            updateHUD();
+        } catch(e) {}
+    };
+</script>
+</body>
+</html>
