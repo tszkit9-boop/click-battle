@@ -22,6 +22,8 @@
   button:active{transform:scale(.96)}
   button:disabled{opacity:.38;cursor:not-allowed;transform:none!important;filter:grayscale(.5)}
   .hidden{display:none!important}
+  
+  @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
   .global-back-btn {position: fixed; top: 15px; left: 15px; z-index: 99999; padding: 8px 16px; background: rgba(10, 10, 20, 0.85); color: var(--gold); border: 2px solid var(--gold); border-radius: 8px; text-decoration: none; font-weight: 900; font-size: 14px; box-shadow: 0 0 10px rgba(232, 196, 106, 0.3); transition: all 0.2s;}
   .global-back-btn:hover { background: var(--gold); color: #000; }
@@ -97,7 +99,7 @@
   .log-item.system{color:var(--purple);}
   
   .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
-  .modal{background:linear-gradient(160deg,#1c1c38,#14142a);border:1px solid var(--gold);border-radius:20px;padding:24px;max-width:420px;width:100%;margin:auto;}
+  .modal{background:linear-gradient(160deg,#1c1c38,#14142a);border:1px solid var(--gold);border-radius:20px;padding:24px;max-width:420px;width:100%;margin:auto;max-height:90vh;overflow-y:auto;}
   .modal h3{color:var(--gold);margin-bottom:12px;font-size:1.2rem;}
   .modal p{color:#c8c2b4;margin-bottom:16px;font-size:.9rem;line-height:1.5;}
   .modal .btn{width:100%;margin-bottom:10px;}
@@ -183,7 +185,6 @@ const SKILLS = {
   '🐸': { name: '黑市大佬', desc: '喺黑市買地只需 7 折。' }
 };
 
-// 加入車站與公用事業
 const BOARD = [
   {t:'start', n:'起點', icon:'🏁'}, 
   {t:'prop', n:'中環', d:'中西', tier:'S', price:60000, rent:7200},
@@ -432,14 +433,21 @@ function renderBoard() {
       <div class="die ${isRolling?'rolling':''}">${gs.dice2 || '?'}</div>
     </div>
     ${actionArea}
-    ${curP.isBot ? `<div style="font-size:.7rem;color:#666;cursor:pointer;" onclick="forceBotRoll()">(卡住咗？點擊強制電腦行動)</div>` : ''}
+    ${curP.isBot ? `<button class="btn danger" onclick="forceBotRoll()" style="margin-top:10px; animation: flash 1s infinite; font-size: 1rem; padding: 12px 24px; border-radius: 12px;">🚨 電腦卡住咗？點擊強制行動</button>` : ''}
   </div>`;
   boardEl.innerHTML = html;
 }
 
 function forceBotRoll() {
-  if(localData.gameState.phase === 'roll' && localData.players[localData.gameState.currentId].isBot) { lastBotRollAttempt = 0; checkBotTurn(); }
-  else if(localData.gameState.phase === 'action' && localData.players[localData.gameState.currentId].isBot) endTurn();
+  const gs = localData.gameState;
+  const curP = localData.players[gs.currentId];
+  if (!curP || !curP.isBot) return;
+  if (gs.phase === 'roll') {
+    lastBotRollAttempt = 0; 
+    checkBotTurn();
+  } else if (gs.phase === 'action') {
+    endTurn();
+  }
 }
 
 function renderPlayers() {
@@ -466,14 +474,12 @@ function renderPlayers() {
   panel.innerHTML = html;
 }
 
-// 🎯 大事件邏輯 (每5回合觸發)
 function triggerGlobalEvent(round) {
   if(round % 5 !== 0) return null;
   const ev = GLOBAL_EVENTS[Math.floor(Math.random()*GLOBAL_EVENTS.length)];
   return ev;
 }
 
-// 📈 股票市場邏輯
 function openMarket() {
   const stocks = localData.gameState.stocks || {};
   const myP = localData.players[myId];
@@ -522,32 +528,28 @@ function tradeStock(stockId, type) {
   }
 }
 
-// 🤝 AI 主動交易 (當電腦差一塊地壟斷)
 function checkBotTrade(botId) {
   const bot = localData.players[botId];
   if(!bot || bot.bankrupt) return;
   const gs = localData.gameState;
   
-  // 尋找電腦想壟斷嘅區
   const districts = [...new Set(BOARD.filter(c=>c.t==='prop').map(c=>c.d))];
   for(let d of districts) {
     const props = BOARD.map((c, i) => c.t==='prop' && c.d===d ? i : -1).filter(i=>i>=0);
     const botOwns = props.filter(i => gs.owners[i]?.owner === botId);
     const others = props.filter(i => gs.owners[i] && gs.owners[i].owner !== botId);
     
-    // 差一塊就壟斷
     if(botOwns.length === props.length - 1 && others.length === 1) {
       const targetProp = others[0];
       const ownerId = gs.owners[targetProp].owner;
       const ownerP = localData.players[ownerId];
       
-      // 如果嗰塊地係玩家嘅，且電腦有錢
       if(!ownerP.isBot && bot.cash > BOARD[targetProp].price) {
         const offer = Math.round(BOARD[targetProp].price * 1.5);
         showModal(`<h3>🤝 電腦提出交易</h3><p>🤖 ${bot.name} 想收購你嘅 <b>${BOARD[targetProp].n}</b> 以完成壟斷！</p><p>佢出價：<b style="color:var(--green)">$${offer.toLocaleString()}</b></p>
         <button class="btn primary" onclick="acceptTrade('${botId}', ${targetProp}, ${offer})">接受交易</button>
         <button class="btn danger" onclick="closeModal()">拒絕</button>`);
-        return true; // 只觸發一次
+        return true;
       }
     }
   }
@@ -569,7 +571,6 @@ function acceptTrade(botId, propId, offer) {
   });
 }
 
-// 🏆 成就檢查
 function checkAchievements(pid) {
   const p = localData.players[pid];
   if(!p || p.bankrupt) return;
@@ -591,8 +592,7 @@ function checkBotTurn() {
   const curP = localData.players[curId];
   
   if(curP && curP.isBot) {
-    // 檢查 AI 係咪要交易
-    if(checkBotTrade(curId)) return; // 如果彈出交易，先暫停 AI 擲骰
+    if(checkBotTrade(curId)) return;
 
     if(Date.now() - lastBotRollAttempt > 1500) {
       lastBotRollAttempt = Date.now();
@@ -664,7 +664,7 @@ function handleBotLanding(botId, pos) {
         rent = cell.rent * stationCount;
       } else if (cell.t === 'utility') {
         const diceSum = (localData.gameState.dice1 || 1) + (localData.gameState.dice2 || 1);
-        rent = diceSum * 1000; // 公用事業 $1000 x 骰子點數
+        rent = diceSum * 1000; 
       }
       
       if (ownerP.emoji === '🐶') rent = Math.round(rent * 1.2);
@@ -692,7 +692,6 @@ function handleBotLanding(botId, pos) {
     if(p.cash > 30000) { roomRef.update({ [`players/${botId}/cash`]: p.cash - 30000 }).then(() => finishTurn()); } 
     else { finishTurn(); }
   } else if (cell.t === 'market') {
-    // 電腦隨機買股票
     const stocks = Object.keys(localData.gameState.stocks);
     const randStock = stocks[Math.floor(Math.random()*stocks.length)];
     const price = localData.gameState.stocks[randStock].price;
@@ -855,7 +854,6 @@ function endTurn() {
     let nextRound = gs.round + 1;
     updates['gameState/round'] = nextRound;
     
-    // 觸發大事件
     let gEv = triggerGlobalEvent(nextRound);
     if(gEv) {
       updates['gameState/globalEvent'] = gEv;
@@ -864,20 +862,17 @@ function endTurn() {
       updates['gameState/globalEvent'] = null;
     }
 
-    // 股票升跌
     const stocks = { ...localData.gameState.stocks };
     Object.keys(stocks).forEach(k => {
-      let change = 0.8 + Math.random() * 0.4; // 跌20% ~ 升20%
+      let change = 0.8 + Math.random() * 0.4;
       stocks[k].price = Math.max(1, Math.round(stocks[k].price * change));
     });
     updates['gameState/stocks'] = stocks;
 
-    // 派錢及處理利息
     pIds.forEach(pid => {
       const pl = localData.players[pid]; if(pl.bankrupt) return;
       let roundBonus = 10000; if (pl.emoji === '👦') roundBonus += 5000;
       let newCash = (pl.cash || 0) + roundBonus;
-      let updatesDebts = false;
       
       if(pl.debts && pl.debts.length > 0) {
         updates[`players/${pid}/debts`] = pl.debts.map(d => {
@@ -887,10 +882,7 @@ function endTurn() {
       }
       
       if(gEv?.type === 'cash') newCash = Math.round(newCash * 0.9);
-      if(gEv?.type === 'price') {
-         // 未起樓嘅地價上升 (簡化處理：直接加現金)
-         newCash += 20000;
-      }
+      if(gEv?.type === 'price') newCash += 20000;
       
       updates[`players/${pid}/cash`] = newCash;
     });
@@ -992,11 +984,10 @@ function showCellInfo(pos) {
 }
 function upgradeProperty(pos) { const cell = BOARD[pos], p = localData.players[myId]; const ownerData = localData.gameState.owners[pos]; if(!ownerData || ownerData.owner !== myId) return; if(p.cash < cell.price / 2) return alert('現金不足！'); roomRef.update({ [`gameState/owners/${pos}/level`]: (ownerData.level || 0) + 1, [`players/${myId}/cash`]: p.cash - (cell.price / 2) }).then(() => { closeModal(); }); }
 
-// 玩家主動交易
 function openTradeModal() {
   const others = Object.keys(localData.players).filter(id => id !== myId && !localData.players[id].bankrupt);
   if(others.length === 0) return;
-  const targetId = others[0]; // 簡化：只同第一個非破產玩家交易
+  const targetId = others[0];
   const targetP = localData.players[targetId];
   const myP = localData.players[myId];
   if(!myP.props || myP.props.length === 0) return alert('你冇地可以換！');
@@ -1029,7 +1020,7 @@ function submitTrade(targetId) {
   roomRef.update(updates).then(() => { addLog(`🤝 交易完成！`, 'system'); closeModal(); }); 
 }
 
-function openLoanModal() { const p = localData.players[myId]; showModal(`<h3>💸 借款</h3><div class="loan-row"><label>借款額</label><input type="number" id="loanAmount" value="20000" step="5000"></div><div class="loan-row"><label>每回合息</label><select id="loanRate"><option value="0.05">5%</option><option value="0.1">10%</option><option value="0.2">20%</option></select></div><button class="btn primary" onclick="confirmLoan()">確認</button><button class="btn" onclick="closeModal()">取消</button>`); }
+function openLoanModal() { showModal(`<h3>💸 借款</h3><div class="loan-row"><label>借款額</label><input type="number" id="loanAmount" value="20000" step="5000"></div><div class="loan-row"><label>每回合息</label><select id="loanRate"><option value="0.05">5%</option><option value="0.1">10%</option><option value="0.2">20%</option></select></div><button class="btn primary" onclick="confirmLoan()">確認</button><button class="btn" onclick="closeModal()">取消</button>`); }
 function confirmLoan() { const amount = +document.getElementById('loanAmount').value; let rate = +document.getElementById('loanRate').value; const p = localData.players[myId]; if(amount < 5000) return alert('最少借 $5,000'); if (p.emoji === '🦊') rate = Math.max(0.01, rate - 0.05); roomRef.update({ [`players/${myId}/cash`]: p.cash + amount, [`players/${myId}/debts`]: [...(p.debts||[]), { lender: 'bank', principal: amount, rate }] }); closeModal(); }
 
 function calcNetWorth(p) { let assets = p.cash; (p.props||[]).forEach(i => { const lvl = localData.gameState.owners[i] ? localData.gameState.owners[i].level : 0; assets += BOARD[i].price + (BOARD[i].price / 2) * lvl; }); const debt = (p.debts||[]).reduce((s,d)=>s+d.principal,0); return assets - debt; }
