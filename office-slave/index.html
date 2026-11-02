@@ -30,6 +30,9 @@
     .bg-street { background: linear-gradient(to bottom, #2c3e50, #1a252f); }
     .bg-office { background: linear-gradient(to bottom, #34495e, #1e272e); }
     .bg-boss { background: linear-gradient(to bottom, #4a2500, #1a0d00); }
+    .bg-morning { background: linear-gradient(to bottom, #87CEEB, #4682B4); }
+    .bg-noon { background: linear-gradient(to bottom, #FFD700, #FF8C00); }
+    .bg-night { background: linear-gradient(to bottom, #191970, #000000); }
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
     .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 20px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto;}
     .modal-box h2 { color: #f1c40f; margin-bottom: 15px; font-size: 20px; }
@@ -106,7 +109,7 @@
             <div class="stat-item" style="justify-content: center; color: #a4b0be; font-size: 10px;" id="status-display">💼 求職中</div>
         </div>
 
-        <div id="scene" class="bg-street">
+        <div id="scene" class="bg-morning">
             <div id="character">
                 <div class="hair"></div>
                 <div class="head">
@@ -272,9 +275,9 @@
 
 <script>
     window.onerror = function(msg, url, line) { alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg); return false; };
-    const SAVE_KEY = 'officeSlaveSave_v25';
-    function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth })); } catch(e){} }
-    function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; return true; } } catch(e){} return false; }
+    const SAVE_KEY = 'officeSlaveSave_v26';
+    function saveGame() { try { if (player.stage === 'end' || player.stage === 'job_select') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth, timeOfDay, currentDay })); } catch(e){} }
+    function loadGame() { try { const saved = localStorage.getItem(SAVE_KEY); if (saved) { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; timeOfDay = d.timeOfDay || 0; currentDay = d.currentDay || 1; return true; } } catch(e){} return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
 
     const jobDatabase = {
@@ -303,6 +306,8 @@
     };
     
     let currentMonth = 0, candidates = [];
+    let timeOfDay = 0; // 0=早晨, 1=中午, 2=晚上
+    let currentDay = 1;
     const MAX_STAFF = 5;
     const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
@@ -321,13 +326,34 @@
             document.getElementById('bar-health').style.width = `${Math.max(0, player.health)}%`; document.getElementById('val-health').innerText = Math.floor(player.health);
             document.getElementById('char-sweat').style.display = player.stress >= 60 ? 'block' : 'none';
             
-            if (player.isBoss) { statusDisplay.innerText = `👑 老闆 (${player.staffList.length}/${MAX_STAFF}人)`; statusDisplay.style.color = '#f1c40f'; }
-            else { statusDisplay.innerText = `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
+            let timeStr = timeOfDay === 0 ? '☀️ 早晨' : (timeOfDay === 1 ? '🌤️ 中午' : '🌙 晚上');
+            let displayStr = `第${currentDay}天 ${timeStr} | `;
+            
+            if (player.isBoss) { statusDisplay.innerText = displayStr + `👑 老闆`; statusDisplay.style.color = '#f1c40f'; }
+            else { statusDisplay.innerText = displayStr + `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
+
+            // 改變背景顏色
+            if (!player.isBoss && player.stage === 'work') {
+                if (timeOfDay === 0) sceneEl.className = 'bg-morning';
+                else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
+                else sceneEl.className = 'bg-night';
+            } else if (player.isBoss) {
+                sceneEl.className = 'bg-boss';
+            }
             
             if (player.health <= 0) gameOver("你因為長期過勞，不幸猝死...");
             else if (!player.isBoss && player.stage === 'work' && (player.energy <= 0 || player.stress >= 100)) triggerHospital();
             saveGame();
         } catch(e) {}
+    }
+
+    function advanceTime() {
+        timeOfDay++;
+        if (timeOfDay > 2) {
+            timeOfDay = 0;
+            currentDay++;
+        }
+        updateHUD();
     }
 
     function showToast(msg) { if(!toastEl) return; toastEl.innerText = msg; toastEl.style.opacity = 1; clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => { toastEl.style.opacity = 0; }, 3000); speakText(msg); }
@@ -366,7 +392,7 @@
 
     function finishInterview() {
         player.stage = 'work'; player.money = 5000; player.job = jobDatabase[player.jobType].levels[0]; player.salary = jobDatabase[player.jobType].baseSalary;
-        document.getElementById('dialogue-box').style.display = 'none'; sceneEl.className = 'bg-office';
+        document.getElementById('dialogue-box').style.display = 'none'; sceneEl.className = 'bg-morning';
         updateActionButtons(); updateHUD(); showToast(`💼 入職成功！你現在係 ${player.job}！`);
     }
 
@@ -420,39 +446,29 @@
         if (player.energy < energyCost) { showToast("體力唔夠做兼職！去瞓覺啦！"); return; }
         player.money += money; player.energy -= energyCost; player.stress += stressCost;
         showToast(`🛵 做完${name}，賺咗 $${money}，就快攰死...`);
-        closeModal('parttime-modal'); checkMonthEnd(); updateHUD(); updateActionButtons();
+        closeModal('parttime-modal'); 
+        advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
     // === 監獄與律師系統 ===
-    function openJail() {
-        document.getElementById('jail-modal').style.display = 'flex';
-    }
+    function openJail() { document.getElementById('jail-modal').style.display = 'flex'; }
     function hireLawyer() {
         if (player.money < 30000) { showToast("你連 $30,000 律師費都俾唔起，自己頂啦！"); goToJail("你無錢請律師，被迫認罪。"); return; }
         player.money -= 30000;
-        if (Math.random() < 0.6) {
-            showToast("👨‍⚖️ 律師成功幫你打甩官司！無罪釋放！");
-            closeModal('jail-modal');
-        } else {
-            goToJail("大律師盡咗力，但證據確鑿，你敗訴入獄。");
-        }
+        if (Math.random() < 0.6) { showToast("👨‍⚖️ 律師成功幫你打甩官司！無罪釋放！"); closeModal('jail-modal'); }
+        else { goToJail("大律師盡咗力，但證據確鑿，你敗訴入獄。"); }
     }
     function goToJail(msg) {
         closeModal('jail-modal');
-        let fine = 50000;
-        player.money -= fine;
-        player.mood = Math.max(0, player.mood - 50);
-        player.stress = Math.min(100, player.stress + 50);
-        player.age += 1; // 坐監浪費一年青春
-        showToast(`🚓 ${msg} 罰款 $50,000，監禁一年！`);
+        let fine = 50000; player.money -= fine; player.mood = Math.max(0, player.mood - 50); player.stress = Math.min(100, player.stress + 50);
+        player.age += 1; showToast(`🚓 ${msg} 罰款 $50,000，監禁一年！`);
         if (player.money < 0) { gameOver("你連罰款都交唔起，破產收場！"); return; }
-        checkMonthEnd(); // 強制推進一個月結
-        updateHUD(); updateActionButtons();
+        checkMonthEnd(); updateHUD(); updateActionButtons();
     }
 
-    // === 隨機事件 (包含被捕) ===
+    // === 隨機事件 ===
     function triggerRandomEvent() {
-        if (Math.random() > 0.2) return; // 20% 機率觸發
+        if (Math.random() > 0.2) return;
         let events = [
             { msg: "💰 返工路上執到錢！賺咗 $1000！", effect: () => { player.money += 1000; } },
             { msg: "🎉 老闆突然派 Bonus！加 $5000！", effect: () => { player.money += 5000; } },
@@ -494,8 +510,7 @@
 
     function checkMonthEnd() {
         currentMonth++;
-        if (currentMonth % 3 === 0) {
-            player.age++;
+        if (currentMonth % 3 === 0) { // 每 3 次行動結算一次生活費
             if (player.isBoss) {
                 let totalSalary = 0, totalProfit = 0;
                 player.staffList.forEach(s => { totalSalary += s.salary; if (s.type === 'sales') totalProfit += (Math.random() < 0.5 ? Math.floor(Math.random() * 40000) : 0); else totalProfit += s.profit; });
@@ -519,13 +534,18 @@
             if (player.money < 0) { gameOver("你供唔起樓，被銀行收樓，宣佈破產！"); return; }
 
             if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
-            if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
+            
+            // 每 30 天長一歲
+            if (currentDay % 30 === 0) {
+                player.age++;
+                if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
+            }
         }
         updateHUD(); 
     }
 
-    function bossPatrolAction() { player.stress = Math.max(0, player.stress - 30); player.mood = Math.min(100, player.mood + 15); showToast("👀 巡視業務，心情舒暢！"); checkMonthEnd(); updateHUD(); updateActionButtons(); }
-    function bossBusinessAction() { if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } checkMonthEnd(); updateHUD(); updateActionButtons(); }
+    function bossPatrolAction() { player.stress = Math.max(0, player.stress - 30); player.mood = Math.min(100, player.mood + 15); showToast("👀 巡視業務，心情舒暢！"); advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
+    function bossBusinessAction() { if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
 
     function startCompany() {
         if (player.money < 300000) { showToast("資本不足 $300,000！"); return; }
@@ -579,15 +599,32 @@
         if (!player.isBoss) {
             addActionBtn('💼 努力工作', `每次 +$${Math.floor(player.salary/3)}`, 'work', () => { 
                 let info = jobDatabase[player.jobType];
-                player.money += Math.floor(player.salary / 3); player.energy -= info.energyCost; player.stress += info.stressCost; player.workCount++; 
-                triggerRandomEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+                let earn = Math.floor(player.salary / 3);
+                let stressAdd = info.stressCost;
+                let energyCost = info.energyCost;
+                
+                // 時段加成
+                if (timeOfDay === 0) { earn = Math.floor(earn * 1.2); stressAdd = Math.floor(stressAdd * 0.8); }
+                else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.2); energyCost = Math.floor(energyCost * 1.1); }
+                
+                player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++; 
+                
+                advanceTime(); triggerRandomEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel+1)*15} 次`, 'buy', askPromotion);
-            addActionBtn('🛏️ 睡覺休息', '免費回滿體力/減壓', 'rest', () => { 
-                player.energy = 100; player.stress = Math.max(0, player.stress - 15); player.mood = Math.min(100, player.mood + 5); 
-                showToast("😴 瞓咗個好覺，體力回滿！"); triggerRandomEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+            addActionBtn('🛏️ 睡觉休息', '跳至明早回滿體力', 'rest', () => { 
+                player.energy = 100; 
+                player.stress = Math.max(0, player.stress - 15); 
+                player.mood = Math.min(100, player.mood + 5); 
+                
+                // 強制跳轉
+                currentDay++;
+                timeOfDay = 0;
+                
+                showToast("😴 瞓咗個好覺，第二朝體力回滿！"); 
+                checkMonthEnd(); updateHUD(); updateActionButtons(); 
             });
-            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借財仔', 'buy', openPropertyModal);
             addActionBtn('🛵 兼職', '放工賺外快', 'buy', () => { document.getElementById('parttime-modal').style.display = 'flex'; });
             addActionBtn('💸 終極賭徒', '賭馬/波/幣圈', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
@@ -618,7 +655,12 @@
         try {
             if (loadGame() && player.stage === 'work') { 
                 document.getElementById('dialogue-box').style.display = 'none'; 
-                if(player.isBoss) sceneEl.className = 'bg-boss'; else sceneEl.className = 'bg-office';
+                if(player.isBoss) sceneEl.className = 'bg-boss'; 
+                else {
+                    if (timeOfDay === 0) sceneEl.className = 'bg-morning';
+                    else if (timeOfDay === 1) sceneEl.className = 'bg-noon';
+                    else sceneEl.className = 'bg-night';
+                }
                 updateActionButtons(); 
             } else { player.stage = 'job_select'; player.money = 0; document.getElementById('job-modal').style.display = 'flex'; }
             updateHUD();
