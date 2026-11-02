@@ -8,13 +8,17 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
     body { background-color: #050510; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1a2e, #050510); }
+    
     .back-btn { position: absolute; top: 10px; left: 10px; z-index: 9999; padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); transition: all 0.2s; backdrop-filter: blur(5px); }
     .back-btn:hover { background: #00d2d3; color: #000; }
+    
     .top-right-btns { position: absolute; top: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; }
     .voice-btn, .reset-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: all 0.2s; backdrop-filter: blur(5px); cursor: pointer; }
     .voice-btn { color: #f1c40f; border: 2px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
     .reset-btn { color: #e74c3c; border: 2px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
+
     #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
+    
     #hud { background: rgba(10, 10, 20, 0.9); padding: 10px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px; z-index: 10; backdrop-filter: blur(5px); }
     .stat-item { display: flex; align-items: center; gap: 5px; }
     .stat-label { width: 30px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 10px;}
@@ -26,10 +30,12 @@
     .fill-stress { background: linear-gradient(90deg, #9b59b6, #8e44ad); box-shadow: 0 0 10px #9b59b6; }
     .fill-health { background: linear-gradient(90deg, #2ecc71, #27ae60); box-shadow: 0 0 10px #2ecc71; }
     .stat-val { position: absolute; right: 2px; top: 0; font-size: 8px; line-height: 10px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
-    #scene { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: background 1s ease; }
+
+    #scene { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: background 1s ease; min-height: 0; }
     .bg-street { background: linear-gradient(to bottom, #2c3e50, #1a252f); }
     .bg-office { background: linear-gradient(to bottom, #34495e, #1e272e); }
     .bg-boss { background: linear-gradient(to bottom, #4a2500, #1a0d00); }
+
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(5px); }
     .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 25px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto;}
     .modal-box h2 { color: #f1c40f; margin-bottom: 15px; font-size: 22px; }
@@ -40,25 +46,31 @@
     .modal-btn.warning { background: #f39c12; color: #fff; }
     .modal-btn.casino { background: #e84393; color: #fff; }
     .modal-btn.boss { background: #f1c40f; color: #000; }
+
     .staff-card { background: #2c3e50; border: 2px solid #555; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     .staff-info { text-align: left; }
     .staff-info b { font-size: 16px; color: #f1c40f; }
     .staff-info small { font-size: 12px; color: #bbb; display: block; margin-top: 3px; }
+
     .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
     .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 15px 10px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
     .bet-btn:active { transform: scale(0.95); background: #f39c12; color: #000; }
     .bet-btn .odds { display: block; font-size: 12px; color: #f1c40f; margin-top: 5px; }
+
     #end-screen { position: absolute; inset: 0; background: rgba(5,5,10,0.98); z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
     #end-screen h1 { color: #f1c40f; font-size: 40px; text-shadow: 0 0 20px #f1c40f; margin-bottom: 20px; }
     #end-screen p { font-size: 16px; line-height: 2; margin-bottom: 30px; color: #ccc; }
     #end-screen button { padding: 15px 40px; background: #f1c40f; color: #000; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #f1c40f; }
+
     #dialogue-box { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 80%, transparent 100%); padding: 30px 20px 20px 20px; z-index: 10; display: none; flex-direction: column; gap: 10px; }
     #speaker-name { color: #f1c40f; font-weight: bold; font-size: 16px; text-shadow: 0 2px 4px #000; }
     #dialogue-text { font-size: 18px; line-height: 1.6; min-height: 40px; text-shadow: 0 2px 4px #000; letter-spacing: 1px; }
     #choices { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 35vh; overflow-y: auto; padding-right: 5px; }
     .choice-btn { background: rgba(30, 30, 47, 0.9); color: #fff; border: 2px solid #555; border-radius: 8px; padding: 12px 15px; font-size: 14px; text-align: left; cursor: pointer; transition: all 0.1s; font-family: 'Noto Sans HK', sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.5); touch-action: manipulation; }
     .choice-btn:active { background: #00d2d3; color: #000; border-color: #00d2d3; transform: scale(0.98); }
-    #actions { background: #111; padding: 10px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 10; max-height: 40vh; overflow-y: auto; }
+
+    /* 修復按鈕被擠壓問題 */
+    #actions { background: #111; padding: 10px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 10; max-height: 40vh; overflow-y: auto; flex-shrink: 0; }
     .action-btn { background: linear-gradient(to bottom, #3498db, #2980b9); color: #fff; border: 2px solid #000; border-radius: 8px; padding: 12px 8px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Noto Sans HK', sans-serif; box-shadow: 0 4px 0 #1c5980; transition: all 0.1s; display: flex; flex-direction: column; align-items: center; gap: 3px; touch-action: manipulation; }
     .action-btn:active { transform: translateY(4px); box-shadow: none; }
     .action-btn.work { background: linear-gradient(to bottom, #e67e22, #d35400); box-shadow: 0 4px 0 #a04000; }
@@ -68,7 +80,9 @@
     .action-btn.boss { background: linear-gradient(to bottom, #f1c40f, #f39c12); box-shadow: 0 4px 0 #b38f00; color: #000; text-shadow: none; }
     .action-btn.disabled { background: #333; box-shadow: 0 4px 0 #111; cursor: not-allowed; color: #666; }
     .action-btn small { font-size: 10px; font-weight: normal; opacity: 0.8; }
+
     #toast { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.1); border: 1px solid #fff; padding: 10px 20px; border-radius: 20px; font-weight: bold; z-index: 40; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; backdrop-filter: blur(5px); white-space: nowrap; }
+
     #character { position: relative; width: 140px; height: 280px; animation: breathe 2s infinite ease-in-out; z-index: 5; }
     @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
     .head { position: absolute; top: 0; left: 30px; width: 80px; height: 90px; background: #f5cba7; border-radius: 40px 40px 30px 30px; border: 3px solid #000; z-index: 2; }
@@ -125,6 +139,7 @@
         <div id="actions"></div>
     </div>
 
+    <!-- 員工管理與招聘彈窗 -->
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👥 員工管理與招聘</h2>
@@ -136,7 +151,7 @@
                     每月總利潤：<span id="total-profit" style="color: #2ecc71;">$0</span>
                 </p>
             </div>
-            <h3 style="color: #f1c40f; font-size: 14px; margin-bottom: 10px; text-align: left;">📋 招聘市場 (隨機刷新)</h3>
+            <h3 style="color: #f1c40f; font-size: 14px; margin-bottom: 10px; text-align: left;">📋 招聘市場 (每次打開隨機刷新)</h3>
             <div id="candidate-list" style="margin-bottom: 15px;"></div>
             <h3 style="color: #e74c3c; font-size: 14px; margin-bottom: 10px; text-align: left;">📉 解僱員工</h3>
             <div id="current-staff-list" style="margin-bottom: 15px;"></div>
@@ -144,6 +159,7 @@
         </div>
     </div>
 
+    <!-- 開公司彈窗 -->
     <div id="company-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🚀 創業做老闆</h2>
@@ -153,6 +169,7 @@
         </div>
     </div>
 
+    <!-- 賭博主選單 -->
     <div id="invest-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">💸 終極賭徒</h2>
@@ -165,6 +182,7 @@
         </div>
     </div>
 
+    <!-- 賭馬 -->
     <div id="horse-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🐎 香港賽馬日</h2>
@@ -179,6 +197,7 @@
         </div>
     </div>
 
+    <!-- 賭波 -->
     <div id="football-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">⚽ 英超大戰</h2>
@@ -192,6 +211,7 @@
         </div>
     </div>
 
+    <!-- 醫院 -->
     <div id="hospital-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c;">
             <h2 style="color: #e74c3c;">🏥 強制送院！</h2>
@@ -209,28 +229,17 @@
     </div>
 
 <script>
-    const SAVE_KEY = 'officeSlaveSave_v14';
-    function saveGame() {
-        if (player.stage === 'end') { localStorage.removeItem(SAVE_KEY); return; }
-        localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth }));
-    }
-    function loadGame() {
-        const saved = localStorage.getItem(SAVE_KEY);
-        if (saved) { try { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; return true; } catch(e) { return false; } }
-        return false;
-    }
+    const SAVE_KEY = 'officeSlaveSave_v16';
+    function saveGame() { if (player.stage === 'end') { localStorage.removeItem(SAVE_KEY); return; } localStorage.setItem(SAVE_KEY, JSON.stringify({ player, currentMonth })); }
+    function loadGame() { const saved = localStorage.getItem(SAVE_KEY); if (saved) { try { const d = JSON.parse(saved); player = d.player; currentMonth = d.currentMonth; return true; } catch(e) { return false; } } return false; }
     function resetGame() { if (confirm("確定要清除所有進度，重新投胎嗎？")) { localStorage.removeItem(SAVE_KEY); location.reload(); } }
 
-    let player = { age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100, job: '見習生', salary: 15000, stage: 'work', isInHospital: false, workCount: 0, hasInsurance: false, isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0 };
-    let currentMonth = 0;
-    let candidates = [];
+    let player = { age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100, job: '見習生', salary: 15000, stage: 'interview', isInHospital: false, workCount: 0, hasInsurance: false, isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0 };
+    let currentMonth = 0, candidates = [];
     const MAX_STAFF = 5;
+    const sceneEl = document.getElementById('scene'), actionsEl = document.getElementById('actions'), statusDisplay = document.getElementById('status-display'), toastEl = document.getElementById('toast');
 
-    const sceneEl = document.getElementById('scene');
-    const actionsEl = document.getElementById('actions');
-    const statusDisplay = document.getElementById('status-display');
-    const toastEl = document.getElementById('toast');
-
+    // 語音系統
     let isVoiceOn = false; let voices = [];
     if ('speechSynthesis' in window) { speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices(); }; }
     function toggleVoice() { isVoiceOn = !isVoiceOn; document.getElementById('voice-toggle').innerText = isVoiceOn ? "🔊 語音" : "🔇 靜音"; if(!isVoiceOn) window.speechSynthesis.cancel(); }
@@ -246,46 +255,81 @@
     function updateHUD() {
         document.getElementById('bar-money').style.width = `${Math.min(100, (player.money / 1000000) * 100)}%`;
         document.getElementById('val-money').innerText = `$${player.money.toLocaleString()}`;
-        document.getElementById('bar-energy').style.width = `${Math.max(0, player.energy)}%`;
-        document.getElementById('val-energy').innerText = Math.floor(player.energy);
-        document.getElementById('bar-mood').style.width = `${Math.max(0, player.mood)}%`;
-        document.getElementById('val-mood').innerText = Math.floor(player.mood);
-        document.getElementById('bar-stress').style.width = `${Math.min(100, player.stress)}%`;
-        document.getElementById('val-stress').innerText = Math.floor(player.stress);
-        document.getElementById('bar-health').style.width = `${Math.max(0, player.health)}%`;
-        document.getElementById('val-health').innerText = Math.floor(player.health);
-
+        document.getElementById('bar-energy').style.width = `${Math.max(0, player.energy)}%`; document.getElementById('val-energy').innerText = Math.floor(player.energy);
+        document.getElementById('bar-mood').style.width = `${Math.max(0, player.mood)}%`; document.getElementById('val-mood').innerText = Math.floor(player.mood);
+        document.getElementById('bar-stress').style.width = `${Math.min(100, player.stress)}%`; document.getElementById('val-stress').innerText = Math.floor(player.stress);
+        document.getElementById('bar-health').style.width = `${Math.max(0, player.health)}%`; document.getElementById('val-health').innerText = Math.floor(player.health);
+        
+        // 流汗特效
         document.getElementById('char-sweat').style.display = player.stress >= 60 ? 'block' : 'none';
 
-        if (player.isBoss) {
-            statusDisplay.innerText = `👑 老闆 (${player.staffList.length}/${MAX_STAFF}人)`;
-            statusDisplay.style.color = '#f1c40f';
-        } else {
-            statusDisplay.innerText = `💼 ${player.job}`;
-            statusDisplay.style.color = '#a4b0be';
-        }
+        if (player.isBoss) { statusDisplay.innerText = `👑 老闆 (${player.staffList.length}/${MAX_STAFF}人)`; statusDisplay.style.color = '#f1c40f'; }
+        else { statusDisplay.innerText = `💼 ${player.job}`; statusDisplay.style.color = '#a4b0be'; }
+
         if (player.health <= 0) gameOver("你因為長期過勞，不幸猝死...");
         else if (!player.isBoss && (player.energy <= 0 || player.stress >= 100)) triggerHospital();
         saveGame();
     }
 
-    function showToast(msg) { toastEl.innerText = msg; toastEl.style.opacity = 1; clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => { toastEl.style.opacity = 0; }, 3000); }
+    function showToast(msg) { 
+        toastEl.innerText = msg; toastEl.style.opacity = 1; 
+        clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => { toastEl.style.opacity = 0; }, 3000); 
+        speakText(msg);
+    }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+    // --- 面試環節 ---
+    function startInterview() {
+        const db = document.getElementById('dialogue-box');
+        db.style.display = 'flex';
+        const speaker = document.getElementById('speaker-name');
+        const text = document.getElementById('dialogue-text');
+        const choices = document.getElementById('choices');
+        
+        speaker.innerText = "面試官";
+        text.innerText = "見你履歷空白，點解我哋要請你？";
+        speakText(text.innerText);
+        choices.innerHTML = '';
+        
+        const opts = [
+            { t: "因為我肯學！(心情+10, 壓力+10)", m: 10, s: 10, msg: "好，有熱誠！聽日開始返工。" },
+            { t: "因為我人工要求低！(心情-10, 壓力+20)", m: -10, s: 20, msg: "好！就欣賞你夠坦白。" },
+            { t: "因為我冇得揀... (心情-20, 壓力+30)", m: -20, s: 30, msg: "唉，同是天涯淪落人..." }
+        ];
+        
+        opts.forEach(o => {
+            let btn = document.createElement('button');
+            btn.className = 'choice-btn'; btn.innerText = o.t;
+            btn.onclick = () => {
+                player.mood += o.m; player.stress += o.s;
+                text.innerText = o.msg; speakText(text.innerText);
+                choices.innerHTML = '<button class="choice-btn" onclick="finishInterview()" style="text-align:center;border-color:#f1c40f;">接受 Offer，開始社畜人生</button>';
+                updateHUD();
+            };
+            choices.appendChild(btn);
+        });
+    }
+
+    function finishInterview() {
+        player.stage = 'work'; player.money = 5000;
+        document.getElementById('dialogue-box').style.display = 'none';
+        sceneEl.className = 'bg-office';
+        updateActionButtons(); updateHUD();
+        showToast("💼 入職成功！開始你嘅社畜生涯！");
+    }
+
+    // --- 老闆與員工 ---
     function startCompany() {
         if (player.money < 300000) { showToast("資本不足 $300,000！"); return; }
         player.money -= 300000; player.isBoss = true; player.job = '老闆';
         closeModal('company-modal'); sceneEl.className = 'bg-boss';
-        showToast("🚀 恭喜！你成立咗自己嘅公司！");
-        updateHUD(); updateActionButtons();
+        showToast("🚀 恭喜！你成立咗自己嘅公司！"); updateHUD(); updateActionButtons();
     }
 
     function generateCandidates() {
-        candidates = [];
-        const types = ['intern', 'it', 'sales', 'cleaner'];
+        candidates = []; const types = ['intern', 'it', 'sales', 'cleaner'];
         for (let i = 0; i < 3; i++) {
-            let t = types[Math.floor(Math.random() * types.length)];
-            let name = '', salary = 0, profit = 0, cost = 0;
+            let t = types[Math.floor(Math.random() * types.length)], name = '', salary = 0, profit = 0, cost = 0;
             if (t === 'intern') { name = '實習生'; salary = 3000; profit = 5000; cost = 5000; }
             else if (t === 'it') { name = 'IT狗'; salary = 10000; profit = 25000; cost = 15000; }
             else if (t === 'sales') { name = '金融Sales'; salary = 6000; profit = -1; cost = 10000; }
@@ -295,104 +339,74 @@
     }
 
     function openStaffModal() {
-        document.getElementById('staff-modal').style.display = 'flex';
-        generateCandidates();
+        document.getElementById('staff-modal').style.display = 'flex'; generateCandidates();
         let totalSal = 0, totalProf = 0;
         player.staffList.forEach(s => { totalSal += s.salary; if (s.type !== 'sales') totalProf += s.profit; });
         document.getElementById('total-staff').innerText = player.staffList.length;
         document.getElementById('total-salary').innerText = `$${totalSal.toLocaleString()}`;
         document.getElementById('total-profit').innerText = `$${totalProf.toLocaleString()} (Sales未計)`;
 
-        let candList = document.getElementById('candidate-list');
-        candList.innerHTML = '';
+        let candList = document.getElementById('candidate-list'); candList.innerHTML = '';
         candidates.forEach((c, i) => {
             let div = document.createElement('div'); div.className = 'staff-card';
-            div.innerHTML = `<div class="staff-info"><b>${c.name}</b><small>月薪: $${c.salary} | 利潤: ${c.profit===-1?'隨機':('$'+c.profit)}</small><small>招聘費: $${c.cost}</small></div>
-            <button onclick="hireCandidate(${i})" style="background:#2ecc71; border:none; color:#fff; padding:8px 12px; border-radius:5px; cursor:pointer;">聘請</button>`;
+            div.innerHTML = `<div class="staff-info"><b>${c.name}</b><small>月薪: $${c.salary} | 利潤: ${c.profit===-1?'隨機':('$'+c.profit)}</small><small>招聘費: $${c.cost}</small></div><button onclick="hireCandidate(${i})" style="background:#2ecc71; border:none; color:#fff; padding:8px 12px; border-radius:5px; cursor:pointer;">聘請</button>`;
             candList.appendChild(div);
         });
 
-        let staffList = document.getElementById('current-staff-list');
-        staffList.innerHTML = '';
+        let staffList = document.getElementById('current-staff-list'); staffList.innerHTML = '';
         if (player.staffList.length === 0) { staffList.innerHTML = '<p style="font-size:12px;color:#888;text-align:left;">暫時未有員工。</p>'; }
         player.staffList.forEach((s, i) => {
             let div = document.createElement('div'); div.className = 'staff-card';
-            div.innerHTML = `<div class="staff-info"><b>${s.name}</b><small>月薪: $${s.salary}</small></div>
-            <button onclick="fireStaff(${i})" style="background:#e74c3c; border:none; color:#fff; padding:8px 12px; border-radius:5px; cursor:pointer;">解僱</button>`;
+            div.innerHTML = `<div class="staff-info"><b>${s.name}</b><small>月薪: $${s.salary}</small></div><button onclick="fireStaff(${i})" style="background:#e74c3c; border:none; color:#fff; padding:8px 12px; border-radius:5px; cursor:pointer;">解僱</button>`;
             staffList.appendChild(div);
         });
     }
 
     function hireCandidate(index) {
         if (player.staffList.length >= MAX_STAFF) { showToast("公司座位滿咗啦！"); return; }
-        let c = candidates[index];
-        if (player.money < c.cost) { showToast("唔夠錢俾招聘費！"); return; }
-        player.money -= c.cost;
-        player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit });
-        showToast(`✅ 成功請咗個 ${c.name}！`);
-        updateHUD(); openStaffModal();
+        let c = candidates[index]; if (player.money < c.cost) { showToast("唔夠錢俾招聘費！"); return; }
+        player.money -= c.cost; player.staffList.push({ type: c.type, name: c.name, salary: c.salary, profit: c.profit });
+        showToast(`✅ 成功請咗個 ${c.name}！`); updateHUD(); openStaffModal();
     }
 
-    function fireStaff(index) {
-        let staff = player.staffList[index];
-        player.staffList.splice(index, 1);
-        showToast(`🔥 你炒咗 ${staff.name} 魷魚！`);
-        updateHUD(); openStaffModal();
-    }
+    function fireStaff(index) { let staff = player.staffList[index]; player.staffList.splice(index, 1); showToast(`🔥 你炒咗 ${staff.name} 魷魚！`); updateHUD(); openStaffModal(); }
 
+    // --- 賭博 ---
     function openHorseBet() { closeModal('invest-modal'); document.getElementById('horse-modal').style.display = 'flex'; document.getElementById('racing-anim').style.display = 'none'; document.getElementById('horse-buttons').style.display = 'grid'; }
-    function betHorse(num) {
-        if (player.money < 500) { showToast("連 $500 都冇！"); return; }
-        player.money -= 500; document.getElementById('horse-buttons').style.display = 'none'; document.getElementById('racing-anim').style.display = 'block';
-        setTimeout(() => {
-            if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); }
-            else { showToast(`🐎 ${num}號馬跑輸咗...`); }
-            document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); updateHUD(); updateActionButtons();
-        }, 1500);
+    function betHorse(num) { 
+        if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
+        player.money -= 500; document.getElementById('horse-buttons').style.display = 'none'; document.getElementById('racing-anim').style.display = 'block'; 
+        setTimeout(() => { 
+            if (Math.random() < 0.2) { player.money += 2500; showToast(`🐎 ${num}號馬跑第一！贏咗 $2500！`); } 
+            else { showToast(`🐎 ${num}號馬跑輸咗...`); } 
+            document.getElementById('racing-anim').style.display = 'none'; closeModal('horse-modal'); updateHUD(); updateActionButtons(); 
+        }, 1500); 
     }
-
+    
     function openFootballBet() { closeModal('invest-modal'); document.getElementById('football-modal').style.display = 'flex'; document.getElementById('football-anim').style.display = 'none'; document.getElementById('football-buttons').style.display = 'grid'; }
-    function betFootball(choice) {
-        if (player.money < 500) { showToast("連 $500 都冇！"); return; }
-        player.money -= 500; document.getElementById('football-buttons').style.display = 'none'; document.getElementById('football-anim').style.display = 'block';
-        setTimeout(() => {
-            let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away');
-            if (choice === actual) { let winAmt = choice === 'draw' ? 1500 : 1000; player.money += winAmt; showToast(`⚽ 買中咗！贏 $${winAmt}！`); }
-            else { showToast(`⚽ 買錯咗，輸 $500...`); }
-            document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons();
-        }, 1500);
+    function betFootball(choice) { 
+        if (player.money < 500) { showToast("連 $500 都冇！"); return; } 
+        player.money -= 500; document.getElementById('football-buttons').style.display = 'none'; document.getElementById('football-anim').style.display = 'block'; 
+        setTimeout(() => { 
+            let res = Math.random(); let actual = res < 0.45 ? 'home' : (res < 0.75 ? 'draw' : 'away'); 
+            if (choice === actual) { let winAmt = choice === 'draw' ? 1500 : 1000; player.money += winAmt; showToast(`⚽ 買中咗！贏 $${winAmt}！`); } 
+            else { showToast(`⚽ 買錯咗，輸 $500...`); } 
+            document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons(); 
+        }, 1500); 
     }
 
-    function playLottery() {
-        if (player.money < 100) { showToast("連 $100 都冇！"); return; }
-        player.money -= 100;
-        if (Math.random() < 0.01) { player.money += 5000000; showToast("🎉 中咗頭獎！500萬！"); }
-        else { showToast("😢 又做善事。"); }
-        updateHUD(); updateActionButtons();
-    }
+    function playLottery() { if (player.money < 100) { showToast("連 $100 都冇！"); return; } player.money -= 100; if (Math.random() < 0.01) { player.money += 5000000; showToast("🎉 中咗頭獎！500萬！"); } else { showToast("😢 又做善事。"); } updateHUD(); updateActionButtons(); }
+    function playStock() { if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; } if (Math.random() < 0.5) { let l = Math.floor(Math.random() * 8000) + 2000; player.money -= l; showToast(`📉 股市大跌！蝕咗 $${l}`); } else { let w = Math.floor(Math.random() * 15000) + 5000; player.money += w; showToast(`📈 股市大升！賺咗 $${w}`); } updateHUD(); updateActionButtons(); }
+    function buyInsurance() { if (player.hasInsurance) { showToast("你已經買咗醫保啦！"); return; } if (player.money < 5000) { showToast("唔夠錢！"); return; } player.money -= 5000; player.hasInsurance = true; showToast("🛡️ 成功購買自願醫保！"); updateHUD(); updateActionButtons(); }
 
-    function playStock() {
-        if (player.money < 10000) { showToast("最少要 $10000 本金！"); return; }
-        if (Math.random() < 0.5) { let l = Math.floor(Math.random() * 8000) + 2000; player.money -= l; showToast(`📉 股市大跌！蝕咗 $${l}`); }
-        else { let w = Math.floor(Math.random() * 15000) + 5000; player.money += w; showToast(`📈 股市大升！賺咗 $${w}`); }
-        updateHUD(); updateActionButtons();
-    }
-
-    function buyInsurance() {
-        if (player.hasInsurance) { showToast("你已經買咗醫保啦！"); return; }
-        if (player.money < 5000) { showToast("唔夠錢！"); return; }
-        player.money -= 5000; player.hasInsurance = true;
-        showToast("🛡️ 成功購買自願醫保！"); updateHUD(); updateActionButtons();
-    }
-
+    // --- 醫院與結算 ---
     function triggerHospital() {
-        if (player.isInHospital) return;
-        player.isInHospital = true;
-        let loss = player.hasInsurance ? 0.2 : 0.5;
-        let medFee = Math.floor(player.money * loss);
+        if (player.isInHospital) return; player.isInHospital = true;
+        let loss = player.hasInsurance ? 0.2 : 0.5; let medFee = Math.floor(player.money * loss);
         player.money -= medFee; player.energy = 100; player.stress = 20; player.health = Math.max(10, player.health - 20);
         document.getElementById('hospital-text').innerHTML = `你暈低咗送院。<br>${player.hasInsurance ? '🛡️ 醫保報銷！扣 20% 身家。' : '⚠️ 無醫保！扣 50% 身家。'}<br><span style="color:#f1c40f;">損失：$${medFee}</span>`;
         document.getElementById('hospital-modal').style.display = 'flex';
+        speakText("你暈低咗，被強制送院。");
     }
 
     function closeHospital() { document.getElementById('hospital-modal').style.display = 'none'; player.isInHospital = false; showToast("出院了，保重身體..."); updateHUD(); updateActionButtons(); }
@@ -403,43 +417,32 @@
             player.age++;
             if (player.isBoss) {
                 let totalSalary = 0, totalProfit = 0;
-                player.staffList.forEach(s => {
-                    totalSalary += s.salary;
-                    if (s.type === 'sales') totalProfit += (Math.random() < 0.5 ? Math.floor(Math.random() * 40000) : 0);
-                    else totalProfit += s.profit;
-                });
-                let net = totalProfit - totalSalary - 5000;
-                player.money += net;
+                player.staffList.forEach(s => { totalSalary += s.salary; if (s.type === 'sales') totalProfit += (Math.random() < 0.5 ? Math.floor(Math.random() * 40000) : 0); else totalProfit += s.profit; });
+                let net = totalProfit - totalSalary - 5000; player.money += net;
                 showToast(net > 0 ? `📈 公司月結：淨賺 $${net}` : `📉 公司月結：蝕錢 $${Math.abs(net)}！`);
                 if (player.money < 0) { gameOver("公司資金鏈斷裂，你宣佈破產！"); return; }
-            } else {
-                if (player.stress > 80) player.health -= 15;
-            }
-            let rand = Math.random();
-            if (rand < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
+            } else { if (player.stress > 80) player.health -= 15; }
+            if (Math.random() < 0.2) { showToast("🎉 派花紅！"); player.money += 2000; }
             if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
         }
         updateHUD(); saveGame();
     }
 
     function bossPatrolAction() { player.stress = Math.max(0, player.stress - 30); player.mood = Math.min(100, player.mood + 15); showToast("👀 巡視業務，心情舒暢！"); checkMonthEnd(); updateHUD(); updateActionButtons(); }
-    
-    function bossBusinessAction() {
-        if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); }
-        else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); }
-        checkMonthEnd(); updateHUD(); updateActionButtons();
+    function bossBusinessAction() { 
+        if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } 
+        else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } 
+        checkMonthEnd(); updateHUD(); updateActionButtons(); 
     }
 
     function updateActionButtons() {
         actionsEl.innerHTML = '';
         if (player.stage !== 'work') return;
         if (!player.isBoss) {
-            addActionBtn('💼 努力工作', '連點賺錢', 'work', () => { player.money += 5000; player.energy -= 15; player.workCount++; checkMonthEnd(); updateHUD(); updateActionButtons(); });
-            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress -= 30;} checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('💼 努力工作', '連點賺錢', 'work', () => { player.money += 5000; player.energy -= 15; player.stress += 10; player.workCount++; checkMonthEnd(); updateHUD(); updateActionButtons(); });
+            addActionBtn('🏥 去診所', '花 $2000 回滿體力', 'rest', () => { if(player.money>=2000){player.money -= 2000; player.energy = 100; player.stress = Math.max(0, player.stress - 30);} checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('💸 終極賭徒', '賭馬/波/六合彩', 'casino', () => { document.getElementById('invest-modal').style.display = 'flex'; });
-            if (player.money >= 300000 && player.workCount >= 30) {
-                addActionBtn('🚀 開公司', '辭職創業做老闆！', 'boss', () => { document.getElementById('company-modal').style.display = 'flex'; });
-            }
+            if (player.money >= 300000 && player.workCount >= 30) { addActionBtn('🚀 開公司', '辭職創業做老闆！', 'boss', () => { document.getElementById('company-modal').style.display = 'flex'; }); }
         } else {
             addActionBtn('👀 巡視業務', '減壓，視察員工', 'rest', bossPatrolAction);
             addActionBtn('🤝 見客傾生意', '隨機大賺或大蝕', 'work', bossBusinessAction);
@@ -455,22 +458,27 @@
     }
 
     function gameOver(reason) {
-        player.stage = 'end';
-        document.getElementById('end-screen').style.display = 'flex';
+        player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
         document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : "👴 光榮退休";
         document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${player.money.toLocaleString()}<br>最終身份：${player.isBoss ? '老闆' : '打工仔'}`;
         localStorage.removeItem(SAVE_KEY);
+        speakText(reason);
     }
 
     window.onload = () => { 
-        if (loadGame() && player.stage === 'work') { 
-            document.getElementById('dialogue-box').style.display = 'none'; 
-            updateActionButtons(); 
-            if(player.isBoss) sceneEl.className = 'bg-boss';
+        // 若載入到舊檔，檢查狀態
+        if (loadGame()) { 
+            if (player.stage === 'work') { 
+                document.getElementById('dialogue-box').style.display = 'none'; 
+                if(player.isBoss) sceneEl.className = 'bg-boss'; else sceneEl.className = 'bg-office';
+                updateActionButtons(); 
+            } else if (player.stage === 'interview') {
+                startInterview();
+            }
         } else { 
-            player.stage = 'work'; player.money = 5000;
-            document.getElementById('dialogue-box').style.display = 'none'; 
-            updateActionButtons();
+            // 全新遊戲
+            player.stage = 'interview'; player.money = 0;
+            startInterview();
         }
         updateHUD();
     };
