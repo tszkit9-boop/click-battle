@@ -546,7 +546,7 @@
                 currentMonth = d.currentMonth; 
                 timeOfDay = d.timeOfDay || 0; 
                 currentDay = d.currentDay || 1; 
-                if (player.bossMpfRate === undefined) player.bossMpfRate = 0.05; // 兼容舊存檔
+                if (player.bossMpfRate === undefined) player.bossMpfRate = 0.05;
                 return true; 
             } 
         } catch(e){} 
@@ -1342,7 +1342,7 @@
             else if (player.mpfTrend.includes('跌')) mpfHtml += `<span style="color:#e74c3c;">${player.mpfTrend}</span> | `;
             else mpfHtml += `${player.mpfTrend} | `;
         }
-        mpfHtml += `<small style="color:#a4b0be;">*退休 (65歲) 或死亡時可提取</small>`;
+        mpfHtml += `<small style="color:#a4b0be;">*退休 (100歲) 或死亡時可提取</small>`;
         document.getElementById('mpf-status').innerHTML = mpfHtml;
     }
     function drawHousing(type) {
@@ -1508,12 +1508,14 @@
                     totalProfit += s.profit;
                 }
             });
+            // 老闆賺錢加速：利潤直接乘 1.5 倍
+            totalProfit = Math.floor(totalProfit * 1.5);
             totalProfit = Math.floor(totalProfit * (player.competitorMultiplier || 1));
             totalProfit = Math.floor(totalProfit * (player.permanentProfitBonus || 1));
             totalProfit = Math.floor(totalProfit * (1 + managerCount * 0.10));
             player.competitorMultiplier = 1;
 
-            let net = totalProfit - totalSalary - 5000;
+            let net = totalProfit - totalSalary - 2000; // 營運費減至 2000
 
             if (net > 0) {
                 let mpfRate = player.bossMpfRate !== undefined ? player.bossMpfRate : 0.05;
@@ -1521,7 +1523,7 @@
                 player.mpf += mpfCost;
                 net -= mpfCost;
                 player.money += net;
-                player.companyValue += Math.floor(net * 0.5);
+                player.companyValue += Math.floor(net * 0.8); // 淨資產累積加速
                 if (mpfCost > 0) {
                     showToast(`📈 月結淨賺：$${net} (已扣 $${mpfCost} 老闆 MPF ${Math.round(mpfRate*100)}%)`);
                 } else {
@@ -1598,7 +1600,10 @@
             player.age++;
             showToast(`🎂 生日快樂！你而家 ${player.age} 歲啦！`);
             if (player.hasKid) player.kidAge = (player.kidAge || 0) + 1;
-            if (player.age >= 65) gameOver("你終於捱到 65 歲退休，回望過去，不勝唏噓...");
+            if (player.age >= 100) {
+                gameOver("你活到 100 歲，壽終正寢。回望一生，不勝唏噓...");
+                return;
+            }
         }
 
         updateHUD();
@@ -1647,7 +1652,19 @@
         showToast("👀 睇住成班員工做嘢，心情舒暢！"); 
         advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
     }
-    function bossBusinessAction() { if (Math.random() < 0.5) { let p = Math.floor(Math.random() * 30000) + 10000; player.money += p; showToast(`🤝 簽大單！賺咗 $${p}！`); } else { let l = Math.floor(Math.random() * 20000) + 5000; player.money = Math.max(0, player.money - l); showToast(`📉 被客走數！蝕咗 $${l}...`); } advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
+    function bossBusinessAction() { 
+        // 賺錢加速：贏錢機會 60%，賺得更多
+        if (Math.random() < 0.6) { 
+            let p = Math.floor(Math.random() * 50000) + 20000; // 20k ~ 70k
+            player.money += p; 
+            showToast(`🤝 簽大單！賺咗 $${p}！`); 
+        } else { 
+            let l = Math.floor(Math.random() * 10000) + 2000; // 2k ~ 12k
+            player.money = Math.max(0, player.money - l); 
+            showToast(`📉 被客走數！蝕咗 $${l}...`); 
+        } 
+        advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); 
+    }
 
     // === 自動見客系統 ===
     let autoBusinessTimer = null;
@@ -1671,18 +1688,19 @@
             let hasModal = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex' || m.style.display === 'block');
             if (hasModal) return;
 
+            // 賺錢加速：自動見客收益提升
             let roll = Math.random();
             let msg = "";
-            if (roll < 0.45) {
-                let p = Math.floor((Math.random() * 15000) + 5000);
+            if (roll < 0.60) {
+                let p = Math.floor((Math.random() * 20000) + 10000); // 10k ~ 30k
                 player.money += p;
                 msg = `🤖 自動見客：簽細單，賺 $${p}`;
             } else if (roll < 0.90) {
-                let l = Math.floor((Math.random() * 10000) + 2000);
+                let l = Math.floor((Math.random() * 5000) + 1000); // 1k ~ 6k
                 player.money = Math.max(0, player.money - l);
                 msg = `🤖 自動見客：被客走數，蝕 $${l}`;
             } else {
-                let p = Math.floor((Math.random() * 30000) + 20000);
+                let p = Math.floor((Math.random() * 50000) + 30000); // 30k ~ 80k
                 player.money += p;
                 msg = `🤖 自動見客：中大單！賺 $${p}`;
             }
@@ -1825,7 +1843,7 @@
             if (s.isManager) managerCount++;
             else if (s.type !== 'sales') totalProf += s.profit; 
         });
-        let baseNet = Math.floor(totalProf * (1 + managerCount * 0.10)) - totalSal - 5000;
+        let baseNet = Math.floor(totalProf * (1 + managerCount * 0.10)) - totalSal - 2000;
         
         let statusText = '';
         if (player.isListed) {
@@ -1838,7 +1856,7 @@
             statusText += `💸 每月總人工：$${totalSal.toLocaleString()}<br>`;
             statusText += `📈 基本預期利潤：$${totalProf.toLocaleString()}<br>`;
             if (managerCount > 0) statusText += `👔 主管加成：+${managerCount * 10}%<br>`;
-            statusText += `🏢 營運費：$5,000<br>`;
+            statusText += `🏢 營運費：$2,000<br>`;
             statusText += `<hr style="border-color:#333; margin:8px 0;">`;
             statusText += `💰 <b>預期老闆人工：$${baseNet.toLocaleString()}</b><br>`;
             statusText += `🏦 老闆 MPF 供款：${Math.round((player.bossMpfRate || 0) * 100)}%<br>`;
@@ -1939,13 +1957,20 @@
     function gameOver(reason) {
         stopAutoBusiness();
         player.stage = 'end'; document.getElementById('end-screen').style.display = 'flex';
-        document.getElementById('end-title').innerText = reason.includes("破產") ? "💸 破產收場" : (reason.includes("猝死") || reason.includes("離世") ? "💀 過勞死" : (reason.includes("停牌") ? "🚗 停牌收場" : "👴 光榮退休"));
+        
+        let title = "人生落幕";
+        if (reason.includes("破產")) title = "💸 破產收場";
+        else if (reason.includes("猝死") || reason.includes("離世") || reason.includes("過勞")) title = "💀 過勞死";
+        else if (reason.includes("停牌")) title = "🚗 停牌收場";
+        else if (reason.includes("100 歲")) title = "👴 壽終正寢";
+        
+        document.getElementById('end-title').innerText = title;
         
         let finalMoney = player.money;
         let mpfText = "";
         let insuranceText = "";
         
-        if (player.age >= 65 || reason.includes("猝死") || reason.includes("離世")) {
+        if (reason.includes("100 歲") || reason.includes("猝死") || reason.includes("離世")) {
             if (player.mpf > 0) { finalMoney += player.mpf; mpfText = `<br>提取 MPF：+$${player.mpf.toLocaleString()}`; }
             if (player.hasLifeInsurance) { finalMoney += 500000; insuranceText = `<br>人壽保險賠償：+$500,000`; }
         }
