@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🧹 極致洗地毯模擬器</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+        }
+
+        body {
+            background: #111;
+            color: #fff;
+            font-family: 'Fredoka One', 'PingFang HK', cursive;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 頂部導航與進度條 */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        }
+        .top-left, .top-right { display: flex; gap: 10px; align-items: center; }
+        
+        .icon-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .icon-btn:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.3); }
+        .back-btn { color: #00d2d3; border-color: #00d2d3; box-shadow: 0 0 15px rgba(0, 210, 211, 0.4); }
+        .rank-btn { color: #f1c40f; border-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); }
+
+        .player-name {
+            color: #fff;
+            font-size: 16px;
+            text-shadow: 0 0 10px #fff;
+            margin-left: 10px;
+        }
+
+        .progress-container {
+            width: 40%;
+            max-width: 250px;
+            background: rgba(0,0,0,0.6);
+            height: 20px;
+            border-radius: 10px;
+            border: 2px solid #555;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #e74c3c, #f1c40f, #2ecc71);
+            transition: width 0.2s;
+            border-radius: 8px;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* 遊戲畫布 */
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        canvas {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 15px;
+            cursor: crosshair;
+            max-width: 95vw;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+
+        /* 底部工具欄 */
+        .toolbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(20, 20, 30, 0.85);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+        .tool-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            background: #222;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .tool-btn:active { transform: scale(0.9); }
+        .tool-btn.active {
+            background: #fff;
+            border-color: #fff;
+            transform: translateY(-10px) scale(1.1);
+            box-shadow: 0 0 20px rgba(255,255,255,0.8);
+        }
+        .tool-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        /* 通用彈窗 */
+        .modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(10px);
+        }
+        .modal.active { display: flex; }
+        .modal-box {
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+            border: 3px solid #f1c40f;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(241, 196, 15, 0.5);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 90%;
+            max-width: 400px;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-box h1 { color: #f1c40f; font-size: 28px; margin-bottom: 15px; text-shadow: 0 0 20px #f1c40f; }
+        .modal-box p { color: #ccc; font-size: 15px; margin-bottom: 20px; line-height: 1.5; }
+        
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 2px solid #555;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            text-align: center;
+            margin-bottom: 20px;
+            outline: none;
+            user-select: text;
+        }
+        .modal-input:focus { border-color: #f1c40f; }
+
+        .modal-btn {
+            padding: 15px 40px;
+            background: linear-gradient(to bottom, #f1c40f, #e67e22);
+            color: #000;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 5px 0 #b38f00;
+            width: 100%;
+            transition: 0.1s;
+        }
+        .modal-btn:active { transform: translateY(5px); box-shadow: none; }
+
+        /* 排行榜專用 */
+        .rank-list {
+            width: 100%;
+            max-height: 50vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            text-align: left;
+            background: #111;
+            border-radius: 10px;
+            border: 1px solid #333;
+            padding: 10px;
+        }
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            font-size: 16px;
+            color: #ddd;
+        }
+        .rank-item:last-child { border-bottom: none; }
+        .rank-item.top1 { color: #f1c40f; font-weight: bold; font-size: 18px; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
+        .rank-item.top2 { color: #bdc3c7; font-weight: bold; }
+        .rank-item.top3 { color: #e67e22; font-weight: bold; }
+        .rank-name { flex: 1; text-align: left; }
+        .rank-score { width: 80px; text-align: right; }
+
+        /* 提示文字 */
+        .hint {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #00d2d3;
+            border: 1px solid #00d2d3;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部 -->
+    <div class="top-bar">
+        <div class="top-left">
+            <a href="../" class="icon-btn back-btn">⬅ 返回大廳</a>
+            <div class="player-name" id="display-name">玩家</div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+            <div class="progress-text" id="progress-text">0%</div>
+        </div>
+        <div class="top-right">
+            <button class="icon-btn rank-btn" onclick="openRank()">🏆 排行榜</button>
+        </div>
+    </div>
+
+    <!-- 提示 -->
+    <div class="hint" id="hint-text">請選擇工具開始清潔</div>
+
+    <!-- 遊戲區 -->
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+    </div>
+
+    <!-- 工具欄 -->
+    <div class="toolbar">
+        <div class="tool-btn active" onclick="setTool('vacuum', this)" title="吸塵機">🌪️</div>
+        <div class="tool-btn" onclick="setTool('spray', this)" title="清潔劑">🧴</div>
+        <div class="tool-btn" onclick="setTool('brush', this)" title="刷洗">🪥</div>
+        <div class="tool-btn" onclick="setTool('water', this)" title="高壓水槍">💦</div>
+        <div class="tool-btn" onclick="setTool('squeegee', this)" title="刮水器">🪟</div>
+        <div class="tool-btn" onclick="setTool('dryer', this)" title="風乾機">💨</div>
+    </div>
+
+    <!-- 登入/改名彈窗 -->
+    <div id="login-modal" class="modal">
+        <div class="modal-box" style="border-color: #00d2d3;">
+            <h1 style="color: #00d2d3; text-shadow: 0 0 20px #00d2d3;">👤 輸入玩家名稱</h1>
+            <p>請輸入你嘅名字，等大家可以喺排行榜見到你！</p>
+            <input type="text" id="username-input" class="modal-input" maxlength="10" placeholder="例如：洗地王">
+            <button class="modal-btn" onclick="saveUsername()" style="background: linear-gradient(to bottom, #00d2d3, #2980b9); box-shadow: 0 5px 0 #1c5980; color: #fff;">確認</button>
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="win-screen" class="modal">
+        <div class="modal-box">
+            <h1>✨ 完美清潔！ ✨</h1>
+            <p id="win-desc">你已經將張地毯洗到令一令！</p>
+            <div style="font-size: 40px; color: #f1c40f; margin: 15px 0; text-shadow: 0 0 20px #f1c40f;" id="final-score">0 分</div>
+            <button class="modal-btn" onclick="resetGame()">再洗一張</button>
+        </div>
+    </div>
+
+    <!-- 排行榜畫面 -->
+    <div id="rank-modal" class="modal">
+        <div class="modal-box" style="border-color: #f1c40f;">
+            <h1>🏆 洗地王排行榜</h1>
+            <div class="rank-list" id="rank-list">
+                <!-- 動態生成 -->
+            </div>
+            <button class="modal-btn" onclick="closeRank()">關閉</button>
+        </div>
+    </div>
+
+<script>
+    // ==========================================
+    // 基礎設置與防呆
+    // ==========================================
+    window.onerror = function(msg, url, line) {
+        console.warn("遊戲發生小錯誤，已自動修復：", msg);
+        return true; 
+    };
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const hintText = document.getElementById('hint-text');
+    const displayName = document.getElementById('display-name');
+
+    // 確保畫布在手機上比例正確
+    function resizeCanvas() {
+        const container = document.getElementById('game-container');
+        const ratio = canvas.width / canvas.height;
+        const cw = container.clientWidth * 0.95;
+        const ch = container.clientHeight * 0.7;
+        
+        if (cw / ch > ratio) {
+            canvas.style.width = (ch * ratio) + 'px';
+            canvas.style.height = ch + 'px';
+        } else {
+            canvas.style.width = cw + 'px';
+            canvas.style.height = (cw / ratio) + 'px';
+        }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    setTimeout(resizeCanvas, 100);
+
+    // ==========================================
+    // 玩家與排行榜系統
+    // ==========================================
+    let currentUser = localStorage.getItem('carpet_username') || '';
+    let leaderboard = [];
+    try {
+        leaderboard = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
+    } catch(e) { leaderboard = []; }
+
+    function initUser() {
+        if (!currentUser) {
+            document.getElementById('login-modal').classList.add('active');
+        } else {
+            displayName.innerText = currentUser;
+            initGame();
+        }
+    }
+
+    function saveUsername() {
+        const val = document.getElementById('username-input').value.trim();
+        if (val.length === 0) { alert("請輸入名字！"); return; }
+        currentUser = val;
+        localStorage.setItem('carpet_username', currentUser);
+        displayName.innerText = currentUser;
+        document.getElementById('login-modal').classList.remove('active');
+        initGame();
+    }
+
+    function openRank() {
+        document.getElementById('rank-modal').classList.add('active');
+        renderLeaderboard();
+    }
+
+    function closeRank() {
+        document.getElementById('rank-modal').classList.remove('active');
+    }
+
+    function renderLeaderboard() {
+        const list = document.getElementById('rank-list');
+        list.innerHTML = '';
+        
+        // 排序（分數由高到低）
+        leaderboard.sort((a, b) => b.score - a.score);
+        
+        if (leaderboard.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">暫時未有人上榜，快啲嚟挑戰啦！</div>';
+            return;
+        }
+
+        leaderboard.forEach((item, index) => {
+            let div = document.createElement('div');
+            div.className = 'rank-item';
+            if (index === 0) div.classList.add('top1');
+            else if (index === 1) div.classList.add('top2');
+            else if (index === 2) div.classList.add('top3');
+            
+            let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index+1) + '.';
+            div.innerHTML = `<div class="rank-name">${medal} ${item.name}</div><div class="rank-score">${item.score} 分</div>`;
+            list.appendChild(div);
+        });
+    }
+
+    function submitScore(score) {
+        // 尋找當前玩家
+        let existingIndex = leaderboard.findIndex(item => item.name === currentUser);
+        
+        if (existingIndex !== -1) {
+            // 如果已有紀錄，只保留最高分
+            if (score > leaderboard[existingIndex].score) {
+                leaderboard[existingIndex].score = score;
+            }
+        } else {
+            // 新玩家
+            leaderboard.push({ name: currentUser, score: score });
+        }
+        
+        try {
+            localStorage.setItem('carpet_leaderboard', JSON.stringify(leaderboard));
+        } catch(e) {}
+    }
+
+    // ==========================================
+    // 音效系統 (Web Audio API)
+    // ==========================================
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function createNoiseBuffer() {
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        return buffer;
+    }
+    const noiseBuffer = createNoiseBuffer();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        if (type === 'vacuum') {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 800;
+            const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+            src.start(); src.stop(now + 0.2);
+        } else if (type === 'spray') {
+            const osc = audioCtx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(2000, now); osc.frequency.exponentialRampToValueAtTime(4000, now + 0.1);
+            const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(now + 0.1);
+        } else if (type === 'brush') {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3000;
+            const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); src.start(); src.stop(now + 0.1);
+        } else if (type === 'water') {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 1500;
+            const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); src.start(); src.stop(now + 0.3);
+        } else if (type === 'dryer') {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 500;
+            const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.2, now + 0.2); gain.gain.linearRampToValueAtTime(0, now + 0.5);
+            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); src.start(); src.stop(now + 0.5);
+        }
+    }
+
+    // ==========================================
+    // 核心圖層與狀態
+    // ==========================================
+    let currentTool = 'vacuum';
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
+    let progress = 0;
+    let isGameOver = false;
+    let startTime = 0;
+
+    const baseCanvas = document.createElement('canvas'); const baseCtx = baseCanvas.getContext('2d');
+    const dirtCanvas = document.createElement('canvas'); const dirtCtx = dirtCanvas.getContext('2d');
+    const soapCanvas = document.createElement('canvas'); const soapCtx = soapCanvas.getContext('2d');
+    const checkCanvas = document.createElement('canvas'); const checkCtx = checkCanvas.getContext('2d');
+
+    baseCanvas.width = canvas.width; baseCanvas.height = canvas.height;
+    dirtCanvas.width = canvas.width; dirtCanvas.height = canvas.height;
+    soapCanvas.width = canvas.width; soapCanvas.height = canvas.height;
+    checkCanvas.width = 100; checkCanvas.height = 60;
+
+    let particles = [];
+
+    // ==========================================
+    // 初始化遊戲 (繪製底圖與污垢)
+    // ==========================================
+    function initGame() {
+        progress = 0; 
+        isGameOver = false;
+        startTime = Date.now();
+        updateProgressUI();
+        document.getElementById('win-screen').classList.remove('active');
+        particles = [];
+        soapCtx.clearRect(0, 0, soapCanvas.width, soapCanvas.height);
+
+        // 1. 畫底層：波斯地毯紋理
+        baseCtx.fillStyle = '#8e44ad';
+        baseCtx.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
+        
+        baseCtx.strokeStyle = '#9b59b6';
+        baseCtx.lineWidth = 2;
+        for(let i=0; i<baseCanvas.width; i+=10) {
+            baseCtx.beginPath(); baseCtx.moveTo(i, 0); baseCtx.lineTo(i, baseCanvas.height); baseCtx.stroke();
+        }
+        baseCtx.strokeStyle = '#f1c40f';
+        baseCtx.lineWidth = 15;
+        baseCtx.strokeRect(20, 20, baseCanvas.width-40, baseCanvas.height-40);
+        baseCtx.strokeStyle = '#e74c3c';
+        baseCtx.lineWidth = 5;
+        baseCtx.strokeRect(40, 40, baseCanvas.width-80, baseCanvas.height-80);
+        baseCtx.fillStyle = '#3498db';
+        baseCtx.beginPath();
+        baseCtx.ellipse(baseCanvas.width/2, baseCanvas.height/2, 200, 120, 0, 0, Math.PI*2);
+        baseCtx.fill();
+
+        // 2. 畫污垢層
+        dirtCtx.clearRect(0, 0, dirtCanvas.width, dirtCanvas.height);
+        for(let i=0; i<200; i++) {
+            dirtCtx.fillStyle = `rgba(60, 40, 20, ${Math.random()*0.5 + 0.3})`;
+            dirtCtx.beginPath();
+            dirtCtx.arc(Math.random()*dirtCanvas.width, Math.random()*dirtCanvas.height, Math.random()*40+10, 0, Math.PI*2);
+            dirtCtx.fill();
+        }
+        for(let i=0; i<30; i++) {
+            dirtCtx.fillStyle = 'rgba(20, 15, 10, 0.8)';
+            dirtCtx.beginPath();
+            dirtCtx.arc(Math.random()*dirtCanvas.width, Math.random()*dirtCanvas.height, Math.random()*20+5, 0, Math.PI*2);
+            dirtCtx.fill();
+        }
+        for(let i=0; i<100; i++) {
+            dirtCtx.fillStyle = '#333';
+            dirtCtx.fillRect(Math.random()*dirtCanvas.width, Math.random()*dirtCanvas.height, 4, 4);
+        }
+
+        // 同步到檢查畫布
+        checkCtx.clearRect(0,0,checkCanvas.width, checkCanvas.height);
+        checkCtx.drawImage(dirtCanvas, 0, 0, checkCanvas.width, checkCanvas.height);
+    }
+
+    // ==========================================
+    // 工具切換與提示
+    // ==========================================
+    function setTool(tool, el) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        el.classList.add('active');
+        
+        const hints = {
+            'vacuum': '🌪️ 吸塵機：吸走表面碎屑',
+            'spray': '🧴 清潔劑：噴灑泡泡溶解污垢',
+            'brush': '🪥 刷洗：用力刷走深層污漬',
+            'water': '💦 水槍：沖洗乾淨',
+            'squeegee': '🪟 刮水器：刮走多餘水分',
+            'dryer': '💨 風乾機：吹乾地毯'
+        };
+        hintText.innerText = hints[tool];
+    }
+
+    // ==========================================
+    // 核心繪製與擦除邏輯
+    // ==========================================
+    function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    function startDraw(e) {
+        e.preventDefault();
+        if (isGameOver) return;
+        isDrawing = true;
+        const pos = getPointerPos(e);
+        lastX = pos.x; lastY = pos.y;
+        handleDraw(pos.x, pos.y);
+    }
+
+    function draw(e) {
+        e.preventDefault();
+        if (!isDrawing || isGameOver) return;
+        const pos = getPointerPos(e);
+        handleDraw(pos.x, pos.y);
+        lastX = pos.x; lastY = pos.y;
+    }
+
+    function stopDraw(e) {
+        if (e) e.preventDefault();
+        isDrawing = false;
+    }
+
+    function eraseDirt(x, y, radius) {
+        dirtCtx.globalCompositeOperation = 'destination-out';
+        dirtCtx.beginPath();
+        dirtCtx.arc(x, y, radius, 0, Math.PI*2);
+        dirtCtx.fill();
+        dirtCtx.globalCompositeOperation = 'source-over';
+
+        let cx = (x / canvas.width) * checkCanvas.width;
+        let cy = (y / canvas.height) * checkCanvas.height;
+        let cr = (radius / canvas.width) * checkCanvas.width;
+        checkCtx.globalCompositeOperation = 'destination-out';
+        checkCtx.beginPath();
+        checkCtx.arc(cx, cy, cr, 0, Math.PI*2);
+        checkCtx.fill();
+        checkCtx.globalCompositeOperation = 'source-over';
+    }
+
+    function handleDraw(x, y) {
+        if (currentTool === 'vacuum') {
+            eraseDirt(x, y, 40);
+            playSound('vacuum');
+            for(let i=0; i<3; i++) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1, color: '#555', size: Math.random()*5+2, type: 'dust'});
+        } 
+        else if (currentTool === 'spray') {
+            soapCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            soapCtx.beginPath();
+            soapCtx.arc(x, y, 30, 0, Math.PI*2);
+            soapCtx.fill();
+            playSound('spray');
+            eraseDirt(x, y, 20);
+            for(let i=0; i<2; i++) particles.push({x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 1, color: '#fff', size: Math.random()*8+4, type: 'bubble'});
+        } 
+        else if (currentTool === 'brush') {
+            eraseDirt(x, y, 35);
+            soapCtx.globalCompositeOperation = 'destination-out';
+            soapCtx.beginPath(); soapCtx.arc(x, y, 35, 0, Math.PI*2); soapCtx.fill();
+            soapCtx.globalCompositeOperation = 'source-over';
+            
+            if (Math.random() < 0.3) playSound('brush');
+            for(let i=0; i<4; i++) particles.push({x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color: '#f1c40f', size: Math.random()*4+1, type: 'spark'});
+        } 
+        else if (currentTool === 'water') {
+            eraseDirt(x, y, 50);
+            soapCtx.globalCompositeOperation = 'destination-out';
+            soapCtx.beginPath(); soapCtx.arc(x, y, 60, 0, Math.PI*2); soapCtx.fill();
+            soapCtx.globalCompositeOperation = 'source-over';
+            
+            if (Math.random() < 0.2) playSound('water');
+            for(let i=0; i<5; i++) particles.push({x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1, color: '#00d2d3', size: Math.random()*6+2, type: 'water'});
+        } 
+        else if (currentTool === 'squeegee') {
+            eraseDirt(x, y, 60);
+            soapCtx.globalCompositeOperation = 'destination-out';
+            soapCtx.beginPath(); soapCtx.arc(x, y, 60, 0, Math.PI*2); soapCtx.fill();
+            soapCtx.globalCompositeOperation = 'source-over';
+        } 
+        else if (currentTool === 'dryer') {
+            if (Math.random() < 0.3) playSound('dryer');
+            for(let i=0; i<2; i++) particles.push({x, y, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20, life: 1, color: '#ff9f43', size: Math.random()*10+5, type: 'wind'});
+        }
+    }
+
+    // ==========================================
+    // 事件綁定
+    // ==========================================
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('touchstart', startDraw, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    window.addEventListener('touchend', stopDraw);
+
+    // ==========================================
+    // 進度計算與更新 (核心計分)
+    // ==========================================
+    function updateProgress() {
+        if (isGameOver) return;
+
+        const imgData = checkCtx.getImageData(0, 0, checkCanvas.width, checkCanvas.height).data;
+        let totalPixels = imgData.length / 4;
+        let dirtPixels = 0;
+        
+        for (let i = 3; i < imgData.length; i += 4) {
+            if (imgData[i] > 10) dirtPixels++;
+        }
+        
+        let cleanPercent = 100 - ((dirtPixels / totalPixels) * 100);
+        progress = Math.min(100, Math.floor(cleanPercent * 1.05)); 
+        
+        progressBar.style.width = progress + '%';
+        progressText.innerText = progress + '%';
+
+        if (progress >= 98) {
+            gameOver();
+        }
+    }
+    setInterval(updateProgress, 300);
+
+    function updateProgressUI() {
+        progressBar.style.width = progress + '%';
+        progressText.innerText = progress + '%';
+    }
+
+    function gameOver() {
+        if (isGameOver) return;
+        isGameOver = true;
+        
+        let timeSecs = Math.floor((Date.now() - startTime) / 1000);
+        // 計分公式：基礎1000分，每用1秒扣5分，最低100分
+        let score = Math.max(100, 1000 - (timeSecs * 5));
+        
+        document.getElementById('win-desc').innerHTML = `你用咗 ${timeSecs} 秒洗乾淨張地毯！<br>恭喜你獲得：`;
+        document.getElementById('final-score').innerText = score + " 分";
+        document.getElementById('win-screen').classList.add('active');
+        
+        // 提交分數
+        submitScore(score);
+
+        // 播放勝利音效
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    function resetGame() {
+        initGame();
+    }
+
+    // ==========================================
+    // 主渲染循環
+    // ==========================================
+    function drawLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(baseCanvas, 0, 0);
+        ctx.drawImage(dirtCanvas, 0, 0);
+
+        ctx.globalAlpha = 0.8;
+        ctx.drawImage(soapCanvas, 0, 0);
+        ctx.globalAlpha = 1.0;
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy;
+            p.life -= 0.02;
+            
+            if (p.type === 'wind') {
+                p.life -= 0.03;
+                ctx.strokeStyle = `rgba(255, 159, 67, ${p.life * 0.5})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx*2, p.y - p.vy*2); ctx.stroke();
+            } else {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+            }
+            
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+        ctx.globalAlpha = 1.0;
+
+        if (isDrawing && !isGameOver) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, currentTool === 'water' ? 50 : (currentTool === 'vacuum' ? 40 : 30), 0, Math.PI*2);
+            ctx.stroke();
+        }
+
+        requestAnimationFrame(drawLoop);
+    }
+
+    // 啟動
+    initUser();
+    drawLoop();
+
+</script>
+</body>
+</html>
