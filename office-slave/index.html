@@ -3066,7 +3066,7 @@
             document.getElementById('end-stats').innerHTML = `${reason}<br><br>終年：${player.age} 歲<br>最終資產：$${finalMoney.toLocaleString()}${mpfText}${insuranceText}<br>最終身份：${identityStr}<br>最終聲望：${player.reputation}${slackText}`;
             localStorage.removeItem(SAVE_KEY); speakText(reason);
         }
-                window.onload = () => {
+        window.onload = () => {
             document.getElementById('voice-toggle').innerText = "🔊 粵語";
             try {
                 if (loadGame() && player.stage === 'work') {
@@ -3086,6 +3086,10 @@
                 updateHUD();
             } catch (e) {}
         };
+    </script> <!-- 👈 閂返主遊戲邏輯嘅 script -->
+
+    <!-- ===== Three.js 3D 場景層 ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script> <!-- 👈 引入 Three.js 庫 -->
     <script>
     (function () {
         try {
@@ -3098,7 +3102,7 @@
 
             var scene = new THREE.Scene();
 
-            // 拉遠少少個鏡頭，睇到多啲環境
+            // 鏡頭設定
             var VIEW = 11;
             var aspect = W() / H();
             var cam = new THREE.OrthographicCamera(-VIEW * aspect, VIEW * aspect, VIEW, -VIEW, 0.1, 300);
@@ -3291,219 +3295,6 @@
                     else if (player.isListed) floorMat.color.setHex(0x112218);
                     else floorMat.color.setHex(0x3a4155);
 
-                } catch (e) {}
-            }, 250);
-
-        } catch (e) {
-            console.warn('3D 場景初始化失敗，已自動跳過：', e);
-            var h = document.getElementById('scene3d');
-            if (h) h.style.display = 'none';
-        }
-    })();
-    </script>
-</body>
-</html>
-    (function () {
-        try {
-            var host = document.getElementById('scene3d');
-            var wrap = document.getElementById('scene');
-            if (!host || !wrap || typeof THREE === 'undefined') return;
-
-            var W = function () { return Math.max(1, wrap.clientWidth); };
-            var H = function () { return Math.max(1, wrap.clientHeight); };
-
-            var scene = new THREE.Scene();
-
-            var VIEW = 9;
-            var aspect = W() / H();
-            var cam = new THREE.OrthographicCamera(-VIEW * aspect, VIEW * aspect, VIEW, -VIEW, 0.1, 300);
-            cam.position.set(14, 15, 14);
-            cam.lookAt(0, 1.2, 0);
-
-            var renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-            renderer.setSize(W(), H());
-            renderer.setClearColor(0x000000, 0);
-            host.appendChild(renderer.domElement);
-
-            // 燈光
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x2a3550, 1.15));
-            var dl = new THREE.DirectionalLight(0xffffff, 0.8);
-            dl.position.set(10, 18, 8);
-            scene.add(dl);
-
-            // 地板
-            var floorMat = new THREE.MeshLambertMaterial({ color: 0x2b3040 });
-            var floor = new THREE.Mesh(new THREE.PlaneGeometry(26, 20), floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            scene.add(floor);
-
-            var grid = new THREE.GridHelper(26, 26, 0x44506e, 0x323a52);
-            grid.position.y = 0.02;
-            scene.add(grid);
-
-            // 牆
-            var wallMat = new THREE.MeshLambertMaterial({ color: 0x232838 });
-            var backWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 8), wallMat);
-            backWall.position.set(0, 4, -10);
-            scene.add(backWall);
-
-            var sideWall = new THREE.Mesh(new THREE.PlaneGeometry(20, 8), wallMat);
-            sideWall.rotation.y = Math.PI / 2;
-            sideWall.position.set(-13, 4, 0);
-            scene.add(sideWall);
-
-            // 共用材質
-            var deskMat  = new THREE.MeshLambertMaterial({ color: 0x8a6d4b });
-            var monMat   = new THREE.MeshLambertMaterial({ color: 0x4fc3f7, emissive: 0x0a3550 });
-            var bodyMat  = new THREE.MeshLambertMaterial({ color: 0x3498db });
-            var mgrMat   = new THREE.MeshLambertMaterial({ color: 0xf1c40f, emissive: 0x4a3800 });
-            var optMat   = new THREE.MeshLambertMaterial({ color: 0xe84393, emissive: 0x4a0a2a });
-            var headMat  = new THREE.MeshLambertMaterial({ color: 0xf5cba7 });
-            var slackMat = new THREE.MeshLambertMaterial({ color: 0xffb300, emissive: 0x664400 });
-            var femaleMat= new THREE.MeshLambertMaterial({ color: 0xe84393 });
-
-            // 12 個桌位（3 欄 × 4 排）
-            var staffGroups = [];
-            var slotPositions = [];
-            for (var r = 0; r < 4; r++) {
-                for (var c = 0; c < 3; c++) {
-                    slotPositions.push([ (c - 1) * 4.0, (r - 1.5) * 3.6 ]);
-                }
-            }
-
-            slotPositions.forEach(function (p) {
-                var g = new THREE.Group();
-
-                var desk = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 1.3), deskMat);
-                desk.position.y = 0.78;
-                g.add(desk);
-
-                var mon = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.5, 0.06), monMat);
-                mon.position.set(0, 1.12, -0.38);
-                g.add(mon);
-
-                var body = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.4), bodyMat);
-                body.position.set(0, 1.12, 0.32);
-                g.add(body);
-
-                var head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), headMat);
-                head.position.set(0, 1.62, 0.32);
-                g.add(head);
-
-                var mark = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), slackMat);
-                mark.position.set(0, 2.05, 0.32);
-                mark.visible = false;
-                g.add(mark);
-
-                g.position.set(p[0], 0, p[1]);
-                g.visible = false;
-                scene.add(g);
-
-                staffGroups.push({ g: g, body: body, mark: mark });
-            });
-
-            // 打工仔單人（未做老闆時）
-            var solo = new THREE.Group();
-            var sBody = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.15, 0.6), bodyMat);
-            sBody.position.y = 0.95;
-            solo.add(sBody);
-
-            var sHead = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), headMat);
-            sHead.position.y = 1.85;
-            solo.add(sHead);
-
-            var sHair = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
-            sHair.position.y = 2.02;
-            solo.add(sHair);
-
-            scene.add(solo);
-
-            // 上市大樓
-            var towerMat = new THREE.MeshLambertMaterial({ color: 0x2ecc71, emissive: 0x0a3d24 });
-            var tower = new THREE.Mesh(new THREE.BoxGeometry(4.5, 11, 4.5), towerMat);
-            tower.position.set(0, 5.5, -7);
-            tower.visible = false;
-            scene.add(tower);
-
-            var towerTop = new THREE.Mesh(new THREE.ConeGeometry(2.4, 2, 4), new THREE.MeshLambertMaterial({ color: 0xf1c40f, emissive: 0x4a3800 }));
-            towerTop.position.set(0, 12, -7);
-            towerTop.rotation.y = Math.PI / 4;
-            towerTop.visible = false;
-            scene.add(towerTop);
-
-            // 私人飛機 / 遊艇（裝飾）
-            var jet = new THREE.Mesh(new THREE.ConeGeometry(0.6, 3.2, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-            jet.rotation.z = Math.PI / 2;
-            jet.position.set(-8, 6, -4);
-            jet.visible = false;
-            scene.add(jet);
-
-            var yacht = new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 0.9), new THREE.MeshLambertMaterial({ color: 0xf1c40f }));
-            yacht.position.set(8, 0.5, -3);
-            yacht.visible = false;
-            scene.add(yacht);
-
-            window.__scene3d = { scene: scene, camera: cam, renderer: renderer };
-
-            function resize() {
-                var a = W() / H();
-                cam.left = -VIEW * a;
-                cam.right = VIEW * a;
-                cam.top = VIEW;
-                cam.bottom = -VIEW;
-                cam.updateProjectionMatrix();
-                renderer.setSize(W(), H());
-            }
-            window.addEventListener('resize', resize);
-            setTimeout(resize, 120);
-            setTimeout(resize, 600);
-
-            function loop() {
-                requestAnimationFrame(loop);
-                renderer.render(scene, cam);
-            }
-            loop();
-
-            // 每 250ms 同步一次遊戲狀態（只讀 player，唔改任何邏輯）
-            setInterval(function () {
-                try {
-                    if (typeof player === 'undefined') return;
-
-                    var isBoss = !!player.isBoss && !player.isListed;
-                    var n = isBoss ? Math.min(player.staffList.length, 12) : 0;
-
-                    solo.visible = !isBoss && !player.isListed;
-                    if (solo.visible) {
-                        sBody.material = (player.gender === 'female') ? femaleMat : bodyMat;
-                    }
-
-                    tower.visible = !!player.isListed;
-                    towerTop.visible = !!player.isListed;
-                    jet.visible = !!(player.luxury && player.luxury.jet);
-                    yacht.visible = !!(player.luxury && player.luxury.yacht);
-
-                    for (var i = 0; i < staffGroups.length; i++) {
-                        var o = staffGroups[i];
-                        o.g.visible = i < n;
-                        if (i < n) {
-                            var s = player.staffList[i];
-                            var txt = (s && s.status) ? s.status.text : '';
-                            o.mark.visible = (txt === '摸魚中' || txt === '偷懶中');
-                            o.body.material = s.isManager ? mgrMat : (s.hasOptions ? optMat : bodyMat);
-                        }
-                    }
-
-                    // 地板顏色隨身份變化
-                    if (player.isGroup) {
-                        floorMat.color.setHex(0x1a1200);
-                    } else if (player.luxury && (player.luxury.jet || player.luxury.yacht)) {
-                        floorMat.color.setHex(0x201600);
-                    } else if (player.isListed) {
-                        floorMat.color.setHex(0x0e1a14);
-                    } else {
-                        floorMat.color.setHex(0x2b3040);
-                    }
                 } catch (e) {}
             }, 250);
 
