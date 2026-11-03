@@ -54,6 +54,7 @@
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
         }
         .control-btn:active { transform: scale(0.9); }
+        .control-btn.info-btn { background: rgba(162, 155, 254, 0.2); border: 1px solid #a29bfe; }
 
         /* 提示文字 */
         #hint-text {
@@ -61,6 +62,28 @@
             color: rgba(255, 255, 255, 0.5); font-size: 14px; z-index: 100;
             pointer-events: none; transition: opacity 0.5s;
         }
+
+        /* 玩法彈窗 */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #1a1a2e; border: 2px solid #a29bfe; border-radius: 15px;
+            padding: 20px; max-width: 400px; width: 100%; text-align: left;
+            box-shadow: 0 0 30px rgba(162, 155, 254, 0.3);
+        }
+        .modal-box h2 { color: #a29bfe; margin-bottom: 15px; text-align: center; font-size: 22px; }
+        .modal-box p { font-size: 14px; line-height: 1.6; margin-bottom: 10px; color: #e0e0e0; }
+        .modal-box b { color: #fff; }
+        .modal-btn {
+            width: 100%; padding: 12px; background: #a29bfe; color: #000;
+            border: none; border-radius: 8px; font-weight: bold; font-size: 16px;
+            margin-top: 10px; cursor: pointer; font-family: 'Nunito', sans-serif;
+        }
+        .modal-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -81,6 +104,21 @@
         <button class="control-btn" id="btn-smash" onclick="setMode('smash')" title="破壞發洩">🔨</button>
         <button class="control-btn" id="btn-piano" onclick="setMode('piano')" title="療癒琴鍵">🎹</button>
         <button class="control-btn" id="btn-firework" onclick="setMode('firework')" title="夢幻煙花">🎆</button>
+        <!-- 玩法說明按鈕 -->
+        <button class="control-btn info-btn" onclick="document.getElementById('intro-modal').classList.add('active')" title="玩法說明">❓</button>
+    </div>
+
+    <!-- 玩法彈窗 (預設開啟) -->
+    <div id="intro-modal" class="modal-overlay active">
+        <div class="modal-box">
+            <h2>🧘‍♂️ 無限減壓艙 - 玩法</h2>
+            <p>🫧 <b>氣泡紙</b>：點擊或滑動螢幕，戳破所有氣泡。</p>
+            <p>🌌 <b>星塵引力</b>：滑動手指，吸引並融合發光星塵。</p>
+            <p>🔨 <b>破壞發洩</b>：用力點擊畫面，擊碎螢幕並震動。</p>
+            <p>🎹 <b>療癒琴鍵</b>：隨意點擊/滑動，彈奏和諧的五聲音階。</p>
+            <p>🎆 <b>夢幻煙花</b>：按住拖曳拉出星塵，放手發射絢麗煙花。</p>
+            <button class="modal-btn" onclick="document.getElementById('intro-modal').classList.remove('active')">開始放鬆</button>
+        </div>
     </div>
 
 <script>
@@ -134,13 +172,12 @@
             gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
             osc.start(); osc.stop(t + 0.2);
         } else if (type === 'piano') {
-            // 療癒琴鍵
             osc.type = 'sine';
             osc.frequency.setValueAtTime(param, t);
             gain.gain.setValueAtTime(0.3, t);
             gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
             osc.start(); osc.stop(t + 1.5);
-            // 加個泛音令聲音更清脆
+            
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.type = 'triangle';
@@ -284,11 +321,9 @@
                 if (Math.random() < 0.1) playSound('stardust');
             }
         } else if (mode === 'piano' && isPointerDown) {
-            // 滑動彈琴，加個節流避免太密
             if (Math.random() < 0.2) triggerPiano(x, y);
         } else if (mode === 'firework' && isPointerDown) {
             fireworkTrail.push({x: x, y: y});
-            // 限制拖尾長度
             if (fireworkTrail.length > 20) fireworkTrail.shift();
         }
     }
@@ -297,14 +332,12 @@
         isPointerDown = false;
         
         if (mode === 'firework' && fireworkTrail.length > 0) {
-            // 放手，發射煙花
             const last = fireworkTrail[fireworkTrail.length - 1];
             launchFirework(last.x, last.y);
             fireworkTrail = [];
         }
     }
 
-    // 療癒琴鍵觸發
     function triggerPiano(x, y) {
         const note = pentatonicScale[Math.floor(Math.random() * pentatonicScale.length)];
         playSound('piano', note);
@@ -314,7 +347,6 @@
         });
     }
 
-    // 煙花發射
     function launchFirework(x, y) {
         playSound('firework');
         const numParticles = 50 + Math.random() * 30;
@@ -335,7 +367,6 @@
             });
         }
         
-        // 中心閃光
         ripples.push({ x: x, y: y, r: 0, maxR: 100, color: '#fff' });
     }
 
@@ -364,7 +395,6 @@
     function draw() {
         ctx.clearRect(0, 0, W, H);
 
-        // 背景漸變
         let grad = ctx.createLinearGradient(0, 0, 0, H);
         if (mode === 'stardust') {
             grad.addColorStop(0, '#0a0a1a');
@@ -385,9 +415,6 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // ------------------------------------------
-        // 模式 1：氣泡紙
-        // ------------------------------------------
         if (mode === 'bubble') {
             bubbles.forEach(b => {
                 if (!b.popped) {
@@ -411,9 +438,6 @@
             });
         }
 
-        // ------------------------------------------
-        // 模式 2：星塵引力
-        // ------------------------------------------
         if (mode === 'stardust') {
             ctx.lineWidth = 1;
             for (let i = 0; i < particles.length; i++) {
@@ -432,9 +456,6 @@
             }
         }
 
-        // ------------------------------------------
-        // 模式 3：破壞發洩
-        // ------------------------------------------
         if (mode === 'smash') {
             cracks.forEach(crack => {
                 ctx.strokeStyle = `rgba(255, 255, 255, ${crack.life * 0.8})`;
@@ -453,9 +474,6 @@
             cracks = cracks.filter(c => c.life > 0);
         }
 
-        // ------------------------------------------
-        // 模式 4：療癒琴鍵 (水波紋)
-        // ------------------------------------------
         if (mode === 'piano' || mode === 'firework') {
             for (let i = ripples.length - 1; i >= 0; i--) {
                 let r = ripples[i];
@@ -471,9 +489,6 @@
             }
         }
 
-        // ------------------------------------------
-        // 模式 5：夢幻煙花 (拖尾)
-        // ------------------------------------------
         if (mode === 'firework' && fireworkTrail.length > 0) {
             ctx.beginPath();
             ctx.moveTo(fireworkTrail[0].x, fireworkTrail[0].y);
@@ -486,16 +501,12 @@
             ctx.lineJoin = 'round';
             ctx.stroke();
             
-            // 畫光暈
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#ffcc00';
             ctx.stroke();
             ctx.shadowBlur = 0;
         }
 
-        // ------------------------------------------
-        // 粒子更新與繪製 (通用)
-        // ------------------------------------------
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             
@@ -509,13 +520,12 @@
                 p.vx *= 0.95;
                 p.vy *= 0.95;
             } else if (p.isFirework) {
-                // 煙花有摩擦力，慢慢停下
                 p.vx *= p.friction;
                 p.vy *= p.friction;
-                p.vy += 0.05; // 輕微重力
-                p.life -= 0.015; // 煙花生命較長
+                p.vy += 0.05;
+                p.life -= 0.015;
             } else {
-                p.vy += 0.1; // 一般重力
+                p.vy += 0.1;
                 p.life -= 0.02;
             }
 
@@ -549,7 +559,6 @@
         requestAnimationFrame(draw);
     }
 
-    // 初始化
     initBubbles();
     draw();
 </script>
