@@ -47,7 +47,6 @@
             color: #a4b0be; font-size: 14px; letter-spacing: 2px; margin: 0;
         }
 
-        /* ★ 新增：控制欄 (搜尋 + 分類 + 排行榜) ★ */
         .controls-section {
             width: 100%; max-width: 1000px; padding: 0 20px; margin-bottom: 30px;
             display: flex; flex-direction: column; gap: 15px; align-items: center;
@@ -152,6 +151,18 @@
         .card-judge:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.8); transform: translateY(-10px); }
         .card-judge h2 { color: #d2b4de; text-shadow: 0 0 10px #9b59b6, 0 0 20px #9b59b6; }
 
+        /* ★ 新增：九龍城寨保衛戰 — 霓虹紫金塔防 ★ */
+        .card-klt { border-color: rgba(199, 125, 255, 0.4); }
+        .card-klt:hover {
+            border-color: #c77dff;
+            box-shadow: 0 0 30px rgba(199, 125, 255, 0.7), 0 0 60px rgba(255, 209, 102, 0.25);
+            transform: translateY(-10px);
+        }
+        .card-klt h2 {
+            color: #c77dff;
+            text-shadow: 0 0 10px #c77dff, 0 0 20px #ffd166;
+        }
+
         .game-card::before {
             content: ''; position: absolute; top: -50%; left: -50%;
             width: 200%; height: 200%;
@@ -160,7 +171,6 @@
         }
         .game-card:hover::before { top: 100%; left: 100%; }
 
-        /* ★ 新增：排行榜彈窗 ★ */
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
             display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -204,7 +214,6 @@
         <p class="subtitle">原創網頁遊戲工作室</p>
     </div>
 
-    <!-- ★ 新增：控制區 ★ -->
     <div class="controls-section">
         <div class="search-bar">
             <span class="search-icon">🔍</span>
@@ -226,6 +235,12 @@
     </div>
 
     <div class="games-container" id="games-container">
+        <!-- ★ 主打：九龍城寨保衛戰（策略） ★ -->
+        <a href="./klt-defense/" class="game-card card-klt" data-category="strategy">
+            <h2>九龍城寨保衛戰</h2>
+            <p>霓虹塔防！30 級塔、15 英雄、科研樹、城堡養成！擋住收數佬同地產霸權！</p>
+        </a>
+
         <!-- 動作 -->
         <a href="./black-hole/" class="game-card card-hole" data-category="action">
             <h2>黑洞吞噬</h2>
@@ -432,6 +447,43 @@
                             </div>
                         </div>
                         <div class="rank-score" style="color:#b87333;">${minerData.maxDepthRecord}m</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 5. ★ 九龍城寨保衛戰 ★
+        try {
+            let kltLB = JSON.parse(localStorage.getItem('klt_leaderboard')) || [];
+            let kltWave = parseInt(localStorage.getItem('klt_wave_record')) || 0;
+            if (kltLB.length > 0) {
+                kltLB.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.wave || 0) - (a.wave || 0));
+                let top = kltLB[0];
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #c77dff;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🏢</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">九龍城寨保衛戰</span>
+                                <span style="font-size:12px; color:#aaa;">守住 ${top.wave || 0} 波 · ${top.name || '無名氏'}</span>
+                            </div>
+                        </div>
+                        <div class="rank-score" style="color:#c77dff;">${top.score || 0} 分</div>
+                    </div>
+                `;
+                hasData = true;
+            } else if (kltWave > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #c77dff;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🏢</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">九龍城寨保衛戰</span>
+                                <span style="font-size:12px; color:#aaa;">最高波數紀錄</span>
+                            </div>
+                        </div>
+                        <div class="rank-score" style="color:#c77dff;">${kltWave} 波</div>
                     </div>
                 `;
                 hasData = true;
