@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🧑‍⚖️ 賽博判官</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+
+    body {
+        background: #050505; color: #fff; font-family: 'Noto Sans HK', sans-serif;
+        height: 100vh; height: 100dvh; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        background: radial-gradient(circle at center, #0a1a2e, #050505);
+    }
+
+    /* 掃描線特效 */
+    .scanlines {
+        position: fixed; inset: 0; z-index: 999; pointer-events: none;
+        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+    }
+
+    /* 返回大廳 */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 100;
+        padding: 8px 16px; background: rgba(0,0,0,0.8); color: #00d2d3;
+        border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none;
+        font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 14px;
+        box-shadow: 0 0 10px rgba(0,210,211,0.5); transition: 0.2s;
+    }
+    .back-btn:active { transform: scale(0.95); background: #00d2d3; color: #000; }
+
+    /* 主容器 */
+    #app-container {
+        position: relative; width: 100%; max-width: 700px; height: 100%;
+        display: flex; flex-direction: column; padding: 60px 20px 20px;
+        z-index: 10;
+    }
+
+    /* 頂部數據列 */
+    .hud {
+        display: flex; justify-content: space-between; align-items: center;
+        background: rgba(0,0,0,0.6); border: 1px solid #333; border-radius: 10px;
+        padding: 10px 15px; margin-bottom: 20px; font-family: 'Orbitron', sans-serif;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        flex-wrap: wrap; gap: 10px;
+    }
+    .stat-box { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 100px; }
+    .stat-label { font-size: 10px; color: #a4b0be; letter-spacing: 1px; }
+    .stat-value { font-size: 18px; font-weight: bold; }
+    #money-val { color: #f1c40f; text-shadow: 0 0 10px #f1c40f; }
+    #stability-val { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
+    #combo-val { color: #e67e22; text-shadow: 0 0 10px #e67e22; }
+    .progress-bg { width: 100%; height: 6px; background: #111; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+    .progress-fill { height: 100%; background: #00d2d3; transition: width 0.3s, background 0.3s; }
+
+    /* 法庭主體 */
+    .courtroom {
+        flex: 1; display: flex; flex-direction: column; position: relative;
+    }
+    .case-file {
+        flex: 1; background: rgba(15, 20, 30, 0.9); border: 1px solid #2c3e50;
+        border-radius: 10px; padding: 20px; position: relative;
+        box-shadow: 0 0 30px rgba(0,0,0,0.5); overflow-y: auto; margin-bottom: 15px;
+    }
+    .case-file::before {
+        content: 'CONFIDENTIAL // 案件檔案'; position: absolute; top: 10px; right: 15px;
+        font-family: 'Orbitron', sans-serif; font-size: 10px; color: #e74c3c; opacity: 0.5;
+    }
+    #case-title { color: #e74c3c; font-size: 20px; font-weight: bold; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+    #case-desc { font-size: 15px; line-height: 1.8; color: #ecf0f1; min-height: 100px; }
+    #case-desc::after { content: '█'; animation: blink 1s infinite; color: #00d2d3; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* 判決按鈕區 */
+    #actions {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .action-btn {
+        padding: 15px 5px; border: none; border-radius: 10px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
+        font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.1s;
+        display: flex; flex-direction: column; align-items: center; gap: 5px;
+    }
+    .action-btn small { font-size: 10px; font-weight: normal; opacity: 0.7; }
+    .btn-guilty { background: linear-gradient(to bottom, #e74c3c, #c0392b); color: #fff; box-shadow: 0 4px 0 #7b241c; }
+    .btn-innocent { background: linear-gradient(to bottom, #2ecc71, #27ae60); color: #fff; box-shadow: 0 4px 0 #145a32; }
+    .btn-fine { background: linear-gradient(to bottom, #f1c40f, #f39c12); color: #000; box-shadow: 0 4px 0 #b38f00; }
+    .action-btn:active { transform: translateY(4px); box-shadow: none; }
+    .action-btn:disabled { background: #333; color: #666; box-shadow: 0 4px 0 #111; cursor: not-allowed; }
+
+    /* 升級掣 */
+    .upgrade-btn {
+        margin-top: 15px; padding: 12px; background: rgba(0, 210, 211, 0.1); color: #00d2d3;
+        border: 2px solid #00d2d3; border-radius: 10px; font-family: 'Orbitron', sans-serif;
+        font-weight: bold; font-size: 14px; cursor: pointer; text-align: center;
+        box-shadow: 0 0 15px rgba(0,210,211,0.2); transition: 0.2s;
+    }
+    .upgrade-btn:active { background: #00d2d3; color: #000; }
+
+    /* 彈窗 */
+    .modal {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 200;
+        display: flex; align-items: center; justify-content: center; padding: 20px;
+        backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal.active { opacity: 1; pointer-events: auto; }
+    .modal-box {
+        background: linear-gradient(135deg, #111, #000);
+        border: 2px solid #f1c40f; padding: 30px; border-radius: 15px;
+        text-align: center; max-width: 450px; width: 100%;
+        box-shadow: 0 0 50px rgba(241, 196, 15, 0.2); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-box h1 { color: #f1c40f; font-family: 'Orbitron', sans-serif; font-size: 24px; margin-bottom: 15px; text-shadow: 0 0 20px #f1c40f; }
+    .modal-box p { color: #ccc; font-size: 14px; line-height: 1.6; margin-bottom: 20px; text-align: left; }
+    .modal-box p span { color: #00d2d3; font-weight: bold; }
+    .modal-btn {
+        width: 100%; padding: 15px; background: linear-gradient(to bottom, #f1c40f, #e67e22);
+        color: #000; border: none; border-radius: 30px; font-size: 18px; font-weight: bold;
+        cursor: pointer; font-family: 'Orbitron', sans-serif; box-shadow: 0 4px 0 #b38f00; transition: 0.1s;
+        margin-bottom: 10px;
+    }
+    .modal-btn:active { transform: translateY(4px); box-shadow: none; }
+    
+    /* 升級列表 */
+    .shop-item {
+        display: flex; justify-content: space-between; align-items: center;
+        background: #1a1a2e; border: 1px solid #333; border-radius: 8px;
+        padding: 10px; margin-bottom: 10px; text-align: left;
+    }
+    .shop-info b { display: block; font-size: 14px; color: #fff; margin-bottom: 3px; }
+    .shop-info small { font-size: 11px; color: #aaa; }
+    .shop-buy {
+        padding: 8px 15px; background: #2ecc71; color: #000; border: none; border-radius: 5px;
+        font-weight: bold; font-family: 'Orbitron', sans-serif; cursor: pointer; white-space: nowrap;
+    }
+    .shop-buy:disabled { background: #444; color: #888; cursor: not-allowed; }
+    .shop-buy:active { transform: scale(0.95); }
+
+    /* 判決結果特效 */
+    #verdict-overlay {
+        position: absolute; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    #verdict-overlay.show { opacity: 1; }
+    .verdict-stamp {
+        font-family: 'Orbitron', sans-serif; font-size: 60px; font-weight: 900;
+        border: 8px solid; padding: 10px 30px; border-radius: 10px; transform: scale(1.5) rotate(-15deg);
+        animation: stampAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes stampAnim { to { transform: scale(1) rotate(-15deg); } }
+    
+    /* 飄浮數值 */
+    .float-text {
+        position: absolute; font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 20px;
+        pointer-events: none; z-index: 300; animation: floatUp 1s ease-out forwards;
+    }
+    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
+
+</style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <div id="app-container">
+        <!-- 頂部 HUD -->
+        <div class="hud">
+            <div class="stat-box">
+                <div class="stat-label">💰 法官錢包</div>
+                <div class="stat-value" id="money-val">$5,000</div>
+            </div>
+            <div class="stat-box" style="align-items: flex-end;">
+                <div class="stat-label">⚖️ 社會穩定度</div>
+                <div class="stat-value" id="stability-val">80%</div>
+                <div class="progress-bg"><div class="progress-fill" id="stability-bar" style="width: 80%;"></div></div>
+            </div>
+            <div class="stat-box" style="align-items: center;">
+                <div class="stat-label">🔥 連續判案</div>
+                <div class="stat-value" id="combo-val">0 / 30</div>
+            </div>
+        </div>
+
+        <!-- 案件顯示區 -->
+        <div class="courtroom">
+            <div class="case-file">
+                <div id="case-title">案件載入中...</div>
+                <div id="case-desc"></div>
+            </div>
+        </div>
+
+        <!-- 判決按鈕 -->
+        <div id="actions">
+            <button class="action-btn btn-guilty" id="btn-guilty" onclick="makeJudgment('guilty')">🔴 有罪<small>維持秩序</small></button>
+            <button class="action-btn btn-innocent" id="btn-innocent" onclick="makeJudgment('innocent')">🟢 無罪<small>自由萬歲</small></button>
+            <button class="action-btn btn-fine" id="btn-fine" onclick="makeJudgment('fine')">🟡 罰款<small>充實錢包</small></button>
+        </div>
+
+        <button class="upgrade-btn" onclick="openShop()">🛒 賽博法庭升級</button>
+    </div>
+
+    <!-- 判決印章特效層 -->
+    <div id="verdict-overlay">
+        <div class="verdict-stamp" id="stamp-text">有罪</div>
+    </div>
+
+    <!-- 玩法說明彈窗 -->
+    <div id="intro-modal" class="modal active">
+        <div class="modal-box">
+            <h1>🧑‍⚖️ 賽博判官</h1>
+            <p>你是一位擁有絕對權力的法官，你要在無盡的荒謬案件中生存。<br><br>
+            🟢 <span>無罪</span>：穩定度上升，但冇錢落袋。<br>
+            🟡 <span>罰款</span>：充實錢包，但會扣少少穩定度。<br>
+            🔴 <span>有罪</span>：討好權貴，錢包大增，但穩定度大跌。<br><br>
+            你的目標是連續判案 <span>30 局</span>！<br>
+            但請注意：隨著連勝增加，市民會越來越暴躁，數值扣減會倍增！<br>
+            錢或穩定度跌到 0 就會被炒。</p>
+            <button class="modal-btn" onclick="startGame()">開庭！</button>
+        </div>
+    </div>
+
+    <!-- 升級商店彈窗 -->
+    <div id="shop-modal" class="modal">
+        <div class="modal-box" style="border-color: #00d2d3;">
+            <h1 style="color: #00d2d3;">🛒 法庭升級</h1>
+            <p style="text-align: center; margin-bottom: 15px;">用錢包購買，保命必備。</p>
+            
+            <div class="shop-item">
+                <div class="shop-info">
+                    <b>⌨️ 打字機加速</b>
+                    <small>減少案件打字時間</small>
+                </div>
+                <button class="shop-buy" id="buy-speed" onclick="buyUpgrade('speed')">$1000</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <b>🛡️ 穩定度裝甲</b>
+                    <small>每次扣穩定度減少 5%</small>
+                </div>
+                <button class="shop-buy" id="buy-stab" onclick="buyUpgrade('stability')">$2000</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <b>👨‍⚖️ 私人律師</b>
+                    <small>錢包破產時自動補滿 $5000 (一次性)</small>
+                </div>
+                <button class="shop-buy" id="buy-shield" onclick="buyUpgrade('shield')">$5000</button>
+            </div>
+
+            <button class="modal-btn" style="background: #00d2d3; box-shadow: 0 4px 0 #008c8c; color: #000; margin-top: 10px;" onclick="closeShop()">返回法庭</button>
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="end-modal" class="modal">
+        <div class="modal-box" style="border-color: #e74c3c;">
+            <h1 style="color: #e74c3c;" id="end-title">🔨 退庭</h1>
+            <p id="end-desc" style="text-align: center; font-size: 16px;"></p>
+            <button class="modal-btn" style="background: #e74c3c; box-shadow: 0 4px 0 #b03a2e; color: #fff;" onclick="startGame()">重新開庭</button>
+        </div>
+    </div>
+
+<script>
+    window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
+
+    // 遊戲狀態
+    let money = 5000;
+    let stability = 80;
+    let currentCase = null;
+    let isTyping = false;
+    let typeTimer = null;
+    let combo = 0;
+    const MAX_COMBO = 30;
+
+    // 升級狀態
+    let speedLevel = 0; // 最多 3 級
+    let stabilityArmor = 0; // 最多 3 級
+    let hasShield = false; // 一次性免死金牌
+
+    // 音效系統
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        let now = audioCtx.currentTime;
+
+        if (type === 'type') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+            gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            osc.start(); osc.stop(now + 0.05);
+        } else if (type === 'guilty') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+            gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        } else if (type === 'innocent') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(); osc.stop(now + 0.2);
+        } else if (type === 'fine') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(900, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(); osc.stop(now + 0.2);
+        } else if (type === 'gameover') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(20, now + 1);
+            gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+            osc.start(); osc.stop(now + 1);
+        } else if (type === 'win') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now+0.1); osc.frequency.setValueAtTime(783, now+0.2); osc.frequency.setValueAtTime(1046, now+0.3);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(); osc.stop(now + 0.5);
+        }
+    }
+
+    // 荒謬案件生成器
+    const CHAR = ["AI 機械人", "仿生人", "賽博格打工人", "元宇宙地產商", "機械狗", "黑客", "外星使節", "虛擬偶像", "黑市商人"];
+    const ACTION = ["控告", "起訴", "舉報", "惡意投訴", "誹謗"];
+    const TARGET = ["主人", "烤麵包機", "公司老闆", "宇宙飛船", "大數據系統", "鄰居的 Wi-Fi", "政府部門", "限量版手袋"];
+    const REASON = [
+        "因為佢拒絕更新系統", "因為佢發出誘人嘅光芒", "因為佢偷食咗數據", "因為佢用 AI 代班", 
+        "因為佢咬爛咗限量版手袋", "因為佢發佈咗大量貓貓相", "因為佢操縱虛擬市場", "因為佢無視勞工法例",
+        "因為佢強行餵食有機蔬菜", "因為佢拒絕進行星際通訊"
+    ];
+    const DEMAND = ["要求賠償 500 萬", "要求公開道歉", "要求即時銷毀", "要求永久封號", "要求割讓領土", "要求提供終身免費保養"];
+
+    function generateCase() {
+        // 隨機組合
+        let c1 = CHAR[Math.floor(Math.random()*CHAR.length)];
+        let c2 = TARGET[Math.floor(Math.random()*TARGET.length)];
+        let a = ACTION[Math.floor(Math.random()*ACTION.length)];
+        let r = REASON[Math.floor(Math.random()*REASON.length)];
+        let d = DEMAND[Math.floor(Math.random()*DEMAND.length)];
+        
+        let title = `案件 #${Math.floor(Math.random()*900)+100}：${c1} ${a} ${c2}`;
+        let desc = `原告人：${c1}。被告人：${c2}。\n控罪：${a}。\n案情：原告指控被告人${r}，導致原告出現嚴重嘅數碼創傷。\n原告${d}。`;
+
+        return {
+            title: title,
+            desc: desc,
+            // 隨機生成選項影響
+            options: {
+                guilty: { money: -1500, stability: 15, msg: `你判咗 ${c2} 有罪，${c1} 得到安撫。` },
+                innocent: { money: 1000, stability: -10, msg: `你判咗 ${c2} 無罪，但 ${c1} 極度不滿！` },
+                fine: { money: 3000, stability: -5, msg: `你罰咗 ${c2} 錢，充實咗國庫，但雙方都覺得你判得怪。` }
+            }
+        };
+    }
+
+    function startGame() {
+        document.getElementById('intro-modal').classList.remove('active');
+        document.getElementById('end-modal').classList.remove('active');
+        
+        money = 5000;
+        stability = 80;
+        combo = 0;
+        speedLevel = 0;
+        stabilityArmor = 0;
+        hasShield = false;
+        
+        updateHUD();
+        nextCase();
+    }
+
+    function nextCase() {
+        currentCase = generateCase();
+        
+        document.getElementById('case-title').innerText = currentCase.title;
+        document.getElementById('case-desc').innerText = '';
+        
+        // 打字機效果
+        isTyping = true;
+        let text = currentCase.desc;
+        let i = 0;
+        if (typeTimer) clearInterval(typeTimer);
+        
+        let typingSpeed = Math.max(10, 30 - (speedLevel * 10)); // 升級加速
+        
+        typeTimer = setInterval(() => {
+            if (i < text.length) {
+                document.getElementById('case-desc').innerText += text.charAt(i);
+                i++;
+                if (i % 2 === 0) playSound('type');
+            } else {
+                clearInterval(typeTimer);
+                isTyping = false;
+                enableButtons(true);
+            }
+        }, typingSpeed);
+        
+        enableButtons(false);
+    }
+
+    function enableButtons(enable) {
+        document.getElementById('btn-guilty').disabled = !enable;
+        document.getElementById('btn-innocent').disabled = !enable;
+        document.getElementById('btn-fine').disabled = !enable;
+    }
+
+    function makeJudgment(type) {
+        if (isTyping || !currentCase) return;
+        enableButtons(false);
+
+        let opt = currentCase.options[type];
+        
+        // 計算實際扣減 (連勝越高，難度越大)
+        let difficultyMult = 1 + (combo * 0.05); 
+        let actualMoney = Math.floor(opt.money * (opt.money > 0 ? 1 : difficultyMult));
+        let actualStab = Math.floor(opt.stability * (opt.stability > 0 ? 1 : difficultyMult));
+        
+        // 穩定度裝甲減傷
+        if (actualStab < 0 && stabilityArmor > 0) {
+            actualStab += stabilityArmor * 5; 
+            if (actualStab > 0) actualStab = 0;
+        }
+
+        money += actualMoney;
+        stability += actualStab;
+        
+        // 邊界限制
+        if (stability > 100) stability = 100;
+        if (stability < 0) stability = 0;
+
+        // 破產檢查 (有律師護盾)
+        if (money < 0) {
+            if (hasShield) {
+                money = 5000;
+                hasShield = false;
+                showFloatText(5000, 0);
+                alert("👨‍⚖️ 私人律師發功！幫你填補咗 5000 蚊律師費！");
+            } else {
+                money = 0;
+            }
+        }
+
+        combo++;
+        document.getElementById('record-cases').innerText = combo;
+
+        playSound(type);
+        showVerdictStamp(type);
+        showFloatText(actualMoney, actualStab);
+        updateHUD();
+
+        // 檢查結局
+        if (stability <= 0) {
+            setTimeout(() => gameOver("📉 社會穩定度歸零！\n你嘅判決引發咗全面暴動，市民推翻咗政府，你被趕下台！"), 1000);
+            return;
+        }
+        if (money <= 0) {
+            setTimeout(() => gameOver("💸 法官錢包破產！\n你連賄賂下屬嘅錢都冇，被政敵舉報貪污，鋃鐺入獄！"), 1000);
+            return;
+        }
+        if (combo >= MAX_COMBO) {
+            setTimeout(() => winGame(), 1000);
+            return;
+        }
+
+        setTimeout(nextCase, 1500);
+    }
+
+    // 商店系統
+    function openShop() {
+        if (isTyping) return;
+        document.getElementById('shop-modal').classList.add('active');
+        updateShopUI();
+    }
+    function closeShop() {
+        document.getElementById('shop-modal').classList.remove('active');
+    }
+
+    function updateShopUI() {
+        let btnSpeed = document.getElementById('buy-speed');
+        let costSpeed = 1000 * (speedLevel + 1);
+        btnSpeed.innerText = speedLevel >= 3 ? "已滿級" : `$${costSpeed}`;
+        btnSpeed.disabled = money < costSpeed || speedLevel >= 3;
+
+        let btnStab = document.getElementById('buy-stab');
+        let costStab = 2000 * (stabilityArmor + 1);
+        btnStab.innerText = stabilityArmor >= 3 ? "已滿級" : `$${costStab}`;
+        btnStab.disabled = money < costStab || stabilityArmor >= 3;
+
+        let btnShield = document.getElementById('buy-shield');
+        btnShield.innerText = hasShield ? "已購買" : `$5000`;
+        btnShield.disabled = money < 5000 || hasShield;
+    }
+
+    function buyUpgrade(type) {
+        if (type === 'speed' && speedLevel < 3) {
+            let cost = 1000 * (speedLevel + 1);
+            if (money >= cost) { money -= cost; speedLevel++; }
+        } else if (type === 'stability' && stabilityArmor < 3) {
+            let cost = 2000 * (stabilityArmor + 1);
+            if (money >= cost) { money -= cost; stabilityArmor++; }
+        } else if (type === 'shield' && !hasShield) {
+            if (money >= 5000) { money -= 5000; hasShield = true; }
+        }
+        playSound('fine');
+        updateHUD();
+        updateShopUI();
+    }
+
+    // 特效
+    function showVerdictStamp(type) {
+        let overlay = document.getElementById('verdict-overlay');
+        let stamp = document.getElementById('stamp-text');
+        
+        if (type === 'guilty') { stamp.innerText = "有罪"; stamp.style.color = '#e74c3c'; stamp.style.borderColor = '#e74c3c'; }
+        else if (type === 'innocent') { stamp.innerText = "無罪"; stamp.style.color = '#2ecc71'; stamp.style.borderColor = '#2ecc71'; }
+        else { stamp.innerText = "罰款"; stamp.style.color = '#f1c40f'; stamp.style.borderColor = '#f1c40f'; }
+        
+        overlay.classList.add('show');
+        setTimeout(() => overlay.classList.remove('show'), 800);
+    }
+
+    function showFloatText(moneyDelta, stabilityDelta) {
+        const container = document.getElementById('app-container');
+        if (moneyDelta !== 0) {
+            let mt = document.createElement('div');
+            mt.className = 'float-text'; mt.style.left = '20%'; mt.style.top = '10%';
+            mt.style.color = moneyDelta > 0 ? '#f1c40f' : '#e74c3c';
+            mt.innerText = `${moneyDelta > 0 ? '+' : ''}$${moneyDelta}`;
+            container.appendChild(mt); setTimeout(() => mt.remove(), 1000);
+        }
+        if (stabilityDelta !== 0) {
+            let st = document.createElement('div');
+            st.className = 'float-text'; st.style.right = '20%'; st.style.top = '10%';
+            st.style.color = stabilityDelta > 0 ? '#2ecc71' : '#e74c3c';
+            st.innerText = `${stabilityDelta > 0 ? '+' : ''}${stabilityDelta}%`;
+            container.appendChild(st); setTimeout(() => st.remove(), 1000);
+        }
+    }
+
+    function updateHUD() {
+        document.getElementById('money-val').innerText = `$${money.toLocaleString()}`;
+        document.getElementById('stability-val').innerText = `${stability}%`;
+        document.getElementById('combo-val').innerText = `${combo} / ${MAX_COMBO}`;
+        
+        let bar = document.getElementById('stability-bar');
+        bar.style.width = `${stability}%`;
+        
+        if (stability > 60) { bar.style.background = '#00d2d3'; }
+        else if (stability > 30) { bar.style.background = '#f39c12'; }
+        else { bar.style.background = '#e74c3c'; }
+    }
+
+    function gameOver(reason) {
+        playSound('gameover');
+        document.getElementById('end-title').innerText = "🔨 退庭";
+        document.getElementById('end-desc').innerText = reason;
+        document.getElementById('end-modal').classList.add('active');
+    }
+
+    function winGame() {
+        playSound('win');
+        document.getElementById('end-title').innerText = "👑 終極大法官";
+        document.getElementById('end-desc').innerText = `恭喜！你連續判決咗 ${MAX_COMBO} 宗案件！\n你已經完全掌控咗呢個賽博法庭！\n你嘅名字將被刻在虛擬歷史中！`;
+        document.getElementById('end-modal').classList.add('active');
+    }
+</script>
+</body>
+</html>
