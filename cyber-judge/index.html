@@ -17,7 +17,6 @@
 
     #app-container { position: relative; width: 100%; max-width: 800px; height: 100%; display: flex; flex-direction: column; padding: 65px 15px 15px; z-index: 10; }
 
-    /* HUD */
     .hud { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.6); border: 1px solid #333; border-radius: 10px; padding: 10px; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 8px; }
     .stat-box { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 80px; }
     .stat-label { font-size: 10px; color: #a4b0be; letter-spacing: 1px; }
@@ -28,14 +27,12 @@
     .progress-bg { width: 100%; height: 5px; background: #111; border-radius: 3px; overflow: hidden; margin-top: 3px; }
     .progress-fill { height: 100%; background: #00d2d3; transition: width 0.3s, background 0.3s; }
     
-    /* 聲望條 */
     .favor-container { display: flex; flex-direction: column; gap: 4px; margin-top: 5px; width: 100%; font-size: 10px; font-family: 'Noto Sans HK'; }
     .favor-row { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
     .favor-bar { flex: 1; height: 6px; background: #111; border-radius: 3px; overflow: hidden; }
     .favor-citizen { height: 100%; background: #2ecc71; width: 50%; transition: 0.3s; }
     .favor-elite { height: 100%; background: #e74c3c; width: 50%; transition: 0.3s; }
 
-    /* 法庭主體 */
     .courtroom { flex: 1; display: flex; flex-direction: column; position: relative; }
     .case-file { flex: 1; background: rgba(15, 20, 30, 0.9); border: 1px solid #2c3e50; border-radius: 10px; padding: 20px; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.5); overflow-y: auto; margin-bottom: 15px; }
     .case-file::before { content: 'CONFIDENTIAL // 案件檔案'; position: absolute; top: 10px; right: 15px; font-family: 'Orbitron', sans-serif; font-size: 10px; color: #e74c3c; opacity: 0.5; }
@@ -44,7 +41,10 @@
     #case-desc::after { content: '█'; animation: blink 1s infinite; color: #00d2d3; }
     @keyframes blink { 50% { opacity: 0; } }
 
-    /* 按鈕區 */
+    /* 黑市線人預覽掣 */
+    #predict-btn { display: none; position: absolute; bottom: 15px; right: 15px; background: rgba(241,196,15,0.2); color: #f1c40f; border: 1px solid #f1c40f; padding: 6px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; z-index: 10; font-weight: bold; }
+    #predict-btn:active { background: #f1c40f; color: #000; }
+
     #actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .action-btn { padding: 12px 5px; border: none; border-radius: 8px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.1s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .action-btn small { font-size: 9px; font-weight: normal; opacity: 0.8; }
@@ -57,7 +57,6 @@
     .upgrade-btn { margin-top: 12px; padding: 10px; background: rgba(0, 210, 211, 0.1); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; }
     .upgrade-btn:active { background: #00d2d3; color: #000; }
 
-    /* 彈窗 */
     .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .modal.active { opacity: 1; pointer-events: auto; }
     .modal-box { background: linear-gradient(135deg, #111, #000); border: 2px solid #f1c40f; padding: 20px; border-radius: 15px; text-align: center; max-width: 450px; width: 100%; max-height: 90vh; overflow-y: auto; }
@@ -67,14 +66,12 @@
     .modal-btn { width: 100%; padding: 12px; background: linear-gradient(to bottom, #f1c40f, #e67e22); color: #000; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: 'Orbitron', sans-serif; box-shadow: 0 4px 0 #b38f00; margin-bottom: 8px; }
     .modal-btn:active { transform: translateY(4px); box-shadow: none; }
 
-    /* 商店 */
     .shop-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; text-align: left; }
     .shop-info b { display: block; font-size: 13px; color: #fff; }
     .shop-info small { font-size: 10px; color: #aaa; }
     .shop-buy { padding: 6px 12px; background: #2ecc71; color: #000; border: none; border-radius: 5px; font-weight: bold; font-family: 'Orbitron', sans-serif; cursor: pointer; white-space: nowrap; }
     .shop-buy:disabled { background: #444; color: #888; cursor: not-allowed; }
 
-    /* 特效 */
     #verdict-overlay { position: absolute; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     #verdict-overlay.show { opacity: 1; }
     .verdict-stamp { font-family: 'Orbitron', sans-serif; font-size: 50px; font-weight: 900; border: 6px solid; padding: 8px 24px; border-radius: 10px; transform: scale(1.5) rotate(-15deg); animation: stampAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -83,28 +80,29 @@
     .float-text { position: absolute; font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 18px; pointer-events: none; z-index: 300; animation: floatUp 1s ease-out forwards; }
     @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
 
-    /* 難度選擇 */
     .diff-btn { display: block; width: 100%; padding: 10px; margin-bottom: 8px; border: 2px solid; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
     .diff-normal { background: #111; color: #2ecc71; border-color: #2ecc71; }
     .diff-hell { background: #111; color: #e74c3c; border-color: #e74c3c; }
     .diff-btn:active { transform: scale(0.98); }
 
-    /* 排行榜 */
     .rank-list { text-align: left; font-size: 13px; margin-bottom: 15px; max-height: 40vh; overflow-y: auto; }
     .rank-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; }
     .rank-row:nth-child(1) { color: #f1c40f; font-weight: bold; }
     .rank-row:nth-child(2) { color: #bdc3c7; }
     .rank-row:nth-child(3) { color: #cd7f32; }
+    
+    .achieve-list { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 15px; }
+    .achieve-badge { padding: 5px 10px; background: #222; border: 1px solid #555; border-radius: 20px; font-size: 11px; color: #888; }
+    .achieve-badge.unlocked { background: rgba(46, 204, 113, 0.2); border-color: #2ecc71; color: #2ecc71; font-weight: bold; }
 </style>
 </head>
 <body>
 
     <div class="scanlines"></div>
     <a href="../" class="back-btn">⬅ 返回大廳</a>
-    <button class="rank-btn" onclick="openRank()">🏆 排行榜</button>
+    <button class="rank-btn" onclick="openRank()">🏆 檔案室</button>
 
     <div id="app-container">
-        <!-- 頂部 HUD -->
         <div class="hud">
             <div class="stat-box">
                 <div class="stat-label">💰 法官錢包</div>
@@ -117,9 +115,8 @@
             </div>
             <div class="stat-box" style="align-items: center;">
                 <div class="stat-label">🔥 連續判案</div>
-                <div class="stat-value" id="combo-val">0 / ∞</div>
+                <div class="stat-value" id="combo-val">0 / 30</div>
             </div>
-            <!-- 陣營聲望 -->
             <div class="favor-container">
                 <div class="favor-row">
                     <span style="color:#2ecc71; width: 30px;">市民</span>
@@ -134,15 +131,14 @@
             </div>
         </div>
 
-        <!-- 案件顯示區 -->
         <div class="courtroom">
             <div class="case-file">
                 <div id="case-title">案件載入中...</div>
                 <div id="case-desc"></div>
+                <button id="predict-btn" onclick="predictCase()">🔮 預覽結果 ($500)</button>
             </div>
         </div>
 
-        <!-- 判決按鈕 -->
         <div id="actions">
             <button class="action-btn btn-guilty" id="btn-guilty" onclick="makeJudgment('guilty')">🔴 有罪<small>權貴大喜</small></button>
             <button class="action-btn btn-innocent" id="btn-innocent" onclick="makeJudgment('innocent')">🟢 無罪<small>市民歡呼</small></button>
@@ -152,12 +148,10 @@
         <button class="upgrade-btn" onclick="openShop()">🛒 賽博法庭升級</button>
     </div>
 
-    <!-- 判決印章特效層 -->
     <div id="verdict-overlay">
         <div class="verdict-stamp" id="stamp-text">有罪</div>
     </div>
 
-    <!-- 玩法說明 & 難度選擇 -->
     <div id="intro-modal" class="modal active">
         <div class="modal-box">
             <h1>🧑‍⚖️ 賽博判官</h1>
@@ -168,11 +162,10 @@
             <b>陣營影響：</b>市民聲望太低會引發暴動（穩定度扣加倍）；權貴聲望太高會不斷派黑金引誘你。<br>
             請選擇你的難度：</p>
             <button class="diff-btn diff-normal" onclick="startGame('normal')">正常模式 (目標 30 連勝)</button>
-            <button class="diff-btn diff-hell" onclick="startGame('hell')">地獄模式 (無盡，越玩越難)</button>
+            <button class="diff-btn diff-hell" onclick="startGame('hell')">地獄模式 (無盡，每 10 局難度大增)</button>
         </div>
     </div>
 
-    <!-- 升級商店彈窗 -->
     <div id="shop-modal" class="modal">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h1 style="color: #00d2d3;">🛒 法庭升級</h1>
@@ -197,14 +190,13 @@
                 <button class="shop-buy" id="buy-media" onclick="buyUpgrade('media')">$12000</button>
             </div>
             <div class="shop-item" style="border-color:#f1c40f;">
-                <div class="shop-info"><b style="color:#f1c40f;">🕵️ 黑市線人</b><small>可以預覽案件結果，花 $500</small></div>
+                <div class="shop-info"><b style="color:#f1c40f;">🕵️ 黑市線人</b><small>解鎖案件右下角「預覽結果」功能 ($500/次)</small></div>
                 <button class="shop-buy" id="buy-informant" onclick="buyUpgrade('informant')">$6000</button>
             </div>
             <button class="modal-btn" style="background: #00d2d3; box-shadow: 0 4px 0 #008c8c; color: #000; margin-top: 10px;" onclick="closeShop()">返回法庭</button>
         </div>
     </div>
 
-    <!-- 隨機事件彈窗 -->
     <div id="event-modal" class="modal">
         <div class="modal-box" style="border-color: #e67e22;">
             <h1 style="color: #e67e22;" id="event-title">📢 突發事件</h1>
@@ -213,16 +205,17 @@
         </div>
     </div>
 
-    <!-- 排行榜彈窗 -->
     <div id="rank-modal" class="modal">
         <div class="modal-box" style="border-color: #f1c40f;">
-            <h1 style="color: #f1c40f;">🏆 最高連勝榜</h1>
+            <h1 style="color: #f1c40f;">🏆 檔案室</h1>
+            <h2 style="font-size: 14px; color: #aaa; margin-bottom: 10px;">最高連勝紀錄</h2>
             <div class="rank-list" id="rank-list-content"></div>
+            <h2 style="font-size: 14px; color: #aaa; margin-bottom: 10px;">成就徽章</h2>
+            <div class="achieve-list" id="achieve-content"></div>
             <button class="modal-btn" onclick="document.getElementById('rank-modal').classList.remove('active')">關閉</button>
         </div>
     </div>
 
-    <!-- 結算畫面 -->
     <div id="end-modal" class="modal">
         <div class="modal-box" style="border-color: #e74c3c;">
             <h1 style="color: #e74c3c;" id="end-title">🔨 退庭</h1>
@@ -234,17 +227,14 @@
 <script>
     window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
-    // 狀態
     let money = 5000, stability = 80, combo = 0, maxCombo = 30;
     let citizenFavor = 50, eliteFavor = 50;
     let currentCase = null, isTyping = false, typeTimer = null;
     let currentMode = 'normal';
     
-    // 升級
     let speedLevel = 0, stabilityArmor = 0, hasShield = false;
     let hasGavel = false, hasMedia = false, hasInformant = false;
 
-    // 事件狀態
     let pendingEvent = null;
 
     // 音效
@@ -266,7 +256,6 @@
         } catch(e) {}
     }
 
-    // 案件生成
     const CHAR = ["AI 機械人", "仿生人", "賽博格打工人", "元宇宙地產商", "機械狗", "黑客", "外星使節", "虛擬偶像", "黑市商人"];
     const ACTION = ["控告", "起訴", "舉報", "惡意投訴", "誹謗"];
     const TARGET = ["主人", "烤麵包機", "公司老闆", "宇宙飛船", "大數據系統", "鄰居的 Wi-Fi", "政府部門", "限量版手袋"];
@@ -283,9 +272,9 @@
             title: `案件 #${Math.floor(Math.random()*900)+100}：${c1} ${a} ${c2}`,
             desc: `原告人：${c1}。被告人：${c2}。\n控罪：${a}。\n案情：原告指控被告人${r}，導致原告出現嚴重嘅數碼創傷。\n原告${d}。`,
             options: {
-                guilty: { money: -1500, stability: 15, citizen: -10, elite: 10, msg: `你判咗 ${c2} 有罪，權貴大喜。` },
-                innocent: { money: 1000, stability: -10, citizen: 10, elite: -10, msg: `你判咗 ${c2} 無罪，市民歡呼。` },
-                fine: { money: 3000, stability: -5, citizen: -5, elite: 5, msg: `你罰咗 ${c2} 錢，雙方都覺得你判得怪。` }
+                guilty: { money: -1500, stability: 15, citizen: -10, elite: 10 },
+                innocent: { money: 1000, stability: -10, citizen: 10, elite: -10 },
+                fine: { money: 3000, stability: -5, citizen: -5, elite: 5 }
             }
         };
     }
@@ -307,6 +296,7 @@
         currentCase = generateCase();
         document.getElementById('case-title').innerText = currentCase.title;
         document.getElementById('case-desc').innerText = '';
+        document.getElementById('predict-btn').style.display = 'none'; // 隱藏預覽掣
         
         isTyping = true; let text = currentCase.desc; let i = 0;
         if (typeTimer) clearInterval(typeTimer);
@@ -320,6 +310,7 @@
                 clearInterval(typeTimer);
                 isTyping = false;
                 enableButtons(true);
+                if (hasInformant) document.getElementById('predict-btn').style.display = 'block'; // 顯示預覽掣
                 
                 // 觸發隨機事件 (20% 機率)
                 if (Math.random() < 0.20) triggerEvent();
@@ -332,7 +323,19 @@
         let evs = [
             { title: "📺 記者庭外抗議", desc: "記者不滿法庭判決，市民情緒高漲。", act: () => { stability = Math.max(0, stability - 10); citizenFavor = Math.max(0, citizenFavor - 5); return "穩定度 -10%，市民聲望 -5%"; } },
             { title: "💰 權貴暗中塞錢", desc: "有神祕富豪在桌下塞了一疊錢。", act: () => { money += 2000; eliteFavor = Math.min(100, eliteFavor + 10); return "錢包 +$2000，權貴聲望 +10%"; } },
-            { title: "🤖 AI 陪審團故障", desc: "陪審團系統崩潰，要求你立即判決！", act: () => { return "請馬上判決 (按鈕已解鎖)"; } }
+            { title: "🤖 AI 陪審團故障", desc: "系統崩潰！請在 5 秒內作出判決，否則隨機判決！", act: () => {
+                // 如果冇喺 5 秒內撳確定，就開始倒數
+                setTimeout(() => {
+                    if (pendingEvent) { // 仲未撳確定
+                        document.getElementById('event-modal').classList.remove('active');
+                        pendingEvent = null;
+                        let randType = ['guilty', 'innocent', 'fine'][Math.floor(Math.random()*3)];
+                        makeJudgment(randType);
+                        showFloatText(0, 0, "🤖 AI 強制判決！");
+                    }
+                }, 5000);
+                return "請即刻判決！(5秒後自動執行)";
+            }}
         ];
         let ev = evs[Math.floor(Math.random() * evs.length)];
         pendingEvent = ev;
@@ -346,10 +349,22 @@
         document.getElementById('event-modal').classList.remove('active');
         if (pendingEvent) {
             let result = pendingEvent.act();
-            showFloatText(0, 0, result);
-            pendingEvent = null;
+            if (result !== "請即刻判決！(5秒後自動執行)") { // AI 故障事件唔洗彈字
+                showFloatText(0, 0, result);
+                pendingEvent = null;
+            }
         }
         enableButtons(true);
+    }
+
+    function predictCase() {
+        if (money < 500) { alert("錢包餘額不足，無法支付線人費！"); return; }
+        money -= 500;
+        updateHUD();
+        document.getElementById('predict-btn').style.display = 'none';
+        
+        let g = currentCase.options.guilty, i = currentCase.options.innocent, f = currentCase.options.fine;
+        alert(`🕵️ 線人情報：\n\n🔴 有罪：錢 ${g.money}，穩定 ${g.stability}，市民 ${g.citizen}，權貴 ${g.elite}\n🟢 無罪：錢 ${i.money}，穩定 ${i.stability}，市民 ${i.citizen}，權貴 ${i.elite}\n🟡 罰款：錢 ${f.money}，穩定 ${f.stability}，市民 ${f.citizen}，權貴 ${f.elite}`);
     }
 
     function enableButtons(enable) {
@@ -361,31 +376,28 @@
     function makeJudgment(type) {
         if (isTyping || !currentCase) return;
         enableButtons(false);
+        document.getElementById('predict-btn').style.display = 'none';
 
         let opt = currentCase.options[type];
         let difficultyMult = 1 + (combo * 0.05); 
-        if (currentMode === 'hell') difficultyMult = 1 + (combo * 0.1);
+        if (currentMode === 'hell') difficultyMult = 1 + (combo * 0.1) + Math.floor(combo/10) * 0.5; // 地獄模式每 10 局大加成
         
-        // 法槌秒殺
         if (hasGavel && Math.random() < 0.2) {
             combo++;
             showVerdictStamp('guilty');
             showFloatText(0, 0, "🔨 法槌秒殺！連擊+1");
-            updateHUD();
-            setTimeout(nextCase, 1500);
+            updateHUD(); setTimeout(nextCase, 1500);
             return;
         }
 
         let actualMoney = Math.floor(opt.money * (opt.money > 0 ? 1 : difficultyMult));
         let actualStab = Math.floor(opt.stability * (opt.stability > 0 ? 1 : difficultyMult));
         
-        // 媒體控制
         if (hasMedia && actualStab < 0) {
             actualStab = Math.floor(actualStab / 2);
-            money -= 200; // 維護費
+            money -= 200;
         }
         
-        // 裝甲
         if (actualStab < 0 && stabilityArmor > 0) {
             actualStab += stabilityArmor * 5; 
             if (actualStab > 0) actualStab = 0;
@@ -410,7 +422,6 @@
         showFloatText(actualMoney, actualStab);
         updateHUD();
 
-        // 聲望懲罰/獎勵
         if (citizenFavor < 20 && Math.random() < 0.5) {
             showFloatText(0, 0, "⚠️ 市民暴動！穩定度額外扣減！");
             stability = Math.max(0, stability - 10);
@@ -420,7 +431,6 @@
             money += 2000;
         }
 
-        // 檢查結局
         if (stability <= 0) { setTimeout(() => gameOver("📉 社會穩定度歸零！暴動爆發！"), 1000); return; }
         if (money <= 0) { setTimeout(() => gameOver("💸 法官錢包破產！鋃鐺入獄！"), 1000); return; }
         if (combo >= maxCombo && currentMode === 'normal') { setTimeout(() => winGame(), 1000); return; }
@@ -428,7 +438,6 @@
         setTimeout(nextCase, 1500);
     }
 
-    // 升級系統
     function openShop() { if (isTyping) return; document.getElementById('shop-modal').classList.add('active'); updateShopUI(); }
     function closeShop() { document.getElementById('shop-modal').classList.remove('active'); }
 
@@ -457,7 +466,6 @@
         playSound('fine'); updateHUD(); updateShopUI();
     }
 
-    // 特效 & HUD
     function showVerdictStamp(type) {
         let overlay = document.getElementById('verdict-overlay'), stamp = document.getElementById('stamp-text');
         if (type === 'guilty') { stamp.innerText = "有罪"; stamp.style.color = '#e74c3c'; stamp.style.borderColor = '#e74c3c'; }
@@ -469,7 +477,7 @@
     function showFloatText(moneyDelta, stabilityDelta, customMsg = null) {
         const container = document.getElementById('app-container');
         if (customMsg) {
-            let mt = document.createElement('div'); mt.className = 'float-text'; mt.style.left = '50%'; mt.style.top = '30%'; mt.style.transform = 'translateX(-50%)'; mt.style.color = '#f1c40f';
+            let mt = document.createElement('div'); mt.className = 'float-text'; mt.style.left = '50%'; mt.style.top = '30%'; mt.style.transform = 'translateX(-50%)'; mt.style.color = '#f1c40f'; mt.style.whiteSpace = 'nowrap';
             mt.innerText = customMsg; container.appendChild(mt); setTimeout(() => mt.remove(), 1500);
             return;
         }
@@ -502,6 +510,14 @@
             lb.push({ name: "匿名法官", score: c, date: new Date().toLocaleDateString(), mode: currentMode });
             lb.sort((a,b) => b.score - a.score);
             localStorage.setItem('cyber-judge-rank', JSON.stringify(lb.slice(0, 10)));
+
+            // 成就解鎖邏輯
+            let ach = JSON.parse(localStorage.getItem('cyber-judge-achieve')) || {};
+            if (c >= 10) ach["連勝10局"] = true;
+            if (c >= 30) ach["終極大法官"] = true;
+            if (currentMode === 'hell' && c >= 20) ach["地獄使者"] = true;
+            if (money >= 50000) ach["貪污之王"] = true;
+            localStorage.setItem('cyber-judge-achieve', JSON.stringify(ach));
         } catch(e) {}
     }
 
@@ -509,10 +525,15 @@
         let lb = [];
         try { lb = JSON.parse(localStorage.getItem('cyber-judge-rank')) || []; } catch(e) {}
         let list = document.getElementById('rank-list-content');
-        if (lb.length === 0) list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">暫無紀錄</div>';
-        else {
-            list.innerHTML = lb.map((r,i) => `<div class="rank-row"><span>${i+1}. ${r.name} (${r.mode==='hell'?'地獄':'正常'})</span> <span>${r.score} 連勝</span></div>`).join('');
-        }
+        if (lb.length === 0) list.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">暫無紀錄</div>';
+        else list.innerHTML = lb.map((r,i) => `<div class="rank-row"><span>${i+1}. ${r.name} (${r.mode==='hell'?'地獄':'正常'})</span> <span>${r.score} 連勝</span></div>`).join('');
+
+        let ach = {};
+        try { ach = JSON.parse(localStorage.getItem('cyber-judge-achieve')) || {}; } catch(e) {}
+        let achList = document.getElementById('achieve-content');
+        let allAch = ["連勝10局", "終極大法官", "地獄使者", "貪污之王"];
+        achList.innerHTML = allAch.map(a => `<div class="achieve-badge ${ach[a] ? 'unlocked' : ''}">${a}</div>`).join('');
+
         document.getElementById('rank-modal').classList.add('active');
     }
 </script>
