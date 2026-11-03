@@ -3089,7 +3089,7 @@
         };
     </script> <!-- 👈 閂返主遊戲邏輯嘅 script -->
 
-    <!-- ===== Three.js 3D 場景層（極致畫質版） ===== -->
+    <!-- ===== Three.js 3D 場景層（人體工學修復版） ===== -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
     <script>
     (function () {
@@ -3102,279 +3102,221 @@
             var H = function () { return Math.max(1, wrap.clientHeight); };
 
             var scene = new THREE.Scene();
-            
-            // 加少少霧氣，令遠景更有層次
-            scene.fog = new THREE.Fog(0x0a0a14, 15, 40);
+            scene.fog = new THREE.Fog(0x0a0a14, 18, 45);
 
-            var VIEW = 9;
+            var VIEW = 8.5;
             var aspect = W() / H();
             var cam = new THREE.OrthographicCamera(-VIEW * aspect, VIEW * aspect, VIEW, -VIEW, 0.1, 100);
             cam.position.set(15, 16, 15);
-            cam.lookAt(0, 1, 0);
+            cam.lookAt(0, 1.5, 0);
 
             var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             renderer.setSize(W(), H());
             renderer.setClearColor(0x000000, 0);
-            
-            // ★ 開啟陰影 ★
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             host.appendChild(renderer.domElement);
 
-            // ==========================================
-            // 1. 高級燈光系統
-            // ==========================================
-            // 環境光 (柔和整體)
-            var hemiLight = new THREE.HemisphereLight(0xffffff, 0x334455, 0.8);
-            scene.add(hemiLight);
-            
-            // 主燈 (帶陰影)
+            // 生成材質
+            function createGridTexture(color1, color2, size) {
+                var canvas = document.createElement('canvas');
+                canvas.width = size; canvas.height = size;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = color1; ctx.fillRect(0, 0, size, size);
+                ctx.strokeStyle = color2; ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, size, size);
+                var tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(10, 10);
+                return tex;
+            }
+            function createWoodTexture() {
+                var canvas = document.createElement('canvas');
+                canvas.width = 128; canvas.height = 128;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(0, 0, 128, 128);
+                ctx.fillStyle = '#6b3e1b';
+                for(let i=0; i<10; i++) ctx.fillRect(0, i*15 + Math.random()*5, 128, 2);
+                var tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(2, 2);
+                return tex;
+            }
+            var texCarpet = createGridTexture('#2d3436', '#1e272e', 64);
+            var texWood = createWoodTexture();
+            var texTile = createGridTexture('#ffffff', '#cccccc', 128);
+
+            // 燈光 (調光，避免面部全黑)
+            var ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // 加亮環境光
+            scene.add(ambientLight);
+
             var dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
-            dirLight.position.set(10, 20, 10);
+            dirLight.position.set(10, 20, 15);
             dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
             dirLight.shadow.camera.left = -15;
             dirLight.shadow.camera.right = 15;
             dirLight.shadow.camera.top = 15;
             dirLight.shadow.camera.bottom = -15;
-            dirLight.shadow.mapSize.width = 1024;
-            dirLight.shadow.mapSize.height = 1024;
             scene.add(dirLight);
 
-            // 補光 (打靚公仔個面)
-            var fillLight = new THREE.DirectionalLight(0x88bbff, 0.5);
-            fillLight.position.set(-10, 10, 10);
-            scene.add(fillLight);
-
-            // ==========================================
-            // 2. 環境容器
-            // ==========================================
             var envGroup = new THREE.Group();
             scene.add(envGroup);
             var currentEnv = "";
 
-            // 高級材質 (改用 Phong 材質，有反光效果)
-            var matWood = new THREE.MeshPhongMaterial({ color: 0x8b5a2b, shininess: 30 });
-            var matDarkWood = new THREE.MeshPhongMaterial({ color: 0x4a2e00, shininess: 10 });
-            var matScreen = new THREE.MeshPhongMaterial({ color: 0x4fc3f7, emissive: 0x0a3550 });
-            var matWhite = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 80 });
+            var matWood = new THREE.MeshPhongMaterial({ map: texWood, shininess: 30 });
+            var matWhite = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 60 });
             var matMetal = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, shininess: 100 });
-            var matGlass = new THREE.MeshPhongMaterial({ color: 0x88ccff, emissive: 0x224466, transparent: true, opacity: 0.4, shininess: 90 });
-            var matPlant = new THREE.MeshLambertMaterial({ color: 0x2ecc71 });
-            var matPot = new THREE.MeshPhongMaterial({ color: 0xe67e22, shininess: 20 });
+            var matDark = new THREE.MeshPhongMaterial({ color: 0x222222, shininess: 10 });
+            var matGlass = new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.3, shininess: 90 });
+            var matGreen = new THREE.MeshLambertMaterial({ color: 0x2ecc71 });
 
             function clearEnv() {
                 while(envGroup.children.length > 0){ envGroup.remove(envGroup.children[0]); }
             }
 
-            // --- 場景建立函數 ---
+            // 場景建立函數 (簡化，確保唔會太亂)
             function buildOffice() {
-                // 高級雲石地板
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x2d3436, shininess: 50 }));
-                floor.rotation.x = -Math.PI / 2;
-                floor.receiveShadow = true;
-                envGroup.add(floor);
-
-                // 背景牆 (深色木紋)
-                var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 12), matDarkWood);
-                wall.position.set(0, 6, -11);
-                wall.receiveShadow = true;
-                envGroup.add(wall);
-
-                // 落地玻璃
-                for (var i = 0; i < 5; i++) {
-                    var win = new THREE.Mesh(new THREE.PlaneGeometry(4, 8), matGlass);
-                    win.position.set(-10 + (i * 5), 4, -10.9);
-                    envGroup.add(win);
-                    var frame = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.2, 0.2), matMetal);
-                    frame.position.set(-10 + (i * 5), 8, -10.9); envGroup.add(frame);
-                    frame = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.2, 0.2), matMetal);
-                    frame.position.set(-10 + (i * 5), 0, -10.9); envGroup.add(frame);
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ map: texCarpet, shininess: 10 }));
+                floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
+                var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 10), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
+                wall.position.set(0, 5, -11); envGroup.add(wall);
+                for (var i = 0; i < 4; i++) {
+                    var win = new THREE.Mesh(new THREE.PlaneGeometry(4, 7), matGlass);
+                    win.position.set(-9 + (i * 6), 4, -10.8); envGroup.add(win);
                 }
-
-                // 接待處 (Reception Desk)
-                var reception = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 2), matWhite);
-                reception.position.set(0, 0.6, -5);
-                reception.castShadow = true; reception.receiveShadow = true;
-                envGroup.add(reception);
-                var logo = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 0.1), new THREE.MeshPhongMaterial({color: 0x00d2d3, emissive: 0x005566}));
-                logo.position.set(0, 0.6, -3.95); envGroup.add(logo);
-
-                // 背景辦公枱 (有枱腳同電腦)
-                var bPos = [[-7, -2], [7, -2], [-7, -7], [7, -7]];
+                var counter = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 2), matWood);
+                counter.position.set(0, 0.6, -5); counter.castShadow = true; counter.receiveShadow = true; envGroup.add(counter);
+                var bPos = [[-7, -1], [7, -1], [-7, -7], [7, -7]];
                 bPos.forEach(function(p) {
                     var g = new THREE.Group();
-                    // 桌面
                     var top = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.1, 1.2), matWood);
-                    top.position.y = 0.75; top.castShadow = true; top.receiveShadow = true; g.add(top);
-                    // 枱腳
-                    var legL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.75, 1), matMetal);
-                    legL.position.set(-1.1, 0.375, 0); g.add(legL);
-                    var legR = legL.clone(); legR.position.x = 1.1; g.add(legR);
-                    // 電腦
-                    var mon = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.1), matScreen);
-                    mon.position.set(0, 1.05, -0.3); mon.castShadow = true; g.add(mon);
-                    
-                    g.position.set(p[0], 0, p[1]);
-                    envGroup.add(g);
+                    top.position.y = 0.75; top.castShadow = true; g.add(top);
+                    var leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.75, 1), matMetal); leg1.position.set(-1.1, 0.375, 0); g.add(leg1);
+                    var leg2 = leg1.clone(); leg2.position.x = 1.1; g.add(leg2);
+                    g.position.set(p[0], 0, p[1]); envGroup.add(g);
                 });
-
-                // 盆栽點綴
-                var pot = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.3, 0.6, 16), matPot);
-                pot.position.set(-9, 0.3, -8); pot.castShadow = true; envGroup.add(pot);
-                var leaf = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), matPlant);
-                leaf.position.set(-9, 1.2, -8); leaf.scale.set(1, 1.5, 1); leaf.castShadow = true; envGroup.add(leaf);
             }
 
             function buildStreet() {
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x1e1e1e, shininess: 20 }));
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 20 }));
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
-                
-                // 斑馬線
                 for(var i=0; i<6; i++) {
                     var line = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 8), matWhite);
-                    line.rotation.x = -Math.PI / 2; line.position.set(-5 + i*2, 0.02, -4); line.receiveShadow = true; envGroup.add(line);
+                    line.rotation.x = -Math.PI / 2; line.position.set(-5 + i*2, 0.02, -4); envGroup.add(line);
                 }
-                // 高級街燈
                 var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 8), matMetal);
                 pole.position.set(-6, 4, -6); pole.castShadow = true; envGroup.add(pole);
                 var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshBasicMaterial({color: 0xffdd55}));
                 lamp.position.set(-6, 8, -6); envGroup.add(lamp);
-                // 遠景大廈
-                for(var j=0; j<6; j++) {
-                    var h = Math.random()*10+5;
-                    var b = new THREE.Mesh(new THREE.BoxGeometry(4, h, 4), new THREE.MeshPhongMaterial({color: 0x111111}));
-                    b.position.set(-15 + j*6, h/2, -15); envGroup.add(b);
-                }
             }
 
             function buildKitchen() {
-                // 防滑地
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x333333, shininess: 30 }));
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ map: texTile, shininess: 80 }));
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
-                
-                // 格子磚 (有反光)
-                var matTile = new THREE.MeshPhongMaterial({ color: 0xdddddd, shininess: 80 });
-                for(var x=-8; x<=8; x+=2) {
-                    for(var z=-8; z<=-2; z+=2) {
-                        if((x+z)%4 === 0) {
-                            var tile = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), matTile);
-                            tile.rotation.x = -Math.PI / 2; tile.position.set(x, 0.01, z); tile.receiveShadow = true; envGroup.add(tile);
-                        }
-                    }
-                }
-                // 不銹鋼牆
                 var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 10), matMetal);
-                wall.position.set(0, 5, -11); wall.receiveShadow = true; envGroup.add(wall);
-                
-                // 巨型灶台
+                wall.position.set(0, 5, -11); envGroup.add(wall);
                 var counter = new THREE.Mesh(new THREE.BoxGeometry(12, 1.2, 2), matMetal);
-                counter.position.set(0, 0.6, -6); counter.castShadow = true; counter.receiveShadow = true; envGroup.add(counter);
-                var stove = new THREE.Mesh(new THREE.BoxGeometry(4, 0.1, 1.5), new THREE.MeshPhongMaterial({color: 0x111111}));
-                stove.position.set(0, 1.25, -6); envGroup.add(stove);
+                counter.position.set(0, 0.6, -6); counter.castShadow = true; envGroup.add(counter);
             }
 
             function buildConstruction() {
                 var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshLambertMaterial({ color: 0x5c4033 }));
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
-                
-                // 泥地石頭
-                for(var i=0; i<20; i++) {
-                    var size = Math.random()*0.6+0.2;
-                    var rock = new THREE.Mesh(new THREE.DodecahedronGeometry(size), new THREE.MeshPhongMaterial({color: 0x4a3525}));
+                for(var i=0; i<15; i++) {
+                    var size = Math.random()*0.4+0.2;
+                    var rock = new THREE.Mesh(new THREE.BoxGeometry(size, size, size*1.5), new THREE.MeshPhongMaterial({color: 0x8b4513}));
                     rock.position.set(Math.random()*24-12, size/2, Math.random()*14-12); 
-                    rock.castShadow = true; rock.receiveShadow = true;
-                    envGroup.add(rock);
+                    rock.rotation.set(Math.random(), Math.random(), Math.random());
+                    rock.castShadow = true; rock.receiveShadow = true; envGroup.add(rock);
                 }
-                // 鋼筋柱
                 for(var j=0; j<4; j++) {
-                    var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 12), new THREE.MeshPhongMaterial({color: 0x95a5a6, shininess: 50}));
+                    var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 12), new THREE.MeshPhongMaterial({color: 0xcc8800}));
                     pillar.position.set(-9 + j*6, 6, -8); pillar.castShadow = true; envGroup.add(pillar);
                 }
-                // 綠色圍網
-                var net = new THREE.Mesh(new THREE.PlaneGeometry(30, 3), new THREE.MeshLambertMaterial({color: 0x27ae60, transparent: true, opacity: 0.6, side: THREE.DoubleSide}));
-                net.position.set(0, 1.5, -10); envGroup.add(net);
             }
 
             function buildStudio() {
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 60 }));
-                floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
-                
-                var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 12), new THREE.MeshLambertMaterial({ color: 0x4a148c }));
-                wall.position.set(0, 6, -11); wall.receiveShadow = true; envGroup.add(wall);
-                
-                // 環形燈
-                var ring = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.1, 8, 32), new THREE.MeshBasicMaterial({color: 0xffffff}));
-                ring.position.set(0, 3, -4); envGroup.add(ring);
-                var light = new THREE.PointLight(0xff00ff, 3, 20);
-                light.position.set(3, 5, -2); scene.add(light);
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x1a1a2e }));
+                floor.rotation.x = -Math.PI / 2; envGroup.add(floor);
+                var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 10), new THREE.MeshLambertMaterial({ color: 0x4a148c }));
+                wall.position.set(0, 5, -11); envGroup.add(wall);
+                var ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.1, 8, 32), new THREE.MeshBasicMaterial({color: 0xffffff}));
+                ring.position.set(0, 2.5, -4); envGroup.add(ring);
             }
 
             function buildLuxury() {
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 100 }));
-                floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
-                
-                // 落地夜景窗
-                var win = new THREE.Mesh(new THREE.PlaneGeometry(28, 10), new THREE.MeshPhongMaterial({color: 0x001133, emissive: 0x002244}));
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshPhongMaterial({ color: 0x0a0a0a, shininess: 100 }));
+                floor.rotation.x = -Math.PI / 2; envGroup.add(floor);
+                var win = new THREE.Mesh(new THREE.PlaneGeometry(28, 10), new THREE.MeshPhongMaterial({color: 0x001133, emissive: 0x001122}));
                 win.position.set(0, 5, -10.9); envGroup.add(win);
-                
-                // 大班枱
-                var desk = new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 3), matDarkWood);
-                desk.position.set(0, 0.8, -5); desk.castShadow = true; desk.receiveShadow = true; envGroup.add(desk);
+                var desk = new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 3), matDark);
+                desk.position.set(0, 0.8, -5); desk.castShadow = true; envGroup.add(desk);
             }
 
             // ==========================================
-            // 3. 主角與道具
+            // 主角設定 (修復面向與手腳)
             // ==========================================
             var solo = new THREE.Group();
             solo.scale.set(1.6, 1.6, 1.6); 
-            solo.position.set(0, 0, 3); // 強制放喺最前面
+            solo.position.set(0, 0, 3); 
+            // ★ 關鍵修復：將公仔轉向鏡頭 (45度) ★
+            solo.rotation.y = -Math.PI / 4; 
             scene.add(solo);
 
-            var headMat  = new THREE.MeshPhongMaterial({ color: 0xf5cba7, shininess: 30 });
-            var hairMat  = new THREE.MeshPhongMaterial({ color: 0x2c3e50, shininess: 50 });
+            var headMat  = new THREE.MeshPhongMaterial({ color: 0xf5cba7, shininess: 20 });
+            var hairMat  = new THREE.MeshPhongMaterial({ color: 0x2c3e50, shininess: 40 });
             var maleBodyMat = new THREE.MeshPhongMaterial({ color: 0x3498db, shininess: 20 });
             var femaleBodyMat = new THREE.MeshPhongMaterial({ color: 0xe84393, shininess: 20 });
             var legMat   = new THREE.MeshPhongMaterial({ color: 0x34495e, shininess: 10 });
 
-            // 身體
+            // 身體與頭部
             var sBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.3, 0.65), maleBodyMat);
             sBody.position.set(0, 1.05, 0); sBody.castShadow = true; solo.add(sBody);
-
-            // 頭
+            
             var sHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), headMat);
             sHead.position.set(0, 2.0, 0); sHead.castShadow = true; solo.add(sHead);
-
+            
             var sHairMale = new THREE.Mesh(new THREE.SphereGeometry(0.47, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.2), hairMat);
             sHairMale.position.set(0, 2.05, 0); sHairMale.castShadow = true; solo.add(sHairMale);
+            
             var sHairFemale = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
             sHairFemale.position.set(0, 2.05, 0); sHairFemale.scale.set(1, 1.6, 1); sHairFemale.castShadow = true; sHairFemale.visible = false; solo.add(sHairFemale);
 
-            // 眼睛
-            var eyeGeo = new THREE.SphereGeometry(0.06, 8, 8);
-            var eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-            var eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.15, 2.05, 0.4); solo.add(eyeL);
-            var eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.15, 2.05, 0.4); solo.add(eyeR);
+            // ★ 修復眼睛：加眼白同黑色瞳孔，面向 +z ★
+            var eyeWhiteGeo = new THREE.SphereGeometry(0.1, 8, 8);
+            var eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            var eyePupilGeo = new THREE.SphereGeometry(0.05, 8, 8);
+            var eyePupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
-            // 手腳
+            var eyeL = new THREE.Group(); eyeL.position.set(-0.15, 2.05, 0.42); solo.add(eyeL);
+            eyeL.add(new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat));
+            var pupilL = new THREE.Mesh(eyePupilGeo, eyePupilMat); pupilL.position.z = 0.06; eyeL.add(pupilL);
+
+            var eyeR = new THREE.Group(); eyeR.position.set(0.15, 2.05, 0.42); solo.add(eyeR);
+            eyeR.add(new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat));
+            var pupilR = new THREE.Mesh(eyePupilGeo, eyePupilMat); pupilR.position.z = 0.06; eyeR.add(pupilR);
+
+            // 手腳 (中心點在肩膀和盤骨，確保旋轉自然)
             var armL = new THREE.Group(); armL.position.set(-0.7, 1.5, 0); solo.add(armL);
             var armLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.3), maleBodyMat); armLMesh.position.y = -0.45; armLMesh.castShadow = true; armL.add(armLMesh);
-
+            
             var armR = new THREE.Group(); armR.position.set(0.7, 1.5, 0); solo.add(armR);
             var armRMesh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.3), maleBodyMat); armRMesh.position.y = -0.45; armRMesh.castShadow = true; armR.add(armRMesh);
-
+            
             var legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.7, 0.35), legMat); legL.position.set(-0.3, 0.35, 0); legL.castShadow = true; solo.add(legL);
             var legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.7, 0.35), legMat); legR.position.set(0.3, 0.35, 0); legR.castShadow = true; solo.add(legR);
 
-            // 專屬工作台 (放喺公仔前面)
+            // 主角專屬工作台
             var soloDesk = new THREE.Group();
             var sDesk = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.1, 1.4), matWood);
-            sDesk.position.set(0, 0.75, 0.8); sDesk.castShadow = true; sDesk.receiveShadow = true; soloDesk.add(sDesk);
-            var sMon = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.1), matScreen);
-            sMon.position.set(0, 1.05, 0.4); sMon.castShadow = true; soloDesk.add(sMon);
+            sDesk.position.set(0, 0.75, 1.2); sDesk.castShadow = true; sDesk.receiveShadow = true; soloDesk.add(sDesk);
+            var sMon = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.1), matGlass);
+            sMon.position.set(0, 1.05, 0.8); sMon.castShadow = true; soloDesk.add(sMon);
             solo.add(soloDesk);
 
-            // 道具容器
             var propGroup = new THREE.Group();
             solo.add(propGroup);
 
@@ -3385,40 +3327,21 @@
                 if (envType === "office") {
                     soloDesk.visible = true;
                 } else if (jobType === 'security') {
-                    // 保安專屬道具：對講機 + 閃爍警燈
-                    var radio = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.3, 0.1), new THREE.MeshPhongMaterial({color: 0x111111}));
-                    radio.position.set(-0.5, 1.2, 0.4); propGroup.add(radio);
-                    
-                    var baton = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8), new THREE.MeshPhongMaterial({color: 0x111111}));
-                    baton.position.set(0.8, 0.8, 0.2); baton.rotation.z = Math.PI / 4; baton.castShadow = true; propGroup.add(baton);
-                    
-                    var cap = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.2), new THREE.MeshPhongMaterial({color: 0x1a1a1a}));
+                    var cap = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.2), matDark);
                     cap.position.set(0, 2.35, 0); cap.castShadow = true; propGroup.add(cap);
-                    var brim = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.4), new THREE.MeshPhongMaterial({color: 0x000000}));
+                    var brim = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.4), matDark);
                     brim.position.set(0, 2.28, 0.3); propGroup.add(brim);
-                } else if (jobType === 'cleaner') {
-                    var broom = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.8), matWood);
-                    broom.position.set(0.8, 0.9, 0.2); broom.rotation.z = -Math.PI / 6; broom.castShadow = true; propGroup.add(broom);
                 } else if (envType === "street") {
-                    var helmet = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({color: 0xf1c40f, shininess: 80}));
+                    var helmet = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({color: 0xf1c40f}));
                     helmet.position.set(0, 2.1, 0); helmet.castShadow = true; propGroup.add(helmet);
                 } else if (jobType === 'chef' || jobType === 'waiter') {
                     var chefHat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.6), matWhite);
                     chefHat.position.set(0, 2.55, 0); chefHat.castShadow = true; propGroup.add(chefHat);
-                    var pan = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05), new THREE.MeshPhongMaterial({color: 0x333333}));
-                    pan.position.set(0.5, 1.2, 0.6); pan.castShadow = true; propGroup.add(pan);
                 } else if (envType === "construction") {
-                    var hardhat = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({color: 0xffcc00, shininess: 80}));
+                    var hardhat = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({color: 0xffcc00}));
                     hardhat.position.set(0, 2.1, 0); hardhat.scale.set(1, 0.8, 1.2); hardhat.castShadow = true; propGroup.add(hardhat);
-                } else if (envType === "studio") {
-                    var ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 8, 24), new THREE.MeshBasicMaterial({color: 0xffffff}));
-                    ring.position.set(0, 1.6, 0.5); propGroup.add(ring);
                 }
             }
-
-            // 上市大廈 (背景)
-            var tower = new THREE.Mesh(new THREE.BoxGeometry(4, 9, 4), new THREE.MeshPhongMaterial({ color: 0x2ecc71, emissive: 0x0a3d24, shininess: 80 }));
-            tower.position.set(0, 4.5, -14); tower.visible = false; tower.castShadow = true; scene.add(tower);
 
             function resize() {
                 var a = W() / H();
@@ -3436,25 +3359,36 @@
                 var time = clock.getElapsedTime();
                 
                 if (solo.visible) {
-                    if (currentEnv === "office") {
-                        armL.rotation.x = Math.PI / 2 + Math.sin(time * 10) * 0.1;
-                        armR.rotation.x = Math.PI / 2 - Math.sin(time * 10) * 0.1;
-                    } else if (currentEnv === "kitchen") {
-                        armR.rotation.x = Math.PI / 2 + Math.sin(time * 6) * 0.5;
-                        armL.rotation.x = Math.PI / 4;
-                    } else if (currentEnv === "street") {
-                        armL.rotation.x = Math.PI / 3; armR.rotation.x = Math.PI / 3;
+                    // ★ 修復動作：手部唔會再向後拗 ★
+                    if (typeof player !== 'undefined' && player.stage !== 'work') {
+                        // 面試/未入職：站直，手自然垂低
+                        armL.rotation.x = Math.sin(time * 2) * 0.05;
+                        armR.rotation.x = -Math.sin(time * 2) * 0.05;
+                        sBody.position.y = 1.05 + Math.sin(time * 2) * 0.02;
                     } else {
-                        sBody.position.y = 1.05 + Math.sin(time * 2) * 0.05;
-                        armL.rotation.x = Math.sin(time * 2) * 0.1;
-                        armR.rotation.x = -Math.sin(time * 2) * 0.1;
+                        // 工作狀態
+                        if (currentEnv === "office") {
+                            // 打字動作：手放前面 (向內微曲)
+                            armL.rotation.x = -Math.PI / 3; 
+                            armR.rotation.x = -Math.PI / 3;
+                        } else if (currentEnv === "kitchen") {
+                            armR.rotation.x = -Math.PI / 4 + Math.sin(time * 6) * 0.3;
+                            armL.rotation.x = -Math.PI / 6;
+                        } else if (currentEnv === "street") {
+                            // 揸車
+                            armL.rotation.x = -Math.PI / 2; armR.rotation.x = -Math.PI / 2;
+                        } else {
+                            // 預設待機
+                            armL.rotation.x = Math.sin(time * 2) * 0.1;
+                            armR.rotation.x = -Math.sin(time * 2) * 0.1;
+                            sBody.position.y = 1.05 + Math.sin(time * 2) * 0.05;
+                        }
                     }
                 }
                 renderer.render(scene, cam); 
             }
             loop();
 
-            // 實時同步遊戲狀態
             setInterval(function () {
                 try {
                     if (typeof player === 'undefined') return;
@@ -3492,14 +3426,7 @@
                         sHairFemale.visible = isFemale;
                         legL.material = isFemale ? new THREE.MeshPhongMaterial({color: 0xc0392b}) : legMat;
                         legR.material = isFemale ? new THREE.MeshPhongMaterial({color: 0xc0392b}) : legMat;
-                        
-                        // 保安帽顯示控制
-                        if (player.jobType === 'security' && propGroup.children.length > 2) {
-                            propGroup.children[2].visible = true; // 帽
-                        }
                     }
-
-                    tower.visible = !!player.isListed;
 
                 } catch (e) {}
             }, 250);
