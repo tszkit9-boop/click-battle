@@ -28,7 +28,7 @@
 
         .header-section {
             display: flex; flex-direction: column; align-items: center;
-            margin-top: 50px; margin-bottom: 40px; text-align: center;
+            margin-top: 40px; margin-bottom: 20px; text-align: center;
         }
 
         h1 {
@@ -40,12 +40,52 @@
         .divider {
             width: 150px; height: 3px;
             background: linear-gradient(90deg, transparent, #00d2d3, transparent);
-            margin: 15px 0 20px 0;
+            margin: 15px 0 10px 0;
         }
 
         p.subtitle {
             color: #a4b0be; font-size: 14px; letter-spacing: 2px; margin: 0;
         }
+
+        /* ★ 新增：控制欄 (搜尋 + 分類 + 排行榜) ★ */
+        .controls-section {
+            width: 100%; max-width: 1000px; padding: 0 20px; margin-bottom: 30px;
+            display: flex; flex-direction: column; gap: 15px; align-items: center;
+        }
+
+        .search-bar {
+            position: relative; width: 100%; max-width: 400px;
+        }
+        .search-bar input {
+            width: 100%; padding: 12px 20px 12px 45px;
+            background: rgba(17, 17, 17, 0.8); border: 2px solid #333;
+            border-radius: 30px; color: #fff; font-family: inherit; font-size: 14px;
+            outline: none; transition: 0.3s;
+        }
+        .search-bar input:focus { border-color: #00d2d3; box-shadow: 0 0 15px rgba(0,210,211,0.3); }
+        .search-icon {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: #a4b0be; font-size: 18px; pointer-events: none;
+        }
+
+        .tag-container {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+        }
+        .tag-btn {
+            padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid #444;
+            color: #a4b0be; border-radius: 20px; font-family: inherit; font-size: 12px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .tag-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .tag-btn.active { background: #00d2d3; color: #000; border-color: #00d2d3; font-weight: bold; box-shadow: 0 0 15px rgba(0,210,211,0.4); }
+
+        .rank-btn-main {
+            padding: 10px 25px; background: linear-gradient(135deg, #f1c40f, #e67e22);
+            color: #000; border: none; border-radius: 30px; font-family: inherit;
+            font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 5px 0 #b38f00;
+            transition: 0.1s; display: flex; align-items: center; gap: 8px;
+        }
+        .rank-btn-main:active { transform: translateY(5px); box-shadow: none; }
 
         .games-container {
             display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;
@@ -92,26 +132,25 @@
         .card-hole:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.6); transform: translateY(-10px); }
         .card-hole h2 { color: #9b59b6; text-shadow: 0 0 10px #9b59b6; }
 
-        /* 社畜人生專屬土黃色 */
         .card-slave:hover { border-color: #e67e22; box-shadow: 0 0 30px rgba(230, 126, 34, 0.6); transform: translateY(-10px); }
         .card-slave h2 { color: #e67e22; text-shadow: 0 0 10px #e67e22; }
 
-        /* 薑餅人建屋大亨專屬聖誕紅 */
         .card-gingerbread:hover { border-color: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.6); transform: translateY(-10px); }
         .card-gingerbread h2 { color: #e74c3c; text-shadow: 0 0 10px #e74c3c; }
 
-        /* 無限減壓艙專屬粉紫色 */
         .card-zen:hover { border-color: #a29bfe; box-shadow: 0 0 30px rgba(162, 155, 254, 0.6); transform: translateY(-10px); }
         .card-zen h2 { color: #a29bfe; text-shadow: 0 0 10px #a29bfe; }
 
-        /* 極致洗地毯專屬青綠色 */
         .card-carpet:hover { border-color: #00cec9; box-shadow: 0 0 30px rgba(0, 206, 201, 0.6); transform: translateY(-10px); }
         .card-carpet h2 { color: #00cec9; text-shadow: 0 0 10px #00cec9; }
 
-        /* ★ 新增：時間高利貸專屬金黃色 ★ */
         .card-loan { border-color: rgba(241, 196, 15, 0.3); }
         .card-loan:hover { border-color: #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.6); transform: translateY(-10px); }
         .card-loan h2 { color: #f1c40f; text-shadow: 0 0 10px #f1c40f; }
+
+        .card-judge { border-color: rgba(142, 68, 173, 0.3); }
+        .card-judge:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.8); transform: translateY(-10px); }
+        .card-judge h2 { color: #d2b4de; text-shadow: 0 0 10px #9b59b6, 0 0 20px #9b59b6; }
 
         .game-card::before {
             content: ''; position: absolute; top: -50%; left: -50%;
@@ -121,6 +160,38 @@
         }
         .game-card:hover::before { top: 100%; left: 100%; }
 
+        /* ★ 新增：排行榜彈窗 ★ */
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+            border: 3px solid #f1c40f; padding: 25px; border-radius: 20px;
+            width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 0 50px rgba(241, 196, 15, 0.3);
+        }
+        .modal-box h2 { color: #f1c40f; text-align: center; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 15px #f1c40f; }
+        
+        .rank-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.05); padding: 12px 15px; margin-bottom: 10px;
+            border-radius: 10px; border-left: 4px solid #00d2d3;
+        }
+        .rank-info { display: flex; flex-direction: column; gap: 4px; }
+        .rank-game-name { font-size: 14px; color: #fff; font-weight: bold; }
+        .rank-score { font-size: 18px; color: #f1c40f; font-weight: 900; font-family: 'Orbitron', sans-serif; }
+        .rank-icon { font-size: 24px; margin-right: 10px; }
+
+        .close-modal {
+            width: 100%; padding: 12px; background: #333; color: #fff; border: none;
+            border-radius: 10px; font-family: inherit; font-weight: bold; cursor: pointer;
+            margin-top: 10px; transition: 0.2s;
+        }
+        .close-modal:active { background: #555; }
+        
     </style>
 </head>
 <body>
@@ -133,83 +204,255 @@
         <p class="subtitle">原創網頁遊戲工作室</p>
     </div>
 
-    <div class="games-container">
-        <a href="./grudge-game/" class="game-card card-grudge">
-            <h2>會記仇的遊戲</h2>
-            <p>AI 學習你嘅習慣，生成陷阱針對你</p>
-        </a>
-        <a href="./one-line-life/" class="game-card card-line">
-            <h2>一筆定生死</h2>
-            <p>畫一條完美光線，避開致命陷阱</p>
-        </a>
-        <a href="./neon-music-box/" class="game-card card-music">
-            <h2>霓虹音樂盒</h2>
-            <p>自由砌出專屬軌道，彈奏你的音樂</p>
-        </a>
-        <a href="./endless-maze/" class="game-card card-maze">
-            <h2>無盡迷宮</h2>
-            <p>喺變幻莫測嘅迷宮中尋找出口</p>
-        </a>
-        <a href="./snowball-game/" class="game-card card-monopoly">
-            <h2>香港大富翁</h2>
-            <p>擲骰買地，體驗香港版大富翁</p>
-        </a>
-        <a href="./deep-miner/" class="game-card card-miner">
-            <h2>深淵礦工</h2>
-            <p>貪婪與恐懼的極限考驗，掘得越深越危險！</p>
-        </a>
-        <a href="./magic-survivor/" class="game-card card-survivor">
-            <h2>魔法狂潮</h2>
-            <p>自動射擊，無限進化，享受滿屏割草的爽快！</p>
-        </a>
-        <a href="./escape-room/" class="game-card card-escape">
-            <h2>賽博密室</h2>
-            <p>20 關極限挑戰！解謎、逃生，對抗恐怖幻覺</p>
-        </a>
-        <a href="./cyber-trader/" class="game-card card-trader">
-            <h2>賽博股神</h2>
-            <p>做多、做空、100倍槓桿！一撳定生死！</p>
-        </a>
-        <a href="./black-hole/" class="game-card card-hole">
+    <!-- ★ 新增：控制區 ★ -->
+    <div class="controls-section">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="搜尋遊戲..." oninput="filterGames()">
+        </div>
+        
+        <div class="tag-container" id="tag-container">
+            <button class="tag-btn active" onclick="setCategory('all', this)">全部</button>
+            <button class="tag-btn" onclick="setCategory('action', this)">動作</button>
+            <button class="tag-btn" onclick="setCategory('casual', this)">休閒</button>
+            <button class="tag-btn" onclick="setCategory('strategy', this)">策略</button>
+            <button class="tag-btn" onclick="setCategory('sim', this)">模擬</button>
+            <button class="tag-btn" onclick="setCategory('hardcore', this)">硬核</button>
+        </div>
+
+        <button class="rank-btn-main" onclick="openLeaderboard()">
+            🏆 全站成就排行榜
+        </button>
+    </div>
+
+    <div class="games-container" id="games-container">
+        <!-- 動作 -->
+        <a href="./black-hole/" class="game-card card-hole" data-category="action">
             <h2>黑洞吞噬</h2>
             <p>引力爆發、Boss 追擊！由微塵進化成宇宙巨獸！</p>
         </a>
-        <!-- 遊戲 11：社畜人生 -->
-        <a href="./office-slave/" class="game-card card-slave">
-            <h2>社畜人生</h2>
-            <p>由見工到退休，體驗打工仔嘅血淚辛酸史</p>
+        <a href="./magic-survivor/" class="game-card card-survivor" data-category="action">
+            <h2>魔法狂潮</h2>
+            <p>自動射擊，無限進化，享受滿屏割草的爽快！</p>
+        </a>
+        <a href="./one-line-life/" class="game-card card-line" data-category="action">
+            <h2>一筆定生死</h2>
+            <p>畫一條完美光線，避開致命陷阱</p>
         </a>
         
-        <!-- 遊戲 12：薑餅人建屋 -->
-        <a href="./gingerbread-house/" class="game-card card-gingerbread">
-            <h2>薑餅人建屋</h2>
-            <p>親手畫出薑餅人，疊出最高嘅聖誕大廈！</p>
-        </a>
-
-        <!-- 遊戲 13：無限減壓艙 -->
-        <a href="./zen-reliever/" class="game-card card-zen">
+        <!-- 休閒 -->
+        <a href="./zen-reliever/" class="game-card card-zen" data-category="casual">
             <h2>無限減壓艙</h2>
             <p>氣泡紙、星塵引力、療癒琴鍵！一撳即時放鬆！</p>
         </a>
-
-        <!-- 遊戲 14：極致洗地毯模擬器 -->
-        <a href="./carpet-cleaning/" class="game-card card-carpet">
+        <a href="./neon-music-box/" class="game-card card-music" data-category="casual">
+            <h2>霓虹音樂盒</h2>
+            <p>自由砌出專屬軌道，彈奏你的音樂</p>
+        </a>
+        <a href="./carpet-cleaning/" class="game-card card-carpet" data-category="casual">
             <h2>極致洗地毯</h2>
             <p>吸塵、噴泡、刷洗！挑戰無限關卡，成為洗地王！</p>
         </a>
 
-        <!-- ★ 遊戲 15：時間高利貸（已移入容器內並套用專屬 CSS） ★ -->
-        <a href="./time-loan-shark/" class="game-card card-loan">
+        <!-- 策略 -->
+        <a href="./cyber-trader/" class="game-card card-trader" data-category="strategy">
+            <h2>賽博股神</h2>
+            <p>做多、做空、100倍槓桿！一撳定生死！</p>
+        </a>
+        <a href="./snowball-game/" class="game-card card-monopoly" data-category="strategy">
+            <h2>香港大富翁</h2>
+            <p>擲骰買地，體驗香港版大富翁</p>
+        </a>
+        <a href="./endless-maze/" class="game-card card-maze" data-category="strategy">
+            <h2>無盡迷宮</h2>
+            <p>喺變幻莫測嘅迷宮中尋找出口</p>
+        </a>
+        <a href="./escape-room/" class="game-card card-escape" data-category="strategy">
+            <h2>賽博密室</h2>
+            <p>20 關極限挑戰！解謎、逃生，對抗恐怖幻覺</p>
+        </a>
+
+        <!-- 模擬 -->
+        <a href="./office-slave/" class="game-card card-slave" data-category="sim">
+            <h2>社畜人生</h2>
+            <p>由見工到退休，體驗打工仔嘅血淚辛酸史</p>
+        </a>
+        <a href="./gingerbread-house/" class="game-card card-gingerbread" data-category="sim">
+            <h2>薑餅人建屋</h2>
+            <p>親手畫出薑餅人，疊出最高嘅聖誕大廈！</p>
+        </a>
+
+        <!-- 硬核 -->
+        <a href="./time-loan-shark/" class="game-card card-loan" data-category="hardcore">
             <h2>時間高利貸</h2>
             <p>借時間打怪，但利息會令你加速死亡！</p>
         </a>
-        
-        <!-- ★ 遊戲 16：賽博判官 ★ -->
-        <a href="./cyber-judge/" class="game-card card-judge">
+        <a href="./cyber-judge/" class="game-card card-judge" data-category="hardcore">
             <h2>賽博判官</h2>
             <p>荒謬案件、生死判決！你能穩住社會穩定度嗎？</p>
         </a>
+        <a href="./grudge-game/" class="game-card card-grudge" data-category="hardcore">
+            <h2>會記仇的遊戲</h2>
+            <p>AI 學習你嘅習慣，生成陷阱針對你</p>
+        </a>
+        <a href="./deep-miner/" class="game-card card-miner" data-category="hardcore">
+            <h2>深淵礦工</h2>
+            <p>貪婪與恐懼的極限考驗，掘得越深越危險！</p>
+        </a>
     </div>
 
+    <!-- 排行榜彈窗 -->
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-box">
+            <h2>🏆 全站成就排行榜</h2>
+            <div id="leaderboard-list">
+                <!-- 動態生成 -->
+            </div>
+            <button class="close-modal" onclick="closeLeaderboard()">關閉</button>
+        </div>
+    </div>
+
+<script>
+    // ==========================================
+    // 搜尋與分類邏輯
+    // ==========================================
+    let currentCategory = 'all';
+
+    function setCategory(cat, btn) {
+        currentCategory = cat;
+        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterGames();
+    }
+
+    function filterGames() {
+        let keyword = document.getElementById('search-input').value.toLowerCase();
+        let cards = document.querySelectorAll('.game-card');
+
+        cards.forEach(card => {
+            let title = card.querySelector('h2').innerText.toLowerCase();
+            let desc = card.querySelector('p').innerText.toLowerCase();
+            let cat = card.getAttribute('data-category');
+            
+            let matchSearch = title.includes(keyword) || desc.includes(keyword);
+            let matchCat = (currentCategory === 'all') || (cat === currentCategory);
+
+            if (matchSearch && matchCat) {
+                card.style.display = 'flex';
+                card.style.animation = 'popIn 0.3s ease';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // ==========================================
+    // 全站成就排行榜邏輯
+    // ==========================================
+    function openLeaderboard() {
+        let list = document.getElementById('leaderboard-list');
+        list.innerHTML = '';
+        
+        let hasData = false;
+
+        // 1. 極致洗地毯
+        try {
+            let carpetData = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
+            if (carpetData.length > 0) {
+                carpetData.sort((a, b) => b.level - a.level || b.score - a.score);
+                let top = carpetData[0];
+                list.innerHTML += `
+                    <div class="rank-item">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🧹</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">極致洗地毯</span>
+                                <span style="font-size:12px; color:#aaa;">最高 Lv.${top.level}</span>
+                            </div>
+                        </div>
+                        <div class="rank-score">${top.score} 分</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 2. 時間高利貸
+        try {
+            let rate = parseFloat(localStorage.getItem('loan_best_rate')) || 1.0;
+            let combo = parseInt(localStorage.getItem('loan_best_combo')) || 0;
+            if (rate > 1.0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #f1c40f;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">💸</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">時間高利貸</span>
+                                <span style="font-size:12px; color:#aaa;">最高連擊 ${combo}</span>
+                            </div>
+                        </div>
+                        <div class="rank-score" style="color:#e74c3c;">${rate.toFixed(1)}x</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 3. 賽博判官
+        try {
+            let record = parseInt(localStorage.getItem('judge_record')) || 0;
+            if (record > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #9b59b6;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🧑‍⚖️</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">賽博判官</span>
+                                <span style="font-size:12px; color:#aaa;">最高連續判案</span>
+                            </div>
+                        </div>
+                        <div class="rank-score" style="color:#9b59b6;">${record} 宗</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 4. 深淵礦工 (如果有紀錄)
+        try {
+            let minerData = JSON.parse(localStorage.getItem('deepMinerSave')) || {};
+            if (minerData.maxDepthRecord > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #b87333;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">⛏️</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">深淵礦工</span>
+                                <span style="font-size:12px; color:#aaa;">最深挖掘紀錄</span>
+                            </div>
+                        </div>
+                        <div class="rank-score" style="color:#b87333;">${minerData.maxDepthRecord}m</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        if (!hasData) {
+            list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">暫時未有任何紀錄，快啲去玩下啦！</div>';
+        }
+
+        document.getElementById('leaderboard-modal').classList.add('active');
+    }
+
+    function closeLeaderboard() {
+        document.getElementById('leaderboard-modal').classList.remove('active');
+    }
+
+    // 點擊背景關閉
+    document.getElementById('leaderboard-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeLeaderboard();
+    });
+</script>
 </body>
 </html>
