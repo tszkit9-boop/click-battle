@@ -7,56 +7,27 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; }
 
         body {
-            background: #111;
-            color: #fff;
-            font-family: 'Fredoka One', 'PingFang HK', cursive;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            background: #111; color: #fff; font-family: 'Fredoka One', 'PingFang HK', cursive;
+            height: 100vh; height: 100dvh; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* 頂部導航與進度條 */
+        /* 頂部導航 */
         .top-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            position: absolute; top: 0; left: 0; width: 100%; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
         }
         .top-left, .top-right { display: flex; gap: 10px; align-items: center; }
         
         .icon-btn {
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            backdrop-filter: blur(5px);
-            cursor: pointer;
-            transition: 0.2s;
+            padding: 10px 15px; background: rgba(255, 255, 255, 0.1); color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 30px;
+            text-decoration: none; font-weight: bold; font-size: 14px;
+            backdrop-filter: blur(5px); cursor: pointer; transition: 0.2s;
         }
         .icon-btn:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.3); }
         .back-btn { color: #00d2d3; border-color: #00d2d3; box-shadow: 0 0 15px rgba(0, 210, 211, 0.4); }
@@ -67,181 +38,93 @@
         .level-text { color: #e67e22; font-size: 14px; font-weight: bold; text-shadow: 0 0 10px #e67e22; }
 
         .progress-container {
-            width: 40%;
-            max-width: 250px;
-            background: rgba(0,0,0,0.6);
-            height: 20px;
-            border-radius: 10px;
-            border: 2px solid #555;
-            overflow: hidden;
-            position: relative;
+            width: 40%; max-width: 250px; background: rgba(0,0,0,0.6); height: 20px;
+            border-radius: 10px; border: 2px solid #555; overflow: hidden; position: relative;
         }
         .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #e74c3c, #f1c40f, #2ecc71);
-            transition: width 0.2s;
-            border-radius: 8px;
+            height: 100%; width: 0%; background: linear-gradient(90deg, #e74c3c, #f1c40f, #2ecc71);
+            transition: width 0.2s; border-radius: 8px;
         }
         .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 12px;
-            text-shadow: 1px 1px 2px #000;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 12px; text-shadow: 1px 1px 2px #000;
         }
 
         /* 遊戲畫布 */
         #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            position: relative; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
         canvas {
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border-radius: 15px;
-            cursor: crosshair;
-            max-width: 95vw;
-            max-height: 70vh;
-            object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-radius: 15px;
+            cursor: crosshair; max-width: 95vw; max-height: 70vh; object-fit: contain;
         }
 
-        /* 底部工具欄 */
+        /* 工具欄 */
         .toolbar {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: rgba(20, 20, 30, 0.85);
-            padding: 10px 20px;
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(15px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 100;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; background: rgba(20, 20, 30, 0.85);
+            padding: 10px 20px; border-radius: 50px; border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
         }
         .tool-btn {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            border: 2px solid #555;
-            background: #222;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
+            width: 55px; height: 55px; border-radius: 50%; border: 2px solid #555;
+            background: #222; font-size: 24px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
         }
         .tool-btn:active { transform: scale(0.9); }
         .tool-btn.active {
-            background: #fff;
-            border-color: #fff;
-            transform: translateY(-10px) scale(1.1);
+            background: #fff; border-color: #fff; transform: translateY(-10px) scale(1.1);
             box-shadow: 0 0 20px rgba(255,255,255,0.8);
         }
         .tool-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 6px;
-            height: 6px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #fff;
+            content: ''; position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 6px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff;
         }
 
         /* 通用彈窗 */
         .modal {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            backdrop-filter: blur(10px);
+            position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 200; backdrop-filter: blur(10px);
         }
         .modal.active { display: flex; }
         .modal-box {
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
-            border: 3px solid #f1c40f;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a); border: 3px solid #f1c40f;
+            padding: 30px; border-radius: 20px; text-align: center;
             box-shadow: 0 0 50px rgba(241, 196, 15, 0.5);
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            width: 90%;
-            max-width: 400px;
+            width: 90%; max-width: 400px;
         }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-box h1 { color: #f1c40f; font-size: 28px; margin-bottom: 15px; text-shadow: 0 0 20px #f1c40f; }
         .modal-box p { color: #ccc; font-size: 15px; margin-bottom: 20px; line-height: 1.5; }
         
         .modal-input {
-            width: 100%;
-            padding: 12px;
-            background: #000;
-            border: 2px solid #555;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 16px;
-            font-family: inherit;
-            text-align: center;
-            margin-bottom: 20px;
-            outline: none;
-            user-select: text;
+            width: 100%; padding: 12px; background: #000; border: 2px solid #555;
+            color: #fff; border-radius: 8px; font-size: 16px; font-family: inherit;
+            text-align: center; margin-bottom: 20px; outline: none; user-select: text;
         }
         .modal-input:focus { border-color: #f1c40f; }
 
         .modal-btn {
-            padding: 15px 20px;
-            background: linear-gradient(to bottom, #f1c40f, #e67e22);
-            color: #000;
-            border: none;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: inherit;
-            box-shadow: 0 5px 0 #b38f00;
-            width: 100%;
-            transition: 0.1s;
-            margin-bottom: 10px;
+            padding: 15px 20px; background: linear-gradient(to bottom, #f1c40f, #e67e22);
+            color: #000; border: none; border-radius: 30px; font-size: 18px;
+            font-weight: bold; cursor: pointer; font-family: inherit;
+            box-shadow: 0 5px 0 #b38f00; width: 100%; transition: 0.1s; margin-bottom: 10px;
         }
         .modal-btn:active { transform: translateY(5px); box-shadow: none; }
         .modal-btn.secondary { background: #333; color: #fff; box-shadow: 0 5px 0 #111; }
 
-        /* 排行榜專用 */
+        /* 排行榜 */
         .rank-list {
-            width: 100%;
-            max-height: 40vh;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            text-align: left;
-            background: #111;
-            border-radius: 10px;
-            border: 1px solid #333;
-            padding: 10px;
+            width: 100%; max-height: 40vh; overflow-y: auto; margin-bottom: 20px;
+            text-align: left; background: #111; border-radius: 10px;
+            border: 1px solid #333; padding: 10px;
         }
         .rank-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #333;
-            font-size: 14px;
-            color: #ddd;
+            display: flex; justify-content: space-between; padding: 10px;
+            border-bottom: 1px solid #333; font-size: 14px; color: #ddd;
             align-items: center;
         }
         .rank-item:last-child { border-bottom: none; }
@@ -254,25 +137,15 @@
 
         /* 提示文字 */
         .hint {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            color: #00d2d3;
-            border: 1px solid #00d2d3;
-            pointer-events: none;
-            transition: opacity 0.3s;
-            white-space: nowrap;
+            position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); padding: 8px 20px; border-radius: 20px;
+            font-size: 14px; color: #00d2d3; border: 1px solid #00d2d3;
+            pointer-events: none; transition: opacity 0.3s; white-space: nowrap;
         }
     </style>
 </head>
 <body>
 
-    <!-- 頂部 -->
     <div class="top-bar">
         <div class="top-left">
             <a href="../" class="icon-btn back-btn">⬅ 返回大廳</a>
@@ -292,12 +165,10 @@
 
     <div class="hint" id="hint-text">請選擇工具開始清潔</div>
 
-    <!-- 遊戲區 -->
     <div id="game-container">
         <canvas id="gameCanvas" width="800" height="500"></canvas>
     </div>
 
-    <!-- 工具欄 -->
     <div class="toolbar">
         <div class="tool-btn active" onclick="setTool('vacuum', this)" title="吸塵機">🌪️</div>
         <div class="tool-btn" onclick="setTool('spray', this)" title="清潔劑">🧴</div>
@@ -307,7 +178,6 @@
         <div class="tool-btn" onclick="setTool('dryer', this)" title="風乾機">💨</div>
     </div>
 
-    <!-- 登入彈窗 -->
     <div id="login-modal" class="modal">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h1 style="color: #00d2d3; text-shadow: 0 0 20px #00d2d3;">👤 輸入玩家名稱</h1>
@@ -317,7 +187,6 @@
         </div>
     </div>
 
-    <!-- 結算畫面 -->
     <div id="win-screen" class="modal">
         <div class="modal-box">
             <h1>✨ 完美清潔！ ✨</h1>
@@ -328,7 +197,6 @@
         </div>
     </div>
 
-    <!-- 排行榜畫面 -->
     <div id="rank-modal" class="modal">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h1>🏆 洗地王排行榜</h1>
@@ -338,13 +206,7 @@
     </div>
 
 <script>
-    // ==========================================
-    // 基礎設置與防呆
-    // ==========================================
-    window.onerror = function(msg) {
-        console.warn("遊戲發生小錯誤，已自動修復：", msg);
-        return true; 
-    };
+    window.onerror = function(msg) { console.warn("已跳過錯誤：", msg); return true; };
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -354,19 +216,15 @@
     const displayName = document.getElementById('display-name');
     const displayLevel = document.getElementById('display-level');
 
-    // 確保畫布在手機上比例正確
     function resizeCanvas() {
         const container = document.getElementById('game-container');
         const ratio = canvas.width / canvas.height;
         const cw = container.clientWidth * 0.95;
         const ch = container.clientHeight * 0.7;
-        
         if (cw / ch > ratio) {
-            canvas.style.width = (ch * ratio) + 'px';
-            canvas.style.height = ch + 'px';
+            canvas.style.width = (ch * ratio) + 'px'; canvas.style.height = ch + 'px';
         } else {
-            canvas.style.width = cw + 'px';
-            canvas.style.height = (cw / ratio) + 'px';
+            canvas.style.width = cw + 'px'; canvas.style.height = (cw / ratio) + 'px';
         }
     }
     window.addEventListener('resize', resizeCanvas);
@@ -378,13 +236,9 @@
     let currentUser = localStorage.getItem('carpet_username') || '';
     let currentLevel = parseInt(localStorage.getItem('carpet_level')) || 1;
     let totalScore = parseInt(localStorage.getItem('carpet_total_score')) || 0;
-    
     let leaderboard = [];
-    try {
-        leaderboard = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
-    } catch(e) { leaderboard = []; }
+    try { leaderboard = JSON.parse(localStorage.getItem('carpet_leaderboard')) || []; } catch(e) { leaderboard = []; }
 
-    // ★ 修復 1：加入遊戲狀態鎖，防止未開始就計算進度
     let isGamePlaying = false; 
     let isGameOver = false;
 
@@ -409,36 +263,26 @@
         initGame();
     }
 
-    function openRank() {
-        document.getElementById('rank-modal').classList.add('active');
-        renderLeaderboard();
-    }
-
-    function closeRank() {
-        document.getElementById('rank-modal').classList.remove('active');
-    }
+    function openRank() { document.getElementById('rank-modal').classList.add('active'); renderLeaderboard(); }
+    function closeRank() { document.getElementById('rank-modal').classList.remove('active'); }
 
     function renderLeaderboard() {
         const list = document.getElementById('rank-list');
         list.innerHTML = '';
-        
         leaderboard.sort((a, b) => {
             if (b.level !== a.level) return b.level - a.level;
             return b.score - a.score;
         });
-        
         if (leaderboard.length === 0) {
             list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">暫時未有人上榜，快啲嚟挑戰啦！</div>';
             return;
         }
-
         leaderboard.forEach((item, index) => {
             let div = document.createElement('div');
             div.className = 'rank-item';
             if (index === 0) div.classList.add('top1');
             else if (index === 1) div.classList.add('top2');
             else if (index === 2) div.classList.add('top3');
-            
             let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index+1) + '.';
             div.innerHTML = `
                 <div class="rank-name">${medal} ${item.name}</div>
@@ -451,7 +295,6 @@
 
     function submitScore(finalScore) {
         let existingIndex = leaderboard.findIndex(item => item.name === currentUser);
-        
         if (existingIndex !== -1) {
             if (currentLevel > leaderboard[existingIndex].level || 
                (currentLevel === leaderboard[existingIndex].level && finalScore > leaderboard[existingIndex].score)) {
@@ -461,16 +304,13 @@
         } else {
             leaderboard.push({ name: currentUser, level: currentLevel, score: finalScore });
         }
-        try {
-            localStorage.setItem('carpet_leaderboard', JSON.stringify(leaderboard));
-        } catch(e) {}
+        try { localStorage.setItem('carpet_leaderboard', JSON.stringify(leaderboard)); } catch(e) {}
     }
 
     // ==========================================
     // 音效系統
     // ==========================================
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
     function createNoiseBuffer() {
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -483,13 +323,11 @@
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const now = audioCtx.currentTime;
-
         if (type === 'vacuum') {
             const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
             const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 800;
             const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-            src.start(); src.stop(now + 0.2);
+            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); src.start(); src.stop(now + 0.2);
         } else if (type === 'spray') {
             const osc = audioCtx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(2000, now); osc.frequency.exponentialRampToValueAtTime(4000, now + 0.1);
             const gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
@@ -520,7 +358,6 @@
     let lastX = 0, lastY = 0;
     let progress = 0;
     let startTime = 0;
-    let targetCleanPercent = 98;
 
     const baseCanvas = document.createElement('canvas'); const baseCtx = baseCanvas.getContext('2d');
     const dirtCanvas = document.createElement('canvas'); const dirtCtx = dirtCanvas.getContext('2d');
@@ -530,7 +367,9 @@
     baseCanvas.width = canvas.width; baseCanvas.height = canvas.height;
     dirtCanvas.width = canvas.width; dirtCanvas.height = canvas.height;
     soapCanvas.width = canvas.width; soapCanvas.height = canvas.height;
-    checkCanvas.width = 100; checkCanvas.height = 60;
+    
+    // ★ 修復 1：提升隱藏檢測畫布嘅解像度，令判定更精準 (由 100x60 提升到 200x125)
+    checkCanvas.width = 200; checkCanvas.height = 125;
 
     let particles = [];
 
@@ -538,10 +377,8 @@
     // 初始化關卡
     // ==========================================
     function initGame() {
-        // ★ 修復 2：重置狀態鎖
         isGamePlaying = false;
         isGameOver = false;
-        
         progress = 0; 
         updateProgressUI();
         document.getElementById('win-screen').classList.remove('active');
@@ -572,7 +409,7 @@
         // 2. 畫污垢層
         dirtCtx.clearRect(0, 0, dirtCanvas.width, dirtCanvas.height);
         
-        let baseDirtCount = 100 + (currentLevel * 40); 
+        let baseDirtCount = 80 + (currentLevel * 30); 
         for(let i=0; i<baseDirtCount; i++) {
             dirtCtx.fillStyle = `rgba(60, 40, 20, ${Math.random()*0.5 + 0.3})`;
             dirtCtx.beginPath();
@@ -580,7 +417,7 @@
             dirtCtx.fill();
         }
 
-        let toughDirtCount = currentLevel > 2 ? (currentLevel * 8) : 0;
+        let toughDirtCount = currentLevel > 2 ? (currentLevel * 5) : 0;
         for(let i=0; i<toughDirtCount; i++) {
             dirtCtx.fillStyle = 'rgba(10, 5, 0, 0.95)';
             dirtCtx.beginPath();
@@ -588,7 +425,7 @@
             dirtCtx.fill();
         }
 
-        let trashCount = 50 + (currentLevel * 20);
+        let trashCount = 30 + (currentLevel * 15);
         for(let i=0; i<trashCount; i++) {
             dirtCtx.fillStyle = '#222';
             dirtCtx.fillRect(Math.random()*dirtCanvas.width, Math.random()*dirtCanvas.height, 6, 6);
@@ -597,24 +434,17 @@
         // 同步到檢查畫布
         checkCtx.clearRect(0,0,checkCanvas.width, checkCanvas.height);
         checkCtx.drawImage(dirtCanvas, 0, 0, checkCanvas.width, checkCanvas.height);
-        
-        targetCleanPercent = Math.min(99.5, 95 + (currentLevel * 0.5));
 
-        // ★ 修復 3：確保污垢畫完之後，延遲一丁點才開啟遊戲狀態同計時
         setTimeout(() => {
             startTime = Date.now();
             isGamePlaying = true;
         }, 100);
     }
 
-    // ==========================================
-    // 工具切換與提示
-    // ==========================================
     function setTool(tool, el) {
         currentTool = tool;
         document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
         el.classList.add('active');
-        
         const hints = {
             'vacuum': '🌪️ 吸塵機：吸走表面碎屑',
             'spray': '🧴 清潔劑：噴灑泡泡溶解污垢',
@@ -626,9 +456,6 @@
         hintText.innerText = hints[tool];
     }
 
-    // ==========================================
-    // 核心繪製與擦除邏輯
-    // ==========================================
     function getPointerPos(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -641,7 +468,7 @@
 
     function startDraw(e) {
         e.preventDefault();
-        if (!isGamePlaying || isGameOver) return; // ★ 狀態鎖保護
+        if (!isGamePlaying || isGameOver) return;
         isDrawing = true;
         const pos = getPointerPos(e);
         lastX = pos.x; lastY = pos.y;
@@ -662,7 +489,7 @@
     }
 
     function eraseDirt(x, y, radius) {
-        let efficiency = Math.max(0.5, 1 - (currentLevel * 0.01));
+        let efficiency = Math.max(0.6, 1 - (currentLevel * 0.01));
         let actualRadius = radius * efficiency;
 
         dirtCtx.globalCompositeOperation = 'destination-out';
@@ -683,41 +510,36 @@
 
     function handleDraw(x, y) {
         if (currentTool === 'vacuum') {
-            eraseDirt(x, y, 40);
+            eraseDirt(x, y, 45); // 加大少少範圍
             playSound('vacuum');
             for(let i=0; i<3; i++) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1, color: '#555', size: Math.random()*5+2, type: 'dust'});
         } 
         else if (currentTool === 'spray') {
             soapCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            soapCtx.beginPath();
-            soapCtx.arc(x, y, 30, 0, Math.PI*2);
-            soapCtx.fill();
-            playSound('spray');
-            eraseDirt(x, y, 20);
+            soapCtx.beginPath(); soapCtx.arc(x, y, 35, 0, Math.PI*2); soapCtx.fill();
+            playSound('spray'); eraseDirt(x, y, 25);
             for(let i=0; i<2; i++) particles.push({x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 1, color: '#fff', size: Math.random()*8+4, type: 'bubble'});
         } 
         else if (currentTool === 'brush') {
-            eraseDirt(x, y, 35);
+            eraseDirt(x, y, 40); // 刷洗範圍加大
             soapCtx.globalCompositeOperation = 'destination-out';
-            soapCtx.beginPath(); soapCtx.arc(x, y, 35, 0, Math.PI*2); soapCtx.fill();
+            soapCtx.beginPath(); soapCtx.arc(x, y, 40, 0, Math.PI*2); soapCtx.fill();
             soapCtx.globalCompositeOperation = 'source-over';
-            
             if (Math.random() < 0.3) playSound('brush');
             for(let i=0; i<4; i++) particles.push({x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color: '#f1c40f', size: Math.random()*4+1, type: 'spark'});
         } 
         else if (currentTool === 'water') {
-            eraseDirt(x, y, 50);
+            eraseDirt(x, y, 60); // 水槍範圍最大
             soapCtx.globalCompositeOperation = 'destination-out';
-            soapCtx.beginPath(); soapCtx.arc(x, y, 60, 0, Math.PI*2); soapCtx.fill();
+            soapCtx.beginPath(); soapCtx.arc(x, y, 65, 0, Math.PI*2); soapCtx.fill();
             soapCtx.globalCompositeOperation = 'source-over';
-            
             if (Math.random() < 0.2) playSound('water');
             for(let i=0; i<5; i++) particles.push({x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1, color: '#00d2d3', size: Math.random()*6+2, type: 'water'});
         } 
         else if (currentTool === 'squeegee') {
-            eraseDirt(x, y, 60);
+            eraseDirt(x, y, 70); // 刮水範圍極大
             soapCtx.globalCompositeOperation = 'destination-out';
-            soapCtx.beginPath(); soapCtx.arc(x, y, 60, 0, Math.PI*2); soapCtx.fill();
+            soapCtx.beginPath(); soapCtx.arc(x, y, 70, 0, Math.PI*2); soapCtx.fill();
             soapCtx.globalCompositeOperation = 'source-over';
         } 
         else if (currentTool === 'dryer') {
@@ -726,9 +548,6 @@
         }
     }
 
-    // ==========================================
-    // 事件綁定
-    // ==========================================
     canvas.addEventListener('mousedown', startDraw);
     canvas.addEventListener('mousemove', draw);
     window.addEventListener('mouseup', stopDraw);
@@ -740,7 +559,6 @@
     // 進度計算與計分
     // ==========================================
     function updateProgress() {
-        // ★ 修復 4：如果未開始或者已完結，唔好計進度
         if (!isGamePlaying || isGameOver) return;
 
         const imgData = checkCtx.getImageData(0, 0, checkCanvas.width, checkCanvas.height).data;
@@ -752,17 +570,34 @@
         }
         
         let cleanPercent = 100 - ((dirtPixels / totalPixels) * 100);
-        // ★ 修復 5：唔好乘大個百分比，保持真實
-        progress = Math.min(100, Math.floor(cleanPercent)); 
+        
+        // ★ 修復 2：強制設定目標為 100%（排除浮點數誤差用 99.9%）
+        let targetCleanPercent = 99.9; 
+        
+        // 顯示真實進度，只有當真正乾淨時才顯示 100%
+        if (cleanPercent >= targetCleanPercent) {
+            progress = 100;
+        } else {
+            progress = Math.floor(cleanPercent);
+        }
         
         progressBar.style.width = progress + '%';
         progressText.innerText = progress + '%';
 
-        if (progress >= targetCleanPercent) {
+        // ★ 修復 3：加入提示，令玩家知道仲差少少
+        if (progress >= 90 && progress < 100) {
+            hintText.innerText = "⚠️ 仲有少少污漬喺角落！洗埋佢！";
+            hintText.style.color = "#e74c3c";
+            hintText.style.borderColor = "#e74c3c";
+        } else if (progress === 100) {
             gameOver();
+        } else {
+            hintText.innerText = "請選擇工具開始清潔";
+            hintText.style.color = "#00d2d3";
+            hintText.style.borderColor = "#00d2d3";
         }
     }
-    setInterval(updateProgress, 300);
+    setInterval(updateProgress, 200); // 加快刷新率
 
     function updateProgressUI() {
         progressBar.style.width = progress + '%';
@@ -772,7 +607,7 @@
     function gameOver() {
         if (isGameOver) return;
         isGameOver = true;
-        isGamePlaying = false; // ★ 鎖定狀態，防止重複觸發
+        isGamePlaying = false;
         
         let timeSecs = Math.floor((Date.now() - startTime) / 1000);
         
@@ -853,17 +688,16 @@
             ctx.strokeStyle = 'rgba(255,255,255,0.5)';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(lastX, lastY, currentTool === 'water' ? 50 : (currentTool === 'vacuum' ? 40 : 30), 0, Math.PI*2);
+            let r = currentTool === 'water' ? 60 : (currentTool === 'vacuum' ? 45 : (currentTool === 'squeegee' ? 70 : 40));
+            ctx.arc(lastX, lastY, r, 0, Math.PI*2);
             ctx.stroke();
         }
 
         requestAnimationFrame(drawLoop);
     }
 
-    // 啟動
     initUser();
     drawLoop();
-
 </script>
 </body>
 </html>
