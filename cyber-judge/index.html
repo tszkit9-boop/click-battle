@@ -70,7 +70,7 @@
         font-family: 'Orbitron', sans-serif; font-size: 10px; color: #e74c3c; opacity: 0.5;
     }
     #case-title { color: #e74c3c; font-size: 20px; font-weight: bold; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
-    #case-desc { font-size: 15px; line-height: 1.8; color: #ecf0f1; min-height: 100px; }
+    #case-desc { font-size: 15px; line-height: 1.8; color: #ecf0f1; min-height: 100px; white-space: pre-wrap; }
     #case-desc::after { content: '█'; animation: blink 1s infinite; color: #00d2d3; }
     @keyframes blink { 50% { opacity: 0; } }
 
@@ -275,44 +275,51 @@
     const MAX_COMBO = 30;
 
     // 升級狀態
-    let speedLevel = 0; // 最多 3 級
-    let stabilityArmor = 0; // 最多 3 級
-    let hasShield = false; // 一次性免死金牌
+    let speedLevel = 0;
+    let stabilityArmor = 0;
+    let hasShield = false;
 
-    // 音效系統
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 音效系統 (加上 try-catch 防崩潰)
+    let audioCtx = null;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {}
+
     function playSound(type) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        let now = audioCtx.currentTime;
+        if (!audioCtx) return;
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            let now = audioCtx.currentTime;
 
-        if (type === 'type') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
-            gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-            osc.start(); osc.stop(now + 0.05);
-        } else if (type === 'guilty') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
-            gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(); osc.stop(now + 0.3);
-        } else if (type === 'innocent') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
-            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(); osc.stop(now + 0.2);
-        } else if (type === 'fine') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(900, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(); osc.stop(now + 0.2);
-        } else if (type === 'gameover') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(20, now + 1);
-            gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
-            osc.start(); osc.stop(now + 1);
-        } else if (type === 'win') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now+0.1); osc.frequency.setValueAtTime(783, now+0.2); osc.frequency.setValueAtTime(1046, now+0.3);
-            gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            osc.start(); osc.stop(now + 0.5);
-        }
+            if (type === 'type') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+                gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(); osc.stop(now + 0.05);
+            } else if (type === 'guilty') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(); osc.stop(now + 0.3);
+            } else if (type === 'innocent') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(); osc.stop(now + 0.2);
+            } else if (type === 'fine') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(900, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(); osc.stop(now + 0.2);
+            } else if (type === 'gameover') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(20, now + 1);
+                gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+                osc.start(); osc.stop(now + 1);
+            } else if (type === 'win') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now+0.1); osc.frequency.setValueAtTime(783, now+0.2); osc.frequency.setValueAtTime(1046, now+0.3);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(); osc.stop(now + 0.5);
+            }
+        } catch(e) {}
     }
 
     // 荒謬案件生成器
@@ -327,7 +334,6 @@
     const DEMAND = ["要求賠償 500 萬", "要求公開道歉", "要求即時銷毀", "要求永久封號", "要求割讓領土", "要求提供終身免費保養"];
 
     function generateCase() {
-        // 隨機組合
         let c1 = CHAR[Math.floor(Math.random()*CHAR.length)];
         let c2 = TARGET[Math.floor(Math.random()*TARGET.length)];
         let a = ACTION[Math.floor(Math.random()*ACTION.length)];
@@ -340,7 +346,6 @@
         return {
             title: title,
             desc: desc,
-            // 隨機生成選項影響
             options: {
                 guilty: { money: -1500, stability: 15, msg: `你判咗 ${c2} 有罪，${c1} 得到安撫。` },
                 innocent: { money: 1000, stability: -10, msg: `你判咗 ${c2} 無罪，但 ${c1} 極度不滿！` },
@@ -376,7 +381,7 @@
         let i = 0;
         if (typeTimer) clearInterval(typeTimer);
         
-        let typingSpeed = Math.max(10, 30 - (speedLevel * 10)); // 升級加速
+        let typingSpeed = Math.max(10, 30 - (speedLevel * 10));
         
         typeTimer = setInterval(() => {
             if (i < text.length) {
@@ -405,12 +410,10 @@
 
         let opt = currentCase.options[type];
         
-        // 計算實際扣減 (連勝越高，難度越大)
         let difficultyMult = 1 + (combo * 0.05); 
         let actualMoney = Math.floor(opt.money * (opt.money > 0 ? 1 : difficultyMult));
         let actualStab = Math.floor(opt.stability * (opt.stability > 0 ? 1 : difficultyMult));
         
-        // 穩定度裝甲減傷
         if (actualStab < 0 && stabilityArmor > 0) {
             actualStab += stabilityArmor * 5; 
             if (actualStab > 0) actualStab = 0;
@@ -419,7 +422,6 @@
         money += actualMoney;
         stability += actualStab;
         
-        // 邊界限制
         if (stability > 100) stability = 100;
         if (stability < 0) stability = 0;
 
@@ -436,7 +438,8 @@
         }
 
         combo++;
-        document.getElementById('record-cases').innerText = combo;
+        // ❌ 原本呢行係：document.getElementById('record-cases').innerText = combo; 係錯嘅，導致卡死
+        // ✅ 已經刪除，因為 updateHUD() 會處理 combo 顯示
 
         playSound(type);
         showVerdictStamp(type);
@@ -457,6 +460,7 @@
             return;
         }
 
+        // 進入下一局
         setTimeout(nextCase, 1500);
     }
 
