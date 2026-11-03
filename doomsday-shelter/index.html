@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>☢️ 末日避難所：第三人稱防線</title>
+<title>☢️ 末日避難所</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -12,8 +12,7 @@
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
     
-    /* 加入電影感暗角同掃描線 */
-    .overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.6) 100%); }
+    .overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.7) 100%); }
     .scanlines { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px); }
 
     .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
@@ -119,91 +118,115 @@
         // --- 建立精緻玩家角色 (機甲士兵) ---
         function createPlayer() {
             let group = new THREE.Group();
-            let armorMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.3, metalness: 0.8 }); // 深藍灰裝甲
-            let cyanMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.5 }); // 發光部件
+            let armorMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.3, metalness: 0.8 });
+            let cyanMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.5 });
             let darkMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
 
-            // 軀幹 (厚重)
             let body = new THREE.Mesh(new THREE.BoxGeometry(1, 1.4, 0.6), armorMat); body.position.y = 0.7; group.add(body);
-            // 胸口發光核心
             let core = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 8), cyanMat); core.rotation.x = Math.PI/2; core.position.set(0, 0.8, 0.31); group.add(core);
-            
-            // 頭部 (頭盔)
             let head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), armorMat); head.position.y = 1.65; group.add(head);
-            // 面罩 (發光)
             let visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.65), cyanMat); visor.position.set(0, 1.65, 0.02); group.add(visor);
-
-            // 雙腿
             let legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.4), darkMat); legL.position.set(-0.3, -0.3, 0); group.add(legL);
             let legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.4), darkMat); legR.position.set(0.3, -0.3, 0); group.add(legR);
-            
-            // 右手持槍 (舉起狀態)
             let armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.8), armorMat); armR.position.set(0.6, 1, 0.4); group.add(armR);
             
-            // 步槍
             let gun = new THREE.Group();
             let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.2), darkMat);
-            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8), armorMat);
-            barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
-            let scope = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.4), cyanMat); scope.position.set(0, 0.2, 0); // 發光瞄準鏡
+            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8), armorMat); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
+            let scope = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.4), cyanMat); scope.position.set(0, 0.2, 0);
             gun.add(gunBody); gun.add(barrel); gun.add(scope);
             gun.position.set(0.6, 1, 0.8); group.add(gun);
 
-            gunMuzzle = new THREE.Object3D();
-            gunMuzzle.position.set(0, 0, -1.4); gun.add(gunMuzzle);
-
+            gunMuzzle = new THREE.Object3D(); gunMuzzle.position.set(0, 0, -1.4); gun.add(gunMuzzle);
             return group;
         }
 
-        // --- 建立精緻喪屍模型 ---
-        function createZombieModel(color, isBoss) {
+        // --- 【全新升級】建立電影級恐怖喪屍模型 ---
+        function createZombieModel(isBoss) {
             let group = new THREE.Group();
-            let mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.9, metalness: 0.1 });
-            let bloodMat = new THREE.MeshStandardMaterial({ color: 0x4a0000, roughness: 0.9 });
-            let darkMat = new THREE.MeshStandardMaterial({ color: 0x050505 });
-
-            // 身體 (腐爛，前傾，唔對稱)
-            let body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.5), mat);
-            body.position.y = 0.8; body.rotation.x = 0.3; body.rotation.z = 0.1;
-            group.add(body);
-
-            // 頭 (歪曲)
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), mat);
-            head.position.set(0.1, 1.6, 0.2); head.rotation.z = 0.5; head.rotation.x = 0.2;
             
-            // 血紅發光眼
-            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-            let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), eyeMat); eyeL.position.set(-0.15, 0.1, 0.35);
-            let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), eyeMat); eyeR.position.set(0.15, 0.1, 0.35);
-            head.add(eyeL); head.add(eyeR);
+            // 材質設定 (腐肉、破爛衣服、骨頭)
+            let fleshColor = isBoss ? 0x330044 : (wave > 5 ? 0x551111 : 0x224422); // 紫/紅/綠
+            let fleshMat = new THREE.MeshStandardMaterial({ color: fleshColor, roughness: 0.9, metalness: 0.1 });
+            let shirtMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 }); // 破爛灰衣
+            let boneMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.5 }); // 白骨
+            let bloodMat = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.6 }); // 暗紅血跡
+            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // 紅光眼
+
+            // 1. 殘破的軀幹
+            let body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.2, 8), shirtMat);
+            body.position.y = 1.1; body.rotation.x = 0.3; body.rotation.z = 0.1; // 歪斜
+            group.add(body);
+            
+            // 露出的肋骨 (幾條白色橫線)
+            for(let i=0; i<3; i++) {
+                let rib = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 4, 8, Math.PI), boneMat);
+                rib.rotation.x = Math.PI / 2; rib.rotation.z = Math.PI / 2;
+                rib.position.set(0, 0.8 + i*0.25, 0.25); 
+                body.add(rib);
+            }
+
+            // 2. 恐怖的頭部
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), fleshMat);
+            head.position.set(0.1, 1.9, 0.2); head.rotation.z = 0.6; head.rotation.x = 0.2; // 嚴重歪頭
             group.add(head);
 
-            // 撕裂的左手 (伸直)
-            let armL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.9, 0.2), mat);
-            armL.position.set(-0.6, 1.1, 0.6); armL.rotation.x = -Math.PI / 2 + 0.2;
-            group.add(armL);
+            // 凸出的下顎
+            let jaw = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.4), boneMat);
+            jaw.position.set(0, -0.2, 0.2); jaw.rotation.x = 0.2;
+            head.add(jaw);
 
-            // 斷掉的右手 (垂低)
-            let armR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), bloodMat);
-            armR.position.set(0.6, 0.7, 0.1); armR.rotation.x = 0.5;
+            // 血紅發光眼
+            let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 4, 4), eyeMat); eyeL.position.set(-0.1, 0.1, 0.3);
+            let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.06, 4, 4), eyeMat); eyeR.position.set(0.15, 0.1, 0.3);
+            head.add(eyeL); head.add(eyeR);
+
+            // 頭頂插住的玻璃/碎片
+            let glass = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 4), bloodMat);
+            glass.position.set(0.1, 0.35, -0.1); glass.rotation.z = -0.3;
+            head.add(glass);
+
+            // 3. 四肢
+            // 左臂 (向前伸)
+            let armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1, 6), fleshMat);
+            armL.position.set(-0.5, 1.3, 0.5); armL.rotation.x = -Math.PI / 2 + 0.2;
+            group.add(armL);
+            
+            // 左爪
+            let clawL = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 4), boneMat);
+            clawL.position.set(0, 0.6, 0); armL.add(clawL);
+
+            // 右臂 (斷掉垂低)
+            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.6, 6), fleshMat);
+            armR.position.set(0.6, 1.2, 0.1); armR.rotation.x = 0.5; armR.rotation.z = -0.2;
             group.add(armR);
 
-            // 拖行的雙腿 (一長一短)
-            let legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), darkMat); legL.position.set(-0.25, 0, 0); group.add(legL);
-            let legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.6, 0.3), darkMat); legR.position.set(0.25, -0.1, 0); group.add(legR);
+            // 雙腿 (一長一短)
+            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.1, 0.9, 6), fleshMat);
+            legL.position.set(-0.2, 0.2, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.1, 0.7, 6), fleshMat);
+            legR.position.set(0.25, 0.1, 0); legR.rotation.x = -0.2; group.add(legR);
+
+            // 4. 喪屍王專屬武裝
+            if (isBoss) {
+                // 巨型尖刺
+                let spikeMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x552200 });
+                for(let i=0; i<6; i++) {
+                    let spike = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.8, 4), spikeMat);
+                    let angle = (i / 6) * Math.PI * 2;
+                    spike.position.set(Math.cos(angle)*0.6, 1.2 + Math.sin(angle)*0.6, 0);
+                    spike.rotation.z = -angle;
+                    body.add(spike);
+                }
+                // 王冠
+                let crownMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                let crown = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.2, 5), crownMat);
+                crown.position.set(0, 0.4, 0); head.add(crown);
+            }
 
             group.userData.armL = armL;
             group.userData.legL = legL;
-
-            if (isBoss) {
-                // 喪屍王加冠冕/尖刺
-                let spikeMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xffaa00 });
-                for(let i=0; i<5; i++) {
-                    let spike = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 4), spikeMat);
-                    spike.position.set(Math.cos(i/5*Math.PI*2)*0.4, 0.4, Math.sin(i/5*Math.PI*2)*0.4);
-                    head.add(spike);
-                }
-            }
+            group.userData.legR = legR;
 
             return group;
         }
@@ -214,7 +237,7 @@
                 const container = document.getElementById('canvas-container');
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x050505);
-                scene.fog = new THREE.FogExp2(0x050505, 0.035); // 濃霧增加壓迫感
+                scene.fog = new THREE.FogExp2(0x050505, 0.035);
                 
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 3.5, 12); 
@@ -223,7 +246,6 @@
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                // 開啟色調映射，令光暗更有層次
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 renderer.toneMappingExposure = 1.2;
                 container.appendChild(renderer.domElement);
@@ -233,26 +255,19 @@
                 renderer.domElement.addEventListener('pointerdown', onShoot);
                 renderer.domElement.addEventListener('pointermove', onAim);
 
-                // 燈光系統
-                scene.add(new THREE.AmbientLight(0x223344, 0.8)); // 冷色底光
-                
+                scene.add(new THREE.AmbientLight(0x223344, 0.8));
                 const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
                 dirLight.position.set(0, 10, 10); scene.add(dirLight);
-                
-                // 盡頭大門紅光
                 const doorLight = new THREE.PointLight(0xff0000, 3, 25); doorLight.position.set(0, 2, -19); scene.add(doorLight);
-
-                // 走廊兩側霓虹燈
                 const cyanLightL = new THREE.PointLight(0x00ffff, 1, 15); cyanLightL.position.set(-10, 3, 0); scene.add(cyanLightL);
                 const cyanLightR = new THREE.PointLight(0x00ffff, 1, 15); cyanLightR.position.set(10, 3, 0); scene.add(cyanLightR);
 
                 // 走廊場景
                 const floorGeo = new THREE.PlaneGeometry(24, 50);
-                const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.8 }); // 反光金屬地
+                const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.8 });
                 const floor = new THREE.Mesh(floorGeo, floorMat);
                 floor.rotation.x = -Math.PI / 2; floor.position.set(0, -1, -15); scene.add(floor);
 
-                // 地板發光格線
                 const grid = new THREE.GridHelper(50, 20, 0x00ffff, 0x003333);
                 grid.position.set(0, -0.9, -15); scene.add(grid);
 
@@ -262,7 +277,6 @@
                 const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 50), wallMat); leftWall.position.set(-12, 4, -15); scene.add(leftWall);
                 const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 50), wallMat); rightWall.position.set(12, 4, -15); scene.add(rightWall);
 
-                // 兩側管道裝飾
                 for(let z = 5; z > -25; z -= 8) {
                     let pipeL = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 8), pipeMat);
                     pipeL.rotation.x = Math.PI/2; pipeL.position.set(-11, 6, z); scene.add(pipeL);
@@ -270,16 +284,13 @@
                     pipeR.rotation.x = Math.PI/2; pipeR.position.set(11, 6, z); scene.add(pipeR);
                 }
 
-                // 大門
                 doorMesh = new THREE.Mesh(new THREE.BoxGeometry(20, 10, 1), new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.9, roughness: 0.2 }));
                 doorMesh.position.set(0, 4, -20); scene.add(doorMesh);
-                // 大門警告條
                 for(let i=0; i<4; i++) {
                     let stripe = new THREE.Mesh(new THREE.BoxGeometry(20, 0.5, 1.1), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
                     stripe.position.set(0, i*2, -20); scene.add(stripe);
                 }
 
-                // 生成玩家
                 playerModel = createPlayer();
                 playerModel.position.set(0, -1, 5);
                 scene.add(playerModel);
@@ -332,7 +343,11 @@
             let endPos = new THREE.Vector3();
             if (intersects.length > 0) {
                 endPos = intersects[0].point;
-                let hitGroup = intersects[0].object.parent;
+                // 向上尋找 group root (因為有好多子物件)
+                let hitGroup = intersects[0].object;
+                while (hitGroup.parent && !hitGroup.userData.legL) {
+                    hitGroup = hitGroup.parent;
+                }
                 let targetZ = zombies.find(z => z.mesh === hitGroup);
                 if (targetZ) {
                     targetZ.hp -= (weaponLevel * 50);
@@ -343,14 +358,12 @@
                 raycaster.ray.at(50, endPos);
             }
 
-            // 槍口火光
             let flash = new THREE.PointLight(0x00ffff, 2, 5);
             flash.position.copy(startPos); scene.add(flash);
             setTimeout(() => scene.remove(flash), 50);
 
-            // 子彈軌跡
             let beamGeo = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
-            let beamMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 1, linewidth: 2 });
+            let beamMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 1 });
             let beam = new THREE.Line(beamGeo, beamMat);
             scene.add(beam);
             setTimeout(() => scene.remove(beam), 50);
@@ -360,7 +373,6 @@
         function animate() {
             requestAnimationFrame(animate);
             try {
-                // 震動特效
                 if (shakeTime > 0) {
                     shakeTime -= 0.016;
                     cameraShakeOffset.set((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, 0);
@@ -374,11 +386,12 @@
                     let z = zombies[i];
                     z.mesh.position.z += z.speed; 
                     
-                    // 喪屍蹣跚行走動畫
+                    // 恐怖蹣跚動畫
                     let t = Date.now() * 0.008;
-                    z.mesh.userData.legL.rotation.x = Math.sin(t) * 0.6;
+                    z.mesh.userData.legL.rotation.x = Math.sin(t) * 0.5;
+                    z.mesh.userData.legR.rotation.x = Math.sin(t + Math.PI) * 0.3; // 一拐一拐
                     z.mesh.userData.armL.rotation.x = -Math.PI / 2 + Math.sin(t*0.5) * 0.2;
-                    z.mesh.rotation.z = Math.sin(t*0.5) * 0.05; // 左右搖擺
+                    z.mesh.rotation.z = Math.sin(t*0.5) * 0.08; // 全身搖擺
 
                     if (z.mesh.position.z >= -20) {
                         z.mesh.position.z = -20;
@@ -408,12 +421,12 @@
 
         // --- 生成喪屍 ---
         function spawnZombie(isBoss = false) {
-            let color = isBoss ? 0x8800ff : (wave > 5 ? 0x8b0000 : 0x2ecc71); 
-            let size = isBoss ? 2 : (wave > 5 ? 1.2 : 1);
+            let size = isBoss ? 2.2 : (wave > 5 ? 1.2 : 1);
             let hp = isBoss ? 3000 : (wave > 5 ? 300 : 100);
             
-            let group = createZombieModel(color, isBoss);
-            group.position.set((Math.random() - 0.5) * 16, -1, -35 - Math.random()*10);
+            let group = createZombieModel(isBoss);
+            // 生成喺遠處，隨機位置
+            group.position.set((Math.random() - 0.5) * 18, -1, -35 - Math.random()*10);
             group.scale.set(size, size, size);
             scene.add(group);
             
