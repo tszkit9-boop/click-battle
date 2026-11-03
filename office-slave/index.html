@@ -3089,7 +3089,7 @@
         };
     </script> <!-- 👈 閂返主遊戲邏輯嘅 script -->
 
-    <!-- ===== Three.js 3D 場景層（大老闆修復版） ===== -->
+<!-- ===== Three.js 3D 場景層（老闆巡視完整版） ===== -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
     <script>
     (function () {
@@ -3124,9 +3124,9 @@
             // ★ 旋轉與縮放控制 (全方位睇場景) ★
             // ==========================================
             var camRadius = 26; 
-            var camTheta = Math.PI / 4; // 水平旋轉角 (左右)
-            var camPhi = 0.92;          // 垂直俯仰角 (上下)
-            var target = new THREE.Vector3(0, 1, 0); // 鏡頭望住邊度 (中心點)
+            var camTheta = Math.PI / 4; 
+            var camPhi = 0.92;          
+            var target = new THREE.Vector3(0, 1, 0); 
 
             function updateCamera() {
                 var x = camRadius * Math.sin(camPhi) * Math.cos(camTheta);
@@ -3138,7 +3138,6 @@
             }
             updateCamera();
 
-            // 1. 滑鼠控制 (拖拽旋轉 + 滾輪縮放)
             var isDragging = false;
             var prevMouseX = 0, prevMouseY = 0;
 
@@ -3157,15 +3156,11 @@
 
                 camTheta -= deltaX * 0.01;
                 camPhi -= deltaY * 0.01;
-                
-                // 限制上下角度，避免轉到地底或者頭頂
                 camPhi = Math.max(0.2, Math.min(1.4, camPhi));
                 updateCamera();
             });
 
-            window.addEventListener('mouseup', function() {
-                isDragging = false;
-            });
+            window.addEventListener('mouseup', function() { isDragging = false; });
 
             host.addEventListener('wheel', function(e) {
                 e.preventDefault();
@@ -3174,7 +3169,7 @@
                 cam.updateProjectionMatrix();
             }, { passive: false });
 
-            // 2. 手機觸控 (單指旋轉 + 雙指縮放)
+            // 手機觸控 (單指旋轉 + 雙指縮放)
             var initialDistance = 0;
             var initialZoom = 1;
             var touchStartX = 0, touchStartY = 0;
@@ -3219,28 +3214,6 @@
             }, { passive: false });
             // ==========================================
 
-            var initialDistance = 0, initialZoom = 1;
-            host.addEventListener('touchstart', function(e) {
-                if(e.touches.length === 2) {
-                    var dx = e.touches[0].clientX - e.touches[1].clientX;
-                    var dy = e.touches[0].clientY - e.touches[1].clientY;
-                    initialDistance = Math.sqrt(dx * dx + dy * dy);
-                    initialZoom = cam.zoom;
-                }
-            }, { passive: false });
-            host.addEventListener('touchmove', function(e) {
-                if(e.touches.length === 2) {
-                    e.preventDefault();
-                    var dx = e.touches[0].clientX - e.touches[1].clientX;
-                    var dy = e.touches[0].clientY - e.touches[1].clientY;
-                    var distance = Math.sqrt(dx * dx + dy * dy);
-                    if(initialDistance > 0) {
-                        cam.zoom = Math.max(0.6, Math.min(3.0, initialZoom * (distance / initialDistance)));
-                        cam.updateProjectionMatrix();
-                    }
-                }
-            }, { passive: false });
-
             // 燈光
             var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
@@ -3277,10 +3250,23 @@
             var matDirt = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 1.0 });
             var matGold = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.2, metalness: 0.9 });
 
+            var skinMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.6 });
+            var hairMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.8 });
+            var maleMat = new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.6 });
+            var femaleMat = new THREE.MeshStandardMaterial({ color: 0xe84393, roughness: 0.6 });
+            var pantsMat = new THREE.MeshStandardMaterial({ color: 0x34495e, roughness: 0.8 });
+            var suitMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
+
             // 環境容器
             var envGroup = new THREE.Group();
             scene.add(envGroup);
             var currentEnv = "";
+
+            // 老闆巡視狀態變數
+            var bossTimer = 0;
+            var bossActive = false;
+            var bossDir = 1; 
+            var bossStopTimer = 0; 
 
             function clearEnv() {
                 while(envGroup.children.length > 0){ envGroup.remove(envGroup.children[0]); }
@@ -3294,9 +3280,9 @@
                 wall.position.set(0, 5, -11); envGroup.add(wall);
                 
                 for (var i = 0; i < 4; i++) {
-                    var win = new THREE.Mesh(new THREE.PlaneGeometry(4, 7), matGlass.clone()); // 👈 加 .clone() 
+                    var win = new THREE.Mesh(new THREE.PlaneGeometry(4, 7), matGlass.clone());
                     win.position.set(-9 + (i * 6), 4, -10.8); 
-                    win.name = "officeWindow"; // 👈 加呢句
+                    win.name = "officeWindow"; 
                     envGroup.add(win);
                 }
                 
@@ -3359,22 +3345,18 @@
                 ringLight.position.set(0, 3, -3); envGroup.add(ringLight);
             }
 
-            // ★ 大老闆專屬奢華大班房 (修復為有光影、有質感) ★
             function buildLuxury() {
-                // 反光黑金地板
                 var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.8 }));
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
                 
-                // 背後落地玻璃，透出城市夜景 (深藍色帶點點繁星)
                 var windowMat = new THREE.MeshStandardMaterial({color: 0x001a33, emissive: 0x001122, roughness: 0.1});
                 var win = new THREE.Mesh(new THREE.PlaneGeometry(28, 10), windowMat);
                 win.position.set(0, 5, -10.9); 
-                win.name = "luxuryWindow"; // 👈 必須加呢句，令系統搵到個窗
+                win.name = "luxuryWindow"; 
                 envGroup.add(win);
                 
-                // 城市點點燈光
                 var starsGroup = new THREE.Group();
-                starsGroup.name = "luxuryStars"; // 👈 你加啱咗呢句
+                starsGroup.name = "luxuryStars"; 
                 for(var i=0; i<50; i++) {
                     var star = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.1), new THREE.MeshBasicMaterial({color: 0xffffff}));
                     star.position.set(Math.random()*26-13, Math.random()*8+1, -10.85); 
@@ -3382,29 +3364,24 @@
                 }
                 envGroup.add(starsGroup);
 
-                // 金色裝飾條
                 var goldTrim = new THREE.Mesh(new THREE.BoxGeometry(28, 0.1, 0.1), matGold);
                 goldTrim.position.set(0, 2, -10.8); envGroup.add(goldTrim);
                 var goldTrim2 = new THREE.Mesh(new THREE.BoxGeometry(28, 0.1, 0.1), matGold);
                 goldTrim2.position.set(0, 8, -10.8); envGroup.add(goldTrim2);
 
-                // 巨型真皮大班枱
                 var deskTop = new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 3), matWood);
                 deskTop.position.set(0, 0.8, -4); deskTop.castShadow = true; deskTop.receiveShadow = true; envGroup.add(deskTop);
                 var deskLeg = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.8, 2.5), matDark);
                 deskLeg.position.set(0, 0.4, -4); envGroup.add(deskLeg);
                 
-                // 大班椅 (在桌子後面)
                 var chair = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), matDark);
                 chair.position.set(0, 1.5, -6); chair.castShadow = true; envGroup.add(chair);
 
-                // 奢華裝飾：兩邊書架
                 for(var s=-1; s<=1; s+=2) {
                     var shelf = new THREE.Mesh(new THREE.BoxGeometry(2, 6, 1), matWood);
                     shelf.position.set(s*8, 3, -9); shelf.castShadow = true; envGroup.add(shelf);
                 }
 
-                // 聚光燈打向大班枱
                 var spotLight = new THREE.SpotLight(0xffd700, 2);
                 spotLight.position.set(0, 15, 5);
                 spotLight.angle = Math.PI / 4;
@@ -3421,15 +3398,6 @@
             solo.position.set(0, 0, 3); 
             solo.rotation.y = -Math.PI / 4; 
             scene.add(solo);
-
-            var skinMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.6 });
-            var hairMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.8 });
-            var maleMat = new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.6 });
-            var femaleMat = new THREE.MeshStandardMaterial({ color: 0xe84393, roughness: 0.6 });
-            var pantsMat = new THREE.MeshStandardMaterial({ color: 0x34495e, roughness: 0.8 });
-            
-            // 大佬專屬西裝
-            var suitMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
 
             var sBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.3, 0.6), maleMat);
             sBody.position.set(0, 1.05, 0); sBody.castShadow = true; solo.add(sBody);
@@ -3477,6 +3445,37 @@
             var workDesk = new THREE.Group();
             solo.add(workDesk);
 
+            // ==========================================
+            // ★ 老闆巡視 3D 模型 ★
+            // ==========================================
+            var bossGroup = new THREE.Group();
+            bossGroup.visible = false; 
+            bossGroup.scale.set(1.7, 1.7, 1.7); 
+            bossGroup.position.z = 1.5; // 企喺公仔後面
+            scene.add(bossGroup);
+            
+            var bossSuitMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 }); 
+            
+            // 老闆身體
+            var bBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 0.7), bossSuitMat);
+            bBody.position.set(0, 1.1, 0); bBody.castShadow = true; bossGroup.add(bBody);
+            
+            // 老闆頭
+            var bHead = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), skinMat);
+            bHead.position.set(0, 2.1, 0); bHead.castShadow = true; bossGroup.add(bHead);
+            
+            // 老闆黑超
+            var bGlasses = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 0.1), matDark);
+            bGlasses.position.set(0, 2.15, 0.45); bossGroup.add(bGlasses);
+            
+            // 老闆地中海禿頭
+            var bHair = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.1, 8, 16), hairMat);
+            bHair.rotation.x = Math.PI / 2; bHair.position.set(0, 2.35, 0); bossGroup.add(bHair);
+            
+            // 老闆腳
+            var bLegL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), bossSuitMat); bLegL.position.set(-0.3, 0.4, 0); bLegL.castShadow = true; bossGroup.add(bLegL);
+            var bLegR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), bossSuitMat); bLegR.position.set(0.3, 0.4, 0); bLegR.castShadow = true; bossGroup.add(bLegR);
+
             function clearProps() {
                 while(propGroup.children.length > 0){ propGroup.remove(propGroup.children[0]); }
                 while(workDesk.children.length > 0){ workDesk.remove(workDesk.children[0]); }
@@ -3495,18 +3494,14 @@
                 cup.position.set(-0.8, 0.9, 1.2); workDesk.add(cup);
             }
 
-            // ★ 大老闆專屬道具 (紅酒與金錶) ★
             function createLuxuryTools() {
                 workDesk.visible = true;
-                // 超大老闆枱
                 var desk = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.1, 1.8), matWood);
                 desk.position.set(0, 0.75, 1.2); desk.castShadow = true; workDesk.add(desk);
-                // 桌上紅酒
                 var glass = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.25, 16), matGlass);
                 glass.position.set(0.5, 0.9, 1.0); workDesk.add(glass);
                 var wine = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.1, 16), new THREE.MeshStandardMaterial({color: 0x8b0000}));
                 wine.position.set(0.5, 0.85, 1.0); workDesk.add(wine);
-                // 筆記本電腦
                 var lapBase = new THREE.Mesh(new THREE.BoxGeometry(1, 0.05, 0.7), matMetal);
                 lapBase.position.set(-0.6, 0.82, 1.0); workDesk.add(lapBase);
                 var lapScreen = new THREE.Mesh(new THREE.BoxGeometry(1, 0.6, 0.05), matDark);
@@ -3576,7 +3571,6 @@
                     if (jobType === 'security') createSecurityTools();
                 }
 
-                // 頭部裝備
                 if (envType === "construction") {
                     var hardhat = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({color: 0xffcc00, roughness: 0.4}));
                     hardhat.position.set(0, 2.15, 0); hardhat.scale.set(1.1, 0.8, 1.3); hardhat.castShadow = true; propGroup.add(hardhat);
@@ -3589,7 +3583,6 @@
                     var capBrim = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.4), matDark);
                     capBrim.position.set(0, 2.35, 0.3); propGroup.add(capBrim);
                 } else if (envType === "luxury") {
-                    // 大佬專屬：黑超
                     var glasses = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, 0.1), matDark);
                     glasses.position.set(0, 2.05, 0.45); propGroup.add(glasses);
                 }
@@ -3612,7 +3605,6 @@
                 
                 if (solo.visible) {
                     if (currentEnv === "luxury") {
-                        // 大佬動作：單手舉杯 / 雙手抱胸
                         armR.rotation.x = -Math.PI / 2 + Math.sin(time * 2) * 0.1;
                         armL.rotation.x = -Math.PI / 4;
                         sBody.position.y = 1.05;
@@ -3638,6 +3630,36 @@
                         }
                     }
                 }
+
+                // ==========================================
+                // ★ 老闆巡視動畫 ★
+                // ==========================================
+                if (bossGroup.visible) {
+                    if (bossStopTimer > 0) {
+                        // 停低盯住你
+                        bossStopTimer -= 1/60;
+                        bossGroup.rotation.y = 0; // 面向正前方
+                        bLegL.rotation.x = 0; bLegR.rotation.x = 0; // 腳靜止
+                    } else {
+                        // 左右踱步
+                        bossGroup.position.x += bossDir * 0.03;
+                        bossGroup.rotation.y = bossDir === 1 ? Math.PI/2 : -Math.PI/2;
+                        
+                        // 模擬行路
+                        bLegL.rotation.x = Math.sin(time * 10) * 0.3;
+                        bLegR.rotation.x = -Math.sin(time * 10) * 0.3;
+                        
+                        // 行到邊緣就掉頭
+                        if (bossGroup.position.x > 4) bossDir = -1;
+                        if (bossGroup.position.x < -4) bossDir = 1;
+                        
+                        // 隨機停低
+                        if (Math.random() < 0.01) {
+                            bossStopTimer = 2 + Math.random() * 2; // 停低 2-4 秒
+                        }
+                    }
+                }
+
                 renderer.render(scene, cam); 
             }
             loop();
@@ -3651,62 +3673,48 @@
                     // ==========================================
                     if (typeof timeOfDay !== 'undefined') {
                         if (timeOfDay === 0) { 
-                            // ☀️ 早晨：溫暖晨光
                             ambientLight.color.setHex(0xffe4b5); ambientLight.intensity = 0.6;
                             dirLight.color.setHex(0xffa500); dirLight.intensity = 1.0;
-                            dirLight.position.set(15, 12, 10); // 斜射
+                            dirLight.position.set(15, 12, 10); 
                             scene.fog.color.setHex(0x1a1a2e);
-                            scene.background = new THREE.Color(0x1a1a2e); // 深色背景
+                            scene.background = new THREE.Color(0x1a1a2e); 
                         } else if (timeOfDay === 1) { 
-                            // 🌤️ 中午：猛烈白光
                             ambientLight.color.setHex(0xffffff); ambientLight.intensity = 0.9;
                             dirLight.color.setHex(0xffffff); dirLight.intensity = 1.5;
-                            dirLight.position.set(10, 20, 10); // 直射
+                            dirLight.position.set(10, 20, 10); 
                             scene.fog.color.setHex(0x0a0a14);
                             scene.background = new THREE.Color(0x0a0a14);
                         } else { 
-                            // 🌙 晚上：月光與人造光
                             ambientLight.color.setHex(0x4466aa); ambientLight.intensity = 0.3;
                             dirLight.color.setHex(0x8899bb); dirLight.intensity = 0.5;
-                            dirLight.position.set(-10, 15, -10); // 背光
+                            dirLight.position.set(-10, 15, -10); 
                             scene.fog.color.setHex(0x050510);
                             scene.background = new THREE.Color(0x050510);
                         }
 
-                        // 1. 大老闆房專屬窗變色
                         if (currentEnv === "luxury") {
                             var winMesh = envGroup.getObjectByName("luxuryWindow");
                             var starsGroup = envGroup.getObjectByName("luxuryStars");
                             if (winMesh && starsGroup) {
                                 if (timeOfDay === 0) {
-                                    winMesh.material.color.setHex(0xffccaa); // 朝霞
-                                    winMesh.material.emissive.setHex(0x552200);
-                                    starsGroup.visible = false;
+                                    winMesh.material.color.setHex(0xffccaa); winMesh.material.emissive.setHex(0x552200); starsGroup.visible = false;
                                 } else if (timeOfDay === 1) {
-                                    winMesh.material.color.setHex(0x87ceeb); // 藍天
-                                    winMesh.material.emissive.setHex(0x004466);
-                                    starsGroup.visible = false;
+                                    winMesh.material.color.setHex(0x87ceeb); winMesh.material.emissive.setHex(0x004466); starsGroup.visible = false;
                                 } else {
-                                    winMesh.material.color.setHex(0x001a33); // 夜景
-                                    winMesh.material.emissive.setHex(0x001122);
-                                    starsGroup.visible = true;
+                                    winMesh.material.color.setHex(0x001a33); winMesh.material.emissive.setHex(0x001122); starsGroup.visible = true;
                                 }
                             }
                         }
 
-                        // ★ 2. 普通辦公室/老闆房專屬窗變色 ★ (呢段係你漏咗嘅)
                         if (currentEnv === "office") {
                             var officeWins = envGroup.children.filter(function(child) { return child.name === "officeWindow"; });
                             officeWins.forEach(function(w) {
                                 if (timeOfDay === 0) {
-                                    w.material.color.setHex(0xffccaa); // 朝霞
-                                    w.material.emissive.setHex(0x552200);
+                                    w.material.color.setHex(0xffccaa); w.material.emissive.setHex(0x552200);
                                 } else if (timeOfDay === 1) {
-                                    w.material.color.setHex(0x87ceeb); // 藍天
-                                    w.material.emissive.setHex(0x004466);
+                                    w.material.color.setHex(0x87ceeb); w.material.emissive.setHex(0x004466);
                                 } else {
-                                    w.material.color.setHex(0x001a33); // 夜景
-                                    w.material.emissive.setHex(0x001122);
+                                    w.material.color.setHex(0x001a33); w.material.emissive.setHex(0x001122);
                                 }
                             });
                         }
@@ -3714,7 +3722,6 @@
                     // ==========================================
 
                     var isBoss = !!player.isBoss && !player.isListed;
-                    // ★ 關鍵修復：上市後依然顯示公仔 ★
                     solo.visible = !(player.isBoss && !player.isListed); 
                     
                     var envType = "office";
@@ -3746,7 +3753,6 @@
                         var isFemale = player.gender === 'female';
                         var isLuxury = (envType === "luxury");
                         
-                        // 如果係大老闆，換成黑色西裝
                         var currentMat = isFemale ? femaleMat : maleMat;
                         if (isLuxury) currentMat = suitMat;
 
@@ -3757,6 +3763,33 @@
                         sHairMale.visible = !isFemale;
                         sHairFemaleGroup.visible = isFemale;
                     }
+
+                    // ==========================================
+                    // ★ 老闆巡視系統 (出場/退場判斷) ★
+                    // ==========================================
+                    var isWorker = (!player.isBoss && !player.isListed && player.stage === 'work');
+                    
+                    if (isWorker) {
+                        var bossChance = (timeOfDay === 2) ? 0.15 : 0.05; 
+                        
+                        if (!bossActive && Math.random() < bossChance) {
+                            bossActive = true;
+                            bossGroup.visible = true;
+                            bossGroup.position.x = Math.random() > 0.5 ? 5 : -5;
+                            bossStopTimer = 0;
+                        } else if (bossActive && Math.random() < 0.02) {
+                            bossActive = false;
+                            bossGroup.visible = false;
+                        }
+                        
+                        // 將老闆狀態傳畀外部撳掣邏輯用
+                        window.isBossWatching = (bossGroup.visible && bossStopTimer > 0);
+                    } else {
+                        bossActive = false;
+                        bossGroup.visible = false;
+                        window.isBossWatching = false;
+                    }
+                    // ==========================================
 
                 } catch (e) {}
             }, 250);
