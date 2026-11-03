@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>盲盒快遞：搞事專用</title>
+    <title>📦 盲盒快遞：地獄整蠱版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
         
@@ -18,62 +18,43 @@
         .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         .active { display: flex; }
 
-        /* 場景一：整蠱者設定 */
-        #setup-screen h1 { color: #00d2d3; text-shadow: 0 0 20px #00d2d3; font-size: 24px; }
-        input {
-            padding: 10px; font-size: 16px; border-radius: 5px; border: none; outline: none;
-            background: #1f2833; color: #fff; text-align: center; margin: 10px 0;
-        }
+        /* 通用按鈕 */
         button {
             padding: 15px 30px; background: #ff4757; color: #fff; border: none;
             font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: bold; cursor: pointer;
             border-radius: 5px; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); transition: all 0.2s;
         }
         button:active { transform: scale(0.95); }
-
-        /* 場景二：包裹外觀 */
-        .box-container { cursor: pointer; transition: transform 0.2s; }
-        .box-container:active { transform: scale(0.95); }
-        .box-icon {
-            font-size: 80px; animation: float 2s infinite ease-in-out;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        input {
+            padding: 12px; font-size: 16px; border-radius: 5px; border: 2px solid #00d2d3; outline: none;
+            background: #1f2833; color: #fff; text-align: center; margin: 15px 0; width: 80%; max-width: 300px;
         }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        .to-text { font-size: 20px; color: #ffd32a; margin-bottom: 20px; text-shadow: 0 0 10px #ffd32a; }
-        .hint-text { color: #a4b0be; font-size: 12px; margin-top: 15px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
-        /* 場景三：驚嚇畫面 */
+        /* 場景一：設定 */
+        #setup-screen h1 { color: #00d2d3; text-shadow: 0 0 20px #00d2d3; font-size: 24px; }
+        
+        /* 場景二：包裹 */
+        .box-container { cursor: pointer; transition: transform 0.2s; margin-top: 20px; }
+        .box-container:active { transform: scale(0.9); }
+        .box-icon { font-size: 100px; animation: float 2s infinite ease-in-out; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
+        
+        .to-text { font-size: 22px; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; padding: 0 20px; }
+
+        /* 場景三：驚嚇 */
         #scare-screen { background: #000; z-index: 100; }
-        .ghost-face {
-            font-size: 150px; color: #ff0000; text-shadow: 0 0 50px #ff0000;
-            animation: shake 0.1s infinite;
-        }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
-        }
+        .ghost-face { font-size: 150px; color: #ff0000; text-shadow: 0 0 50px #ff0000; animation: shake 0.1s infinite; }
+        @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, 2px); } }
         .flash-bg { animation: flash 0.2s infinite; }
         @keyframes flash { 0%, 100% { background: #000; } 50% { background: #ff0000; } }
 
         /* 場景四：長按解鎖 */
-        #unlock-screen { background: rgba(0,0,0,0.95); z-index: 90; }
-        #unlock-screen h2 { color: #ff4757; font-size: 20px; margin-bottom: 10px; }
-        #unlock-screen p { color: #a4b0be; font-size: 14px; }
+        #unlock-screen { background: rgba(10,10,26,0.98); z-index: 90; }
         .hold-btn {
             margin-top: 30px; width: 150px; height: 150px; border-radius: 50%;
             background: #1f2833; border: 4px solid #ff4757; color: #ff4757;
             display: flex; align-items: center; justify-content: center; font-size: 20px;
-            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3); position: relative;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3); position: relative; cursor: pointer;
         }
         .progress-ring {
             position: absolute; top: -4px; left: -4px; width: 150px; height: 150px;
@@ -81,62 +62,99 @@
             border-top-color: #00d2d3; transform: rotate(-90deg); transition: all 0.1s linear;
         }
 
-        /* 場景五：復仇 */
+        /* 場景五：假病毒清理 */
+        #virus-screen { background: #000; z-index: 95; font-family: monospace; color: #2ed573; }
+        .terminal { width: 90%; max-width: 500px; background: #111; padding: 20px; border-radius: 10px; border: 2px solid #2ed573; text-align: left; font-size: 14px; box-shadow: 0 0 20px rgba(46, 213, 115, 0.3); }
+        .term-line { margin-bottom: 10px; }
+        .term-warning { color: #ff4757; font-weight: bold; }
+        .progress-bar-bg { width: 100%; height: 20px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 15px; }
+        .progress-bar-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.1s; }
+
+        /* 場景六：逃跑按鈕 */
+        #runaway-screen { background: #0a0a1a; z-index: 85; }
+        #runaway-btn {
+            position: absolute; padding: 20px 40px; background: #00d2d3; color: #000;
+            font-size: 24px; border-radius: 50px; font-weight: bold; transition: all 0.2s;
+            box-shadow: 0 0 20px #00d2d3;
+        }
+
+        /* 場景七：結算/復仇 */
         #revenge-screen { background: #0a0a1a; z-index: 80; }
         #revenge-screen h1 { color: #2ed573; text-shadow: 0 0 20px #2ed573; }
-        #revenge-link { width: 80%; max-width: 400px; padding: 10px; background: #1f2833; color: #00d2d3; word-break: break-all; font-size: 12px; border-radius: 5px; margin: 10px 0; }
+        #revenge-link { width: 80%; max-width: 400px; padding: 10px; background: #1f2833; color: #00d2d3; word-break: break-all; font-size: 12px; border-radius: 5px; margin: 15px 0; }
     </style>
 </head>
 <body>
 
-    <!-- 場景一：設定頁面 (只有整蠱者會見到) -->
+    <!-- 1. 整蠱者設定 -->
     <div id="setup-screen" class="screen active">
         <h1>📦 惡魔快遞局</h1>
-        <p>輸入你想整蠱嘅朋友個名：</p>
+        <p style="color:#a4b0be;">輸入你想整蠱嘅朋友個名：</p>
         <input type="text" id="target-name" placeholder="例如：阿明" maxlength="10">
-        <button onclick="generateLink()">生成專屬惡魔連結</button>
-        <p style="font-size: 10px; color: #a4b0be; margin-top: 20px;">將生成嘅連結傳送俾佢，等佢拆快遞。</p>
+        <button onclick="generateLink()">生成地獄連結</button>
+        <p style="font-size: 10px; color: #a4b0be; margin-top: 20px;">傳送俾佢，等佢體驗下咩叫絕望。</p>
     </div>
 
-    <!-- 場景二：受害者見到嘅包裹 (透過 URL 參數觸發) -->
+    <!-- 2. 受害者包裹 -->
     <div id="box-screen" class="screen">
         <p class="to-text" id="receiver-name"></p>
         <div class="box-container" onclick="openBox()">
-            <div class="box-icon">📦</div>
-            <p class="hint-text">點擊拆開包裹</p>
+            <div class="box-icon">🎁</div>
+            <p style="color:#a4b0be; font-size:14px;">點擊拆開包裹</p>
         </div>
     </div>
 
-    <!-- 場景三：驚嚇畫面 -->
+    <!-- 3. 驚嚇畫面 -->
     <div id="scare-screen" class="screen">
         <div class="ghost-face">👁️</div>
         <h1 style="color: #ff4757; font-size: 40px; margin-top: 20px;">SYSTEM HACKED</h1>
+        <p id="scare-name" style="color:#fff; font-size:20px;"></p>
     </div>
 
-    <!-- 場景四：長按解鎖 -->
+    <!-- 4. 長按解鎖 -->
     <div id="unlock-screen" class="screen">
-        <h2>⚠️ 系統已被病毒入侵</h2>
-        <p>請長按下方按鈕 10 秒解除威脅</p>
+        <h2 style="color: #ff4757;">⚠️ 病毒已入侵系統</h2>
+        <p style="color: #a4b0be;">請長按下方按鈕 5 秒解除威脅</p>
         <div class="hold-btn" id="hold-btn">
             <div class="progress-ring" id="progress-ring"></div>
             長按解鎖
         </div>
     </div>
 
-    <!-- 場景五：復仇 -->
+    <!-- 5. 假病毒清理 -->
+    <div id="virus-screen" class="screen">
+        <div class="terminal" id="terminal">
+            <div class="term-line">> 正在掃描系統...</div>
+            <div class="term-line term-warning" id="term-alert" style="display:none;">> ⚠️ 發現 99+ 個致命病毒！</div>
+            <div class="term-line" id="term-del" style="display:none;">> 正在刪除相簿中嘅珍貴回憶...</div>
+            <div class="term-line" id="term-wa" style="display:none;">> 正在轉發此連結俾 WhatsApp 聯絡人...</div>
+            <div class="term-line" id="term-money" style="display:none;">> 正在扣除銀行戶口 $9,999...</div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        </div>
+    </div>
+
+    <!-- 6. 逃跑按鈕 -->
+    <div id="runaway-screen" class="screen">
+        <h1 style="color:#f1c40f; font-size: 24px;">系統需要你同意以下條款</h1>
+        <p style="color:#a4b0be; font-size: 14px;">(同意後即代表你自願放棄所有財產)</p>
+        <button id="runaway-btn">同意</button>
+    </div>
+
+    <!-- 7. 復仇 -->
     <div id="revenge-screen" class="screen">
-        <h1>😈 你被整蠱了！</h1>
-        <p style="color: #a4b0be;">想報仇？將呢條復仇連結傳送俾下一個受害者！</p>
+        <div style="font-size: 80px;" class="box-icon">🤡</div>
+        <h1 style="margin-top:10px;">😈 你被整蠱了！</h1>
+        <p style="color: #a4b0be; padding: 0 20px;">你已經成功被騙！想報仇？將呢條復仇連結傳送俾下一個受害者！</p>
         <div id="revenge-link"></div>
-        <button onclick="copyRevengeLink()" style="margin-top: 20px;">複製復仇連結</button>
+        <button onclick="copyRevengeLink()">複製復仇連結</button>
     </div>
 
     <script>
-        // --- 音效 (Web Audio API) ---
+        // --- 音效系統 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
         function playScareSound() {
             if(audioCtx.state === 'suspended') audioCtx.resume();
-            // 模擬恐怖警報聲
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sawtooth';
@@ -146,50 +164,53 @@
             gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
             osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-
-            // 加上手機震動
             if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
         }
 
-        // --- 檢查 URL 參數 ---
+        function playBeep() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        // --- URL 參數檢查 ---
         const urlParams = new URLSearchParams(window.location.search);
         const target = urlParams.get('to');
+        let targetName = target ? decodeURIComponent(target) : "你";
 
         if (target) {
-            // 有參數，受害者進入
             document.getElementById('setup-screen').classList.remove('active');
             document.getElementById('box-screen').classList.add('active');
-            document.getElementById('receiver-name').innerText = `收件人：${target}`;
+            document.getElementById('receiver-name').innerText = `📦 收件人：${targetName}`;
+            document.getElementById('scare-name').innerText = `晚安啦，${targetName}！`;
         } else {
-            // 冇參數，進入設定頁面
             document.getElementById('setup-screen').classList.add('active');
         }
 
-        // --- 整蠱者生成連結 ---
+        // --- 1. 生成連結 ---
         function generateLink() {
             let name = document.getElementById('target-name').value.trim();
-            if (!name) name = "你";
+            if (!name) name = "你個好朋友";
             
-            // 將名字進行 URL 編碼，防止特殊字符破壞連結
-            let encodedName = encodeURIComponent(name);
             let baseUrl = window.location.href.split('?')[0];
-            let newUrl = `${baseUrl}?to=${encodedName}`;
+            let newUrl = `${baseUrl}?to=${encodeURIComponent(name)}`;
             
-            // 顯示連結並提示複製
             navigator.clipboard.writeText(newUrl).then(() => {
-                alert(`已複製連結！\n請將呢條 Link 傳送俾「${name}」：\n\n${newUrl}`);
+                alert(`已複製連結！\n快啲傳送俾「${name}」啦：\n\n${newUrl}`);
             }).catch(() => {
                 prompt(`請手動複製連結傳送俾「${name}」：`, newUrl);
             });
         }
 
-        // --- 受害者拆箱 ---
-        let isScared = false;
+        // --- 2. 拆箱與驚嚇 ---
         function openBox() {
-            if (isScared) return;
-            isScared = true;
-            
-            // 切換到驚嚇畫面
             document.getElementById('box-screen').classList.remove('active');
             const scareScreen = document.getElementById('scare-screen');
             scareScreen.classList.add('active');
@@ -197,15 +218,14 @@
             
             playScareSound();
 
-            // 3秒後切換到長按解鎖畫面
             setTimeout(() => {
                 scareScreen.classList.remove('active');
                 scareScreen.classList.remove('flash-bg');
                 document.getElementById('unlock-screen').classList.add('active');
-            }, 3000);
+            }, 2500);
         }
 
-        // --- 長按解鎖機制 ---
+        // --- 3. 長按解鎖 (5秒) ---
         let holdTimer = null;
         let holdProgress = 0;
         const holdBtn = document.getElementById('hold-btn');
@@ -216,16 +236,18 @@
             if (holdTimer) return;
             
             holdTimer = setInterval(() => {
-                holdProgress += 2; // 每次加 2%
+                holdProgress += 2;
                 let deg = (holdProgress / 100) * 360;
                 progressRing.style.transform = `rotate(${deg - 90}deg)`;
                 
+                if (holdProgress % 10 === 0) playBeep();
+
                 if (holdProgress >= 100) {
                     clearInterval(holdTimer);
                     holdTimer = null;
-                    unlockSuccess();
+                    startVirusCleanup();
                 }
-            }, 100); // 100ms * (100/2) = 5000ms = 5秒 (可以改更長)
+            }, 100);
         }
 
         function stopHold(e) {
@@ -233,7 +255,6 @@
             if (holdTimer) {
                 clearInterval(holdTimer);
                 holdTimer = null;
-                // 冇按到底就重置
                 holdProgress = 0;
                 progressRing.style.transform = `rotate(-90deg)`;
             }
@@ -245,12 +266,65 @@
         holdBtn.addEventListener('mouseleave', stopHold);
         holdBtn.addEventListener('touchend', stopHold);
 
-        function unlockSuccess() {
+        // --- 4. 假病毒清理 ---
+        function startVirusCleanup() {
             document.getElementById('unlock-screen').classList.remove('active');
-            document.getElementById('revenge-screen').classList.add('active');
+            document.getElementById('virus-screen').classList.add('active');
             
-            // 生成復仇連結 (隨機一個新名)
-            let randomNames = ["下一個受害者", "你最好的朋友", "群組裡的人", "阿邊個"];
+            const termAlert = document.getElementById('term-alert');
+            const termDel = document.getElementById('term-del');
+            const termWa = document.getElementById('term-wa');
+            const termMoney = document.getElementById('term-money');
+            const progressFill = document.getElementById('progress-fill');
+
+            setTimeout(() => { termAlert.style.display = 'block'; playBeep(); }, 1000);
+            setTimeout(() => { termDel.style.display = 'block'; playBeep(); }, 2500);
+            setTimeout(() => { termWa.style.display = 'block'; playBeep(); }, 4000);
+            setTimeout(() => { termMoney.style.display = 'block'; playBeep(); }, 5500);
+
+            // 進度條加到 99% 就卡住
+            let progress = 0;
+            let interval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress >= 99) {
+                    progress = 99;
+                    clearInterval(interval);
+                    setTimeout(startRunawayGame, 1500);
+                }
+                progressFill.style.width = progress + '%';
+            }, 200);
+        }
+
+        // --- 5. 逃跑按鈕 ---
+        function startRunawayGame() {
+            document.getElementById('virus-screen').classList.remove('active');
+            document.getElementById('runaway-screen').classList.add('active');
+            
+            const btn = document.getElementById('runaway-btn');
+            const moveBtn = () => {
+                let x = Math.random() * (window.innerWidth - 150);
+                let y = Math.random() * (window.innerHeight - 100);
+                btn.style.left = x + 'px';
+                btn.style.top = y + 'px';
+            };
+
+            // 手機觸控同電腦滑鼠都會觸發逃跑
+            btn.addEventListener('mouseover', moveBtn);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
+        }
+
+        // 如果好彩撳中咗同意 (或者放棄)
+        document.getElementById('runaway-btn').addEventListener('click', () => {
+            finishPrank();
+        });
+
+        // --- 6. 結算與復仇 ---
+        function finishPrank() {
+            document.getElementById('runaway-screen').classList.remove('active');
+            document.getElementById('revenge-screen').classList.add('active');
+            playScareSound();
+            
+            let randomNames = ["下一個受害者", "你最好的朋友", "群組裡的人", "阿邊個", "個天", "你老闆"];
             let randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
             let baseUrl = window.location.href.split('?')[0];
             let revengeUrl = `${baseUrl}?to=${encodeURIComponent(randomName)}`;
