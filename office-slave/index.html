@@ -3120,13 +3120,104 @@
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             host.appendChild(renderer.domElement);
 
-            // 縮放控制
+            // ==========================================
+            // ★ 旋轉與縮放控制 (全方位睇場景) ★
+            // ==========================================
+            var camRadius = 26; 
+            var camTheta = Math.PI / 4; // 水平旋轉角 (左右)
+            var camPhi = 0.92;          // 垂直俯仰角 (上下)
+            var target = new THREE.Vector3(0, 1, 0); // 鏡頭望住邊度 (中心點)
+
+            function updateCamera() {
+                var x = camRadius * Math.sin(camPhi) * Math.cos(camTheta);
+                var y = camRadius * Math.cos(camPhi);
+                var z = camRadius * Math.sin(camPhi) * Math.sin(camTheta);
+                cam.position.set(x, y, z);
+                cam.lookAt(target);
+                cam.updateProjectionMatrix();
+            }
+            updateCamera();
+
+            // 1. 滑鼠控制 (拖拽旋轉 + 滾輪縮放)
+            var isDragging = false;
+            var prevMouseX = 0, prevMouseY = 0;
+
+            host.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                var deltaX = e.clientX - prevMouseX;
+                var deltaY = e.clientY - prevMouseY;
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+
+                camTheta -= deltaX * 0.01;
+                camPhi -= deltaY * 0.01;
+                
+                // 限制上下角度，避免轉到地底或者頭頂
+                camPhi = Math.max(0.2, Math.min(1.4, camPhi));
+                updateCamera();
+            });
+
+            window.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+
             host.addEventListener('wheel', function(e) {
                 e.preventDefault();
                 if(e.deltaY > 0) cam.zoom = Math.max(0.6, cam.zoom - 0.1);
                 else cam.zoom = Math.min(3.0, cam.zoom + 0.1);
                 cam.updateProjectionMatrix();
             }, { passive: false });
+
+            // 2. 手機觸控 (單指旋轉 + 雙指縮放)
+            var initialDistance = 0;
+            var initialZoom = 1;
+            var touchStartX = 0, touchStartY = 0;
+            var isRotating = false;
+
+            host.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    isRotating = true;
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    isRotating = false;
+                    var dx = e.touches[0].clientX - e.touches[1].clientX;
+                    var dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialDistance = Math.sqrt(dx * dx + dy * dy);
+                    initialZoom = cam.zoom;
+                }
+            }, { passive: false });
+
+            host.addEventListener('touchmove', function(e) {
+                if (e.touches.length === 1 && isRotating) {
+                    e.preventDefault();
+                    var deltaX = e.touches[0].clientX - touchStartX;
+                    var deltaY = e.touches[0].clientY - touchStartY;
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+
+                    camTheta -= deltaX * 0.015;
+                    camPhi -= deltaY * 0.015;
+                    camPhi = Math.max(0.2, Math.min(1.4, camPhi));
+                    updateCamera();
+                } else if (e.touches.length === 2) {
+                    e.preventDefault();
+                    var dx = e.touches[0].clientX - e.touches[1].clientX;
+                    var dy = e.touches[0].clientY - e.touches[1].clientY;
+                    var distance = Math.sqrt(dx * dx + dy * dy);
+                    if(initialDistance > 0) {
+                        cam.zoom = Math.max(0.6, Math.min(3.0, initialZoom * (distance / initialDistance)));
+                        cam.updateProjectionMatrix();
+                    }
+                }
+            }, { passive: false });
+            // ==========================================
 
             var initialDistance = 0, initialZoom = 1;
             host.addEventListener('touchstart', function(e) {
