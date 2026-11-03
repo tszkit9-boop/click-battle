@@ -511,6 +511,7 @@
             animation: breathe 2s infinite ease-in-out;
             z-index: 5;
             transform: scale(0.65);
+            display: none !important; /* 👈 加呢句，隱藏 2D 公仔 */
         }
 
         @keyframes breathe {
@@ -3088,8 +3089,8 @@
         };
     </script> <!-- 👈 閂返主遊戲邏輯嘅 script -->
 
-    <!-- ===== Three.js 3D 場景層 ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script> <!-- 👈 引入 Three.js 庫 -->
+    <!-- ===== Three.js 3D 場景層（3D公仔完整版） ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
     <script>
     (function () {
         try {
@@ -3154,12 +3155,15 @@
             // 材質
             var deskMat  = new THREE.MeshLambertMaterial({ color: 0x9e805a });
             var monMat   = new THREE.MeshLambertMaterial({ color: 0x4fc3f7, emissive: 0x0a3550 });
-            var bodyMat  = new THREE.MeshLambertMaterial({ color: 0x3498db });
+            var maleBodyMat = new THREE.MeshLambertMaterial({ color: 0x3498db });
+            var femaleBodyMat = new THREE.MeshLambertMaterial({ color: 0xe84393 });
             var mgrMat   = new THREE.MeshLambertMaterial({ color: 0xf1c40f, emissive: 0x4a3800 });
             var optMat   = new THREE.MeshLambertMaterial({ color: 0xe84393, emissive: 0x4a0a2a });
             var headMat  = new THREE.MeshLambertMaterial({ color: 0xf5cba7 });
             var slackMat = new THREE.MeshLambertMaterial({ color: 0xffb300, emissive: 0x664400 });
-            var femaleMat= new THREE.MeshLambertMaterial({ color: 0xe84393 });
+            var hairMat  = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+            var tieMat   = new THREE.MeshLambertMaterial({ color: 0xc0392b });
+            var legMat   = new THREE.MeshLambertMaterial({ color: 0x34495e });
 
             // 預設環境枱
             var basePos = [
@@ -3194,7 +3198,7 @@
                 var mon = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.5, 0.06), monMat);
                 mon.position.set(0, 1.12, -0.38); g.add(mon);
 
-                var body = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.4), bodyMat);
+                var body = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.65, 0.4), maleBodyMat);
                 body.position.set(0, 1.12, 0.32); g.add(body);
 
                 var head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), headMat);
@@ -3210,24 +3214,60 @@
                 staffGroups.push({ g: g, body: body, mark: mark });
             });
 
-            // 打工仔單人
+            // ==========================================
+            // 3D 主角 (打工仔) 
+            // ==========================================
             var solo = new THREE.Group();
+            
+            // 專屬枱
             var soloDesk = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 1.3), deskMat);
             soloDesk.position.set(0, 0.78, 0.5); solo.add(soloDesk);
             var soloMon = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.5, 0.06), monMat);
             soloMon.position.set(0, 1.12, 0.12); solo.add(soloMon);
 
-            var sBody = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.15, 0.6), bodyMat);
-            sBody.position.set(0, 0.95, -0.4); solo.add(sBody);
-            var sHead = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), headMat);
-            sHead.position.set(0, 1.85, -0.4); solo.add(sHead);
-            var sHair = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
-            sHair.position.set(0, 2.02, -0.4); solo.add(sHair);
+            // 身體
+            var sBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.3, 0.65), maleBodyMat);
+            sBody.position.set(0, 1.05, -0.4); solo.add(sBody);
+
+            // 頭
+            var sHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), headMat);
+            sHead.position.set(0, 2.0, -0.4); solo.add(sHead);
+
+            // 頭髮 (男短髮 / 女長髮)
+            var sHairMale = new THREE.Mesh(new THREE.SphereGeometry(0.47, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.2), hairMat);
+            sHairMale.position.set(0, 2.05, -0.4); solo.add(sHairMale);
+            
+            var sHairFemale = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
+            sHairFemale.position.set(0, 2.05, -0.4);
+            sHairFemale.scale.set(1, 1.6, 1); // 拉長模擬長髮
+            sHairFemale.visible = false; solo.add(sHairFemale);
+
+            // 紅色領帶 (男)
+            var sTie = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.05), tieMat);
+            sTie.position.set(0, 1.15, -0.05); solo.add(sTie);
+
+            // 眼睛
+            var eyeGeo = new THREE.SphereGeometry(0.06, 8, 8);
+            var eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            var eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.15, 2.05, -0.02); solo.add(eyeL);
+            var eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.15, 2.05, -0.02); solo.add(eyeR);
+
+            // 手
+            var armGeo = new THREE.BoxGeometry(0.25, 0.9, 0.3);
+            var armL = new THREE.Mesh(armGeo, maleBodyMat); armL.position.set(-0.7, 1.0, -0.4); solo.add(armL);
+            var armR = new THREE.Mesh(armGeo, maleBodyMat); armR.position.set(0.7, 1.0, -0.4); solo.add(armR);
+
+            // 腳
+            var legGeo = new THREE.BoxGeometry(0.35, 0.7, 0.35);
+            var legL = new THREE.Mesh(legGeo, legMat); legL.position.set(-0.3, 0.35, -0.4); solo.add(legL);
+            var legR = new THREE.Mesh(legGeo, legMat); legR.position.set(0.3, 0.35, -0.4); solo.add(legR);
 
             solo.position.set(0, 0, 0);
             scene.add(solo);
 
-            // 上市大廈
+            // ==========================================
+            // 上市大廈 / 飛機 / 遊艇
+            // ==========================================
             var towerMat = new THREE.MeshLambertMaterial({ color: 0x2ecc71, emissive: 0x0a3d24 });
             var tower = new THREE.Mesh(new THREE.BoxGeometry(4, 9, 4), towerMat);
             tower.position.set(0, 4.5, -14);
@@ -3237,7 +3277,6 @@
             towerTop.rotation.y = Math.PI / 4;
             towerTop.visible = false; scene.add(towerTop);
 
-            // 私人飛機 / 遊艇
             var jet = new THREE.Mesh(new THREE.ConeGeometry(0.6, 3.2, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }));
             jet.rotation.z = Math.PI / 2;
             jet.position.set(-10, 6, -6);
@@ -3247,8 +3286,7 @@
             yacht.position.set(10, 0.5, -6);
             yacht.visible = false; scene.add(yacht);
 
-            window.__scene3d = { scene: scene, camera: cam, renderer: renderer };
-
+            // 調整大小 & 渲染循環
             function resize() {
                 var a = W() / H();
                 cam.left = -VIEW * a; cam.right = VIEW * a; cam.top = VIEW; cam.bottom = -VIEW;
@@ -3258,7 +3296,21 @@
             window.addEventListener('resize', resize);
             setTimeout(resize, 120); setTimeout(resize, 600);
 
-            function loop() { requestAnimationFrame(loop); renderer.render(scene, cam); }
+            var clock = new THREE.Clock();
+
+            function loop() { 
+                requestAnimationFrame(loop); 
+                
+                // 加入呼吸浮動動畫
+                var time = clock.getElapsedTime();
+                if (solo.visible) {
+                    solo.position.y = Math.sin(time * 2) * 0.05; // 上下浮動
+                    armL.rotation.x = Math.sin(time * 2) * 0.1;
+                    armR.rotation.x = -Math.sin(time * 2) * 0.1;
+                }
+
+                renderer.render(scene, cam); 
+            }
             loop();
 
             // 實時同步遊戲狀態
@@ -3270,8 +3322,23 @@
                     var n = isBoss ? Math.min(player.staffList.length, 12) : 0;
 
                     solo.visible = !isBoss && !player.isListed;
+                    
                     if (solo.visible) {
-                        sBody.material = (player.gender === 'female') ? femaleMat : bodyMat;
+                        var isFemale = player.gender === 'female';
+                        
+                        // 切換衣服顏色
+                        sBody.material = isFemale ? femaleBodyMat : maleBodyMat;
+                        armL.material = isFemale ? femaleBodyMat : maleBodyMat;
+                        armR.material = isFemale ? femaleBodyMat : maleBodyMat;
+                        
+                        // 切換髮型同領帶
+                        sHairMale.visible = !isFemale;
+                        sHairFemale.visible = isFemale;
+                        sTie.visible = !isFemale;
+                        
+                        // 女仔高跟鞋
+                        legL.material = isFemale ? tieMat : legMat;
+                        legR.material = isFemale ? tieMat : legMat;
                     }
 
                     tower.visible = !!player.isListed;
@@ -3286,7 +3353,7 @@
                             var s = player.staffList[i];
                             var txt = (s && s.status) ? s.status.text : '';
                             o.mark.visible = (txt === '摸魚中' || txt === '偷懶中');
-                            o.body.material = s.isManager ? mgrMat : (s.hasOptions ? optMat : bodyMat);
+                            o.body.material = s.isManager ? mgrMat : (s.hasOptions ? optMat : maleBodyMat);
                         }
                     }
 
