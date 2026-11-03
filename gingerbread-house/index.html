@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎄 聖誕薑餅人建屋大亨 🍪</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+    
+    * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+    body { 
+        margin: 0; 
+        background: radial-gradient(circle at center, #1a2a40, #0a1120); 
+        color: #fff; 
+        font-family: 'Fredoka One', 'PingFang HK', cursive; 
+        display: flex; flex-direction: column; height: 100vh; overflow: hidden; align-items: center; justify-content: center; 
+    }
+    
+    canvas { border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.1); }
+    
+    .btn { 
+        padding: 15px 40px; background: linear-gradient(to bottom, #e74c3c, #c0392b); color: #fff; border: 3px solid #f1c40f; border-radius: 40px; 
+        font-size: 20px; font-family: inherit; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 #8e44ad, 0 10px 20px rgba(0,0,0,0.4); transition: 0.1s; margin-top: 20px;
+    }
+    .btn:active { transform: translateY(6px); box-shadow: none; }
+    .btn.share { background: linear-gradient(to bottom, #2ecc71, #27ae60); box-shadow: 0 6px 0 #145a32; margin-left: 10px; }
+    
+    .ui-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 15px; border: 2px solid #2ecc71; text-align: center; pointer-events: none; box-shadow: 0 0 15px rgba(46, 204, 113, 0.3); }
+    .ui-panel h2 { margin: 0; color: #f1c40f; font-size: 20px; text-shadow: 0 2px 4px #000; }
+    .ui-panel p { margin: 5px 0 0 0; font-size: 14px; color: #ecf0f1; font-family: sans-serif; }
+    
+    .hidden { display: none !important; }
+    
+    /* 焗爐畫面 */
+    #oven-screen { position: absolute; inset: 0; background: #2c1e16; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+    #oven-fire { width: 180px; height: 180px; background: radial-gradient(circle, #ff9900, #cc0000); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 0.3s infinite alternate; cursor: pointer; box-shadow: 0 0 50px #ff9900; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+    #oven-text { font-size: 26px; margin-top: 30px; color: #ffcc00; text-align: center; text-shadow: 0 0 15px #ffcc00; font-family: 'Fredoka One'; }
+    #oven-progress { width: 80%; height: 20px; background: #000; border-radius: 10px; margin-top: 20px; overflow: hidden; border: 2px solid #f1c40f; }
+    #oven-bar { width: 0%; height: 100%; background: linear-gradient(to right, #e74c3c, #f1c40f); transition: width 0.1s; }
+
+    /* 建屋 UI */
+    #score-ui { position: absolute; top: 20px; right: 20px; text-align: right; text-shadow: 0 3px 6px #000; z-index: 5; pointer-events: none; }
+    #score-ui h1 { margin: 0; color: #2ecc71; font-size: 36px; }
+    #score-ui p { margin: 0; font-size: 16px; color: #f1c40f; font-family: sans-serif; }
+    
+    #perfect-text { 
+        position: absolute; top: 30%; left: 50%; transform: translateX(-50%); 
+        color: #f1c40f; font-size: 40px; text-shadow: 0 0 20px #f1c40f, 0 0 40px #e74c3c; 
+        opacity: 0; pointer-events: none; z-index: 20; transition: opacity 0.2s, top 0.2s; 
+        font-family: 'Fredoka One';
+    }
+    
+    /* 隱藏嘅分享畫布 */
+    #shareCanvas { display: none; }
+</style>
+</head>
+<body>
+
+    <!-- 階段一：畫圖 -->
+    <div id="draw-phase" style="text-align:center;">
+        <div class="ui-panel" style="position:relative; margin-bottom:20px; top:0; left:0;">
+            <h2>🧑‍🍳 畫出你嘅薑餅人</h2>
+            <p>畫得越闊，積木底座越穩！</p>
+        </div>
+        <canvas id="drawCanvas" width="300" height="300" style="background:#fdf5e6; cursor:crosshair; border: 5px solid #e74c3c;"></canvas>
+        <br>
+        <button class="btn" id="bakeBtn">🔥 送入焗爐</button>
+    </div>
+
+    <!-- 階段二：焗爐 -->
+    <div id="oven-screen">
+        <div id="oven-fire"><span style="font-size: 60px; text-shadow: 0 0 20px #fff;">🔥</span></div>
+        <div id="oven-text">狂撳畫面幫佢加熱！</div>
+        <div id="oven-progress"><div id="oven-bar"></div></div>
+    </div>
+
+    <!-- 階段三：建屋 -->
+    <div id="build-phase" class="hidden">
+        <div class="ui-panel" style="top:20px; left:20px;">
+            <h2>🎄 點擊畫面放薑餅人</h2>
+            <p>目標：疊夠 50 層！</p>
+        </div>
+        <div id="score-ui">
+            <h1 id="height-val">0m</h1>
+            <p>得分: <span id="score-val">0</span></p>
+        </div>
+        <div id="perfect-text">PERFECT!</div>
+        <canvas id="buildCanvas" width="400" height="550" style="background:#0a1120;"></canvas>
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <button class="btn" id="resetBtn">🔄 再玩一次</button>
+            <button class="btn share hidden" id="shareBtn">📸 分享截圖</button>
+        </div>
+    </div>
+
+    <!-- 用於生成分享圖片的隱藏畫布 -->
+    <canvas id="shareCanvas"></canvas>
+
+<script>
+    // --- 音效系統 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        let t = audioCtx.currentTime;
+        
+        if (type === 'drop') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+            gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            osc.start(); osc.stop(t + 0.1);
+        } else if (type === 'perfect') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(659.25, t); osc.frequency.setValueAtTime(659.25, t + 0.15); osc.frequency.setValueAtTime(659.25, t + 0.3);
+            gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            osc.start(); osc.stop(t + 0.5);
+        } else if (type === 'gameover') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, t); osc.frequency.exponentialRampToValueAtTime(30, t + 0.5);
+            gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            osc.start(); osc.stop(t + 0.5);
+        } else if (type === 'win') {
+            let notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                let newOsc = audioCtx.createOscillator();
+                let newGain = audioCtx.createGain();
+                newOsc.connect(newGain); newGain.connect(audioCtx.destination);
+                newOsc.type = 'square';
+                newOsc.frequency.setValueAtTime(freq, t + i*0.15);
+                newGain.gain.setValueAtTime(0.1, t + i*0.15);
+                newGain.gain.exponentialRampToValueAtTime(0.01, t + i*0.15 + 0.2);
+                newOsc.start(t + i*0.15); newOsc.stop(t + i*0.15 + 0.2);
+            });
+        }
+    }
+
+    // ==========================================
+    // 階段一：畫圖
+    // ==========================================
+    const drawCanvas = document.getElementById('drawCanvas');
+    const ctxDraw = drawCanvas.getContext('2d');
+    const bakeBtn = document.getElementById('bakeBtn');
+    
+    let isDrawing = false;
+    let paths = [];
+    let minX = 300, minY = 300, maxX = 0, maxY = 0;
+
+    drawCanvas.addEventListener('mousedown', startDraw);
+    drawCanvas.addEventListener('mousemove', draw);
+    drawCanvas.addEventListener('mouseup', () => isDrawing = false);
+    drawCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0]); });
+    drawCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+    drawCanvas.addEventListener('touchend', () => isDrawing = false);
+
+    function getPos(e) {
+        let rect = drawCanvas.getBoundingClientRect();
+        return { x: (e.clientX || e.pageX) - rect.left, y: (e.clientY || e.pageY) - rect.top };
+    }
+
+    function startDraw(e) {
+        isDrawing = true;
+        let pos = getPos(e);
+        paths.push([pos]);
+        if(pos.x < minX) minX = pos.x; if(pos.x > maxX) maxX = pos.x;
+        if(pos.y < minY) minY = pos.y; if(pos.y > maxY) maxY = pos.y;
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        let pos = getPos(e);
+        paths[paths.length - 1].push(pos);
+        if(pos.x < minX) minX = pos.x; if(pos.x > maxX) maxX = pos.x;
+        if(pos.y < minY) minY = pos.y; if(pos.y > maxY) maxY = pos.y;
+        renderDrawCanvas();
+    }
+
+    function renderDrawCanvas() {
+        ctxDraw.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        ctxDraw.strokeStyle = '#d35400';
+        ctxDraw.lineWidth = 15;
+        ctxDraw.lineCap = 'round';
+        ctxDraw.lineJoin = 'round';
+        paths.forEach(path => {
+            if (path.length < 2) return;
+            ctxDraw.beginPath();
+            ctxDraw.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) ctxDraw.lineTo(path[i].x, path[i].y);
+            ctxDraw.stroke();
+        });
+    }
+
+    // ==========================================
+    // 階段二：焗爐
+    // ==========================================
+    const ovenScreen = document.getElementById('oven-screen');
+    const ovenFire = document.getElementById('oven-fire');
+    const ovenBar = document.getElementById('oven-bar');
+    const drawPhase = document.getElementById('draw-phase');
+    const buildPhase = document.getElementById('build-phase');
+
+    let bakeProgress = 0;
+
+    bakeBtn.addEventListener('click', () => {
+        if (paths.length === 0) { alert("請先畫一個薑餅人！"); return; }
+        drawPhase.classList.add('hidden');
+        ovenScreen.style.display = 'flex';
+        bakeProgress = 0;
+        ovenBar.style.width = '0%';
+    });
+
+    ovenFire.addEventListener('click', () => {
+        bakeProgress += 15;
+        if(bakeProgress > 100) bakeProgress = 100;
+        ovenBar.style.width = bakeProgress + '%';
+        
+        if(bakeProgress < 50) ovenFire.style.background = `radial-gradient(circle, #ffcc00, #d35400)`;
+        else ovenFire.style.background = `radial-gradient(circle, #ff6600, #8e44ad)`;
+        
+        if (bakeProgress >= 100) {
+            playSound('perfect');
+            setTimeout(() => {
+                ovenScreen.style.display = 'none';
+                startBuildPhase();
+            }, 800);
+        }
+    });
+
+    // ==========================================
+    // 階段三：聖誕建屋
+    // ==========================================
+    const buildCanvas = document.getElementById('buildCanvas');
+    const ctxBuild = buildCanvas.getContext('2d');
+    const resetBtn = document.getElementById('resetBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const heightVal = document.getElementById('height-val');
+    const scoreVal = document.getElementById('score-val');
+    const perfectText = document.getElementById('perfect-text');
+
+    let blocks = [];
+    let currentBlock = null;
+    let particles = []; 
+    let isGameOver = false;
+    let isWin = false;
+    let cameraY = 0;
+    let score = 0;
+    let blockWidth = 80;
+    let blockHeight = 60;
+
+    let stars = [];
+    for(let i=0; i<80; i++) {
+        stars.push({ x: Math.random()*400, y: Math.random()*2000-1000, r: Math.random()*2+1, speed: Math.random()*0.5+0.1 });
+    }
+
+    function calculateBlockSize() {
+        let w = maxX - minX;
+        let h = maxY - minY;
+        blockWidth = Math.max(70, Math.min(120, w + 30)); 
+        blockHeight = Math.max(50, Math.min(90, h + 30));
+    }
+
+    function startBuildPhase() {
+        buildPhase.classList.remove('hidden');
+        calculateBlockSize();
+        
+        blocks = [];
+        particles = [];
+        score = 0;
+        isGameOver = false;
+        isWin = false;
+        cameraY = 0;
+        
+        shareBtn.classList.add('hidden'); // 重置時隱藏分享按鈕
+        resetBtn.style.marginLeft = '0'; // 重置按鈕居中
+        
+        blocks.push({ x: buildCanvas.width/2 - 150, y: buildCanvas.height - 40, w: 300, h: 40, color: '#e0f7fa', isBase: true });
+        
+        spawnNewBlock();
+        updateScoreUI();
+        requestAnimationFrame(updateBuild);
+    }
+
+    function spawnNewBlock() {
+        let randomX = Math.random() * (buildCanvas.width - blockWidth);
+        let colors = ['#d35400', '#e67e22', '#c0392b'];
+        currentBlock = { 
+            x: randomX, 
+            y: cameraY - 100,
+            w: blockWidth, 
+            h: blockHeight, 
+            color: colors[Math.floor(Math.random()*colors.length)],
+            driftDir: Math.random() > 0.5 ? 1 : -1,
+            driftSpeed: Math.random() * 1.5 + 1
+        };
+    }
+
+    buildCanvas.addEventListener('click', dropBlock);
+    buildCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); dropBlock(); });
+
+    function dropBlock() {
+        if (isGameOver || isWin || !currentBlock) return;
+        currentBlock.isDropping = true;
+    }
+
+    function checkCollision(r1, r2) {
+        return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
+    }
+
+    function updateScoreUI() {
+        let heightMeters = Math.max(0, Math.floor((buildCanvas.height - (cameraY + 300)) / 20));
+        heightVal.innerText = heightMeters + 'm';
+        scoreVal.innerText = score;
+    }
+
+    function showPerfect() {
+        perfectText.style.opacity = '1';
+        perfectText.style.top = '20%';
+        setTimeout(() => { perfectText.style.opacity = '0'; perfectText.style.top = '30%'; }, 800);
+    }
+
+    function createParticles(x, y) {
+        for(let i=0; i<15; i++) {
+            particles.push({
+                x: x, y: y,
+                vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8,
+                life: 1, color: Math.random() > 0.5 ? '#fff' : '#f1c40f',
+                size: Math.random()*3+1
+            });
+        }
+    }
+
+    function drawGingerbread(ctx, x, y, w, h, color) {
+        let cx = x + w/2;
+        let cy = y + h/2;
+
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#5c3a21';
+        ctx.lineWidth = 3;
+
+        let bw = w * 0.4;
+        let bh = h * 0.5;
+        ctx.beginPath();
+        ctx.roundRect(cx - bw/2, cy - bh/2 + 5, bw, bh, 10);
+        ctx.fill(); ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, y + 12, 14, 0, Math.PI*2);
+        ctx.fill(); ctx.stroke();
+
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = color;
+        
+        ctx.beginPath(); ctx.moveTo(cx - bw/2, cy); ctx.lineTo(cx - bw/2 - 15, cy + 15); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + bw/2, cy); ctx.lineTo(cx + bw/2 + 15, cy + 15); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - bw/4, cy + bh/2 + 5); ctx.lineTo(cx - bw/4 - 10, y + h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + bw/4, cy + bh/2 + 5); ctx.lineTo(cx + bw/4 + 10, y + h); ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(cx - 5, y + 10, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 5, y + 10, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, y + 15, 4, 0, Math.PI, false); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        
+        ctx.fillStyle = Math.random() > 0.5 ? '#e74c3c' : '#2ecc71';
+        ctx.beginPath(); ctx.arc(cx, cy - 2, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy + 10, 3, 0, Math.PI*2); ctx.fill();
+    }
+
+    function updateBuild() {
+        ctxBuild.clearRect(0, 0, buildCanvas.width, buildCanvas.height);
+        
+        let bgGrad = ctxBuild.createLinearGradient(0, 0, 0, buildCanvas.height);
+        bgGrad.addColorStop(0, '#0a1120');
+        bgGrad.addColorStop(1, '#1a2a40');
+        ctxBuild.fillStyle = bgGrad;
+        ctxBuild.fillRect(0, 0, buildCanvas.width, buildCanvas.height);
+
+        ctxBuild.fillStyle = 'rgba(255, 255, 220, 0.9)';
+        ctxBuild.shadowBlur = 30; ctxBuild.shadowColor = '#ffebb3';
+        ctxBuild.beginPath(); ctxBuild.arc(buildCanvas.width - 80, 80 - cameraY*0.1, 40, 0, Math.PI*2); ctxBuild.fill();
+        ctxBuild.shadowBlur = 0;
+
+        ctxBuild.fillStyle = 'rgba(255,255,255,0.7)';
+        stars.forEach(s => {
+            let screenY = s.y + cameraY * 0.2;
+            if (screenY > buildCanvas.height) { s.y -= 2000; }
+            if (screenY < -100) { s.y += 2000; }
+            ctxBuild.beginPath(); ctxBuild.arc(s.x, screenY, s.r, 0, Math.PI*2); ctxBuild.fill();
+        });
+
+        if (isGameOver || isWin) {
+            ctxBuild.fillStyle = 'rgba(0,0,0,0.85)';
+            ctxBuild.fillRect(0, 0, buildCanvas.width, buildCanvas.height);
+            ctxBuild.textAlign = 'center';
+            
+            if (isWin) {
+                ctxBuild.fillStyle = '#f1c40f';
+                ctxBuild.font = '40px Fredoka One';
+                ctxBuild.fillText('🎄 聖誕建屋成功！', buildCanvas.width/2, buildCanvas.height/2);
+                ctxBuild.fillStyle = '#fff';
+                ctxBuild.font = '20px sans-serif';
+                ctxBuild.fillText('你疊咗一座 50 層高嘅薑餅樹！', buildCanvas.width/2, buildCanvas.height/2 + 40);
+            } else {
+                ctxBuild.fillStyle = '#e74c3c';
+                ctxBuild.font = '40px Fredoka One';
+                ctxBuild.fillText('💥 薑餅人散晒！', buildCanvas.width/2, buildCanvas.height/2);
+                ctxBuild.fillStyle = '#fff';
+                ctxBuild.font = '20px sans-serif';
+                ctxBuild.fillText('最終高度: ' + heightVal.innerText, buildCanvas.width/2, buildCanvas.height/2 + 40);
+            }
+            
+            // 顯示分享按鈕
+            shareBtn.classList.remove('hidden');
+            resetBtn.style.marginLeft = '10px'; 
+            
+            return;
+        }
+
+        if (currentBlock) {
+            if (currentBlock.isDropping) {
+                currentBlock.y += 8 + (Math.abs(cameraY) / 100);
+            } else {
+                currentBlock.x += currentBlock.driftDir * currentBlock.driftSpeed;
+                if (currentBlock.x < 0) { currentBlock.x = 0; currentBlock.driftDir = 1; }
+                if (currentBlock.x + currentBlock.w > buildCanvas.width) { currentBlock.x = buildCanvas.width - currentBlock.w; currentBlock.driftDir = -1; }
+            }
+            
+            for (let i = blocks.length - 1; i >= 0; i--) {
+                let b = blocks[i];
+                if (checkCollision(currentBlock, b)) {
+                    let centerDiff = Math.abs((currentBlock.x + currentBlock.w/2) - (b.x + b.w/2));
+                    if (centerDiff < 15 && currentBlock.isDropping) {
+                        score += 50;
+                        showPerfect();
+                        playSound('perfect');
+                        createParticles(currentBlock.x + currentBlock.w/2, currentBlock.y + currentBlock.h);
+                    } else {
+                        score += 10;
+                        playSound('drop');
+                    }
+
+                    currentBlock.y = b.y - currentBlock.h;
+                    currentBlock.isDropping = false;
+                    blocks.push(currentBlock);
+                    
+                    if (blocks.length >= 51) {
+                        isWin = true;
+                        playSound('win');
+                        return;
+                    }
+
+                    currentBlock = null;
+                    updateScoreUI();
+                    setTimeout(() => { if (!isGameOver && !isWin) spawnNewBlock(); }, 300);
+                    break;
+                }
+            }
+            
+            if (currentBlock && currentBlock.y > cameraY + buildCanvas.height + 100) {
+                gameOver();
+            }
+        }
+
+        if (blocks.length > 0) {
+            let highestBlock = blocks.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
+            let targetCamY = 0;
+            if (highestBlock.y < buildCanvas.height * 0.4) {
+                targetCamY = highestBlock.y - buildCanvas.height * 0.4;
+            }
+            cameraY += (targetCamY - cameraY) * 0.1; 
+        }
+
+        let tiltAngle = Math.sin(Date.now() / 800) * 0.01 * Math.min(1, blocks.length / 20); 
+
+        ctxBuild.save();
+        ctxBuild.translate(buildCanvas.width/2, buildCanvas.height/2);
+        ctxBuild.rotate(tiltAngle);
+        ctxBuild.translate(-buildCanvas.width/2, -buildCanvas.height/2);
+        ctxBuild.translate(0, -cameraY);
+        
+        blocks.forEach(b => {
+            if (b.isBase) {
+                ctxBuild.fillStyle = '#b2ebf2';
+                ctxBuild.beginPath(); ctxBuild.roundRect(b.x, b.y, b.w, b.h, 20); ctxBuild.fill();
+                ctxBuild.fillStyle = '#e74c3c'; ctxBuild.fillRect(b.x + 40, b.y - 25, 20, 25);
+                ctxBuild.fillStyle = '#f1c40f'; ctxBuild.fillRect(b.x + 45, b.y - 25, 10, 25); ctxBuild.fillRect(b.x + 40, b.y - 15, 20, 5);
+                ctxBuild.fillStyle = '#2ecc71'; ctxBuild.fillRect(b.x + 220, b.y - 20, 25, 20);
+                ctxBuild.fillStyle = '#fff'; ctxBuild.fillRect(b.x + 220, b.y - 10, 25, 5); ctxBuild.fillRect(b.x + 230, b.y - 20, 5, 20);
+            } else {
+                drawGingerbread(ctxBuild, b.x, b.y, b.w, b.h, b.color);
+            }
+        });
+
+        if (currentBlock) {
+            ctxBuild.fillStyle = 'rgba(255,255,255,0.2)';
+            ctxBuild.setLineDash([5, 5]);
+            ctxBuild.beginPath();
+            ctxBuild.moveTo(currentBlock.x + currentBlock.w/2, currentBlock.y);
+            ctxBuild.lineTo(currentBlock.x + currentBlock.w/2, cameraY + buildCanvas.height + 200);
+            ctxBuild.stroke();
+            ctxBuild.setLineDash([]);
+
+            drawGingerbread(ctxBuild, currentBlock.x, currentBlock.y, currentBlock.w, currentBlock.h, currentBlock.color);
+        }
+        
+        particles.forEach((p, index) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.02;
+            if (p.life <= 0) { particles.splice(index, 1); return; }
+            ctxBuild.globalAlpha = p.life;
+            ctxBuild.fillStyle = p.color;
+            ctxBuild.beginPath(); ctxBuild.arc(p.x, p.y, p.size, 0, Math.PI*2); ctxBuild.fill();
+        });
+        ctxBuild.globalAlpha = 1;
+        
+        ctxBuild.restore();
+
+        requestAnimationFrame(updateBuild);
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        playSound('gameover');
+        let shake = setInterval(() => {
+            buildCanvas.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px) rotate(${Math.random()*2-1}deg)`;
+        }, 50);
+        setTimeout(() => { clearInterval(shake); buildCanvas.style.transform = 'none'; }, 500);
+    }
+
+    // ==========================================
+    // 截圖與分享功能 (支援 Threads)
+    // ==========================================
+    const shareCanvas = document.getElementById('shareCanvas');
+    const ctxShare = shareCanvas.getContext('2d');
+
+    shareBtn.addEventListener('click', async () => {
+        // 設定分享圖片尺寸 (加高少少用嚟寫字)
+        shareCanvas.width = buildCanvas.width;
+        shareCanvas.height = buildCanvas.height + 100;
+
+        // 畫上遊戲畫面
+        ctxShare.drawImage(buildCanvas, 0, 0);
+
+        // 畫底部裝飾同文字
+        let grad = ctxShare.createLinearGradient(0, buildCanvas.height, 0, shareCanvas.height);
+        grad.addColorStop(0, '#0a1120');
+        grad.addColorStop(1, '#1a2a40');
+        ctxShare.fillStyle = grad;
+        ctxShare.fillRect(0, buildCanvas.height, shareCanvas.width, 100);
+
+        // 畫啲聖誕雪花裝飾
+        ctxShare.fillStyle = 'rgba(255,255,255,0.5)';
+        for(let i=0; i<20; i++) {
+            ctxShare.beginPath();
+            ctxShare.arc(Math.random()*shareCanvas.width, buildCanvas.height + Math.random()*100, Math.random()*2, 0, Math.PI*2);
+            ctxShare.fill();
+        }
+
+        // 寫上文字
+        ctxShare.fillStyle = '#f1c40f';
+        ctxShare.font = 'bold 26px "Fredoka One", sans-serif';
+        ctxShare.textAlign = 'center';
+        ctxShare.fillText('🎄 薑餅人建屋大亨 🍪', shareCanvas.width/2, buildCanvas.height + 35);
+        
+        ctxShare.fillStyle = '#fff';
+        ctxShare.font = '18px sans-serif';
+        ctxShare.fillText(`高度: ${heightVal.innerText} | 得分: ${score}`, shareCanvas.width/2, buildCanvas.height + 70);
+
+        // 將 Canvas 轉為 Blob/File 並分享
+        shareCanvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], 'gingerbread-house.png', { type: 'image/png' });
+
+            // 檢查瀏覽器支援唔支援 Web Share API
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: '我的聖誕薑餅屋！',
+                        text: `我起咗一座 ${heightVal.innerText} 高嘅薑餅屋！你都快啲嚟玩啦！🎄🍪 #Threads #聖誕節 #薑餅人 #小遊戲`,
+                        files: [file]
+                    });
+                } catch (error) {
+                    console.log('分享失敗', error);
+                    downloadImage(); // 如果分享失敗，改為下載
+                }
+            } else {
+                // 如果唔支援分享 (例如電腦)，直接下載
+                downloadImage();
+            }
+        });
+
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'gingerbread-house.png';
+            link.href = shareCanvas.toDataURL('image/png');
+            link.click();
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        buildPhase.classList.add('hidden');
+        drawPhase.classList.remove('hidden');
+        paths = [];
+        renderDrawCanvas();
+        ovenFire.style.transform = 'scale(1)';
+        ovenFire.style.background = 'radial-gradient(circle, #ff9900, #ff0000)';
+        ovenFire.innerHTML = '<span style="font-size: 60px;">🔥</span>';
+        bakeProgress = 0;
+    });
+
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+    };
+</script>
+</body>
+</html>
