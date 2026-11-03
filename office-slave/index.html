@@ -3273,14 +3273,19 @@
                 // 背後落地玻璃，透出城市夜景 (深藍色帶點點繁星)
                 var windowMat = new THREE.MeshStandardMaterial({color: 0x001a33, emissive: 0x001122, roughness: 0.1});
                 var win = new THREE.Mesh(new THREE.PlaneGeometry(28, 10), windowMat);
-                win.position.set(0, 5, -10.9); envGroup.add(win);
+                win.position.set(0, 5, -10.9); 
+                win.name = "luxuryWindow"; // 👈 必須加呢句，令系統搵到個窗
+                envGroup.add(win);
                 
-                // 城市點點燈光 (用隨機小白點)
+                // 城市點點燈光
+                var starsGroup = new THREE.Group();
+                starsGroup.name = "luxuryStars"; // 👈 你加啱咗呢句
                 for(var i=0; i<50; i++) {
                     var star = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.1), new THREE.MeshBasicMaterial({color: 0xffffff}));
                     star.position.set(Math.random()*26-13, Math.random()*8+1, -10.85); 
-                    envGroup.add(star);
+                    starsGroup.add(star);
                 }
+                envGroup.add(starsGroup);
 
                 // 金色裝飾條
                 var goldTrim = new THREE.Mesh(new THREE.BoxGeometry(28, 0.1, 0.1), matGold);
@@ -3545,6 +3550,55 @@
             setInterval(function () {
                 try {
                     if (typeof player === 'undefined') return;
+
+                    // ==========================================
+                    // ★ 新增：早、午、晚光影與天空變化 ★
+                    // ==========================================
+                    if (typeof timeOfDay !== 'undefined') {
+                        if (timeOfDay === 0) { 
+                            // ☀️ 早晨：溫暖晨光
+                            ambientLight.color.setHex(0xffe4b5); ambientLight.intensity = 0.6;
+                            dirLight.color.setHex(0xffa500); dirLight.intensity = 1.0;
+                            dirLight.position.set(15, 12, 10); // 斜射
+                            scene.fog.color.setHex(0x1a1a2e);
+                            scene.background = new THREE.Color(0x1a1a2e); // 深色背景
+                        } else if (timeOfDay === 1) { 
+                            // 🌤️ 中午：猛烈白光
+                            ambientLight.color.setHex(0xffffff); ambientLight.intensity = 0.9;
+                            dirLight.color.setHex(0xffffff); dirLight.intensity = 1.5;
+                            dirLight.position.set(10, 20, 10); // 直射
+                            scene.fog.color.setHex(0x0a0a14);
+                            scene.background = new THREE.Color(0x0a0a14);
+                        } else { 
+                            // 🌙 晚上：月光與人造光
+                            ambientLight.color.setHex(0x4466aa); ambientLight.intensity = 0.3;
+                            dirLight.color.setHex(0x8899bb); dirLight.intensity = 0.5;
+                            dirLight.position.set(-10, 15, -10); // 背光
+                            scene.fog.color.setHex(0x050510);
+                            scene.background = new THREE.Color(0x050510);
+                        }
+
+                        // 如果係大老闆房，個窗要跟時間變色
+                        if (currentEnv === "luxury") {
+                            var winMesh = envGroup.getObjectByName("luxuryWindow");
+                            var starsGroup = envGroup.getObjectByName("luxuryStars");
+                            if (winMesh && starsGroup) {
+                                if (timeOfDay === 0) {
+                                    winMesh.material.color.setHex(0xffccaa); // 朝霞
+                                    winMesh.material.emissive.setHex(0x552200);
+                                    starsGroup.visible = false;
+                                } else if (timeOfDay === 1) {
+                                    winMesh.material.color.setHex(0x87ceeb); // 藍天
+                                    winMesh.material.emissive.setHex(0x004466);
+                                    starsGroup.visible = false;
+                                } else {
+                                    winMesh.material.color.setHex(0x001a33); // 夜景
+                                    winMesh.material.emissive.setHex(0x001122);
+                                    starsGroup.visible = true;
+                                }
+                            }
+                        }
+                    }
 
                     var isBoss = !!player.isBoss && !player.isListed;
                     // ★ 關鍵修復：上市後依然顯示公仔 ★
