@@ -384,6 +384,10 @@
         leaderboard = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
     } catch(e) { leaderboard = []; }
 
+    // ★ 修復 1：加入遊戲狀態鎖，防止未開始就計算進度
+    let isGamePlaying = false; 
+    let isGameOver = false;
+
     function initUser() {
         if (!currentUser) {
             document.getElementById('login-modal').classList.add('active');
@@ -418,7 +422,6 @@
         const list = document.getElementById('rank-list');
         list.innerHTML = '';
         
-        // 先按關卡排，再按分數排
         leaderboard.sort((a, b) => {
             if (b.level !== a.level) return b.level - a.level;
             return b.score - a.score;
@@ -450,7 +453,6 @@
         let existingIndex = leaderboard.findIndex(item => item.name === currentUser);
         
         if (existingIndex !== -1) {
-            // 如果關卡更高，或者同關卡但分數更高，就更新
             if (currentLevel > leaderboard[existingIndex].level || 
                (currentLevel === leaderboard[existingIndex].level && finalScore > leaderboard[existingIndex].score)) {
                 leaderboard[existingIndex].level = currentLevel;
@@ -465,7 +467,7 @@
     }
 
     // ==========================================
-    // 音效系統 (Web Audio API)
+    // 音效系統
     // ==========================================
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
@@ -517,7 +519,6 @@
     let isDrawing = false;
     let lastX = 0, lastY = 0;
     let progress = 0;
-    let isGameOver = false;
     let startTime = 0;
     let targetCleanPercent = 98;
 
@@ -534,18 +535,19 @@
     let particles = [];
 
     // ==========================================
-    // 初始化關卡 (難度遞增)
+    // 初始化關卡
     // ==========================================
     function initGame() {
-        progress = 0; 
+        // ★ 修復 2：重置狀態鎖
+        isGamePlaying = false;
         isGameOver = false;
-        startTime = Date.now();
+        
+        progress = 0; 
         updateProgressUI();
         document.getElementById('win-screen').classList.remove('active');
         particles = [];
         soapCtx.clearRect(0, 0, soapCanvas.width, soapCanvas.height);
 
-        // 更新關卡顯示
         displayLevel.innerText = 'Lv.' + currentLevel;
 
         // 1. 畫底層地毯
@@ -567,10 +569,9 @@
         baseCtx.ellipse(baseCanvas.width/2, baseCanvas.height/2, 200, 120, 0, 0, Math.PI*2);
         baseCtx.fill();
 
-        // 2. 畫污垢層 (動態難度)
+        // 2. 畫污垢層
         dirtCtx.clearRect(0, 0, dirtCanvas.width, dirtCanvas.height);
         
-        // 基礎污垢
         let baseDirtCount = 100 + (currentLevel * 40); 
         for(let i=0; i<baseDirtCount; i++) {
             dirtCtx.fillStyle = `rgba(60, 40, 20, ${Math.random()*0.5 + 0.3})`;
@@ -579,7 +580,6 @@
             dirtCtx.fill();
         }
 
-        // 頑固污漬 (Lv.3 開始出現)
         let toughDirtCount = currentLevel > 2 ? (currentLevel * 8) : 0;
         for(let i=0; i<toughDirtCount; i++) {
             dirtCtx.fillStyle = 'rgba(10, 5, 0, 0.95)';
@@ -588,7 +588,6 @@
             dirtCtx.fill();
         }
 
-        // 垃圾碎屑
         let trashCount = 50 + (currentLevel * 20);
         for(let i=0; i<trashCount; i++) {
             dirtCtx.fillStyle = '#222';
@@ -599,8 +598,13 @@
         checkCtx.clearRect(0,0,checkCanvas.width, checkCanvas.height);
         checkCtx.drawImage(dirtCanvas, 0, 0, checkCanvas.width, checkCanvas.height);
         
-        // 動態通關目標 (隨關卡提高，最高 99.5%)
-        targetCleanPercent = Math.min(99.5, 96 + (currentLevel * 0.5));
+        targetCleanPercent = Math.min(99.5, 95 + (currentLevel * 0.5));
+
+        // ★ 修復 3：確保污垢畫完之後，延遲一丁點才開啟遊戲狀態同計時
+        setTimeout(() => {
+            startTime = Date.now();
+            isGamePlaying = true;
+        }, 100);
     }
 
     // ==========================================
@@ -637,7 +641,7 @@
 
     function startDraw(e) {
         e.preventDefault();
-        if (isGameOver) return;
+        if (!isGamePlaying || isGameOver) return; // ★ 狀態鎖保護
         isDrawing = true;
         const pos = getPointerPos(e);
         lastX = pos.x; lastY = pos.y;
@@ -646,7 +650,7 @@
 
     function draw(e) {
         e.preventDefault();
-        if (!isDrawing || isGameOver) return;
+        if (!isDrawing || !isGamePlaying || isGameOver) return;
         const pos = getPointerPos(e);
         handleDraw(pos.x, pos.y);
         lastX = pos.x; lastY = pos.y;
@@ -658,7 +662,6 @@
     }
 
     function eraseDirt(x, y, radius) {
-        // 關卡越高，工具效率稍微降低
         let efficiency = Math.max(0.5, 1 - (currentLevel * 0.01));
         let actualRadius = radius * efficiency;
 
@@ -737,7 +740,8 @@
     // 進度計算與計分
     // ==========================================
     function updateProgress() {
-        if (isGameOver) return;
+        // ★ 修復 4：如果未開始或者已完結，唔好計進度
+        if (!isGamePlaying || isGameOver) return;
 
         const imgData = checkCtx.getImageData(0, 0, checkCanvas.width, checkCanvas.height).data;
         let totalPixels = imgData.length / 4;
@@ -748,7 +752,8 @@
         }
         
         let cleanPercent = 100 - ((dirtPixels / totalPixels) * 100);
-        progress = Math.min(100, Math.floor(cleanPercent * 1.05)); 
+        // ★ 修復 5：唔好乘大個百分比，保持真實
+        progress = Math.min(100, Math.floor(cleanPercent)); 
         
         progressBar.style.width = progress + '%';
         progressText.innerText = progress + '%';
@@ -767,10 +772,10 @@
     function gameOver() {
         if (isGameOver) return;
         isGameOver = true;
+        isGamePlaying = false; // ★ 鎖定狀態，防止重複觸發
         
         let timeSecs = Math.floor((Date.now() - startTime) / 1000);
         
-        // 計分公式：關卡越高，基礎分越高；時間越快，加乘越多
         let baseScore = 1000 + (currentLevel * 200);
         let timePenalty = timeSecs * 5;
         let levelScore = Math.max(100, baseScore - timePenalty);
@@ -781,12 +786,10 @@
         document.getElementById('final-score').innerText = `+${levelScore} 分`;
         document.getElementById('win-screen').classList.add('active');
         
-        // 紀錄最高分與關卡
         submitScore(totalScore);
         localStorage.setItem('carpet_level', currentLevel);
         localStorage.setItem('carpet_total_score', totalScore);
 
-        // 播放勝利音效
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
@@ -806,7 +809,6 @@
     }
 
     function resetGame() {
-        // 重新開始，清空進度
         currentLevel = 1;
         totalScore = 0;
         displayLevel.innerText = 'Lv.1';
