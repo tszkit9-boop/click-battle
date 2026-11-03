@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>深淵礦工</title>
+<title>深淵礦工：貪婪與恐懼</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
     body {
@@ -90,6 +90,18 @@
     #frenzy-text { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); color: #ff4757; font-size: 28px; font-weight: 900; text-shadow: 0 0 20px #ff4757, 0 0 40px #ff0000; display: none; animation: pulse 0.5s infinite alternate; z-index: 10; pointer-events: none; }
     @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
 
+    /* 新增：簡介彈窗樣式 */
+    #intro-modal .modal-content {
+        background: rgba(10, 10, 15, 0.95); border: 2px solid #ffd32a; border-radius: 12px;
+        padding: 20px; max-width: 500px; text-align: left; box-shadow: 0 0 30px rgba(255, 211, 42, 0.3);
+    }
+    #intro-modal h2 { color: #ffd32a; text-align: center; font-size: 24px; margin-bottom: 15px; text-shadow: 0 0 10px #ffd32a; }
+    #intro-modal p { color: #ccc; font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+    #intro-modal .highlight { color: #2ed573; font-weight: bold; }
+    #intro-modal .danger { color: #ff4757; font-weight: bold; }
+    #intro-modal .emoji { font-size: 16px; margin-right: 5px; }
+    #intro-modal button { width: 100%; margin-top: 15px; }
+
     /* 橫屏提示 */
     #rotate-hint { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; color: #fff; text-align: center; align-items: center; justify-content: center; flex-direction: column; }
     @media (max-width: 800px) and (orientation: portrait) { #rotate-hint { display: flex; } }
@@ -131,6 +143,19 @@
                 <button class="control-btn" onclick="movePlayer(-1, 0)">⬅️ 左</button>
                 <button class="control-btn" onclick="movePlayer(0, 1)">⬇️ 挖掘</button>
                 <button class="control-btn" onclick="movePlayer(1, 0)">➡️ 右</button>
+            </div>
+        </div>
+
+        <!-- 遊戲簡介彈窗 (預設開啟) -->
+        <div id="intro-modal" class="modal active">
+            <div class="modal-content">
+                <h2>⛏️ 深淵礦工：貪婪與恐懼</h2>
+                <p><span class="emoji">🎯</span><b>遊戲目標：</b>向下挖掘越深，礦物越值錢！但要小心怪物同岩漿！</p>
+                <p><span class="emoji">🔥</span><span class="highlight">連擊系統：</span>連續挖到同一款礦物，賣出時價值會倍數暴增！斷咗連擊就冇啦。</p>
+                <p><span class="emoji">💎</span><span class="danger">深淵水晶：</span>價值極高，但有 30% 機率會爆炸扣血，搏唔搏得過？</p>
+                <p><span class="emoji">👹</span><span class="danger">怪物警告：</span>武器唔夠強，亂挖怪物會被反殺！</p>
+                <p><span class="emoji">🏪</span><b>見好就收：</b>背包滿或者體力見底，記得撳「返回地面」賣嘢升級裝備！</p>
+                <button class="control-btn action" onclick="closeIntro()">開始深潛！</button>
             </div>
         </div>
 
@@ -193,9 +218,20 @@
     const btnBomb = document.getElementById('btn-bomb');
     const frenzyText = document.getElementById('frenzy-text');
 
-    // 新增 UI：連擊提示
+    // 關閉簡介
+    function closeIntro() {
+        document.getElementById('intro-modal').classList.remove('active');
+    }
+
+    // 畫面左上角嘅「背包與連擊狀態」
+    const bagUI = document.createElement('div');
+    bagUI.style.cssText = 'position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:8px; border-radius:8px; border:1px solid #555; color:#fff; font-size:12px; z-index:10; pointer-events:none; max-width:200px; line-height:1.4;';
+    bagUI.innerHTML = '🎒 背包：空';
+    document.getElementById('canvas-container').appendChild(bagUI);
+
+    // 連擊大字提示
     const comboDiv = document.createElement('div');
-    comboDiv.style.cssText = 'position:absolute; top:30%; left:50%; transform:translateX(-50%); color:#fff; font-size:24px; font-weight:900; text-shadow:0 0 10px #f1c40f; display:none; z-index:10; pointer-events:none;';
+    comboDiv.style.cssText = 'position:absolute; top:30%; left:50%; transform:translateX(-50%); color:#fff; font-size:28px; font-weight:900; text-shadow:0 0 10px #f1c40f; display:none; z-index:10; pointer-events:none;';
     document.getElementById('canvas-container').appendChild(comboDiv);
 
     let saveData = JSON.parse(localStorage.getItem('deepMinerSave') || '{}');
@@ -227,7 +263,6 @@
     let isFrenzy = false;
     let frenzyTimer = 0;
     
-    // 新增：連擊系統
     let currentComboType = null;
     let currentComboCount = 0;
     let comboTimer = 0;
@@ -239,19 +274,39 @@
     let VISIBLE_ROWS = 12;
     
     const TILES = {
-        dirt: { color: '#5c4033', color2: '#4a3320', value: 0, enCost: 5 },
-        stone: { color: '#555', color2: '#333', value: 0, enCost: 10 },
-        copper: { color: '#b87333', color2: '#8c5a25', value: 15, enCost: 8 },
-        iron: { color: '#a8a8a8', color2: '#777', value: 40, enCost: 12 },
-        gold: { color: '#ffd700', color2: '#ccac00', value: 120, enCost: 15 },
-        diamond: { color: '#00ffff', color2: '#00b3b3', value: 600, enCost: 20 },
-        chest: { color: '#e67e22', color2: '#b85e15', value: 0, enCost: 15 },
-        monster: { color: '#ff4757', color2: '#b82e3a', value: 0, enCost: 0 },
-        lava: { color: '#ff3300', color2: '#cc2900', value: 0, enCost: 0 },
-        // ★ 新增方塊 ★
-        crystal: { color: '#9b59b6', color2: '#8e44ad', value: 1500, enCost: 25 }, // 深淵水晶：極高價值但有危險
-        mushroom: { color: '#2ecc71', color2: '#27ae60', value: 0, enCost: 5 }    // 深淵蘑菇：回復體力
+        dirt: { name: '泥土', color: '#5c4033', color2: '#4a3320', value: 0, enCost: 5 },
+        stone: { name: '石頭', color: '#555', color2: '#333', value: 0, enCost: 10 },
+        copper: { name: '銅礦', color: '#b87333', color2: '#8c5a25', value: 15, enCost: 8 },
+        iron: { name: '鐵礦', color: '#a8a8a8', color2: '#777', value: 40, enCost: 12 },
+        gold: { name: '金礦', color: '#ffd700', color2: '#ccac00', value: 120, enCost: 15 },
+        diamond: { name: '鑽石', color: '#00ffff', color2: '#00b3b3', value: 600, enCost: 20 },
+        chest: { name: '寶箱', color: '#e67e22', color2: '#b85e15', value: 0, enCost: 15 },
+        monster: { name: '怪物', color: '#ff4757', color2: '#b82e3a', value: 0, enCost: 0 },
+        lava: { name: '岩漿', color: '#ff3300', color2: '#cc2900', value: 0, enCost: 0 },
+        crystal: { name: '深淵水晶', color: '#9b59b6', color2: '#8e44ad', value: 1500, enCost: 25 }, 
+        mushroom: { name: '深淵蘑菇', color: '#2ecc71', color2: '#27ae60', value: 0, enCost: 5 }    
     };
+
+    // 更新背包 UI
+    function updateBagUI() {
+        if (bag.length === 0) {
+            bagUI.innerHTML = '🎒 背包：空';
+            return;
+        }
+        let counts = {};
+        bag.forEach(item => {
+            if (!counts[item.type]) counts[item.type] = { count: 0, multi: item.multi };
+            counts[item.type].count++;
+            counts[item.type].multi = Math.max(counts[item.type].multi, item.multi);
+        });
+        let html = '🎒 背包：<br>';
+        for (let type in counts) {
+            let t = TILES[type];
+            let m = counts[type].multi > 1 ? ` (x${counts[type].multi})` : '';
+            html += `<span style="color:${t.color};">■</span> ${t.name} x${counts[type].count}${m}<br>`;
+        }
+        bagUI.innerHTML = html;
+    }
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
@@ -355,6 +410,7 @@
         depthText.innerText = `🌍 ${player.y}m`;
         nextDepthText.innerText = player.y === 0 ? '1' : player.y + 1;
         btnBomb.innerText = `💣 炸彈 (${bombs})`;
+        updateBagUI();
         
         if (player.y > maxDepthRecord) {
             maxDepthRecord = player.y;
@@ -400,7 +456,7 @@
         setTimeout(() => {
             if (tileType === 'monster') {
                 let dmg = swordLvl * 25;
-                let monsterDmg = 20 + Math.floor(player.y / 10) * 5; // 怪物傷害隨深度增加
+                let monsterDmg = 20 + Math.floor(player.y / 10) * 5;
                 
                 if (dmg >= monsterDmg) {
                     delete map[tileKey];
@@ -427,7 +483,6 @@
             } else if (tileType === 'crystal') {
                 delete map[tileKey];
                 if (Math.random() < 0.3) {
-                    // 爆炸
                     let dmg = 30 + Math.floor(player.y / 5);
                     hp -= dmg;
                     triggerShake(); playSound('hurt');
@@ -435,7 +490,6 @@
                     alert(`💥 深淵水晶爆炸！受到 ${dmg} 點傷害！`);
                     if (hp <= 0) { die(); return; }
                 } else {
-                    // 安全收入
                     if (bag.length < maxBag) {
                         bag.push({ type: tileType, multi: 1 });
                         addParticles(nx, ny, '#9b59b6', 20);
@@ -465,7 +519,7 @@
                         bag.push({ type: tileType, multi: 1 });
                         addParticles(nx, ny, tData.color, 10);
                         playSound('coin');
-                        handleCombo(tileType); // 觸發連擊
+                        handleCombo(tileType);
                     } else {
                         alert("背包滿了！請返回地面出售！");
                         isDigging = false;
@@ -504,7 +558,6 @@
             comboDiv.innerText = `🔥 ${currentComboCount} COMBO (x${multiplier})`;
             comboDiv.style.display = 'block';
             comboDiv.style.color = currentComboCount > 5 ? '#ff4757' : '#f1c40f';
-            // 更新背包最後一件物品的倍數
             if(bag.length > 0) bag[bag.length - 1].multi = multiplier;
         }
     }
@@ -541,7 +594,6 @@
         let hasCopper = bag.filter(i => i.type === 'copper').length;
         let hasIron = bag.filter(i => i.type === 'iron').length;
         if (hasCopper >= 3 && hasIron >= 2) {
-            // 移除材料
             for(let i=0; i<3; i++) bag.splice(bag.findIndex(x => x.type === 'copper'), 1);
             for(let i=0; i<2; i++) bag.splice(bag.findIndex(x => x.type === 'iron'), 1);
             bombs++;
@@ -828,8 +880,7 @@
     draw();
     
     if (gameState === 'surface' && player.y === 0) {
-        document.getElementById('shop-modal').classList.add('active');
-        updateShopButtons();
+        // 唔好一開始就彈商店，等玩家睇完簡介先
     }
 </script>
 </body>
