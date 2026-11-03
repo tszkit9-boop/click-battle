@@ -3201,10 +3201,14 @@
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
                 var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 10), new THREE.MeshStandardMaterial({ color: 0x2c3e50 }));
                 wall.position.set(0, 5, -11); envGroup.add(wall);
+                
                 for (var i = 0; i < 4; i++) {
-                    var win = new THREE.Mesh(new THREE.PlaneGeometry(4, 7), matGlass);
-                    win.position.set(-9 + (i * 6), 4, -10.8); envGroup.add(win);
+                    var win = new THREE.Mesh(new THREE.PlaneGeometry(4, 7), matGlass.clone()); // 👈 加 .clone() 
+                    win.position.set(-9 + (i * 6), 4, -10.8); 
+                    win.name = "officeWindow"; // 👈 加呢句
+                    envGroup.add(win);
                 }
+                
                 var counter = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 2), matWood);
                 counter.position.set(0, 0.6, -6); counter.castShadow = true; envGroup.add(counter);
                 var bPos = [[-7, -1], [7, -1]];
@@ -3552,7 +3556,7 @@
                     if (typeof player === 'undefined') return;
 
                     // ==========================================
-                    // ★ 新增：早、午、晚光影與天空變化 ★
+                    // ★ 早、午、晚光影與天空變化 ★
                     // ==========================================
                     if (typeof timeOfDay !== 'undefined') {
                         if (timeOfDay === 0) { 
@@ -3578,7 +3582,7 @@
                             scene.background = new THREE.Color(0x050510);
                         }
 
-                        // 如果係大老闆房，個窗要跟時間變色
+                        // 1. 大老闆房專屬窗變色
                         if (currentEnv === "luxury") {
                             var winMesh = envGroup.getObjectByName("luxuryWindow");
                             var starsGroup = envGroup.getObjectByName("luxuryStars");
@@ -3598,7 +3602,25 @@
                                 }
                             }
                         }
+
+                        // ★ 2. 普通辦公室/老闆房專屬窗變色 ★ (呢段係你漏咗嘅)
+                        if (currentEnv === "office") {
+                            var officeWins = envGroup.children.filter(function(child) { return child.name === "officeWindow"; });
+                            officeWins.forEach(function(w) {
+                                if (timeOfDay === 0) {
+                                    w.material.color.setHex(0xffccaa); // 朝霞
+                                    w.material.emissive.setHex(0x552200);
+                                } else if (timeOfDay === 1) {
+                                    w.material.color.setHex(0x87ceeb); // 藍天
+                                    w.material.emissive.setHex(0x004466);
+                                } else {
+                                    w.material.color.setHex(0x001a33); // 夜景
+                                    w.material.emissive.setHex(0x001122);
+                                }
+                            });
+                        }
                     }
+                    // ==========================================
 
                     var isBoss = !!player.isBoss && !player.isListed;
                     // ★ 關鍵修復：上市後依然顯示公仔 ★
