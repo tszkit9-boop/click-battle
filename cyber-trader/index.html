@@ -3,220 +3,164 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>賽博股神：終極完全體</title>
+<title>賽博股神 - 專業交易終端</title>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap');
+
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
     
     body {
-        background-color: #050510; color: #fff; font-family: 'Orbitron', 'PingFang HK', sans-serif;
+        background-color: #0b0e11; color: #eaecef; font-family: 'Roboto Mono', 'PingFang HK', monospace;
         height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
-        touch-action: manipulation; 
+        font-size: 12px;
     }
 
-    /* --- 頂部專屬導航欄 (防止重疊) --- */
+    /* --- 頂部導航 --- */
     .top-header {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 15px; background: #0a0a14; border-bottom: 1px solid #222;
+        padding: 8px 12px; background: #181a20; border-bottom: 1px solid #2b3139;
         z-index: 100; flex-shrink: 0;
     }
     .back-btn {
-        padding: 6px 12px; background: rgba(0, 210, 211, 0.1);
-        color: #00d2d3; border: 1px solid #00d2d3; border-radius: 6px;
-        text-decoration: none; font-weight: bold; font-size: 12px; transition: 0.2s;
+        padding: 4px 10px; background: transparent; color: #848e9c; border: 1px solid #474d57; border-radius: 4px;
+        text-decoration: none; font-size: 12px; font-weight: 500; transition: 0.2s;
     }
-    .back-btn:active { background: #00d2d3; color: #000; }
-    .game-title { font-size: 14px; font-weight: 900; color: #feca57; letter-spacing: 2px; }
+    .back-btn:active { background: #2b3139; }
+    .game-title { font-size: 14px; font-weight: 700; color: #fcd535; }
 
-    /* --- 遊戲主畫面 --- */
-    #game-container {
-        flex: 1; position: relative; display: flex; flex-direction: column;
-        overflow: hidden; background: radial-gradient(circle at 50% 50%, #0a1a2e, #050510);
+    /* --- 頂部行情列 --- */
+    .ticker-bar {
+        display: flex; align-items: center; padding: 8px 12px; background: #181a20; border-bottom: 1px solid #2b3139;
+        gap: 15px; flex-shrink: 0;
     }
-    canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+    .pair-name { font-size: 16px; font-weight: 700; }
+    .price-large { font-size: 18px; font-weight: 700; }
+    .price-change { font-size: 12px; }
+    .up { color: #0ecb81; }
+    .down { color: #f6465d; }
 
-    /* 資產切換 */
-    .top-nav {
-        position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 5px; z-index: 20; background: rgba(0,0,0,0.8); padding: 5px; border-radius: 8px; border: 1px solid #333;
+    /* --- 主圖表區 --- */
+    .chart-container {
+        flex: 1; position: relative; background: #181a20; display: flex; flex-direction: column; min-height: 0;
     }
-    .top-nav button {
-        padding: 6px 12px; background: transparent; border: none; color: #888;
-        font-family: inherit; font-weight: bold; font-size: 12px; cursor: pointer; border-radius: 5px; transition: 0.2s;
-    }
-    .top-nav button.active { background: #00d2d3; color: #000; box-shadow: 0 0 10px #00d2d3; }
+    canvas { width: 100%; height: 100%; display: block; }
 
-    /* 狀態欄 */
-    #hud {
-        position: absolute; top: 55px; left: 0; width: 100%; padding: 0 15px;
-        display: flex; justify-content: space-between; align-items: flex-start;
-        z-index: 10; pointer-events: none;
-    }
-    .hud-box {
-        background: rgba(0, 0, 0, 0.8); border: 1px solid #333;
-        padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(5px);
-        display: flex; flex-direction: column; gap: 2px;
-    }
-    .hud-box span { font-size: 10px; color: #888; }
-    .hud-box .val { font-size: 14px; font-weight: 900; }
-    #cash-val { color: #2ed573; text-shadow: 0 0 10px rgba(46, 213, 115, 0.5); }
-    #time-val { color: #ff4757; text-align: right; }
-    #liq-val { color: #ff4757; font-size: 11px; text-align: right; display: none; }
-    #streak-val { color: #feca57; }
-    #shield-val { color: #00d2d3; font-size: 11px; display: none; }
-
-    /* 槓桿面板 */
-    #leverage-panel {
-        position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 5px; z-index: 10; background: rgba(0,0,0,0.7); padding: 4px; border-radius: 8px; border: 1px solid #444;
-    }
-    .lev-btn {
-        padding: 4px 8px; background: transparent; border: none; color: #888;
-        font-family: inherit; font-weight: bold; font-size: 12px; cursor: pointer; border-radius: 5px;
-    }
-    .lev-btn.active { background: #00d2d3; color: #000; }
-
-    /* 訂單簿 */
+    /* --- 訂單簿 --- */
     #order-book {
-        position: absolute; top: 45%; right: 10px; width: 60px; z-index: 5;
+        position: absolute; top: 10px; right: 10px; width: 90px; z-index: 5;
         display: flex; flex-direction: column; gap: 2px; pointer-events: none;
+        font-size: 10px;
     }
-    .ob-row { height: 4px; border-radius: 2px; background: #333; transition: width 0.1s; }
-    .ob-ask { background: rgba(255, 71, 87, 0.7); }
-    .ob-bid { background: rgba(46, 213, 115, 0.7); }
+    .ob-row { display: flex; justify-content: space-between; padding: 1px 4px; position: relative; }
+    .ob-bg { position: absolute; right: 0; top: 0; bottom: 0; z-index: -1; opacity: 0.15; }
+    .ob-ask { color: #f6465d; }
+    .ob-ask .ob-bg { background: #f6465d; }
+    .ob-bid { color: #0ecb81; }
+    .ob-bid .ob-bg { background: #0ecb81; }
 
-    /* 中央價格 */
-    #center-display {
-        position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
-        z-index: 5; text-align: center; pointer-events: none; text-shadow: 0 0 10px #000;
+    /* --- 底部交易面板 --- */
+    .trade-panel {
+        background: #181a20; border-top: 1px solid #2b3139; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px;
+        flex-shrink: 0; z-index: 10;
     }
-    #current-price { font-size: 48px; font-weight: 900; color: #fff; }
-    #profit-loss { font-size: 28px; font-weight: 900; margin-top: 10px; }
+    
+    .leverage-slider { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #848e9c; }
+    .leverage-slider input { flex: 1; accent-color: #fcd535; }
+    
+    .trade-actions { display: flex; gap: 10px; }
+    .btn {
+        flex: 1; padding: 12px; border: none; border-radius: 4px; font-family: inherit; font-size: 14px;
+        font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+    }
+    .btn small { font-size: 10px; font-weight: 400; opacity: 0.8; margin-top: 2px; }
+    .btn-long { background: #0ecb81; color: #fff; }
+    .btn-short { background: #f6465d; color: #fff; }
+    .btn-close { background: #fcd535; color: #181a20; }
 
-    /* 止盈止損面板 */
-    #tpsl-panel {
-        position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
-        display: none; z-index: 15; background: rgba(0,0,0,0.9); padding: 10px;
-        border-radius: 8px; border: 1px solid #555; width: 90%; max-width: 300px;
-        justify-content: space-between; gap: 5px;
+    /* --- 倉位面板 --- */
+    #position-info {
+        display: none; background: #2b3139; padding: 10px; border-radius: 4px;
+        grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;
     }
-    .tpsl-input {
-        flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 5px;
-        font-family: inherit; text-align: center; font-size: 12px;
-    }
-    .tpsl-btn {
-        padding: 8px; background: #333; border: none; color: #fff; border-radius: 5px; font-size: 12px; cursor: pointer;
-    }
+    .pos-item { display: flex; flex-direction: column; }
+    .pos-label { color: #848e9c; font-size: 10px; }
+    .pos-value { font-weight: 700; }
 
-    /* 新聞彈出 */
+    /* --- 彈窗與特效 --- */
+    #crash-overlay { position: absolute; inset: 0; background: rgba(246, 70, 93, 0.4); z-index: 40; display: none; pointer-events: none; }
+    .screen-flash { position: absolute; inset: 0; z-index: 30; pointer-events: none; opacity: 0; transition: opacity 0.1s; }
+    @keyframes alertFlash { 0%, 100% { opacity: 0; } 50% { opacity: 0.3; } }
+    .alert-active { animation: alertFlash 0.5s infinite; }
+
     #news-popup {
-        position: absolute; top: 18%; left: 50%; transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.9); border: 2px solid #ff4757;
-        padding: 12px 20px; border-radius: 10px; text-align: center;
-        color: #fff; font-weight: bold; font-size: 14px; z-index: 20;
-        opacity: 0; transition: opacity 0.3s; pointer-events: none;
-        white-space: nowrap; width: 90%; max-width: 400px;
+        position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+        background: rgba(24, 26, 32, 0.95); border: 1px solid #f6465d; border-radius: 4px;
+        padding: 8px 16px; color: #fff; font-weight: 700; font-size: 12px; z-index: 20;
+        opacity: 0; transition: opacity 0.2s; pointer-events: none;
+        white-space: nowrap;
     }
-    #news-popup.show { opacity: 1; transform: translateX(-50%) scale(1); animation: popIn 0.3s; }
-    @keyframes popIn { from { transform: translateX(-50%) scale(0.8); } to { transform: translateX(-50%) scale(1); } }
+    #news-popup.show { opacity: 1; }
 
-    /* 底部控制 */
-    #controls {
-        position: absolute; bottom: 20px; left: 0; width: 100%; padding: 10px;
-        display: flex; gap: 8px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-    }
-    .trade-btn {
-        flex: 1; padding: 12px 8px; font-size: 16px; font-weight: 900; border: none;
-        border-radius: 10px; cursor: pointer; font-family: inherit;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .trade-btn:active { transform: scale(0.95); }
-    .trade-btn small { font-size: 10px; font-weight: normal; opacity: 0.8; margin-top: 3px; }
-    #btn-long { background: #2ed573; color: #000; }
-    #btn-short { background: #ff4757; color: #fff; }
-    #btn-close { background: #feca57; color: #000; display: none; }
-
-    /* 結算與彈窗 */
     #end-screen, #achieve-popup {
-        position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 50;
+        position: absolute; inset: 0; background: rgba(11, 14, 17, 0.95); z-index: 50;
         display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
     }
-    #end-screen h1 { font-size: 32px; margin-bottom: 10px; }
-    #end-screen p { font-size: 16px; color: #ccc; margin-bottom: 20px; line-height: 1.6; white-space: pre-line; }
-    #end-screen button { padding: 12px 30px; background: #00d2d3; color: #000; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-    #achieve-popup { background: rgba(0,0,0,0.8); z-index: 60; pointer-events: none; }
-    .achieve-box { background: #111; border: 2px solid #feca57; padding: 20px; border-radius: 15px; animation: popIn 0.3s; }
-    .achieve-box h2 { color: #feca57; margin-bottom: 10px; }
-    
-    #crash-overlay { position: absolute; inset: 0; background: rgba(255, 0, 0, 0.6); z-index: 40; display: none; pointer-events: none; }
+    #end-screen h1 { font-size: 24px; margin-bottom: 10px; color: #fcd535; }
+    #end-screen p { font-size: 14px; color: #848e9c; margin-bottom: 20px; line-height: 1.6; white-space: pre-line; }
+    #end-screen button { padding: 10px 20px; background: #fcd535; color: #181a20; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; width: 200px; margin: 5px 0; }
 </style>
 </head>
 <body>
 
-    <!-- 頂部專屬導航欄，絕對唔會同遊戲重疊 -->
     <div class="top-header">
         <a href="../" class="back-btn">⬅ 返回大廳</a>
-        <div class="game-title">賽博股神</div>
+        <div class="game-title">賽博股神 PRO</div>
     </div>
 
-    <div id="game-container">
-        <div class="top-nav">
-            <button class="asset-btn active" onclick="setAsset('btc')">₿ BTC</button>
-            <button class="asset-btn" onclick="setAsset('meme')">🐶 MEME</button>
-            <button class="asset-btn" onclick="setAsset('usdt')">💵 USDT</button>
+    <div class="ticker-bar">
+        <div class="pair-name">BTC/USDT</div>
+        <div class="price-large" id="current-price">100.00</div>
+        <div class="price-change up" id="price-change">+0.00%</div>
+        <div style="flex:1"></div>
+        <div style="text-align:right;">
+            <div class="pos-label">總資產</div>
+            <div class="price-large" style="color:#fcd535;" id="cash-val">$10,000</div>
         </div>
+    </div>
 
-        <div id="hud">
-            <div class="hud-box">
-                <span>💰 總資產</span>
-                <span class="val" id="cash-val">$10,000</span>
-                <span id="streak-val">🔥 連勝: 0</span>
-                <span id="shield-val">🛡️ 免死金牌: 0</span>
-            </div>
-            <div class="hud-box" style="text-align:right;">
-                <span>⏳ 剩餘時間</span>
-                <span class="val" id="time-val">60s</span>
-                <span id="liq-val">💥 爆倉價: --</span>
-            </div>
-        </div>
-
-        <div id="leverage-panel">
-            <button class="lev-btn active" onclick="setLeverage(1)">1x</button>
-            <button class="lev-btn" onclick="setLeverage(5)">5x</button>
-            <button class="lev-btn" onclick="setLeverage(10)">10x</button>
-            <button class="lev-btn" onclick="setLeverage(100)">100x</button>
-        </div>
-
+    <div class="chart-container">
         <canvas id="chartCanvas"></canvas>
         <div id="order-book"></div>
         <div id="crash-overlay"></div>
-
-        <div id="center-display">
-            <div id="current-price">$100.00</div>
-            <div id="profit-loss"></div>
-        </div>
-
-        <div id="tpsl-panel">
-            <input type="number" id="tp-input" class="tpsl-input" placeholder="止盈價">
-            <input type="number" id="sl-input" class="tpsl-input" placeholder="止損價">
-            <button class="tpsl-btn" onclick="setTPSL()">設定</button>
-        </div>
-
+        <div class="screen-flash" id="screen-flash"></div>
         <div id="news-popup">📰 新聞</div>
+    </div>
 
-        <div id="controls">
-            <button class="trade-btn" id="btn-long" onclick="openPosition('long')">📈 做多<small>全倉買入</small></button>
-            <button class="trade-btn" id="btn-short" onclick="openPosition('short')">📉 做空<small>全倉沽空</small></button>
-            <button class="trade-btn" id="btn-close" onclick="closePosition()">🛑 平倉<small>結算盈虧</small></button>
+    <div class="trade-panel">
+        <div class="leverage-slider">
+            <span>槓桿</span>
+            <input type="range" id="lev-slider" min="1" max="100" value="10" step="1">
+            <span id="lev-val" style="color:#fff; width:35px;">10x</span>
+        </div>
+
+        <div id="position-info">
+            <div class="pos-item"><span class="pos-label">開倉價</span><span class="pos-value" id="entry-price">--</span></div>
+            <div class="pos-item"><span class="pos-label">強平價</span><span class="pos-value" id="liq-price" style="color:#f6465d;">--</span></div>
+            <div class="pos-item"><span class="pos-label">保證金</span><span class="pos-value" id="margin-val">--</span></div>
+            <div class="pos-item"><span class="pos-label">未實現盈虧</span><span class="pos-value" id="pnl-val" style="color:#0ecb81;">--</span></div>
+        </div>
+
+        <div class="trade-actions">
+            <button class="btn btn-long" id="btn-long" onclick="openPosition('long')">買入 / 做多<small>全倉</small></button>
+            <button class="btn btn-short" id="btn-short" onclick="openPosition('short')">賣出 / 做空<small>全倉</small></button>
+            <button class="btn btn-close" id="btn-close" onclick="closePosition()">平倉<small>市價</small></button>
         </div>
     </div>
 
     <div id="achieve-popup">
-        <div class="achieve-box">
-            <h2 id="achieve-title">🏆 成就解鎖</h2>
-            <p id="achieve-desc" style="color:#ccc;"></p>
+        <div style="background:#181a20; border:1px solid #fcd535; padding:20px; border-radius:8px;">
+            <h2 id="achieve-title" style="color:#fcd535; margin-bottom:10px;">🏆 成就解鎖</h2>
+            <p id="achieve-desc" style="color:#848e9c;"></p>
         </div>
     </div>
 
@@ -224,32 +168,31 @@
         <h1 id="end-title">交易結束</h1>
         <p id="end-stats"></p>
         <button onclick="startGame('classic')">再炒一局 (經典)</button>
-        <button onclick="startGame('endless')" style="background:#ff4757; margin-top:10px;">無盡模式 (挑戰極限)</button>
-        <button onclick="startGame('survival')" style="background:#feca57; margin-top:10px;">生存模式 (本金 $1,000)</button>
+        <button onclick="startGame('endless')" style="background:#f6465d; color:#fff;">無盡模式 (挑戰極限)</button>
+        <button onclick="startGame('survival')" style="background:#0ecb81; color:#fff;">生存模式 (本金 $1,000)</button>
     </div>
 
 <script>
     const canvas = document.getElementById('chartCanvas');
     const ctx = canvas.getContext('2d');
-    const cashVal = document.getElementById('cash-val');
-    const timeVal = document.getElementById('time-val');
-    const liqVal = document.getElementById('liq-val');
-    const streakVal = document.getElementById('streak-val');
-    const shieldVal = document.getElementById('shield-val');
     const currentPriceEl = document.getElementById('current-price');
-    const profitLossEl = document.getElementById('profit-loss');
+    const priceChangeEl = document.getElementById('price-change');
+    const cashVal = document.getElementById('cash-val');
+    const orderBook = document.getElementById('order-book');
     const newsPopup = document.getElementById('news-popup');
-    const endScreen = document.getElementById('end-screen');
-    const endTitle = document.getElementById('end-title');
-    const endStats = document.getElementById('end-stats');
+    const levSlider = document.getElementById('lev-slider');
+    const levVal = document.getElementById('lev-val');
+    const posInfo = document.getElementById('position-info');
+    const entryPriceEl = document.getElementById('entry-price');
+    const liqPriceEl = document.getElementById('liq-price');
+    const marginValEl = document.getElementById('margin-val');
+    const pnlValEl = document.getElementById('pnl-val');
     const btnLong = document.getElementById('btn-long');
     const btnShort = document.getElementById('btn-short');
     const btnClose = document.getElementById('btn-close');
-    const tpslPanel = document.getElementById('tpsl-panel');
+    const endScreen = document.getElementById('end-screen');
+    const screenFlash = document.getElementById('screen-flash');
     const crashOverlay = document.getElementById('crash-overlay');
-    const orderBook = document.getElementById('order-book');
-    const levBtns = document.querySelectorAll('.lev-btn');
-    const assetBtns = document.querySelectorAll('.asset-btn');
 
     let W, H;
     function resize() {
@@ -264,205 +207,148 @@
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         let now = audioCtx.currentTime;
-        if (type === 'open') { osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(); osc.stop(now + 0.1); }
-        else if (type === 'win') { osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(); osc.stop(now + 0.2); }
-        else if (type === 'lose') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(); osc.stop(now + 0.2); }
-        else if (type === 'crash') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.5); gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(); osc.stop(now + 0.5); }
-        else if (type === 'news') { osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(); osc.stop(now + 0.3); }
+        if (type === 'open') { osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(); osc.stop(now + 0.1); }
+        else if (type === 'win') { osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(); osc.stop(now + 0.2); }
+        else if (type === 'lose') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(); osc.stop(now + 0.2); }
+        else if (type === 'crash') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.5); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(); osc.stop(now + 0.5); }
     }
     function vibrate(ms) { if (navigator.vibrate) navigator.vibrate(ms); }
 
-    let mode = 'classic';
-    let asset = 'btc';
-    let cash = 10000, price = 100, timeLeft = 60, gameActive = false;
-    let position = null, entryPrice = 0, margin = 0, leverage = 1;
-    let takeProfit = 0, stopLoss = 0;
+    let cash = 10000, price = 100, gameActive = false;
+    let position = null, entryPrice = 0, margin = 0, leverage = 10;
     let winStreak = 0, hasShield = false;
-    let newsTimer = 0, priceHistory = [], particles = [], shakeTime = 0;
+    let candles = [], tickCount = 0, currentCandle = { o: 100, h: 100, l: 100, c: 100, v: 0 };
+    let particles = [], shakeTime = 0;
+    let lastPrice = 100;
 
-    const ASSETS = {
-        btc: { name: 'BTC', base: 100, vol: 0.05, bias: -0.48, color: '#00d2d3', dec: 2 },
-        meme: { name: 'MEME', base: 0.1, vol: 0.2, bias: -0.45, color: '#e84393', dec: 4 },
-        usdt: { name: 'USDT', base: 1.0, vol: 0.001, bias: -0.5, color: '#2ed573', dec: 3 }
-    };
-
-    const ACHIEVEMENTS = [
-        { id: 'rich', title: '百萬富翁', desc: '總資產超過 $100,000', check: () => cash >= 100000 },
-        { id: 'whale', title: '巨鯨', desc: '單次交易獲利超過 $50,000', check: (pnl) => pnl >= 50000 },
-        { id: 'streak', title: '常勝將軍', desc: '連勝達到 5 次', check: () => winStreak >= 5 },
-        { id: 'survive', title: '百倍傳奇', desc: '用 100x 槓桿成功平倉', check: () => leverage === 100 && position === null }
-    ];
-    let unlockedAchievements = JSON.parse(localStorage.getItem('cyber_stock_achieve') || '[]');
-
-    function updateOrderBook() {
-        let html = '';
-        let baseWidth = Math.min(60, W * 0.15);
-        for (let i = 0; i < 10; i++) {
-            let w = baseWidth * (Math.random() * 0.8 + 0.2);
-            html += `<div class="ob-row ob-ask" style="width:${w}px; margin-left:auto;"></div>`;
-        }
-        for (let i = 0; i < 10; i++) {
-            let w = baseWidth * (Math.random() * 0.8 + 0.2);
-            html += `<div class="ob-row ob-bid" style="width:${w}px;"></div>`;
-        }
-        orderBook.innerHTML = html;
-    }
-    setInterval(() => { if (gameActive) updateOrderBook(); }, 300);
-
-    function initChart() {
-        priceHistory = [];
-        for (let i = 0; i < W / 5; i++) priceHistory.push(ASSETS[asset].base);
-    }
-
-    function setAsset(a) {
-        if (position) return alert('持倉期間不能切換資產！');
-        asset = a;
-        assetBtns.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        if (gameActive) {
-            price = ASSETS[asset].base;
-            initChart();
-            updateHUD();
-        }
-    }
-
-    function setLeverage(val) {
-        if (position) return alert('持倉期間不能更改槓桿！');
-        leverage = val;
-        levBtns.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-    }
-
-    function startGame(m) {
-        mode = m;
+    function startGame(mode = 'classic') {
         cash = mode === 'survival' ? 1000 : 10000;
-        price = ASSETS[asset].base;
-        timeLeft = mode === 'endless' ? Infinity : 60;
+        price = 100;
         gameActive = true;
         position = null;
-        margin = 0;
-        takeProfit = 0; stopLoss = 0;
+        leverage = 10;
+        levSlider.value = 10;
+        levVal.innerText = '10x';
         winStreak = 0; hasShield = false;
         particles = []; shakeTime = 0;
         endScreen.style.display = 'none';
         crashOverlay.style.display = 'none';
-        tpslPanel.style.display = 'none';
-        initChart();
-        updateHUD();
+        
+        candles = [];
+        for(let i=0; i<40; i++) candles.push({ o: 100, h: 100, l: 100, c: 100, v: Math.random()*100 });
+        currentCandle = { o: 100, h: 100, l: 100, c: 100, v: 0 };
+        tickCount = 0;
+        
+        updateUI();
         resetButtons();
-        newsTimer = 0;
-
+        
         if (window.gameLoopInterval) clearInterval(window.gameLoopInterval);
         window.gameLoopInterval = setInterval(gameTick, 100);
-        
-        if (window.timerInterval) clearInterval(window.timerInterval);
-        window.timerInterval = setInterval(() => {
-            if (!gameActive || mode === 'endless') return;
-            timeLeft--;
-            timeVal.innerText = timeLeft + 's';
-            if (timeLeft <= 0) endGame();
-        }, 1000);
     }
+
+    levSlider.addEventListener('input', (e) => {
+        if (position) { levSlider.value = leverage; return; }
+        leverage = parseInt(e.target.value);
+        levVal.innerText = leverage + 'x';
+    });
 
     function gameTick() {
         if (!gameActive) return;
-        let cfg = ASSETS[asset];
-        let changePercent = (Math.random() - cfg.bias) * cfg.vol;
         
-        newsTimer++;
-        let newsProb = asset === 'meme' ? 15 : (asset === 'usdt' ? 150 : 30);
-        if (newsTimer > newsProb + Math.random() * 20) {
-            triggerNews();
-            newsTimer = 0;
+        // 模擬真實價格跳動（帶趨勢和波動）
+        let changePercent = (Math.random() - 0.5) * 0.005; // 基礎波動
+        // 隨機觸發大行情
+        if (Math.random() < 0.02) changePercent += (Math.random() - 0.5) * 0.03; 
+        
+        lastPrice = price;
+        price = price * (1 + changePercent);
+        if (price < 0.01) price = 0.01;
+        
+        // 更新 K 線
+        currentCandle.c = price;
+        currentCandle.h = Math.max(currentCandle.h, price);
+        currentCandle.l = Math.min(currentCandle.l, price);
+        currentCandle.v += Math.random() * 50;
+        tickCount++;
+        
+        // 每 20 個 tick (2秒) 生成一根新蠟燭
+        if (tickCount >= 20) {
+            candles.push({ ...currentCandle });
+            if (candles.length > 40) candles.shift();
+            currentCandle = { o: price, h: price, l: price, c: price, v: 0 };
+            tickCount = 0;
         }
 
-        price = price * (1 + changePercent);
-        if (price < 0.001) price = 0.001;
-        
-        priceHistory.push(price);
-        if (priceHistory.length > W / 5) priceHistory.shift();
-
-        updateHUD();
+        updateUI();
         checkTPSL();
         checkLiquidation();
+        updateOrderBook();
     }
 
-    function triggerNews() {
-        let events = [
-            { text: "🚀 華爾街巨鯨入場！全線暴升！", impact: 0.4 },
-            { text: "🔥 美聯儲突發加息！市場崩盤！", impact: -0.35 },
-            { text: "💻 交易所被黑客攻擊！恐慌拋售！", impact: -0.2 },
-            { text: "🤖 超級 AI 量化機器人啟動！", impact: 0.25 },
-            { text: "🚨 監管機構突擊調查！", impact: -0.15 },
-            { text: "🔌 拔網線！系統維護 3 秒！", impact: 0, pause: true }
-        ];
-        let ev = events[Math.floor(Math.random() * events.length)];
+    function updateUI() {
+        currentPriceEl.innerText = price.toFixed(2);
+        currentPriceEl.className = 'price-large ' + (price >= lastPrice ? 'up' : 'down');
         
-        newsPopup.innerText = ev.text;
-        newsPopup.classList.add('show');
-        setTimeout(() => newsPopup.classList.remove('show'), 2500);
-        playSound('news');
-        vibrate(50);
+        let change = ((price - 100) / 100) * 100;
+        priceChangeEl.innerText = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+        priceChangeEl.className = 'price-change ' + (change >= 0 ? 'up' : 'down');
 
-        if (ev.pause) {
-            gameActive = false;
-            setTimeout(() => {
-                gameActive = true;
-                price *= (1 + (Math.random() > 0.5 ? 0.2 : -0.2));
-                priceHistory.push(price);
-                shakeTime = 20;
-            }, 3000);
-            return;
+        cashVal.innerText = '$' + Math.floor(cash).toLocaleString();
+
+        if (position) {
+            let pnl = position === 'long' ? (price - entryPrice) / entryPrice * margin * leverage : (entryPrice - price) / entryPrice * margin * leverage;
+            pnlValEl.innerText = (pnl >= 0 ? '+' : '') + '$' + Math.floor(pnl).toLocaleString();
+            pnlValEl.style.color = pnl >= 0 ? '#0ecb81' : '#f6465d';
+            
+            let liqPrice = position === 'long' ? entryPrice * (1 - 1/leverage) : entryPrice * (1 + 1/leverage);
+            liqPriceEl.innerText = '$' + liqPrice.toFixed(2);
         }
+    }
 
-        price = price * (1 + ev.impact);
-        priceHistory.push(price);
-        shakeTime = 15;
-        if (ev.impact > 0) spawnParticles(ASSETS[asset].color, 30);
-        else spawnParticles('#ff4757', 30);
+    function updateOrderBook() {
+        let html = '';
+        let basePrice = price;
+        // 賣盤 (Asks)
+        for (let i = 5; i >= 1; i--) {
+            let p = basePrice * (1 + i * 0.001);
+            let w = Math.random() * 100;
+            html += `<div class="ob-row ob-ask"><div class="ob-bg" style="width:${w}%"></div><span>${p.toFixed(2)}</span><span>${(Math.random()*2).toFixed(3)}</span></div>`;
+        }
+        // 買盤 (Bids)
+        for (let i = 1; i <= 5; i++) {
+            let p = basePrice * (1 - i * 0.001);
+            let w = Math.random() * 100;
+            html += `<div class="ob-row ob-bid"><div class="ob-bg" style="width:${w}%"></div><span>${p.toFixed(2)}</span><span>${(Math.random()*2).toFixed(3)}</span></div>`;
+        }
+        orderBook.innerHTML = html;
     }
 
     function openPosition(type) {
         if (!gameActive || position) return;
-        let fee = Math.floor(cash * 0.001);
-        if (cash - fee < 10) return alert('本金太少，唔夠俾手續費！');
         
-        margin = cash - fee;
+        margin = cash;
+        cash = 0;
         entryPrice = price;
         position = type;
-        cash = 0; 
         
         playSound('open'); vibrate(30);
-        updateHUD();
+        
+        posInfo.style.display = 'grid';
+        entryPriceEl.innerText = '$' + entryPrice.toFixed(2);
+        marginValEl.innerText = '$' + Math.floor(margin).toLocaleString();
         
         btnLong.style.display = 'none';
         btnShort.style.display = 'none';
         btnClose.style.display = 'flex';
-        tpslPanel.style.display = 'flex';
         
-        let tpPct = (100 / leverage) * 0.5; 
-        let slPct = (100 / leverage) * 0.3;
-        document.getElementById('tp-input').value = (type === 'long' ? price * (1 + tpPct/100) : price * (1 - tpPct/100)).toFixed(2);
-        document.getElementById('sl-input').value = (type === 'long' ? price * (1 - slPct/100) : price * (1 + slPct/100)).toFixed(2);
-        setTPSL();
+        updateUI();
     }
 
-    function setTPSL() {
-        let tp = parseFloat(document.getElementById('tp-input').value);
-        let sl = parseFloat(document.getElementById('sl-input').value);
-        takeProfit = isNaN(tp) ? 0 : tp;
-        stopLoss = isNaN(sl) ? 0 : sl;
-    }
-
-    function closePosition(isAuto = false) {
+    function closePosition() {
         if (!gameActive || !position) return;
         
-        let pnl = 0;
-        if (position === 'long') pnl = (price - entryPrice) / entryPrice * margin * leverage;
-        else pnl = (entryPrice - price) / entryPrice * margin * leverage;
-        
-        let fee = Math.floor((margin + Math.max(0, pnl)) * 0.001);
-        let finalCash = margin + pnl - fee;
+        let pnl = position === 'long' ? (price - entryPrice) / entryPrice * margin * leverage : (entryPrice - price) / entryPrice * margin * leverage;
+        let finalCash = margin + pnl;
         if (finalCash < 0) finalCash = 0;
         
         if (finalCash <= 0 && hasShield) {
@@ -471,86 +357,44 @@
             alert('🛡️ 觸發免死金牌！保留了一半保證金！');
         }
 
-        cash = finalCash;
+        cash += finalCash;
         position = null;
-        updateHUD();
         
         if (pnl > 0) {
             winStreak++;
             playSound('win'); vibrate(50);
-            spawnParticles('#2ed573', 30);
+            spawnParticles('#0ecb81', 30);
             if (winStreak >= 3 && !hasShield) {
                 hasShield = true;
                 alert('🔥 3 連勝！獲得免死金牌 x1！');
             }
-            checkAchievement('whale', pnl);
-            checkAchievement('streak');
         } else {
             winStreak = 0;
             playSound('lose'); vibrate([50, 50, 50]);
-            spawnParticles('#ff4757', 30);
+            spawnParticles('#f6465d', 30);
             shakeTime = 10;
         }
         
+        posInfo.style.display = 'none';
         resetButtons();
-        checkLiquidation();
+        updateUI();
     }
 
     function resetButtons() {
         btnLong.style.display = 'flex';
         btnShort.style.display = 'flex';
         btnClose.style.display = 'none';
-        tpslPanel.style.display = 'none';
-        profitLossEl.innerText = "";
-        updateHUD();
-    }
-
-    function updateHUD() {
-        cashVal.innerText = `$${Math.floor(cash).toLocaleString()}`;
-        currentPriceEl.innerText = `$${price.toFixed(ASSETS[asset].dec)}`;
-        streakVal.innerText = `🔥 連勝: ${winStreak}`;
-        shieldVal.style.display = hasShield ? 'inline' : 'none';
-        
-        if (mode !== 'endless') timeVal.innerText = timeLeft + 's';
-        else timeVal.innerText = '∞';
-
-        if (position) {
-            let pnl = 0;
-            if (position === 'long') pnl = (price - entryPrice) / entryPrice * margin * leverage;
-            else pnl = (entryPrice - price) / entryPrice * margin * leverage;
-            
-            profitLossEl.innerText = `${pnl >= 0 ? '+' : ''}$${Math.floor(pnl).toLocaleString()}`;
-            profitLossEl.style.color = pnl >= 0 ? '#2ed573' : '#ff4757';
-            
-            let liqPrice = position === 'long' ? entryPrice * (1 - 1/leverage) : entryPrice * (1 + 1/leverage);
-            liqVal.style.display = 'block';
-            liqVal.innerText = `💥 爆倉價: $${liqPrice.toFixed(ASSETS[asset].dec)}`;
-        } else {
-            liqVal.style.display = 'none';
-        }
-    }
-
-    function checkTPSL() {
-        if (!position) return;
-        if (position === 'long') {
-            if (takeProfit > 0 && price >= takeProfit) { closePosition(true); alert('🎯 觸發止盈！'); }
-            else if (stopLoss > 0 && price <= stopLoss) { closePosition(true); alert('🛑 觸發止損！'); }
-        } else {
-            if (takeProfit > 0 && price <= takeProfit) { closePosition(true); alert('🎯 觸發止盈！'); }
-            else if (stopLoss > 0 && price >= stopLoss) { closePosition(true); alert('🛑 觸發止損！'); }
-        }
+        posInfo.style.display = 'none';
     }
 
     function checkLiquidation() {
         if (!position) return;
-        let pnl = 0;
-        if (position === 'long') pnl = (price - entryPrice) / entryPrice * margin * leverage;
-        else pnl = (entryPrice - price) / entryPrice * margin * leverage;
+        let pnl = position === 'long' ? (price - entryPrice) / entryPrice * margin * leverage : (entryPrice - price) / entryPrice * margin * leverage;
         
         if (margin + pnl <= 0) {
             if (hasShield) {
                 hasShield = false;
-                cash = margin * 0.5;
+                cash += margin * 0.5;
                 position = null;
                 playSound('crash'); shakeTime = 30;
                 alert('🛡️ 爆倉！但觸發免死金牌，保留 50% 保證金！');
@@ -562,7 +406,10 @@
                 crashOverlay.style.display = 'block';
                 vibrate([200, 100, 200, 100, 500]);
                 setTimeout(() => { crashOverlay.style.display = 'none'; }, 800);
-                endGame();
+                gameActive = false;
+                clearInterval(window.gameLoopInterval);
+                endScreen.style.display = 'flex';
+                document.getElementById('end-stats').innerText = `最終資產：$${Math.floor(cash).toLocaleString()}\n\n💥 你被爆倉了！`;
             }
         }
     }
@@ -573,92 +420,101 @@
         }
     }
 
-    function checkAchievement(id, val = 0) {
-        if (unlockedAchievements.includes(id)) return;
-        let ach = ACHIEVEMENTS.find(a => a.id === id);
-        if (ach && ach.check(val)) {
-            unlockedAchievements.push(id);
-            localStorage.setItem('cyber_stock_achieve', JSON.stringify(unlockedAchievements));
-            
-            document.getElementById('achieve-title').innerText = `🏆 成就解鎖: ${ach.title}`;
-            document.getElementById('achieve-desc').innerText = ach.desc;
-            document.getElementById('achieve-popup').style.display = 'flex';
-            setTimeout(() => { document.getElementById('achieve-popup').style.display = 'none'; }, 3000);
-        }
-    }
-
-    function endGame() {
-        gameActive = false;
-        clearInterval(window.gameLoopInterval);
-        clearInterval(window.timerInterval);
-        
-        checkAchievement('rich');
-        
-        endTitle.innerText = "交易結束";
-        endTitle.style.color = "#00d2d3";
-        endStats.innerText = `最終資產：$${Math.floor(cash).toLocaleString()}\n\n`;
-        
-        if (unlockedAchievements.length > 0) {
-            endStats.innerText += `已解鎖成就：\n`;
-            unlockedAchievements.forEach(id => {
-                let a = ACHIEVEMENTS.find(x => x.id === id);
-                if (a) endStats.innerText += `🏆 ${a.title}\n`;
-            });
-        }
-        
-        endScreen.style.display = 'flex';
-    }
-
     function draw() {
-        ctx.fillStyle = '#050510';
+        ctx.fillStyle = '#181a20';
         ctx.fillRect(0, 0, W, H);
 
         ctx.save();
-        if (shakeTime > 0) { shakeTime--; ctx.translate((Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15); }
+        if (shakeTime > 0) { shakeTime--; ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10); }
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)'; ctx.lineWidth = 1;
+        // 網格
+        ctx.strokeStyle = '#2b3139'; ctx.lineWidth = 1;
         for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
         for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
 
-        if (priceHistory.length > 0) {
-            ctx.beginPath();
-            ctx.strokeStyle = position === 'short' ? '#ff4757' : (position === 'long' ? '#2ed573' : ASSETS[asset].color);
-            ctx.lineWidth = 3; ctx.shadowBlur = 15; ctx.shadowColor = ctx.strokeStyle; ctx.lineJoin = 'round';
-
-            let maxP = Math.max(...priceHistory) * 1.05;
-            let minP = Math.min(...priceHistory) * 0.95;
+        if (candles.length > 0) {
+            let maxP = Math.max(...candles.map(c => c.h), currentCandle.h);
+            let minP = Math.min(...candles.map(c => c.l), currentCandle.l);
+            // 留出頂部和底部空間
+            let padding = (maxP - minP) * 0.1;
+            maxP += padding; minP -= padding;
             let range = maxP - minP; if (range === 0) range = 1;
+            
+            let chartH = H * 0.7; // K 線佔 70% 高度
+            let volH = H * 0.2;   // 成交量佔 20%
+            let gap = H * 0.1;
+            
+            let candleWidth = Math.min(10, (W - 60) / candles.length - 2);
+            let startX = W - 60 - (candles.length + 1) * (candleWidth + 2);
 
-            for (let i = 0; i < priceHistory.length; i++) {
-                let x = i * 5;
-                let y = H * 0.6 - ((priceHistory[i] - minP) / range) * (H * 0.4);
-                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            let drawCandle = (x, candle) => {
+                let openY = chartH - ((candle.o - minP) / range) * chartH;
+                let closeY = chartH - ((candle.c - minP) / range) * chartH;
+                let highY = chartH - ((candle.h - minP) / range) * chartH;
+                let lowY = chartH - ((candle.l - minP) / range) * chartH;
+                
+                let isUp = candle.c >= candle.o;
+                let color = isUp ? '#0ecb81' : '#f6465d';
+                ctx.strokeStyle = color; ctx.fillStyle = color;
+                
+                // 影線
+                ctx.beginPath(); ctx.moveTo(x + candleWidth/2, highY); ctx.lineTo(x + candleWidth/2, lowY); ctx.stroke();
+                // 實體
+                if (isUp) {
+                    ctx.fillRect(x, closeY, candleWidth, Math.max(1, openY - closeY));
+                } else {
+                    ctx.fillRect(x, openY, candleWidth, Math.max(1, closeY - openY));
+                }
+                
+                // 成交量
+                let volY = chartH + gap - (candle.v / 200) * volH;
+                ctx.fillStyle = isUp ? 'rgba(14, 203, 129, 0.5)' : 'rgba(246, 70, 93, 0.5)';
+                ctx.fillRect(x, volY, candleWidth, chartH + gap - volY);
+            };
+
+            candles.forEach((c, i) => {
+                let x = startX + i * (candleWidth + 2);
+                drawCandle(x, c);
+            });
+            
+            let lastX = startX + candles.length * (candleWidth + 2);
+            drawCandle(lastX, currentCandle);
+
+            // MA 均線
+            ctx.beginPath();
+            ctx.strokeStyle = '#fcd535'; ctx.lineWidth = 1;
+            for(let i = 5; i < candles.length; i++) {
+                let sum = 0;
+                for(let j = 0; j < 5; j++) sum += candles[i-j].c;
+                let ma = sum / 5;
+                let y = chartH - ((ma - minP) / range) * chartH;
+                let x = startX + i * (candleWidth + 2) + candleWidth/2;
+                if(i === 5) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
 
-            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-            let grad = ctx.createLinearGradient(0, 0, 0, H);
-            grad.addColorStop(0, 'rgba(255, 255, 255, 0.1)'); grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = grad; ctx.fill();
-            ctx.shadowBlur = 0;
+            // 進場線
+            if (position) {
+                let entryY = chartH - ((entryPrice - minP) / range) * chartH;
+                ctx.beginPath(); ctx.setLineDash([2, 2]);
+                ctx.strokeStyle = '#848e9c'; ctx.lineWidth = 1;
+                ctx.moveTo(0, entryY); ctx.lineTo(W, entryY); ctx.stroke(); ctx.setLineDash([]);
+            }
 
-            let lastY = H * 0.6 - ((priceHistory[priceHistory.length-1] - minP) / range) * (H * 0.4);
-            let lastX = (priceHistory.length - 1) * 5;
-            ctx.beginPath(); ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+            // 即時價格線
+            let currentY = chartH - ((price - minP) / range) * chartH;
+            ctx.beginPath(); ctx.setLineDash([2, 2]);
+            ctx.strokeStyle = price >= lastPrice ? '#0ecb81' : '#f6465d'; ctx.lineWidth = 1;
+            ctx.moveTo(0, currentY); ctx.lineTo(W, currentY); ctx.stroke(); ctx.setLineDash([]);
+            
+            // 右側價格標籤
+            ctx.fillStyle = price >= lastPrice ? '#0ecb81' : '#f6465d';
+            ctx.fillRect(W - 60, currentY - 8, 60, 16);
+            ctx.fillStyle = '#fff'; ctx.font = '10px Roboto Mono';
+            ctx.fillText(price.toFixed(2), W - 55, currentY + 3);
         }
 
-        if (position) {
-            let maxP = Math.max(...priceHistory, entryPrice) * 1.05;
-            let minP = Math.min(...priceHistory, entryPrice) * 0.95;
-            let range = maxP - minP; if (range === 0) range = 1;
-            let entryY = H * 0.6 - ((entryPrice - minP) / range) * (H * 0.4);
-
-            ctx.beginPath(); ctx.setLineDash([5, 5]);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 2;
-            ctx.moveTo(0, entryY); ctx.lineTo(W, entryY); ctx.stroke(); ctx.setLineDash([]);
-        }
-
+        // 粒子
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             p.x += p.vx; p.y += p.vy; p.life -= 0.02;
