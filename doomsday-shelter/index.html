@@ -7,7 +7,7 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    body { background: #000; color: #ccc; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+    body { background: #050505; color: #ccc; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
     
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
@@ -18,7 +18,7 @@
     .back-btn { position: absolute; top: 15px; left: 15px; padding: 8px 16px; background: rgba(0,0,0,0.8); color: #ffaa00; border: 1px solid #ffaa00; border-radius: 4px; text-decoration: none; font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 13px; z-index: 100; }
     
     /* 頂部 HUD */
-    .hud-top { display: flex; justify-content: space-between; padding: 10px 15px; background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 10px; }
+    .hud-top { display: flex; justify-content: space-between; padding: 10px 15px; background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 10px; }
     .res-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
     .res-box { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold; background: rgba(20,20,20,0.85); padding: 5px 10px; border-radius: 4px; border: 1px solid #333; }
     .res-box.energy { color: #f1c40f; } .res-box.water { color: #00d2d3; } .res-box.food { color: #2ecc71; } .res-box.crystal { color: #e056fd; }
@@ -106,7 +106,6 @@
         let gameTime = 8, day = 1, wave = 1;
         let speechEnabled = true;
         
-        // 居民現在有 3D 實體了
         let residents = [
             { id: 1, name: '平民 #042', awakened: false, mesh: null, state: 'idle', targetCrystal: null },
             { id: 2, name: '平民 #109', awakened: false, mesh: null, state: 'idle', targetCrystal: null }
@@ -125,7 +124,7 @@
         let ambientLight, sunLight, moonLight, doorLight;
         let rainParticles, crystalMesh;
         let zombies = []; 
-        let droppedCrystals = []; // 地下的晶石
+        let droppedCrystals = []; 
         let turretBullets = [];
         let doorMesh, fortressMesh;
 
@@ -133,7 +132,9 @@
             try {
                 const container = document.getElementById('canvas-container');
                 scene = new THREE.Scene();
-                scene.fog = new THREE.FogExp2(0x000000, 0.02);
+                // 調光：移除濃霧，設定淺灰色背景 (永遠唔會死黑)
+                scene.background = new THREE.Color(0x1a1a2e); 
+                
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 8, 28);
                 renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -141,13 +142,15 @@
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 container.appendChild(renderer.domElement);
 
-                ambientLight = new THREE.AmbientLight(0xffffff, 0.5); scene.add(ambientLight);
-                sunLight = new THREE.DirectionalLight(0xffeedd, 1); sunLight.position.set(10, 20, 10); scene.add(sunLight);
-                moonLight = new THREE.DirectionalLight(0x4466ff, 0); moonLight.position.set(-10, 20, 10); scene.add(moonLight);
-                doorLight = new THREE.PointLight(0xff3b3b, 0, 30); doorLight.position.set(0, 0, 6); scene.add(doorLight);
+                // 調光：超強環境光，確保所有嘢都睇得清
+                ambientLight = new THREE.AmbientLight(0xffffff, 0.8); scene.add(ambientLight);
+                sunLight = new THREE.DirectionalLight(0xffeedd, 1.2); sunLight.position.set(10, 20, 10); scene.add(sunLight);
+                moonLight = new THREE.DirectionalLight(0x4466ff, 0.3); moonLight.position.set(-10, 20, 10); scene.add(moonLight);
+                doorLight = new THREE.PointLight(0xff3b3b, 1.5, 30); doorLight.position.set(12, 0, 5); scene.add(doorLight);
 
-                // 建築
-                const metalMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, metalness: 0.8 });
+                // 調光：改用淺灰色金屬材質
+                const metalMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6, metalness: 0.4 });
+                
                 for(let i = 0; i < 3; i++) {
                     const floor = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 10), metalMat);
                     floor.position.set(0, i * 4 - 4, 0); scene.add(floor);
@@ -156,28 +159,27 @@
                 const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 12, 10), metalMat); wallR.position.set(12, 0, 0); scene.add(wallR);
                 const wallB = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 0.5), metalMat); wallB.position.set(0, 0, -5); scene.add(wallB);
                 
-                // 大門
-                const doorMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 1, roughness: 0.2 });
+                const doorMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 1, roughness: 0.2 });
                 doorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 10, 8), doorMat);
                 doorMesh.position.set(12, 0, 0); scene.add(doorMesh);
 
-                // 堡壘防禦層 (預設隱藏，升級後顯示)
-                fortressMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 10), new THREE.MeshStandardMaterial({ color: 0x00d2d3, emissive: 0x00d2d3, transparent: true, opacity: 0.5 }));
-                fortressMesh.position.set(12.5, 0, 0); fortressMesh.visible = false; scene.add(fortressMesh);
+                // 堡壘防禦罩
+                fortressMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 12.5, 10.5), new THREE.MeshBasicMaterial({ color: 0x00d2d3, transparent: true, opacity: 0.3 }));
+                fortressMesh.position.set(12, 0, 0); fortressMesh.visible = false; scene.add(fortressMesh);
 
                 // 雨水
                 const rainGeo = new THREE.BufferGeometry();
-                const posArray = new Float32Array(2000 * 3);
-                for(let i=0; i<2000*3; i+=3) { posArray[i] = (Math.random() - 0.5) * 60; posArray[i+1] = Math.random() * 25 + 5; posArray[i+2] = (Math.random() - 0.5) * 40; }
+                const posArray = new Float32Array(1000 * 3);
+                for(let i=0; i<1000*3; i+=3) { posArray[i] = (Math.random() - 0.5) * 60; posArray[i+1] = Math.random() * 25 + 5; posArray[i+2] = (Math.random() - 0.5) * 40; }
                 rainGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                rainParticles = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.15, transparent: true, opacity: 0.6 }));
+                rainParticles = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.15, transparent: true, opacity: 0.8 }));
                 rainParticles.visible = false; scene.add(rainParticles);
 
-                // 居民 3D 實體
+                // 居民 3D 實體 (藍色小人)
                 residents.forEach(r => {
-                    const rMat = new THREE.MeshStandardMaterial({ color: 0x3498db });
+                    const rMat = new THREE.MeshStandardMaterial({ color: 0x00d2d3, emissive: 0x005577 });
                     r.mesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 1, 4, 8), rMat);
-                    r.mesh.position.set(-5, -3.2, Math.random() * 4 - 2); // 初始位置
+                    r.mesh.position.set(-5, -3.2, Math.random() * 4 - 2);
                     scene.add(r.mesh);
                 });
 
@@ -195,17 +197,17 @@
         function animate() {
             requestAnimationFrame(animate);
             try {
-                // 日夜光影
+                // 日夜光影 (調光版：就算夜晚都只係微暗)
                 if (gameTime >= 6 && gameTime < 18) {
                     let progress = (gameTime - 6) / 12;
                     sunLight.intensity = Math.sin(progress * Math.PI) * 1.5;
-                    ambientLight.intensity = 0.3 + Math.sin(progress * Math.PI) * 0.4;
+                    ambientLight.intensity = 0.6 + Math.sin(progress * Math.PI) * 0.4;
                     moonLight.intensity = 0; doorLight.intensity = 0;
-                    scene.background = new THREE.Color().setHSL(0.6, 0.5, 0.1 + progress * 0.4);
+                    scene.background.setHSL(0.6, 0.4, 0.3 + progress * 0.2); // 白天淺藍/黃昏橙紅
                 } else {
-                    sunLight.intensity = 0; ambientLight.intensity = 0.1;
-                    moonLight.intensity = 0.4; doorLight.intensity = 1.5;
-                    scene.background = new THREE.Color(0x020205);
+                    sunLight.intensity = 0.2; ambientLight.intensity = 0.4; // 晚上都保證有 0.4 亮度
+                    moonLight.intensity = 0.5; doorLight.intensity = 1.5;
+                    scene.background.setHSL(0.6, 0.4, 0.1); // 晚上係深灰藍，唔係死黑
                 }
 
                 // 喪屍 AI
@@ -214,31 +216,26 @@
                     z.mesh.position.x -= z.speed;
                     z.mesh.rotation.z = Math.sin(Date.now() * 0.01) * 0.2;
                     
-                    if (z.mesh.position.x <= 10) {
-                        z.mesh.position.x = 10;
-                        // 如果有堡壘，扣血減半
+                    if (z.mesh.position.x <= 11) {
+                        z.mesh.position.x = 11;
                         let dmgTaken = z.dmg * 0.016 * (fortressLevel > 1 ? 0.5 : 1);
                         doorHp -= dmgTaken;
                         if (doorHp < 0) doorHp = 0;
-                        z.mesh.position.z = Math.sin(Date.now() * 0.05) * 0.5;
                     }
                 }
 
                 // 居民 AI (自動執晶石)
                 residents.forEach(r => {
                     if (r.state === 'idle' && droppedCrystals.length > 0) {
-                        // 尋找最近的晶石
                         r.targetCrystal = droppedCrystals[0];
                         r.state = 'collecting';
                     }
                     
                     if (r.state === 'collecting' && r.targetCrystal) {
-                        // 移動到晶石
                         let targetPos = r.targetCrystal.mesh.position;
                         r.mesh.position.lerp(targetPos, 0.05);
-                        r.mesh.position.y = -3.2; // 貼地
+                        r.mesh.position.y = -3.2;
                         
-                        // 執到
                         if (r.mesh.position.distanceTo(targetPos) < 1) {
                             crystals += r.targetCrystal.amount;
                             scene.remove(r.targetCrystal.mesh);
@@ -248,12 +245,17 @@
                             updateUI();
                         }
                     } else if (r.state === 'returning') {
-                        // 行返原位
                         r.mesh.position.lerp(new THREE.Vector3(-5, -3.2, 0), 0.05);
                         if (r.mesh.position.distanceTo(new THREE.Vector3(-5, -3.2, 0)) < 0.5) {
                             r.state = 'idle';
                         }
                     }
+                });
+
+                // 晶石掉落旋轉
+                droppedCrystals.forEach(c => {
+                    c.mesh.rotation.y += 0.05;
+                    c.mesh.position.y = -3.5 + Math.sin(Date.now() * 0.005) * 0.2;
                 });
 
                 // 子彈
@@ -278,7 +280,6 @@
             } catch(e) {}
         }
 
-        // 生成喪屍
         function spawnZombie(isBoss = false) {
             let color = isBoss ? 0x9b59b6 : (wave > 10 ? 0x3498db : wave > 5 ? 0xe74c3c : 0x2ecc71);
             let size = isBoss ? 3 : (wave > 10 ? 2 : wave > 5 ? 1.5 : 1);
@@ -286,7 +287,7 @@
             let speed = isBoss ? 0.02 : (wave > 5 ? 0.06 : 0.04);
             let dmg = isBoss ? 100 : (wave > 10 ? 30 : wave > 5 ? 20 : 10);
 
-            const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.8 });
+            const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.3 });
             let zGroup = new THREE.Group();
             zGroup.add(new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), mat));
             let head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), mat); head.position.y = 1.2; zGroup.add(head);
@@ -297,36 +298,30 @@
             zombies.push({ mesh: zGroup, hp: hp, speed: speed, dmg: dmg, isBoss: isBoss });
         }
 
-        // 擊殺喪屍 (掉落晶石)
         function killZombie(z) {
             scene.remove(z.mesh);
             zombies = zombies.filter(item => item !== z);
             
-            // 生成掉落物
             let dropAmount = z.isBoss ? 50 : 1;
             const dropMat = new THREE.MeshStandardMaterial({ color: 0xe056fd, emissive: 0xe056fd });
-            let dropMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.3), dropMat);
+            let dropMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.4), dropMat);
             dropMesh.position.copy(z.mesh.position);
-            dropMesh.position.y = -3.5; // 跌落地
+            dropMesh.position.y = -3.5;
             scene.add(dropMesh);
             
             droppedCrystals.push({ mesh: dropMesh, amount: dropAmount });
-
             if (z.isBoss) broadcast("👑 喪屍王死亡！掉落大量晶石！");
         }
 
-        // 建造堡壘
         function buildFortress() {
-            if (crystals < 10) { broadcast("❌ 晶石不足，無法建造！"); return; }
+            if (crystals < 10) { broadcast("❌ 晶石不足！"); return; }
             crystals -= 10;
             fortressLevel++;
-            doorHp = Math.min(maxDoorHp + (fortressLevel - 1) * 500, doorHp + 500); // 升級回血
             maxDoorHp = 1000 + (fortressLevel - 1) * 500;
-            
-            fortressMesh.visible = true; // 顯示 3D 防禦罩
-            fortressMesh.scale.set(fortressLevel * 0.5, 1, 1);
-            
-            broadcast(`🧱 堡壘升級至 Lv.${fortressLevel}！大門獲得加固！`);
+            doorHp = maxDoorHp;
+            fortressMesh.visible = true;
+            fortressMesh.material.opacity = 0.2 + (fortressLevel * 0.1);
+            broadcast(`🧱 堡壘升級至 Lv.${fortressLevel}！大門血量上限增加！`);
             updateUI();
         }
 
@@ -376,9 +371,8 @@
             crystals -= 10;
             let t = un[Math.floor(Math.random() * un.length)];
             t.awakened = true;
-            // 覺醒變色
-            t.mesh.material.color.setHex(0xe056fd);
-            broadcast(`💎 催化成功！${t.name} 覺醒！`);
+            if (t.mesh) t.mesh.material.color.setHex(0xe056fd);
+            broadcast(`💎 催化成功！${t.name} 覺醒異能！`);
             updateUI();
         }
 
@@ -414,7 +408,7 @@
         window.onload = () => {
             init3D(); updateUI();
             setInterval(tick, 1000); 
-            setTimeout(() => { broadcast("系統啟動。居民會自動執拾地面晶石。"); }, 1000);
+            setTimeout(() => { broadcast("系統啟動。避難所已亮燈，居民會自動收集晶石。"); }, 1000);
         };
     </script>
 </body>
