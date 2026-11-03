@@ -140,7 +140,7 @@
             position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
             background: rgba(0,0,0,0.7); padding: 8px 20px; border-radius: 20px;
             font-size: 14px; color: #00d2d3; border: 1px solid #00d2d3;
-            pointer-events: none; transition: opacity 0.3s; white-space: nowrap;
+            pointer-events: none; transition: all 0.3s; white-space: nowrap;
         }
     </style>
 </head>
@@ -368,7 +368,7 @@
     dirtCanvas.width = canvas.width; dirtCanvas.height = canvas.height;
     soapCanvas.width = canvas.width; soapCanvas.height = canvas.height;
     
-    // ★ 修復 1：提升隱藏檢測畫布嘅解像度，令判定更精準 (由 100x60 提升到 200x125)
+    // 提升隱藏檢測畫布解像度，令判定更精準
     checkCanvas.width = 200; checkCanvas.height = 125;
 
     let particles = [];
@@ -406,10 +406,10 @@
         baseCtx.ellipse(baseCanvas.width/2, baseCanvas.height/2, 200, 120, 0, 0, Math.PI*2);
         baseCtx.fill();
 
-        // 2. 畫污垢層
+        // 2. 畫污垢層 (加入上限，防止破千堆 Lag 機)
         dirtCtx.clearRect(0, 0, dirtCanvas.width, dirtCanvas.height);
         
-        let baseDirtCount = 80 + (currentLevel * 30); 
+        let baseDirtCount = Math.min(350, 80 + (currentLevel * 20)); 
         for(let i=0; i<baseDirtCount; i++) {
             dirtCtx.fillStyle = `rgba(60, 40, 20, ${Math.random()*0.5 + 0.3})`;
             dirtCtx.beginPath();
@@ -417,7 +417,7 @@
             dirtCtx.fill();
         }
 
-        let toughDirtCount = currentLevel > 2 ? (currentLevel * 5) : 0;
+        let toughDirtCount = Math.min(80, currentLevel > 2 ? (currentLevel * 5) : 0);
         for(let i=0; i<toughDirtCount; i++) {
             dirtCtx.fillStyle = 'rgba(10, 5, 0, 0.95)';
             dirtCtx.beginPath();
@@ -425,7 +425,7 @@
             dirtCtx.fill();
         }
 
-        let trashCount = 30 + (currentLevel * 15);
+        let trashCount = Math.min(200, 30 + (currentLevel * 15));
         for(let i=0; i<trashCount; i++) {
             dirtCtx.fillStyle = '#222';
             dirtCtx.fillRect(Math.random()*dirtCanvas.width, Math.random()*dirtCanvas.height, 6, 6);
@@ -510,7 +510,7 @@
 
     function handleDraw(x, y) {
         if (currentTool === 'vacuum') {
-            eraseDirt(x, y, 45); // 加大少少範圍
+            eraseDirt(x, y, 45);
             playSound('vacuum');
             for(let i=0; i<3; i++) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1, color: '#555', size: Math.random()*5+2, type: 'dust'});
         } 
@@ -521,7 +521,7 @@
             for(let i=0; i<2; i++) particles.push({x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 1, color: '#fff', size: Math.random()*8+4, type: 'bubble'});
         } 
         else if (currentTool === 'brush') {
-            eraseDirt(x, y, 40); // 刷洗範圍加大
+            eraseDirt(x, y, 40); 
             soapCtx.globalCompositeOperation = 'destination-out';
             soapCtx.beginPath(); soapCtx.arc(x, y, 40, 0, Math.PI*2); soapCtx.fill();
             soapCtx.globalCompositeOperation = 'source-over';
@@ -529,7 +529,7 @@
             for(let i=0; i<4; i++) particles.push({x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color: '#f1c40f', size: Math.random()*4+1, type: 'spark'});
         } 
         else if (currentTool === 'water') {
-            eraseDirt(x, y, 60); // 水槍範圍最大
+            eraseDirt(x, y, 60); 
             soapCtx.globalCompositeOperation = 'destination-out';
             soapCtx.beginPath(); soapCtx.arc(x, y, 65, 0, Math.PI*2); soapCtx.fill();
             soapCtx.globalCompositeOperation = 'source-over';
@@ -537,7 +537,7 @@
             for(let i=0; i<5; i++) particles.push({x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1, color: '#00d2d3', size: Math.random()*6+2, type: 'water'});
         } 
         else if (currentTool === 'squeegee') {
-            eraseDirt(x, y, 70); // 刮水範圍極大
+            eraseDirt(x, y, 70); 
             soapCtx.globalCompositeOperation = 'destination-out';
             soapCtx.beginPath(); soapCtx.arc(x, y, 70, 0, Math.PI*2); soapCtx.fill();
             soapCtx.globalCompositeOperation = 'source-over';
@@ -571,7 +571,7 @@
         
         let cleanPercent = 100 - ((dirtPixels / totalPixels) * 100);
         
-        // ★ 修復 2：強制設定目標為 100%（排除浮點數誤差用 99.9%）
+        // 強制設定目標為 100% (用 99.9% 排除浮點數誤差)
         let targetCleanPercent = 99.9; 
         
         // 顯示真實進度，只有當真正乾淨時才顯示 100%
@@ -584,7 +584,7 @@
         progressBar.style.width = progress + '%';
         progressText.innerText = progress + '%';
 
-        // ★ 修復 3：加入提示，令玩家知道仲差少少
+        // 加入提示，令玩家知道仲差少少
         if (progress >= 90 && progress < 100) {
             hintText.innerText = "⚠️ 仲有少少污漬喺角落！洗埋佢！";
             hintText.style.color = "#e74c3c";
