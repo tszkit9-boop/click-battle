@@ -151,7 +151,7 @@
         .card-judge:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.8); transform: translateY(-10px); }
         .card-judge h2 { color: #d2b4de; text-shadow: 0 0 10px #9b59b6, 0 0 20px #9b59b6; }
 
-        /* ★ 新增：九龍城寨保衛戰 — 霓虹紫金塔防 ★ */
+        /* ★ 九龍城寨保衛戰 — 霓虹紫金塔防 ★ */
         .card-klt { border-color: rgba(199, 125, 255, 0.4); }
         .card-klt:hover {
             border-color: #c77dff;
@@ -161,6 +161,18 @@
         .card-klt h2 {
             color: #c77dff;
             text-shadow: 0 0 10px #c77dff, 0 0 20px #ffd166;
+        }
+
+        /* ★ 新增：末日避難所 — 輻射廢土風 ★ */
+        .card-doomsday { border-color: rgba(46, 204, 113, 0.3); }
+        .card-doomsday:hover {
+            border-color: #2ecc71;
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.6), inset 0 0 20px rgba(46, 204, 113, 0.2);
+            transform: translateY(-10px);
+        }
+        .card-doomsday h2 {
+            color: #2ecc71;
+            text-shadow: 0 0 10px #2ecc71, 0 0 20px #f1c40f;
         }
 
         .game-card::before {
@@ -201,7 +213,11 @@
             margin-top: 10px; transition: 0.2s;
         }
         .close-modal:active { background: #555; }
-        
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -235,6 +251,12 @@
     </div>
 
     <div class="games-container" id="games-container">
+        <!-- ★ 模擬：末日避難所 ★ -->
+        <a href="./doomsday-shelter/" class="game-card card-doomsday" data-category="sim">
+            <h2>末日避難所</h2>
+            <p>3D 輻射生存！分配人手、抵抗酸雨、覺醒異能！</p>
+        </a>
+
         <!-- ★ 主打：九龍城寨保衛戰（策略） ★ -->
         <a href="./klt-defense/" class="game-card card-klt" data-category="strategy">
             <h2>九龍城寨保衛戰</h2>
@@ -370,7 +392,27 @@
         
         let hasData = false;
 
-        // 1. 極致洗地毯
+        // 1. 末日避難所 (最高生存天數 / 人口)
+        try {
+            let dsData = JSON.parse(localStorage.getItem('doomsday_record')) || null;
+            if (dsData) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #2ecc71;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">☢️</span>
+                            <div class="rank-info">
+                                <span class="rank-game-name">末日避難所</span>
+                                <span style="font-size:12px; color:#aaa;">存活 ${dsData.days || 0} 天</span>
+                            </div>
+                        </div>
+                        <div class="rank-score" style="color:#2ecc71;">${dsData.pop || 0} 人</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 2. 極致洗地毯
         try {
             let carpetData = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
             if (carpetData.length > 0) {
@@ -392,7 +434,7 @@
             }
         } catch(e) {}
 
-        // 2. 時間高利貸
+        // 3. 時間高利貸
         try {
             let rate = parseFloat(localStorage.getItem('loan_best_rate')) || 1.0;
             let combo = parseInt(localStorage.getItem('loan_best_combo')) || 0;
@@ -413,7 +455,7 @@
             }
         } catch(e) {}
 
-        // 3. 賽博判官
+        // 4. 賽博判官
         try {
             let record = parseInt(localStorage.getItem('judge_record')) || 0;
             if (record > 0) {
@@ -433,7 +475,7 @@
             }
         } catch(e) {}
 
-        // 4. 深淵礦工 (如果有紀錄)
+        // 5. 深淵礦工
         try {
             let minerData = JSON.parse(localStorage.getItem('deepMinerSave')) || {};
             if (minerData.maxDepthRecord > 0) {
@@ -453,7 +495,7 @@
             }
         } catch(e) {}
 
-        // 5. ★ 九龍城寨保衛戰 ★
+        // 6. 九龍城寨保衛戰
         try {
             let kltLB = JSON.parse(localStorage.getItem('klt_leaderboard')) || [];
             let kltWave = parseInt(localStorage.getItem('klt_wave_record')) || 0;
