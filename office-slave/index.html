@@ -580,7 +580,7 @@
             position: absolute;
             inset: 0;
             z-index: 0;
-            pointer-events: none;
+            pointer-events: auto;
         }
         #scene3d canvas {
             display: block;
@@ -3089,7 +3089,7 @@
         };
     </script> <!-- 👈 閂返主遊戲邏輯嘅 script -->
 
-    <!-- ===== Three.js 3D 場景層（精緻工具版） ===== -->
+    <!-- ===== Three.js 3D 場景層（靚女長髮與縮放版） ===== -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
     <script>
     (function () {
@@ -3109,6 +3109,9 @@
             var cam = new THREE.OrthographicCamera(-VIEW * aspect, VIEW * aspect, VIEW, -VIEW, 0.1, 100);
             cam.position.set(15, 16, 15);
             cam.lookAt(0, 1, 0);
+            // ★ 預設放大倍數 ★
+            cam.zoom = 1.4; 
+            cam.updateProjectionMatrix();
 
             var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -3117,6 +3120,44 @@
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             host.appendChild(renderer.domElement);
+
+            // ==========================================
+            // ★ 縮放控制 (滑鼠滾輪 & 雙指手勢) ★
+            // ==========================================
+            host.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if(e.deltaY > 0) {
+                    cam.zoom = Math.max(0.6, cam.zoom - 0.1);
+                } else {
+                    cam.zoom = Math.min(3.0, cam.zoom + 0.1);
+                }
+                cam.updateProjectionMatrix();
+            }, { passive: false });
+
+            var initialDistance = 0;
+            var initialZoom = 1;
+            host.addEventListener('touchstart', function(e) {
+                if(e.touches.length === 2) {
+                    var dx = e.touches[0].clientX - e.touches[1].clientX;
+                    var dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialDistance = Math.sqrt(dx * dx + dy * dy);
+                    initialZoom = cam.zoom;
+                }
+            }, { passive: false });
+
+            host.addEventListener('touchmove', function(e) {
+                if(e.touches.length === 2) {
+                    e.preventDefault();
+                    var dx = e.touches[0].clientX - e.touches[1].clientX;
+                    var dy = e.touches[0].clientY - e.touches[1].clientY;
+                    var distance = Math.sqrt(dx * dx + dy * dy);
+                    if(initialDistance > 0) {
+                        var factor = distance / initialDistance;
+                        cam.zoom = Math.max(0.6, Math.min(3.0, initialZoom * factor));
+                        cam.updateProjectionMatrix();
+                    }
+                }
+            }, { passive: false });
 
             // --- 燈光 ---
             var ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -3165,7 +3206,7 @@
             }
 
             // ==========================================
-            // 精緻場景建立
+            // 場景建立 (Office, Construction, Kitchen...)
             // ==========================================
             function buildOffice() {
                 var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshStandardMaterial({ color: 0x2d3436, roughness: 0.6 }));
@@ -3178,7 +3219,6 @@
                 }
                 var counter = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 2), matWood);
                 counter.position.set(0, 0.6, -6); counter.castShadow = true; envGroup.add(counter);
-                // 背景枱
                 var bPos = [[-7, -1], [7, -1]];
                 bPos.forEach(function(p) {
                     var g = new THREE.Group();
@@ -3193,7 +3233,6 @@
             function buildConstruction() {
                 var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), matDirt);
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
-                // 散落紅磚
                 for(var i=0; i<20; i++) {
                     var size = Math.random()*0.4+0.2;
                     var brick = new THREE.Mesh(new THREE.BoxGeometry(size, size*0.6, size*1.5), new THREE.MeshStandardMaterial({color: 0xcc5500, roughness: 0.9}));
@@ -3201,18 +3240,15 @@
                     brick.rotation.set(Math.random(), Math.random(), Math.random());
                     brick.castShadow = true; envGroup.add(brick);
                 }
-                // 警告筒
                 for(var k=0; k<3; k++) {
                     var cone = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), new THREE.MeshStandardMaterial({color: 0xff5500}));
                     cone.position.set(-4 + k*4, 0.5, 2); cone.castShadow = true; envGroup.add(cone);
                 }
-                // 鋼筋網
                 for(var j=0; j<6; j++) {
                     var rebar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4), matMetal);
                     rebar.rotation.z = Math.PI / 2;
                     rebar.position.set(0, 0.1, -8 + j*0.3); envGroup.add(rebar);
                 }
-                // 工地支柱
                 for(var m=0; m<3; m++) {
                     var pillar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 12, 0.8), new THREE.MeshStandardMaterial({color: 0xcc8800}));
                     pillar.position.set(-8 + m*8, 6, -8); pillar.castShadow = true; envGroup.add(pillar);
@@ -3224,10 +3260,8 @@
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
                 var wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 10), matMetal);
                 wall.position.set(0, 5, -11); envGroup.add(wall);
-                // 不銹鋼灶台
                 var counter = new THREE.Mesh(new THREE.BoxGeometry(12, 1.2, 2), matMetal);
                 counter.position.set(0, 0.6, -6); counter.castShadow = true; envGroup.add(counter);
-                // 抽油煙機
                 var hood = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 2), matMetal);
                 hood.position.set(0, 4.5, -6); hood.castShadow = true; envGroup.add(hood);
             }
@@ -3272,11 +3306,40 @@
             var sHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), skinMat);
             sHead.position.set(0, 2.0, 0); sHead.castShadow = true; solo.add(sHead);
             
+            // 男仔短髮
             var sHairMale = new THREE.Mesh(new THREE.SphereGeometry(0.48, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2.2), hairMat);
             sHairMale.position.set(0, 2.05, 0); sHairMale.castShadow = true; solo.add(sHairMale);
-            var sHairFemale = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
-            sHairFemale.position.set(0, 2.05, 0); sHairFemale.scale.set(1, 1.6, 1); sHairFemale.visible = false; solo.add(sHairFemale);
+            
+            // ★ 女仔專屬大長髮 ★
+            var sHairFemaleGroup = new THREE.Group();
+            // 頭頂圓帽
+            var hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.49, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
+            sHairFemaleGroup.add(hairTop);
+            
+            // 後面一大束長髮 (用 Box 砌出厚實感)
+            var hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.3), hairMat);
+            hairBack.position.set(0, -0.4, -0.35); 
+            hairBack.castShadow = true;
+            sHairFemaleGroup.add(hairBack);
 
+            // 兩側垂落嘅髮絲
+            var hairSideL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.9, 0.3), hairMat);
+            hairSideL.position.set(-0.5, -0.2, -0.1); 
+            hairSideL.rotation.z = 0.1;
+            hairSideL.castShadow = true;
+            sHairFemaleGroup.add(hairSideL);
+
+            var hairSideR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.9, 0.3), hairMat);
+            hairSideR.position.set(0.5, -0.2, -0.1); 
+            hairSideR.rotation.z = -0.1;
+            hairSideR.castShadow = true;
+            sHairFemaleGroup.add(hairSideR);
+            
+            sHairFemaleGroup.position.set(0, 2.05, 0); 
+            sHairFemaleGroup.visible = false; 
+            solo.add(sHairFemaleGroup);
+
+            // 五官
             var eyeWhiteGeo = new THREE.SphereGeometry(0.08, 16, 16);
             var eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             var eyePupilGeo = new THREE.SphereGeometry(0.04, 16, 16);
@@ -3288,7 +3351,7 @@
             var mouth = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI), new THREE.MeshBasicMaterial({color: 0x333333}));
             mouth.rotation.x = Math.PI; mouth.position.set(0, 1.85, 0.42); solo.add(mouth);
 
-            // 手部 (加手掌)
+            // 手腳
             var armL = new THREE.Group(); armL.position.set(-0.65, 1.5, 0); solo.add(armL);
             var armLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.9, 0.3), maleMat); armLMesh.position.y = -0.45; armLMesh.castShadow = true; armL.add(armLMesh);
             var handL = new THREE.Mesh(new THREE.SphereGeometry(0.15), skinMat); handL.position.y = -0.95; handL.castShadow = true; armL.add(handL);
@@ -3301,7 +3364,7 @@
             var legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.7, 0.35), pantsMat); legR.position.set(0.3, 0.35, 0); legR.castShadow = true; solo.add(legR);
 
             // ==========================================
-            // 高精細度工具生成 (函數)
+            // 工具生成
             // ==========================================
             var propGroup = new THREE.Group();
             solo.add(propGroup);
@@ -3314,48 +3377,35 @@
                 workDesk.visible = false;
             }
 
-            // 1. 辦公枱 (有 Notebook, 咖啡)
             function createOfficeDesk() {
                 workDesk.visible = true;
                 var deskTop = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.1, 1.4), matWood);
-                deskTop.position.set(0, 0.75, 1.2); deskTop.castShadow = true; deskTop.receiveShadow = true; workDesk.add(deskTop);
-                // Notebook 底座
+                deskTop.position.set(0, 0.75, 1.2); deskTop.castShadow = true; workDesk.add(deskTop);
                 var lapBase = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.6), matMetal);
-                lapBase.position.set(0, 0.82, 1.0); lapBase.castShadow = true; workDesk.add(lapBase);
-                // Notebook 螢幕
+                lapBase.position.set(0, 0.82, 1.0); workDesk.add(lapBase);
                 var lapScreen = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.05), matDark);
-                lapScreen.position.set(0, 1.05, 0.75); lapScreen.rotation.x = -0.2; lapScreen.castShadow = true; workDesk.add(lapScreen);
-                // 咖啡杯
+                lapScreen.position.set(0, 1.05, 0.75); lapScreen.rotation.x = -0.2; workDesk.add(lapScreen);
                 var cup = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.2), matWhite);
                 cup.position.set(-0.8, 0.9, 1.2); workDesk.add(cup);
             }
 
-            // 2. 掃把 + 水桶 (清潔)
             function createCleaningTools() {
-                // 掃把柄
                 var handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2), matWood);
                 handle.position.set(-0.8, 1.0, 0.2); handle.rotation.z = -Math.PI / 6; handle.castShadow = true; propGroup.add(handle);
-                // 掃把頭
                 var brush = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.2), new THREE.MeshStandardMaterial({color: 0xd35400}));
                 brush.position.set(-1.1, 0.1, 0.2); brush.castShadow = true; propGroup.add(brush);
-                // 水桶
                 var bucket = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.2, 0.4), new THREE.MeshStandardMaterial({color: 0x2980b9}));
                 bucket.position.set(0.9, 0.2, 1.0); bucket.castShadow = true; workDesk.add(bucket);
                 workDesk.visible = true;
             }
 
-            // 3. 平底鍋 + 鑊鏟 + 砧板 (廚房)
             function createKitchenTools() {
-                // 砧板
                 var board = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.8), matWood);
                 board.position.set(-0.6, 0.8, 1.0); workDesk.add(board);
-                // 鑊 (本體)
                 var panBody = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.35, 0.1, 32), matDark);
                 panBody.position.set(0.6, 0.85, 1.0); workDesk.add(panBody);
-                // 鑊柄
                 var panHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), matDark);
                 panHandle.position.set(1.0, 0.85, 1.3); panHandle.rotation.x = Math.PI / 2; workDesk.add(panHandle);
-                // 鑊入面隻蛋
                 var eggWhite = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02), matWhite);
                 eggWhite.position.set(0.6, 0.91, 1.0); workDesk.add(eggWhite);
                 var eggYolk = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshStandardMaterial({color: 0xffcc00}));
@@ -3363,17 +3413,13 @@
                 workDesk.visible = true;
             }
 
-            // 4. 鐵鏟 (地盤)
             function createShovel() {
-                // 鏟柄
                 var handle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5), matWood);
                 handle.position.set(0.8, 1.0, 0.2); handle.rotation.z = Math.PI / 6; handle.castShadow = true; propGroup.add(handle);
-                // 鏟頭
                 var blade = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.4, 0.05), matMetal);
                 blade.position.set(1.2, 0.2, 0.2); blade.castShadow = true; propGroup.add(blade);
             }
 
-            // 5. 自拍棍 + 環形燈 (KOL)
             function createKOLTools() {
                 var stick = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5), matDark);
                 stick.position.set(-0.8, 1.0, 0.5); stick.rotation.z = Math.PI / 4; stick.castShadow = true; propGroup.add(stick);
@@ -3381,7 +3427,6 @@
                 phone.position.set(-1.3, 1.5, 0.5); phone.castShadow = true; propGroup.add(phone);
             }
 
-            // 6. 保安 (對講機 + 警棍)
             function createSecurityTools() {
                 var radio = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.25, 0.1), matDark);
                 radio.position.set(0.3, 1.2, 0.4); propGroup.add(radio);
@@ -3389,30 +3434,22 @@
                 baton.position.set(-0.8, 0.6, 0.2); baton.rotation.z = -Math.PI / 4; baton.castShadow = true; propGroup.add(baton);
             }
 
-            // ==========================================
-            // 職業切換總控制
-            // ==========================================
             function updateJobScene(jobType, envType) {
                 clearProps();
 
-                if (envType === "office") {
+                if (jobType === 'cleaner') {
+                    createCleaningTools();
+                } else if (envType === "kitchen") {
+                    createKitchenTools();
+                } else if (envType === "construction") {
+                    createShovel();
+                } else if (envType === "studio") {
+                    createKOLTools();
+                } else {
                     createOfficeDesk();
                     if (jobType === 'security') createSecurityTools();
-                } 
-                else if (envType === "construction") {
-                    createShovel();
-                } 
-                else if (envType === "kitchen") {
-                    createKitchenTools();
-                } 
-                else if (jobType === 'cleaner') {
-                    createCleaningTools();
-                }
-                else if (envType === "studio") {
-                    createKOLTools();
                 }
 
-                // 頭部裝備
                 if (envType === "construction") {
                     var hardhat = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({color: 0xffcc00, roughness: 0.4}));
                     hardhat.position.set(0, 2.15, 0); hardhat.scale.set(1.1, 0.8, 1.3); hardhat.castShadow = true; propGroup.add(hardhat);
@@ -3438,9 +3475,6 @@
             window.addEventListener('resize', resize);
             setTimeout(resize, 120); setTimeout(resize, 600);
 
-            // ==========================================
-            // 動畫循環
-            // ==========================================
             var clock = new THREE.Clock();
 
             function loop() { 
@@ -3449,23 +3483,19 @@
                 
                 if (solo.visible) {
                     if (typeof player !== 'undefined' && player.stage !== 'work') {
-                        // 面試：企直
                         armL.rotation.x = Math.sin(time * 2) * 0.05;
                         armR.rotation.x = -Math.sin(time * 2) * 0.05;
                         sBody.position.y = 1.05 + Math.sin(time * 2) * 0.02;
                     } else {
-                        // 工作動作
                         if (currentEnv === "office") {
                             armL.rotation.x = -Math.PI / 3; armR.rotation.x = -Math.PI / 3;
                         } else if (currentEnv === "construction") {
                             armL.rotation.x = -Math.PI / 4 + Math.sin(time * 4) * 0.2;
                             armR.rotation.x = -Math.PI / 4 + Math.sin(time * 4) * 0.2;
                         } else if (currentEnv === "kitchen") {
-                            // 炒餸動作
                             armR.rotation.x = -Math.PI / 3 + Math.sin(time * 8) * 0.2;
                             armL.rotation.x = -Math.PI / 6;
                         } else if (typeof player !== 'undefined' && player.jobType === 'cleaner') {
-                            // 掃地動作
                             armR.rotation.x = -Math.PI / 4 + Math.sin(time * 4) * 0.4;
                         } else {
                             armL.rotation.x = Math.sin(time * 2) * 0.1;
@@ -3478,9 +3508,6 @@
             }
             loop();
 
-            // ==========================================
-            // 實時同步
-            // ==========================================
             setInterval(function () {
                 try {
                     if (typeof player === 'undefined') return;
@@ -3491,12 +3518,10 @@
                     var envType = "office";
                     if (player.isListed || player.isGroup || (player.isBoss && player.companyValue > 5000000)) envType = "luxury";
                     else if (player.isBoss) envType = "office";
-                    else if (player.jobType === 'delivery' || player.jobType === 'driver') envType = "office"; // 暫時用 office 代替
+                    else if (player.jobType === 'delivery' || player.jobType === 'driver') envType = "office";
                     else if (player.jobType === 'chef' || player.jobType === 'waiter') envType = "kitchen";
                     else if (player.jobType === 'construction' || player.jobType === 'surveyor' || player.jobType === 'engineer') envType = "construction";
                     else if (player.jobType === 'kol') envType = "studio";
-
-                    // 判斷係咪清潔工
                     if (player.jobType === 'cleaner') envType = "office";
 
                     if (currentEnv !== envType) {
@@ -3509,9 +3534,7 @@
                         else if (envType === "luxury") buildLuxury();
                     }
 
-                    // 實時更新工具 (每次轉工或者入職時)
                     if (solo.visible) {
-                        // 避免每 250ms 重複生成，用 jobType 做標記
                         if (solo.userData.lastJob !== player.jobType) {
                             solo.userData.lastJob = player.jobType;
                             updateJobScene(player.jobType, envType);
@@ -3521,8 +3544,9 @@
                         sBody.material = isFemale ? femaleMat : maleMat;
                         armLMesh.material = isFemale ? femaleMat : maleMat;
                         armRMesh.material = isFemale ? femaleMat : maleMat;
+                        
                         sHairMale.visible = !isFemale;
-                        sHairFemale.visible = isFemale;
+                        sHairFemaleGroup.visible = isFemale; // 顯示女仔長髮群組
                     }
 
                 } catch (e) {}
