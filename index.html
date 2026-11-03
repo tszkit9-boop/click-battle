@@ -104,9 +104,14 @@
         .card-zen:hover { border-color: #a29bfe; box-shadow: 0 0 30px rgba(162, 155, 254, 0.6); transform: translateY(-10px); }
         .card-zen h2 { color: #a29bfe; text-shadow: 0 0 10px #a29bfe; }
 
-        /* ★ 新增：極致洗地毯專屬青綠色 ★ */
+        /* 極致洗地毯專屬青綠色 */
         .card-carpet:hover { border-color: #00cec9; box-shadow: 0 0 30px rgba(0, 206, 201, 0.6); transform: translateY(-10px); }
         .card-carpet h2 { color: #00cec9; text-shadow: 0 0 10px #00cec9; }
+
+        /* ★ 新增：時間高利貸專屬金黃色 ★ */
+        .card-loan { border-color: rgba(241, 196, 15, 0.3); }
+        .card-loan:hover { border-color: #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.6); transform: translateY(-10px); }
+        .card-loan h2 { color: #f1c40f; text-shadow: 0 0 10px #f1c40f; }
 
         .game-card::before {
             content: ''; position: absolute; top: -50%; left: -50%;
@@ -187,17 +192,18 @@
             <p>氣泡紙、星塵引力、療癒琴鍵！一撳即時放鬆！</p>
         </a>
 
-        <!-- ★ 遊戲 14：極致洗地毯模擬器 ★ -->
+        <!-- 遊戲 14：極致洗地毯模擬器 -->
         <a href="./carpet-cleaning/" class="game-card card-carpet">
             <h2>極致洗地毯</h2>
             <p>吸塵、噴泡、刷洗！挑戰無限關卡，成為洗地王！</p>
         </a>
-    </div>
-        <!-- ★ 遊戲 15：時間高利貸 ★ -->
-        <a href="./time-loan-shark/" class="game-card" style="border-color: #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.3);">
-            <h2 style="color: #f1c40f; text-shadow: 0 0 10px #f1c40f;">時間高利貸</h2>
+
+        <!-- ★ 遊戲 15：時間高利貸（已移入容器內並套用專屬 CSS） ★ -->
+        <a href="./time-loan-shark/" class="game-card card-loan">
+            <h2>時間高利貸</h2>
             <p>借時間打怪，但利息會令你加速死亡！</p>
         </a>
+    </div>
 
 </body>
 </html>
