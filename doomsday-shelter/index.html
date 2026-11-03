@@ -11,6 +11,10 @@
     
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
+    
+    /* 加入電影感暗角同掃描線 */
+    .overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.6) 100%); }
+    .scanlines { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px); }
 
     .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
     .ui-layer > * { pointer-events: auto; }
@@ -19,37 +23,43 @@
     
     .hud-top { display: flex; justify-content: space-between; padding: 15px; background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 10px; }
     .res-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-    .res-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: bold; background: rgba(20,20,20,0.85); padding: 6px 12px; border-radius: 4px; border: 1px solid #333; }
+    .res-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: bold; background: rgba(20,20,20,0.85); padding: 6px 12px; border-radius: 4px; border: 1px solid #333; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
     .res-box.energy { color: #f1c40f; border-color: #f1c40f; } .res-box.crystal { color: #e056fd; border-color: #e056fd; }
     
-    .door-hp-box { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: bold; color: #ff3b3b; text-align: center; width: 80%; max-width: 400px; }
-    .hp-bar-bg { width: 100%; height: 8px; background: #333; border-radius: 4px; margin-top: 5px; overflow: hidden; border: 1px solid #ff3b3b; }
-    .hp-bar-fill { height: 100%; background: #ff3b3b; width: 100%; transition: width 0.3s; }
+    .door-hp-box { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: bold; color: #ff3b3b; text-align: center; width: 80%; max-width: 400px; text-shadow: 0 0 10px #ff3b3b; font-family: 'Orbitron', sans-serif; }
+    .hp-bar-bg { width: 100%; height: 10px; background: #111; border-radius: 5px; margin-top: 5px; overflow: hidden; border: 1px solid #ff3b3b; box-shadow: 0 0 15px rgba(255,59,59,0.5); }
+    .hp-bar-fill { height: 100%; background: linear-gradient(90deg, #ff3b3b, #ff8c00); width: 100%; transition: width 0.3s; }
 
-    /* 準星 (改為動態追蹤) */
-    .crosshair { position: absolute; width: 30px; height: 30px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.8; display: none; }
-    .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #00d2d3; box-shadow: 0 0 5px #00d2d3; }
-    .crosshair::before { top: 14px; left: 0; width: 30px; height: 2px; }
-    .crosshair::after { left: 14px; top: 0; width: 2px; height: 30px; }
+    .crosshair { position: absolute; width: 34px; height: 34px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.9; display: none; }
+    .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #00ffff; box-shadow: 0 0 8px #00ffff; }
+    .crosshair::before { top: 16px; left: 0; width: 34px; height: 2px; }
+    .crosshair::after { left: 16px; top: 0; width: 2px; height: 34px; }
+    .crosshair-dot { position: absolute; top: 15px; left: 15px; width: 4px; height: 4px; background: #fff; border-radius: 50%; }
 
-    .console { margin: 10px; background: rgba(10,10,10,0.95); border: 1px solid #444; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; max-width: 600px; margin-left: auto; margin-right: auto; width: calc(100% - 20px); pointer-events: auto; }
+    .console { margin: 10px; background: linear-gradient(180deg, rgba(15,15,15,0.95) 0%, rgba(5,5,5,0.98) 100%); border: 1px solid #444; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin-left: auto; margin-right: auto; width: calc(100% - 20px); pointer-events: auto; box-shadow: 0 -5px 25px rgba(0,0,0,0.9); }
     
     .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .btn { padding: 10px 4px; background: #1a1a1a; color: #ccc; border: 1px solid #444; border-radius: 5px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; transition: 0.1s; }
+    .btn { padding: 12px 4px; background: #1a1a1a; color: #ccc; border: 1px solid #444; border-radius: 5px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif; }
     .btn:active { transform: scale(0.95); }
     .btn.weapon { border-color: #f1c40f; color: #f1c40f; background: rgba(241,196,15,0.1); }
     .btn.power { border-color: #d500f9; color: #d500f9; background: rgba(213,0,249,0.1); }
-    .btn.ultimate { background: linear-gradient(45deg, #ff3b3b, #f1c40f); color: #000; font-size: 14px; border: none; box-shadow: 0 0 15px rgba(255,59,59,0.5); border-radius: 8px; }
-    .btn.ultimate:disabled { background: #333; color: #666; box-shadow: none; pointer-events: none; }
+    .btn.ultimate { background: linear-gradient(45deg, #ff3b3b, #f1c40f); color: #000; font-size: 14px; border: none; box-shadow: 0 0 15px rgba(255,59,59,0.5); border-radius: 8px; font-weight: 900; }
+    .btn.ultimate:disabled { background: #222; color: #555; box-shadow: none; pointer-events: none; }
 
-    .broadcast-box { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(255, 170, 0, 0.15); border: 1px solid #ffaa00; color: #ffaa00; padding: 8px; font-size: 12px; text-align: center; border-radius: 4px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; }
+    .broadcast-box { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(255, 170, 0, 0.15); border: 1px solid #ffaa00; color: #ffaa00; padding: 10px; font-size: 13px; text-align: center; border-radius: 4px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; box-shadow: 0 0 20px rgba(255,170,0,0.2); }
     .broadcast-box.show { opacity: 1; }
 </style>
 </head>
 <body>
 
+    <div class="overlay"></div>
+    <div class="scanlines"></div>
+
     <a href="../" class="back-btn">⬅ 返回大廳</a>
-    <div class="crosshair" id="crosshair"></div>
+    
+    <div class="crosshair" id="crosshair">
+        <div class="crosshair-dot"></div>
+    </div>
 
     <div id="canvas-container"></div>
 
@@ -88,13 +98,13 @@
         let hasPower = false, powerType = null;
         let powerCharge = 0, ultimateCharge = 0;
         let wave = 1;
+        let shakeTime = 0;
 
         // 3D 變數
         let scene, camera, renderer, raycaster, mouse;
-        let zombies = [], particles = [], bullets = [];
-        let doorMesh;
-        let playerModel; // 玩家角色模型
-        let gunMuzzle; // 槍口位置
+        let zombies = [], particles = [];
+        let doorMesh, gunMuzzle, playerModel;
+        let cameraShakeOffset = new THREE.Vector3();
 
         const POWER_NAMES = {
             'fire': { name: '🔥 火焰風暴', color: 0xff3b3b },
@@ -104,41 +114,96 @@
         };
 
         const crosshairEl = document.getElementById('crosshair');
-
         function broadcast(text) { let box = document.getElementById('broadcast-box'); box.innerText = `📡 ${text}`; box.classList.add('show'); clearTimeout(window.bcTimer); window.bcTimer = setTimeout(() => box.classList.remove('show'), 3000); }
 
-        // --- 建立玩家角色 (第三人稱) ---
+        // --- 建立精緻玩家角色 (機甲士兵) ---
         function createPlayer() {
             let group = new THREE.Group();
-            let bodyMat = new THREE.MeshStandardMaterial({ color: 0x00d2d3, roughness: 0.5 });
+            let armorMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.3, metalness: 0.8 }); // 深藍灰裝甲
+            let cyanMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.5 }); // 發光部件
             let darkMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
 
-            // 身體
-            let body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.5), bodyMat); body.position.y = 0.5; group.add(body);
-            // 頭
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), bodyMat); head.position.y = 1.4; group.add(head);
-            // 腳
-            let legL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), darkMat); legL.position.set(-0.25, -0.4, 0); group.add(legL);
-            let legR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), darkMat); legR.position.set(0.25, -0.4, 0); group.add(legR);
+            // 軀幹 (厚重)
+            let body = new THREE.Mesh(new THREE.BoxGeometry(1, 1.4, 0.6), armorMat); body.position.y = 0.7; group.add(body);
+            // 胸口發光核心
+            let core = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 8), cyanMat); core.rotation.x = Math.PI/2; core.position.set(0, 0.8, 0.31); group.add(core);
             
-            // 右手持槍 (伸向前面)
-            let armR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), bodyMat);
-            armR.position.set(0.5, 0.6, 0.3); armR.rotation.x = -Math.PI / 2;
-            group.add(armR);
-            
-            // 槍枝模型
-            let gun = new THREE.Group();
-            let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.8), darkMat);
-            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6), darkMat);
-            barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.6);
-            gun.add(gunBody); gun.add(barrel);
-            gun.position.set(0.5, 0.6, 0.6); // 握喺右手
-            group.add(gun);
+            // 頭部 (頭盔)
+            let head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), armorMat); head.position.y = 1.65; group.add(head);
+            // 面罩 (發光)
+            let visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.65), cyanMat); visor.position.set(0, 1.65, 0.02); group.add(visor);
 
-            // 槍口發光點 (用於計算子彈起點)
+            // 雙腿
+            let legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.4), darkMat); legL.position.set(-0.3, -0.3, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.4), darkMat); legR.position.set(0.3, -0.3, 0); group.add(legR);
+            
+            // 右手持槍 (舉起狀態)
+            let armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.8), armorMat); armR.position.set(0.6, 1, 0.4); group.add(armR);
+            
+            // 步槍
+            let gun = new THREE.Group();
+            let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.2), darkMat);
+            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8), armorMat);
+            barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
+            let scope = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.4), cyanMat); scope.position.set(0, 0.2, 0); // 發光瞄準鏡
+            gun.add(gunBody); gun.add(barrel); gun.add(scope);
+            gun.position.set(0.6, 1, 0.8); group.add(gun);
+
             gunMuzzle = new THREE.Object3D();
-            gunMuzzle.position.set(0, 0, -1);
-            gun.add(gunMuzzle);
+            gunMuzzle.position.set(0, 0, -1.4); gun.add(gunMuzzle);
+
+            return group;
+        }
+
+        // --- 建立精緻喪屍模型 ---
+        function createZombieModel(color, isBoss) {
+            let group = new THREE.Group();
+            let mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.9, metalness: 0.1 });
+            let bloodMat = new THREE.MeshStandardMaterial({ color: 0x4a0000, roughness: 0.9 });
+            let darkMat = new THREE.MeshStandardMaterial({ color: 0x050505 });
+
+            // 身體 (腐爛，前傾，唔對稱)
+            let body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.5), mat);
+            body.position.y = 0.8; body.rotation.x = 0.3; body.rotation.z = 0.1;
+            group.add(body);
+
+            // 頭 (歪曲)
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), mat);
+            head.position.set(0.1, 1.6, 0.2); head.rotation.z = 0.5; head.rotation.x = 0.2;
+            
+            // 血紅發光眼
+            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), eyeMat); eyeL.position.set(-0.15, 0.1, 0.35);
+            let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), eyeMat); eyeR.position.set(0.15, 0.1, 0.35);
+            head.add(eyeL); head.add(eyeR);
+            group.add(head);
+
+            // 撕裂的左手 (伸直)
+            let armL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.9, 0.2), mat);
+            armL.position.set(-0.6, 1.1, 0.6); armL.rotation.x = -Math.PI / 2 + 0.2;
+            group.add(armL);
+
+            // 斷掉的右手 (垂低)
+            let armR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), bloodMat);
+            armR.position.set(0.6, 0.7, 0.1); armR.rotation.x = 0.5;
+            group.add(armR);
+
+            // 拖行的雙腿 (一長一短)
+            let legL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), darkMat); legL.position.set(-0.25, 0, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.6, 0.3), darkMat); legR.position.set(0.25, -0.1, 0); group.add(legR);
+
+            group.userData.armL = armL;
+            group.userData.legL = legL;
+
+            if (isBoss) {
+                // 喪屍王加冠冕/尖刺
+                let spikeMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xffaa00 });
+                for(let i=0; i<5; i++) {
+                    let spike = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 4), spikeMat);
+                    spike.position.set(Math.cos(i/5*Math.PI*2)*0.4, 0.4, Math.sin(i/5*Math.PI*2)*0.4);
+                    head.add(spike);
+                }
+            }
 
             return group;
         }
@@ -149,16 +214,18 @@
                 const container = document.getElementById('canvas-container');
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x050505);
-                scene.fog = new THREE.FogExp2(0x050505, 0.025);
+                scene.fog = new THREE.FogExp2(0x050505, 0.035); // 濃霧增加壓迫感
                 
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                // 第三人稱鏡頭：企喺玩家後上方
-                camera.position.set(0, 4, 12); 
+                camera.position.set(0, 3.5, 12); 
                 camera.lookAt(0, 1, -5);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                // 開啟色調映射，令光暗更有層次
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.2;
                 container.appendChild(renderer.domElement);
 
                 raycaster = new THREE.Raycaster();
@@ -166,28 +233,55 @@
                 renderer.domElement.addEventListener('pointerdown', onShoot);
                 renderer.domElement.addEventListener('pointermove', onAim);
 
-                // 燈光
-                scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-                const dirLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+                // 燈光系統
+                scene.add(new THREE.AmbientLight(0x223344, 0.8)); // 冷色底光
+                
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
                 dirLight.position.set(0, 10, 10); scene.add(dirLight);
-                const doorLight = new THREE.PointLight(0xff0000, 2, 20); doorLight.position.set(0, 2, -15); scene.add(doorLight);
+                
+                // 盡頭大門紅光
+                const doorLight = new THREE.PointLight(0xff0000, 3, 25); doorLight.position.set(0, 2, -19); scene.add(doorLight);
+
+                // 走廊兩側霓虹燈
+                const cyanLightL = new THREE.PointLight(0x00ffff, 1, 15); cyanLightL.position.set(-10, 3, 0); scene.add(cyanLightL);
+                const cyanLightR = new THREE.PointLight(0x00ffff, 1, 15); cyanLightR.position.set(10, 3, 0); scene.add(cyanLightR);
 
                 // 走廊場景
                 const floorGeo = new THREE.PlaneGeometry(24, 50);
-                const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
+                const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.8 }); // 反光金屬地
                 const floor = new THREE.Mesh(floorGeo, floorMat);
                 floor.rotation.x = -Math.PI / 2; floor.position.set(0, -1, -15); scene.add(floor);
 
-                const wallMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a });
+                // 地板發光格線
+                const grid = new THREE.GridHelper(50, 20, 0x00ffff, 0x003333);
+                grid.position.set(0, -0.9, -15); scene.add(grid);
+
+                const wallMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+                const pipeMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 1, roughness: 0.4 });
+                
                 const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 50), wallMat); leftWall.position.set(-12, 4, -15); scene.add(leftWall);
                 const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 50), wallMat); rightWall.position.set(12, 4, -15); scene.add(rightWall);
 
-                doorMesh = new THREE.Mesh(new THREE.BoxGeometry(24, 10, 1), new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8 }));
+                // 兩側管道裝飾
+                for(let z = 5; z > -25; z -= 8) {
+                    let pipeL = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 8), pipeMat);
+                    pipeL.rotation.x = Math.PI/2; pipeL.position.set(-11, 6, z); scene.add(pipeL);
+                    let pipeR = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 8), pipeMat);
+                    pipeR.rotation.x = Math.PI/2; pipeR.position.set(11, 6, z); scene.add(pipeR);
+                }
+
+                // 大門
+                doorMesh = new THREE.Mesh(new THREE.BoxGeometry(20, 10, 1), new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.9, roughness: 0.2 }));
                 doorMesh.position.set(0, 4, -20); scene.add(doorMesh);
+                // 大門警告條
+                for(let i=0; i<4; i++) {
+                    let stripe = new THREE.Mesh(new THREE.BoxGeometry(20, 0.5, 1.1), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+                    stripe.position.set(0, i*2, -20); scene.add(stripe);
+                }
 
                 // 生成玩家
                 playerModel = createPlayer();
-                playerModel.position.set(0, -1, 5); // 企喺中間
+                playerModel.position.set(0, -1, 5);
                 scene.add(playerModel);
 
                 window.addEventListener('resize', onWindowResize, false);
@@ -201,40 +295,33 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- 玩家瞄準 (準星跟隨手指/滑鼠) ---
+        // --- 瞄準 ---
         function onAim(event) {
-            // 將準星 UI 移動到手指位置
             crosshairEl.style.display = 'block';
             crosshairEl.style.left = event.clientX + 'px';
             crosshairEl.style.top = event.clientY + 'px';
 
-            // 計算 3D 空間中嘅交點
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
             
-            // 投射到 Z = -20 嘅平面 (大門位置)
             let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 20);
             let targetPoint = new THREE.Vector3();
             raycaster.ray.intersectPlane(plane, targetPoint);
 
-            // 令玩家轉向瞄準點
             if (targetPoint && playerModel) {
                 playerModel.lookAt(targetPoint.x, playerModel.position.y, targetPoint.z);
             }
         }
 
-        // --- 玩家開火 ---
+        // --- 開火 ---
         function onShoot(event) {
-            // 槍械後座力動畫
-            playerModel.position.z = 5.1; 
+            playerModel.position.z = 5.2; 
             setTimeout(() => playerModel.position.z = 5, 50);
 
-            // 取得槍口世界座標
             let startPos = new THREE.Vector3();
             gunMuzzle.getWorldPosition(startPos);
 
-            // 射線檢測
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
@@ -253,13 +340,17 @@
                     if (targetZ.hp <= 0) killZombie(targetZ);
                 }
             } else {
-                // 冇打中，射向遠處
                 raycaster.ray.at(50, endPos);
             }
 
-            // 畫出子彈軌跡 (黃色光束)
+            // 槍口火光
+            let flash = new THREE.PointLight(0x00ffff, 2, 5);
+            flash.position.copy(startPos); scene.add(flash);
+            setTimeout(() => scene.remove(flash), 50);
+
+            // 子彈軌跡
             let beamGeo = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
-            let beamMat = new THREE.LineBasicMaterial({ color: 0xf1c40f, transparent: true, opacity: 0.8 });
+            let beamMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 1, linewidth: 2 });
             let beam = new THREE.Line(beamGeo, beamMat);
             scene.add(beam);
             setTimeout(() => scene.remove(beam), 50);
@@ -269,28 +360,39 @@
         function animate() {
             requestAnimationFrame(animate);
             try {
-                // 喪屍移動
+                // 震動特效
+                if (shakeTime > 0) {
+                    shakeTime -= 0.016;
+                    cameraShakeOffset.set((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, 0);
+                    camera.position.copy(new THREE.Vector3(0, 3.5, 12).add(cameraShakeOffset));
+                } else {
+                    camera.position.lerp(new THREE.Vector3(0, 3.5, 12), 0.1);
+                }
+                camera.lookAt(0, 1, -5);
+
                 for (let i = zombies.length - 1; i >= 0; i--) {
                     let z = zombies[i];
-                    // 喪屍由 Z = -40 行向 Z = -20 (大門)
                     z.mesh.position.z += z.speed; 
                     
-                    let t = Date.now() * 0.01;
-                    z.mesh.rotation.z = Math.sin(t) * 0.1;
-                    z.mesh.children[0].rotation.x = 0.5 + Math.sin(t) * 0.2;
+                    // 喪屍蹣跚行走動畫
+                    let t = Date.now() * 0.008;
+                    z.mesh.userData.legL.rotation.x = Math.sin(t) * 0.6;
+                    z.mesh.userData.armL.rotation.x = -Math.PI / 2 + Math.sin(t*0.5) * 0.2;
+                    z.mesh.rotation.z = Math.sin(t*0.5) * 0.05; // 左右搖擺
 
                     if (z.mesh.position.z >= -20) {
                         z.mesh.position.z = -20;
                         doorHp -= z.dmg * 0.016;
                         if (doorHp < 0) doorHp = 0;
+                        if (Math.random() < 0.1) shakeTime = 0.1;
                     }
                 }
 
-                // 粒子
                 for (let i = particles.length - 1; i >= 0; i--) {
                     let p = particles[i];
                     p.mesh.position.add(p.velocity);
-                    p.velocity.y -= 0.05; 
+                    p.velocity.y -= 0.1; 
+                    p.mesh.rotation.x += 0.1; p.mesh.rotation.y += 0.1;
                     p.life -= 0.02;
                     p.mesh.material.opacity = p.life;
                     if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
@@ -306,50 +408,45 @@
 
         // --- 生成喪屍 ---
         function spawnZombie(isBoss = false) {
-            let color = isBoss ? 0x9b59b6 : (wave > 5 ? 0xe74c3c : 0x2ecc71);
+            let color = isBoss ? 0x8800ff : (wave > 5 ? 0x8b0000 : 0x2ecc71); 
             let size = isBoss ? 2 : (wave > 5 ? 1.2 : 1);
             let hp = isBoss ? 3000 : (wave > 5 ? 300 : 100);
             
-            let group = new THREE.Group();
-            let bodyMat = new THREE.MeshStandardMaterial({ color: color });
-            
-            let body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), bodyMat); body.position.y = 1; group.add(body);
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), bodyMat); head.position.y = 2.5; group.add(head);
-            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-            head.add(new THREE.Mesh(new THREE.SphereGeometry(0.1, 4, 4), eyeMat)).position.set(-0.2, 0.1, -0.4);
-            head.add(new THREE.Mesh(new THREE.SphereGeometry(0.1, 4, 4), eyeMat)).position.set(0.2, 0.1, -0.4);
-
-            // 生成喺好遠 (Z = -35 到 -45)
-            group.position.set((Math.random() - 0.5) * 16, 0, -35 - Math.random()*10);
+            let group = createZombieModel(color, isBoss);
+            group.position.set((Math.random() - 0.5) * 16, -1, -35 - Math.random()*10);
             group.scale.set(size, size, size);
             scene.add(group);
             
-            zombies.push({ mesh: group, hp: hp, speed: isBoss ? 0.05 : 0.08, dmg: isBoss ? 50 : 10 });
+            zombies.push({ mesh: group, hp: hp, speed: isBoss ? 0.03 : 0.06, dmg: isBoss ? 50 : 10 });
             
-            if (isBoss) broadcast("🚨 警告：巨型喪屍王從走廊深處逼近！");
+            if (isBoss) {
+                broadcast("🚨 警告：巨型喪屍王從走廊深處逼近！");
+                shakeTime = 0.5;
+            }
         }
 
         function killZombie(z) {
-            createHitEffect(z.mesh.position, 0x2ecc71);
+            createHitEffect(z.mesh.position, 0xffaa00);
             scene.remove(z.mesh);
             zombies = zombies.filter(item => item !== z);
             
             kills++;
-            crystals += 2;
-            energy += 50;
+            crystals += z.mesh.scale.x > 1.5 ? 20 : 2;
+            energy += z.mesh.scale.x > 1.5 ? 500 : 50;
             ultimateCharge = Math.min(100, ultimateCharge + 8);
+            shakeTime = z.mesh.scale.x > 1.5 ? 0.5 : 0.1;
         }
 
         function createHitEffect(pos, color) {
-            for(let i=0; i<8; i++) {
-                let geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+            for(let i=0; i<12; i++) {
+                let geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
                 let mat = new THREE.MeshBasicMaterial({ color: color, transparent: true });
                 let mesh = new THREE.Mesh(geo, mat);
                 mesh.position.copy(pos);
                 scene.add(mesh);
                 particles.push({
                     mesh: mesh, life: 1,
-                    velocity: new THREE.Vector3((Math.random()-0.5)*0.5, Math.random()*0.5, (Math.random()-0.5)*0.5)
+                    velocity: new THREE.Vector3((Math.random()-0.5)*0.8, Math.random()*0.8, (Math.random()-0.5)*0.8)
                 });
             }
         }
@@ -358,13 +455,14 @@
         function upgradeWeapon() {
             if (energy < weaponCost) return;
             energy -= weaponCost; weaponLevel++; weaponCost = Math.floor(weaponCost * 1.5);
-            broadcast(`🔫 步槍升級至 Lv.${weaponLevel}！`);
+            broadcast(`🔫 步槍升級至 Lv.${weaponLevel}！傷害大增！`);
         }
 
         function usePower() {
             if (!hasPower || powerCharge < 100) return;
             powerCharge = 0;
             broadcast(`💥 釋放異能：${POWER_NAMES[powerType].name}！`);
+            shakeTime = 0.8;
             zombies.forEach(z => { z.hp -= 500; createHitEffect(z.mesh.position, POWER_NAMES[powerType].color); if(z.hp<=0) killZombie(z); });
         }
 
@@ -372,6 +470,7 @@
             if (ultimateCharge < 100) return;
             ultimateCharge = 0;
             broadcast("☄️ 軌道死光從天而降！全場蒸發！");
+            shakeTime = 1.5;
             let flash = document.createElement('div');
             flash.style.cssText = 'position:absolute; inset:0; background:#fff; z-index:999; opacity:1; transition:opacity 0.5s; pointer-events:none;';
             document.body.appendChild(flash); setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 500); }, 100);
