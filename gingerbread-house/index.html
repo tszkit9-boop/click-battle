@@ -18,6 +18,17 @@
     
     canvas { border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.1); }
     
+    /* ★ 新增：返回大廳按鈕 ★ */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 9999;
+        padding: 10px 20px; background: rgba(10, 10, 20, 0.85);
+        color: #f1c40f; border: 2px solid #f1c40f; border-radius: 30px;
+        text-decoration: none; font-weight: bold; font-size: 16px; font-family: 'PingFang HK', sans-serif;
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); transition: all 0.2s;
+        pointer-events: auto;
+    }
+    .back-btn:hover { background: #f1c40f; color: #000; box-shadow: 0 0 25px #f1c40f; }
+
     .btn { 
         padding: 15px 40px; background: linear-gradient(to bottom, #e74c3c, #c0392b); color: #fff; border: 3px solid #f1c40f; border-radius: 40px; 
         font-size: 20px; font-family: inherit; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 #8e44ad, 0 10px 20px rgba(0,0,0,0.4); transition: 0.1s; margin-top: 20px;
@@ -56,6 +67,9 @@
 </style>
 </head>
 <body>
+
+    <!-- ★ 返回大廳連結 ★ -->
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
 
     <!-- 階段一：畫圖 -->
     <div id="draw-phase" style="text-align:center;">
