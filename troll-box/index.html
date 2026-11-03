@@ -3,342 +3,546 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>📦 盲盒快遞</title>
+    <title>📦 盲盒快遞：終極 30 陷阱</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+        body { background: #0a0a1a; color: #fff; font-family: 'Orbitron', 'PingFang HK', sans-serif; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; text-align: center; }
         
-        body {
-            margin: 0; padding: 0; background-color: #0a0a1a; color: #fff;
-            font-family: 'Orbitron', 'PingFang HK', sans-serif; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; height: 100vh; overflow: hidden;
-            text-align: center; user-select: none; touch-action: none;
-        }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; padding: 20px; }
+        .screen.active { display: flex; }
         
-        /* 各個場景嘅容器 */
-        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-        .active { display: flex; }
-
-        /* 通用按鈕 */
-        button {
-            padding: 15px 30px; background: #ff4757; color: #fff; border: none;
-            font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: bold; cursor: pointer;
-            border-radius: 5px; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); transition: all 0.2s;
-        }
+        button { padding: 15px 30px; background: #ff4757; color: #fff; border: none; font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); transition: 0.2s; z-index: 10; }
         button:active { transform: scale(0.95); }
-        input {
-            padding: 12px; font-size: 16px; border-radius: 5px; border: 2px solid #00d2d3; outline: none;
-            background: #1f2833; color: #fff; text-align: center; margin: 15px 0; width: 80%; max-width: 300px;
-        }
+        input[type="text"] { padding: 12px; border-radius: 5px; border: 2px solid #00d2d3; background: #1f2833; color: #fff; text-align: center; margin: 15px 0; outline: none; font-size: 16px; }
 
-        /* 場景一：設定 */
-        #setup-screen h1 { color: #00d2d3; text-shadow: 0 0 20px #00d2d3; font-size: 24px; }
-        
-        /* 場景二：包裹 */
-        .box-container { cursor: pointer; transition: transform 0.2s; margin-top: 20px; }
-        .box-container:active { transform: scale(0.9); }
-        .box-icon { font-size: 100px; animation: float 2s infinite ease-in-out; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
-        
-        .to-text { font-size: 22px; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; padding: 0 20px; }
+        /* 通用 UI */
+        .title { font-size: 22px; color: #f1c40f; margin-bottom: 20px; line-height: 1.4; }
+        .subtitle { font-size: 14px; color: #a4b0be; margin-bottom: 20px; }
+        .hidden { display: none !important; }
 
-        /* 場景三：驚嚇 */
-        #scare-screen { background: #000; z-index: 100; }
-        .ghost-face { font-size: 150px; color: #ff0000; text-shadow: 0 0 50px #ff0000; animation: shake 0.1s infinite; }
+        /* 1-3 長按 */
+        .hold-btn { width: 140px; height: 140px; border-radius: 50%; background: #1f2833; border: 4px solid #ff4757; color: #ff4757; display: flex; align-items: center; justify-content: center; font-size: 18px; position: relative; cursor: pointer; transition: all 0.1s; }
+        .progress-ring { position: absolute; top: -4px; left: -4px; width: 140px; height: 140px; border-radius: 50%; border: 4px solid transparent; border-top-color: #00d2d3; transform: rotate(-90deg); transition: all 0.1s linear; }
+
+        /* 4-6 數學 */
+        .math-opts { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; margin-top: 20px; }
+        .math-btn { padding: 15px; background: #333; font-size: 20px; border-radius: 5px; cursor: pointer; border: 2px solid #555; }
+        .math-btn:active { background: #555; }
+
+        /* 7-9 驗證碼 */
+        .captcha-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 350px; margin: 15px 0; }
+        .captcha-item { background: #222; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 5px; cursor: pointer; border: 2px solid #444; }
+        .captcha-item.sel { border-color: #2ed573; background: #1e3a2a; }
+
+        /* 10-13 打字 */
+        .typing-input { width: 100%; max-width: 350px; text-align: left; }
+        .typing-err { color: #ff4757; font-size: 12px; height: 18px; margin-top: 10px; }
+
+        /* 14-17 病毒 */
+        .terminal { width: 100%; max-width: 400px; background: #000; padding: 20px; border-radius: 10px; border: 2px solid #2ed573; text-align: left; font-family: monospace; font-size: 14px; }
+        .term-line { margin-bottom: 10px; color: #2ed573; }
+        .term-warn { color: #ff4757; font-weight: bold; }
+        .prog-bg { width: 100%; height: 20px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 15px; }
+        .prog-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.1s; }
+
+        /* 18-19 錄音 */
+        .mic { font-size: 80px; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { to { transform: scale(1.2); color: #ff4757; } }
+        .wave { display: flex; gap: 5px; height: 50px; align-items: center; justify-content: center; margin: 20px 0; }
+        .bar { width: 10px; background: #ff4757; border-radius: 5px; animation: wave 0.5s infinite alternate; }
+        @keyframes wave { from { height: 10px; } to { height: 50px; } }
+
+        /* 20 亂碼鍵盤 */
+        .gibberish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 300px; margin-top: 20px; }
+        .gib-btn { padding: 15px; background: #333; font-size: 24px; border-radius: 5px; cursor: pointer; }
+
+        /* 21 顏色陷阱 */
+        .color-word { font-size: 40px; font-weight: bold; margin: 20px 0; }
+        .color-opt { display: inline-block; padding: 15px 25px; background: #333; margin: 10px; border-radius: 5px; cursor: pointer; font-size: 18px; }
+
+        /* 22 找不同 */
+        .diff-imgs { display: flex; gap: 20px; font-size: 60px; margin: 20px 0; }
+        .diff-img { cursor: pointer; }
+
+        /* 23 耐力測試 */
+        .drag-area { width: 100%; height: 60vh; position: relative; background: #111; border-radius: 10px; border: 1px solid #333; overflow: hidden; }
+        .drag-ball { width: 50px; height: 50px; background: #f1c40f; border-radius: 50%; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; box-shadow: 0 0 15px #f1c40f; }
+        .drag-target { width: 80px; height: 80px; border: 3px dashed #2ed573; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
+
+        /* 24-26 逃跑按鈕 */
+        .runaway-container { position: relative; width: 100%; height: 100%; }
+        #runaway-btn { position: absolute; padding: 20px 40px; background: #00d2d3; color: #000; font-size: 24px; border-radius: 50px; font-weight: bold; transition: all 0.2s; box-shadow: 0 0 20px #00d2d3; }
+
+        /* 27 垃圾訊息 */
+        .spam-window { position: absolute; width: 200px; background: #222; border: 2px solid #ff4757; border-radius: 10px; padding: 15px; text-align: center; box-shadow: 0 0 20px rgba(255,71,87,0.5); }
+
+        /* 28 旋轉 */
+        .rotate-container { transition: transform 0.1s; }
+
+        /* 29 音量 */
+        .volume-slider { width: 80%; max-width: 300px; margin: 20px 0; accent-color: #00d2d3; height: 20px; }
+
+        /* 30 大結局 */
+        .final-boss { font-size: 60px; animation: shake 0.1s infinite; }
+
+        /* 基礎畫面 */
+        .box-icon { font-size: 100px; animation: float 2s infinite ease-in-out; cursor: pointer; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .ghost { font-size: 150px; color: #ff0000; text-shadow: 0 0 50px #ff0000; animation: shake 0.1s infinite; }
         @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, 2px); } }
-        .flash-bg { animation: flash 0.2s infinite; }
+        .flash { animation: flash 0.2s infinite; }
         @keyframes flash { 0%, 100% { background: #000; } 50% { background: #ff0000; } }
-
-        /* 場景四：長按解鎖 */
-        #unlock-screen { background: rgba(10,10,26,0.98); z-index: 90; }
-        .hold-btn {
-            margin-top: 30px; width: 150px; height: 150px; border-radius: 50%;
-            background: #1f2833; border: 4px solid #ff4757; color: #ff4757;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
-            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3); position: relative; cursor: pointer;
-        }
-        .progress-ring {
-            position: absolute; top: -4px; left: -4px; width: 150px; height: 150px;
-            border-radius: 50%; border: 4px solid transparent;
-            border-top-color: #00d2d3; transform: rotate(-90deg); transition: all 0.1s linear;
-        }
-
-        /* 場景五：假病毒清理 */
-        #virus-screen { background: #000; z-index: 95; font-family: monospace; color: #2ed573; }
-        .terminal { width: 90%; max-width: 500px; background: #111; padding: 20px; border-radius: 10px; border: 2px solid #2ed573; text-align: left; font-size: 14px; box-shadow: 0 0 20px rgba(46, 213, 115, 0.3); }
-        .term-line { margin-bottom: 10px; }
-        .term-warning { color: #ff4757; font-weight: bold; }
-        .progress-bar-bg { width: 100%; height: 20px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 15px; }
-        .progress-bar-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.1s; }
-
-        /* 場景六：逃跑按鈕 */
-        #runaway-screen { background: #0a0a1a; z-index: 85; }
-        #runaway-btn {
-            position: absolute; padding: 20px 40px; background: #00d2d3; color: #000;
-            font-size: 24px; border-radius: 50px; font-weight: bold; transition: all 0.2s;
-            box-shadow: 0 0 20px #00d2d3;
-        }
-
-        /* 場景七：結算/復仇 */
-        #revenge-screen { background: #0a0a1a; z-index: 80; }
-        #revenge-screen h1 { color: #2ed573; text-shadow: 0 0 20px #2ed573; }
-        #revenge-link { width: 80%; max-width: 400px; padding: 10px; background: #1f2833; color: #00d2d3; word-break: break-all; font-size: 12px; border-radius: 5px; margin: 15px 0; }
     </style>
 </head>
 <body>
 
-    <!-- 1. 整蠱者設定 -->
-    <div id="setup-screen" class="screen active">
-        <h1>📦 惡魔快遞局</h1>
-        <p style="color:#a4b0be;">輸入你想整蠱嘅朋友個名：</p>
+    <!-- 設定 -->
+    <div id="setup" class="screen active">
+        <h1 style="color: #00d2d3;">📦 惡魔快遞局</h1>
+        <p class="subtitle">輸入你想整蠱嘅朋友個名：</p>
         <input type="text" id="target-name" placeholder="例如：阿明" maxlength="10">
         <button onclick="generateLink()">生成地獄連結</button>
-        <p style="font-size: 10px; color: #a4b0be; margin-top: 20px;">傳送俾佢，等佢體驗下咩叫絕望。</p>
+        <p style="font-size: 10px; margin-top: 20px; color: #666;">30 個陷阱，每次抽 4 個，保證次次唔同！</p>
     </div>
 
-    <!-- 2. 受害者包裹 -->
+    <!-- 包裹 -->
     <div id="box-screen" class="screen">
-        <p class="to-text" id="receiver-name"></p>
-        <div class="box-container" onclick="openBox()">
-            <div class="box-icon">🎁</div>
-            <p style="color:#a4b0be; font-size:14px;">點擊拆開包裹</p>
-        </div>
+        <p style="font-size: 22px; color: #ffd32a;" id="receiver-name"></p>
+        <div class="box-icon" onclick="openBox()">🎁</div>
+        <p class="subtitle">點擊拆開包裹</p>
     </div>
 
-    <!-- 3. 驚嚇畫面 -->
+    <!-- 驚嚇 -->
     <div id="scare-screen" class="screen">
-        <div class="ghost-face">👁️</div>
+        <div class="ghost">👁️</div>
         <h1 style="color: #ff4757; font-size: 40px; margin-top: 20px;">SYSTEM HACKED</h1>
-        <p id="scare-name" style="color:#fff; font-size:20px;"></p>
+        <p id="scare-name" style="font-size:20px;"></p>
     </div>
 
-    <!-- 4. 長按解鎖 -->
-    <div id="unlock-screen" class="screen">
-        <h2 style="color: #ff4757;">⚠️ 病毒已入侵系統</h2>
-        <p style="color: #a4b0be;">請長按下方按鈕 5 秒解除威脅</p>
-        <div class="hold-btn" id="hold-btn">
-            <div class="progress-ring" id="progress-ring"></div>
-            長按解鎖
-        </div>
+    <!-- 陷阱容器 -->
+    <div id="trap-screen" class="screen">
+        <div id="trap-content" style="display:flex; flex-direction:column; align-items:center; width:100%;"></div>
     </div>
 
-    <!-- 5. 假病毒清理 -->
-    <div id="virus-screen" class="screen">
-        <div class="terminal" id="terminal">
-            <div class="term-line">> 正在掃描系統...</div>
-            <div class="term-line term-warning" id="term-alert" style="display:none;">> ⚠️ 發現 99+ 個致命病毒！</div>
-            <div class="term-line" id="term-del" style="display:none;">> 正在刪除相簿中嘅珍貴回憶...</div>
-            <div class="term-line" id="term-wa" style="display:none;">> 正在轉發此連結俾 WhatsApp 聯絡人...</div>
-            <div class="term-line" id="term-money" style="display:none;">> 正在扣除銀行戶口 $9,999...</div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
-        </div>
-    </div>
-
-    <!-- 6. 逃跑按鈕 -->
-    <div id="runaway-screen" class="screen">
-        <h1 style="color:#f1c40f; font-size: 24px;">系統需要你同意以下條款</h1>
-        <p style="color:#a4b0be; font-size: 14px;">(同意後即代表你自願放棄所有財產)</p>
-        <button id="runaway-btn">同意</button>
-    </div>
-
-    <!-- 7. 復仇 -->
+    <!-- 結算 -->
     <div id="revenge-screen" class="screen">
-        <div style="font-size: 80px;" class="box-icon">🤡</div>
+        <div style="font-size: 80px;">🤡</div>
         <h1 style="margin-top:10px;">😈 你被整蠱了！</h1>
-        <p style="color: #a4b0be; padding: 0 20px;">你已經成功被騙！想報仇？將呢條復仇連結傳送俾下一個受害者！</p>
-        <div id="revenge-link"></div>
+        <p class="subtitle">你已經成功被騙！想報仇？將呢條復仇連結傳送俾下一個受害者！</p>
+        <div id="revenge-link" style="width: 90%; max-width: 400px; padding: 10px; background: #1f2833; color: #00d2d3; word-break: break-all; font-size: 12px; border-radius: 5px; margin: 15px 0;"></div>
         <button onclick="copyRevengeLink()">複製復仇連結</button>
     </div>
 
     <script>
-        // --- 音效系統 ---
+        // --- 音效 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playScareSound() {
+        function playSound(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.5);
             osc.connect(gain); gain.connect(audioCtx.destination);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
-        }
-
-        function playBeep() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            if (navigator.vibrate) navigator.vibrate(50);
-        }
-
-        // --- URL 參數檢查 ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const target = urlParams.get('to');
-        let targetName = target ? decodeURIComponent(target) : "你";
-
-        if (target) {
-            document.getElementById('setup-screen').classList.remove('active');
-            document.getElementById('box-screen').classList.add('active');
-            document.getElementById('receiver-name').innerText = `📦 收件人：${targetName}`;
-            document.getElementById('scare-name').innerText = `晚安啦，${targetName}！`;
-        } else {
-            document.getElementById('setup-screen').classList.add('active');
-        }
-
-        // --- 1. 生成連結 ---
-        function generateLink() {
-            let name = document.getElementById('target-name').value.trim();
-            if (!name) name = "你個好朋友";
-            
-            let baseUrl = window.location.href.split('?')[0];
-            let newUrl = `${baseUrl}?to=${encodeURIComponent(name)}`;
-            
-            navigator.clipboard.writeText(newUrl).then(() => {
-                alert(`已複製連結！\n快啲傳送俾「${name}」啦：\n\n${newUrl}`);
-            }).catch(() => {
-                prompt(`請手動複製連結傳送俾「${name}」：`, newUrl);
-            });
-        }
-
-        // --- 2. 拆箱與驚嚇 ---
-        function openBox() {
-            document.getElementById('box-screen').classList.remove('active');
-            const scareScreen = document.getElementById('scare-screen');
-            scareScreen.classList.add('active');
-            scareScreen.classList.add('flash-bg');
-            
-            playScareSound();
-
-            setTimeout(() => {
-                scareScreen.classList.remove('active');
-                scareScreen.classList.remove('flash-bg');
-                document.getElementById('unlock-screen').classList.add('active');
-            }, 2500);
-        }
-
-        // --- 3. 長按解鎖 (5秒) ---
-        let holdTimer = null;
-        let holdProgress = 0;
-        const holdBtn = document.getElementById('hold-btn');
-        const progressRing = document.getElementById('progress-ring');
-
-        function startHold(e) {
-            e.preventDefault();
-            if (holdTimer) return;
-            
-            holdTimer = setInterval(() => {
-                holdProgress += 2;
-                let deg = (holdProgress / 100) * 360;
-                progressRing.style.transform = `rotate(${deg - 90}deg)`;
-                
-                if (holdProgress % 10 === 0) playBeep();
-
-                if (holdProgress >= 100) {
-                    clearInterval(holdTimer);
-                    holdTimer = null;
-                    startVirusCleanup();
-                }
-            }, 100);
-        }
-
-        function stopHold(e) {
-            e.preventDefault();
-            if (holdTimer) {
-                clearInterval(holdTimer);
-                holdTimer = null;
-                holdProgress = 0;
-                progressRing.style.transform = `rotate(-90deg)`;
+            let t = audioCtx.currentTime;
+            if (type === 'scare') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.5);
+                gain.gain.setValueAtTime(0.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc.start(); osc.stop(t + 0.5);
+                if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
+            } else if (type === 'beep') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(600, t);
+                gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(); osc.stop(t + 0.1);
+                if (navigator.vibrate) navigator.vibrate(50);
+            } else if (type === 'win') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.setValueAtTime(1200, t+0.1);
+                gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                osc.start(); osc.stop(t + 0.3);
             }
         }
 
-        holdBtn.addEventListener('mousedown', startHold);
-        holdBtn.addEventListener('touchstart', startHold, {passive: false});
-        holdBtn.addEventListener('mouseup', stopHold);
-        holdBtn.addEventListener('mouseleave', stopHold);
-        holdBtn.addEventListener('touchend', stopHold);
+        // --- 初始化 ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const target = urlParams.get('to');
+        if (target) {
+            document.getElementById('setup').classList.remove('active');
+            document.getElementById('box-screen').classList.add('active');
+            document.getElementById('receiver-name').innerText = `📦 收件人：${decodeURIComponent(target)}`;
+            document.getElementById('scare-name').innerText = `晚安啦，${decodeURIComponent(target)}！`;
+        }
 
-        // --- 4. 假病毒清理 ---
-        function startVirusCleanup() {
-            document.getElementById('unlock-screen').classList.remove('active');
-            document.getElementById('virus-screen').classList.add('active');
+        function generateLink() {
+            let name = document.getElementById('target-name').value.trim() || "你個好朋友";
+            let url = `${window.location.href.split('?')[0]}?to=${encodeURIComponent(name)}`;
+            navigator.clipboard.writeText(url).then(() => alert(`已複製連結！\n傳送俾「${name}」啦：\n\n${url}`))
+            .catch(() => prompt(`請手動複製連結：`, url));
+        }
+
+        // --- 核心引擎 ---
+        let seq = [];
+        let stage = 0;
+
+        function openBox() {
+            document.getElementById('box-screen').classList.remove('active');
+            const s = document.getElementById('scare-screen');
+            s.classList.add('active', 'flash');
+            playSound('scare');
+            setTimeout(() => {
+                s.classList.remove('active', 'flash');
+                startGame();
+            }, 2000);
+        }
+
+        function startGame() {
+            // 30 個陷阱 ID
+            const traps = [
+                'hold_evade', 'hold_invisible', 'hold_long',
+                'math_wrong', 'math_evade', 'math_timer',
+                'captcha_ghost', 'captcha_cat', 'captcha_shuffle',
+                'typing_normal', 'typing_disappear', 'typing_long', 'typing_reverse',
+                'virus_99', 'virus_files', 'virus_bank', 'virus_reverse',
+                'record_wave', 'record_ransom',
+                'gibberish', 'color_trap', 'spot_diff',
+                'drag_ball', 'runaway_evade', 'runaway_shrink', 'runaway_hold',
+                'spam', 'rotate', 'volume',
+                'final_boss'
+            ];
             
-            const termAlert = document.getElementById('term-alert');
-            const termDel = document.getElementById('term-del');
-            const termWa = document.getElementById('term-wa');
-            const termMoney = document.getElementById('term-money');
-            const progressFill = document.getElementById('progress-fill');
+            // 隨機洗牌，抽 4 個唔同嘅
+            let pool = [...traps].sort(() => Math.random() - 0.5);
+            seq = [pool[0], pool[1], pool[2], pool[3], 'runaway_evade']; // 最後必定係逃跑
+            stage = 0;
+            
+            document.getElementById('trap-screen').classList.add('active');
+            nextTrap();
+        }
 
-            setTimeout(() => { termAlert.style.display = 'block'; playBeep(); }, 1000);
-            setTimeout(() => { termDel.style.display = 'block'; playBeep(); }, 2500);
-            setTimeout(() => { termWa.style.display = 'block'; playBeep(); }, 4000);
-            setTimeout(() => { termMoney.style.display = 'block'; playBeep(); }, 5500);
+        function nextTrap() {
+            if (stage >= seq.length) return showRevenge();
+            const trap = seq[stage++];
+            const c = document.getElementById('trap-content');
+            c.innerHTML = '';
+            
+            // 根據 ID 觸發對應陷阱
+            if (trap === 'hold_evade') initHold(c, "追住個掣長按 5 秒！", 5, true, false);
+            else if (trap === 'hold_invisible') initHold(c, "長按隱形掣 5 秒！", 5, false, true);
+            else if (trap === 'hold_long') initHold(c, "長按 15 秒！", 15, false, false);
+            
+            else if (trap === 'math_wrong') initMath(c, false, false);
+            else if (trap === 'math_evade') initMath(c, true, false);
+            else if (trap === 'math_timer') initMath(c, false, true);
+            
+            else if (trap === 'captcha_ghost') initCaptcha(c, "請選出所有「紅綠燈」", "🚦", false);
+            else if (trap === 'captcha_cat') initCaptcha(c, "請選出隱藏嘅「貓」", "🐱", false);
+            else if (trap === 'captcha_shuffle') initCaptcha(c, "請選出「紅綠燈」(撳啱會洗牌)", "🚦", true);
+            
+            else if (trap === 'typing_normal') initTyping(c, "我以後唔敢再亂撳不明連結", false);
+            else if (trap === 'typing_disappear') initTyping(c, "我以後唔敢再亂撳不明連結", true);
+            else if (trap === 'typing_long') initTyping(c, "我發誓以後不再好奇不再亂撳任何不明來歷嘅超連結同附件", false);
+            else if (trap === 'typing_reverse') initTyping(c, "結連明不撳亂再敢不後以我", false);
+            
+            else if (trap === 'virus_99') initVirus(c, "刪除相簿", "卡99");
+            else if (trap === 'virus_files') initVirus(c, "上傳機密文件", "快");
+            else if (trap === 'virus_bank') initVirus(c, "轉賬至柬埔寨", "倒退");
+            else if (trap === 'virus_reverse') initVirus(c, "格式化系統", "倒退");
+            
+            else if (trap === 'record_wave') initRecord(c, "正在偷偷錄音...", 3500);
+            else if (trap === 'record_ransom') initRecord(c, "偵測到慌張反應，需支付 0.5 比特幣", 5000);
+            
+            else if (trap === 'gibberish') initGibberish(c);
+            else if (trap === 'color_trap') initColor(c);
+            else if (trap === 'spot_diff') initSpotDiff(c);
+            else if (trap === 'drag_ball') initDrag(c);
+            
+            else if (trap === 'runaway_evade') initRunaway(c, "同意", 'evade');
+            else if (trap === 'runaway_shrink') initRunaway(c, "同意", 'shrink');
+            else if (trap === 'runaway_hold') initRunaway(c, "按住 3 秒", 'hold');
+            
+            else if (trap === 'spam') initSpam(c);
+            else if (trap === 'rotate') initRotate(c);
+            else if (trap === 'volume') initVolume(c);
+            else if (trap === 'final_boss') initBoss(c);
+        }
 
-            // 進度條加到 99% 就卡住
-            let progress = 0;
-            let interval = setInterval(() => {
-                progress += Math.random() * 5;
-                if (progress >= 99) {
-                    progress = 99;
-                    clearInterval(interval);
-                    setTimeout(startRunawayGame, 1500);
+        function pass() { playSound('win'); nextTrap(); }
+
+        // ==========================================
+        // 30 個陷阱實作
+        // ==========================================
+
+        // 1-3 長按
+        function initHold(c, txt, secs, evade, inv) {
+            c.innerHTML = `<div class="title">${txt}</div><div class="hold-btn" id="h-btn"><div class="progress-ring" id="h-ring"></div>解鎖</div>`;
+            const btn = document.getElementById('h-btn'), ring = document.getElementById('h-ring');
+            let p = 0, t = null;
+            if (inv) btn.style.opacity = '0.1';
+            if (evade) c.onmousemove = e => {
+                if (!t) {
+                    const r = btn.getBoundingClientRect();
+                    if (Math.hypot(e.clientX - (r.left+70), e.clientY - (r.top+70)) < 100 && Math.random() < 0.15) {
+                        btn.style.position = 'absolute';
+                        btn.style.left = Math.random() * (window.innerWidth-140) + 'px';
+                        btn.style.top = Math.random() * (window.innerHeight-140) + 'px';
+                    }
                 }
-                progressFill.style.width = progress + '%';
-            }, 200);
-        }
-
-        // --- 5. 逃跑按鈕 ---
-        function startRunawayGame() {
-            document.getElementById('virus-screen').classList.remove('active');
-            document.getElementById('runaway-screen').classList.add('active');
-            
-            const btn = document.getElementById('runaway-btn');
-            const moveBtn = () => {
-                let x = Math.random() * (window.innerWidth - 150);
-                let y = Math.random() * (window.innerHeight - 100);
-                btn.style.left = x + 'px';
-                btn.style.top = y + 'px';
             };
-
-            // 手機觸控同電腦滑鼠都會觸發逃跑
-            btn.addEventListener('mouseover', moveBtn);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
+            const start = e => {
+                e.preventDefault(); if (t) return;
+                t = setInterval(() => {
+                    p += 100 / (secs * 10);
+                    ring.style.transform = `rotate(${(p/100)*360 - 90}deg)`;
+                    if (inv) btn.style.opacity = Math.min(1, p/100);
+                    if (p >= 100) { clearInterval(t); t=null; pass(); }
+                }, 100);
+            };
+            const stop = e => {
+                if (e) e.preventDefault();
+                if (t) { clearInterval(t); t=null; p=0; ring.style.transform = 'rotate(-90deg)'; if (inv) btn.style.opacity = '0.1'; }
+            };
+            btn.addEventListener('mousedown', start); btn.addEventListener('touchstart', start, {passive:false});
+            btn.addEventListener('mouseup', stop); btn.addEventListener('mouseleave', stop); btn.addEventListener('touchend', stop);
         }
 
-        // 如果好彩撳中咗同意 (或者放棄)
-        document.getElementById('runaway-btn').addEventListener('click', () => {
-            finishPrank();
-        });
+        // 4-6 數學
+        function initMath(c, evade, timed) {
+            let a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1, ans = a+b;
+            let html = `<div class="title" id="m-title">🧮 ${a} + ${b} = ?</div><div class="math-opts">`;
+            let wrongs = new Set();
+            while(wrongs.size < 4) { let w = ans + Math.floor(Math.random()*10)-5; if(w!==ans && w>0) wrongs.add(w); }
+            Array.from(wrongs).forEach(w => html += `<div class="math-btn" onclick="mathFail(this)">${w}</div>`);
+            html += `</div><p id="m-err" class="hidden" style="color:#ff4757; margin-top:15px;">錯！全部錯！</p>`;
+            c.innerHTML = html;
+            
+            if (evade) {
+                c.querySelectorAll('.math-btn').forEach(btn => {
+                    btn.onmouseover = () => {
+                        btn.style.position = 'absolute';
+                        btn.style.left = Math.random() * (window.innerWidth-100) + 'px';
+                        btn.style.top = Math.random() * (window.innerHeight-50) + 'px';
+                    };
+                });
+            }
+            if (timed) {
+                let left = 3;
+                let tm = setInterval(() => {
+                    left--;
+                    if(document.getElementById('m-title')) document.getElementById('m-title').innerText = `🧮 ${a} + ${b} = ? (剩 ${left}s)`;
+                    if (left <= 0) { clearInterval(tm); pass(); } // 時間到當過關 (因為根本冇啱嘅選項)
+                }, 1000);
+            }
+        }
+        window.mathFail = function(el) {
+            if(el) playSound('beep');
+            const err = document.getElementById('m-err');
+            if(err) { err.classList.remove('hidden'); setTimeout(() => err.classList.add('hidden'), 1000); }
+        };
 
-        // --- 6. 結算與復仇 ---
-        function finishPrank() {
-            document.getElementById('runaway-screen').classList.remove('active');
+        // 7-9 驗證碼
+        function initCaptcha(c, txt, target, shuffle) {
+            c.innerHTML = `<div class="title" style="font-size:16px;">${txt}</div><div class="captcha-grid" id="cap-grid"></div><button onclick="checkCap('${target}', ${shuffle})">驗證</button><p id="cap-err" class="hidden" style="color:#ff4757; margin-top:10px;">錯！重試！</p>`;
+            buildCap(target);
+        }
+        function buildCap(target) {
+            const g = document.getElementById('cap-grid'); g.innerHTML = '';
+            let em = ['👻','💀','🤡','👁️',target,'🕷️','🔥','🎃','👽'].sort(() => Math.random()-0.5);
+            em.forEach(e => {
+                let d = document.createElement('div'); d.className = 'captcha-item'; d.innerText = e;
+                d.onclick = () => d.classList.toggle('sel'); g.appendChild(d);
+            });
+        }
+        window.checkCap = function(target, shuffle) {
+            let sel = document.querySelectorAll('.captcha-item.sel'), ok = false;
+            sel.forEach(s => { if(s.innerText === target) ok = true; });
+            if (ok && sel.length === 1) pass();
+            else {
+                playSound('beep');
+                document.getElementById('cap-err').classList.remove('hidden');
+                if (shuffle) setTimeout(() => { buildCap(target); document.getElementById('cap-err').classList.add('hidden'); }, 500);
+                else setTimeout(() => document.getElementById('cap-err').classList.add('hidden'), 1000);
+            }
+        };
+
+        // 10-13 打字
+        function initTyping(c, txt, vanish) {
+            c.innerHTML = `<div class="title" style="font-size:16px;">請打出：</div><div style="color:#2ecc71; font-weight:bold; margin-bottom:10px;">${txt}</div><input type="text" id="t-in" class="typing-input" autocomplete="off"><p id="t-err" class="typing-err"></p><button onclick="checkType('${txt}', ${vanish})" style="width:100%; max-width:350px;">提交</button>`;
+            if (vanish) {
+                document.getElementById('t-in').oninput = e => { if (Math.random() < 0.3) { e.target.value = ''; playSound('beep'); } };
+            }
+        }
+        window.checkType = function(txt, vanish) {
+            let val = document.getElementById('t-in').value;
+            if (val === txt) {
+                if (Math.random() < 0.5) { document.getElementById('t-err').innerText = "系統錯誤，重試！"; document.getElementById('t-in').value = ''; }
+                else pass();
+            } else { document.getElementById('t-err').innerText = "打錯字！"; playSound('beep'); }
+        };
+
+        // 14-17 病毒
+        function initVirus(c, action, mode) {
+            c.innerHTML = `<div class="terminal"><div class="term-line">> 掃描中...</div><div class="term-line term-warn hidden" id="v-warn">> ⚠️ 發現病毒！</div><div class="term-line hidden" id="v-act">> 正在${action}...</div><div class="prog-bg"><div class="prog-fill" id="v-prog"></div></div></div>`;
+            let p = 0;
+            setTimeout(() => document.getElementById('v-warn').classList.remove('hidden'), 500);
+            setTimeout(() => {
+                document.getElementById('v-act').classList.remove('hidden');
+                let tm = setInterval(() => {
+                    if (mode === '卡99') { p += Math.random()*5; if (p >= 99) { p = 99; clearInterval(tm); setTimeout(pass, 1500); } }
+                    else if (mode === '快') { p += Math.random()*20; if (p >= 100) { clearInterval(tm); pass(); } }
+                    else if (mode === '倒退') { p -= Math.random()*4; if (p < 0) p = 0; if (p > 70 && Math.random() < 0.1) { clearInterval(tm); pass(); } }
+                    document.getElementById('v-prog').style.width = p + '%';
+                }, 200);
+            }, 1500);
+        }
+
+        // 18-19 錄音
+        function initRecord(c, txt, time) {
+            c.innerHTML = `<div class="mic">🎤</div><div class="title">${txt}</div><div class="wave">${'<div class="bar"></div>'.repeat(15)}</div>`;
+            setTimeout(pass, time);
+        }
+
+        // 20 亂碼鍵盤
+        function initGibberish(c) {
+            const chars = ['Ω', '✡', '✙', '☭', '☯', '♆', '♇', '✠', '☢'];
+            const target = chars[Math.floor(Math.random()*chars.length)];
+            c.innerHTML = `<div class="title">請輸入符號：<span style="font-size:30px; color:#f1c40f;">${target}</span></div><div class="gibberish-grid" id="gib-grid"></div>`;
+            const g = document.getElementById('gib-grid');
+            chars.sort(() => Math.random()-0.5).forEach(ch => {
+                let b = document.createElement('div'); b.className = 'gib-btn'; b.innerText = ch;
+                b.onclick = () => { if (ch === target) pass(); else mathFail(); };
+                g.appendChild(b);
+            });
+        }
+
+        // 21 顏色陷阱
+        function initColor(c) {
+            let colors = ['紅色', '藍色', '綠色'];
+            let realColor = colors[Math.floor(Math.random()*3)];
+            let text = colors[Math.floor(Math.random()*3)];
+            let hex = realColor === '紅色' ? '#ff4757' : (realColor === '藍色' ? '#3498db' : '#2ed573');
+            c.innerHTML = `<div class="title">請選出文字嘅「意思」</div><div class="color-word" style="color:${hex};">${text}</div><div><div class="color-opt" onclick="mathFail()">紅色</div><div class="color-opt" onclick="mathFail()">藍色</div><div class="color-opt" onclick="mathFail()">綠色</div></div>`;
+            // 隨機一個掣係啱
+            let opts = c.querySelectorAll('.color-opt');
+            let correctIdx = colors.indexOf(text);
+            opts[correctIdx].onclick = () => pass();
+        }
+
+        // 22 找不同
+        function initSpotDiff(c) {
+            c.innerHTML = `<div class="title">請點擊唔同嘅地方</div><div class="diff-imgs"><div class="diff-img" id="d1">👁️</div><div class="diff-img" id="d2">👁️</div></div>`;
+            const click = () => { if (Math.random() < 0.2) pass(); else mathFail(); };
+            document.getElementById('d1').onclick = click;
+            document.getElementById('d2').onclick = click;
+        }
+
+        // 23 耐力測試
+        function initDrag(c) {
+            c.innerHTML = `<div class="title">將波波拖去終點</div><div class="drag-area" id="d-area"><div class="drag-ball" id="d-ball"></div><div class="drag-target"></div></div>`;
+            const area = document.getElementById('d-area'), ball = document.getElementById('d-ball');
+            let drag = false, shake = setInterval(() => {
+                if (drag) { ball.style.transform = `translate(${Math.random()*20-10}px, ${Math.random()*20-10}px)`; }
+            }, 50);
+            ball.onmousedown = ball.ontouchstart = () => drag = true;
+            window.onmouseup = window.ontouchend = () => { drag = false; ball.style.transform = 'none'; };
+            window.onmousemove = window.ontouchmove = e => {
+                if (!drag) return;
+                let rect = area.getBoundingClientRect();
+                let x = (e.clientX || e.touches[0].clientX) - rect.left;
+                let y = (e.clientY || e.touches[0].clientY) - rect.top;
+                ball.style.left = (x - 25) + 'px'; ball.style.top = (y - 25) + 'px';
+                if (x > area.clientWidth - 100) { clearInterval(shake); pass(); }
+            };
+        }
+
+        // 24-26 逃跑按鈕
+        function initRunaway(c, txt, mode) {
+            c.innerHTML = `<div class="runaway-container" id="r-cont"><div class="title">同意條款</div><div id="runaway-btn" style="position:relative; left:auto; top:auto;">${txt}</div></div>`;
+            const btn = document.getElementById('runaway-btn'), cont = document.getElementById('r-cont');
+            let scale = 1, holdT = null, p = 0;
+            
+            cont.onmousemove = e => {
+                if (mode === 'evade' || mode === 'shrink') {
+                    const r = btn.getBoundingClientRect();
+                    if (Math.hypot(e.clientX - (r.left+40), e.clientY - (r.top+25)) < 100) {
+                        btn.style.position = 'absolute';
+                        btn.style.left = Math.random() * (window.innerWidth-150) + 'px';
+                        btn.style.top = Math.random() * (window.innerHeight-100) + 'px';
+                        if (mode === 'shrink') { scale -= 0.05; if (scale < 0.3) scale = 0.3; btn.style.transform = `scale(${scale})`; }
+                    }
+                }
+            };
+            
+            if (mode === 'hold') {
+                btn.onmousedown = btn.ontouchstart = e => {
+                    e.preventDefault();
+                    holdT = setInterval(() => {
+                        p += 5;
+                        btn.innerText = `按住中... ${p}%`;
+                        if (p >= 100) { clearInterval(holdT); pass(); }
+                    }, 100);
+                };
+                btn.onmouseup = btn.onmouseleave = btn.ontouchend = () => { clearInterval(holdT); p = 0; btn.innerText = txt; };
+            } else {
+                btn.onclick = () => pass();
+            }
+        }
+
+        // 27 垃圾訊息
+        function initSpam(c) {
+            c.innerHTML = `<div class="title">請關閉所有視窗</div>`;
+            for(let i=0; i<10; i++) {
+                let w = document.createElement('div'); w.className = 'spam-window';
+                w.style.left = Math.random()*(window.innerWidth-200) + 'px';
+                w.style.top = Math.random()*(window.innerHeight-100) + 'px';
+                w.innerHTML = `⚠️ 警告<br><button style="padding:5px 10px; margin-top:10px; font-size:12px;">關閉</button>`;
+                w.querySelector('button').onclick = () => {
+                    w.remove();
+                    if(c.querySelectorAll('.spam-window').length === 0) pass();
+                };
+                c.appendChild(w);
+            }
+        }
+
+        // 28 旋轉
+        function initRotate(c) {
+            c.innerHTML = `<div class="rotate-container" id="rot-c"><div class="title">保持平衡，點擊確認</div><button onclick="pass()">確認</button></div>`;
+            const el = document.getElementById('rot-c');
+            let deg = 0, tm = setInterval(() => { deg += 5; el.style.transform = `rotate(${deg}deg)`; }, 50);
+            setTimeout(() => clearInterval(tm), 10000);
+        }
+
+        // 29 音量
+        function initVolume(c) {
+            c.innerHTML = `<div class="title">請將音量拉到 100% 以作確認</div><input type="range" class="volume-slider" id="vol" min="0" max="100" value="0"><button onclick="checkVol()">確認</button>`;
+        }
+        window.checkVol = function() {
+            if (document.getElementById('vol').value == 100) pass();
+            else mathFail();
+        };
+
+        // 30 大魔王
+        function initBoss(c) {
+            c.innerHTML = `<div class="final-boss">👹</div><div class="title">請按住畫面任何地方 10 秒懺悔</div><div class="prog-bg" style="max-width:300px;"><div class="prog-fill" id="b-prog" style="background:#ff4757;"></div></div>`;
+            let hold = false, p = 0;
+            c.onmousedown = c.ontouchstart = () => hold = true;
+            window.onmouseup = window.ontouchend = () => { if(p<100){hold=false; p=0; document.getElementById('b-prog').style.width='0%';} };
+            let tm = setInterval(() => {
+                if(hold) { p++; if(document.getElementById('b-prog')) document.getElementById('b-prog').style.width = p+'%'; }
+                if (p >= 100) { clearInterval(tm); pass(); }
+            }, 100);
+        }
+
+        // --- 結算 ---
+        function showRevenge() {
+            document.getElementById('trap-screen').classList.remove('active');
             document.getElementById('revenge-screen').classList.add('active');
-            playScareSound();
-            
-            let randomNames = ["下一個受害者", "你最好的朋友", "群組裡的人", "阿邊個", "個天", "你老闆"];
-            let randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
-            let baseUrl = window.location.href.split('?')[0];
-            let revengeUrl = `${baseUrl}?to=${encodeURIComponent(randomName)}`;
-            
-            document.getElementById('revenge-link').innerText = revengeUrl;
+            playSound('scare');
+            let names = ["下一個受害者", "你最好的朋友", "群組裡的人", "阿邊個", "個天", "你老闆"];
+            let rName = names[Math.floor(Math.random() * names.length)];
+            document.getElementById('revenge-link').innerText = `${window.location.href.split('?')[0]}?to=${encodeURIComponent(rName)}`;
         }
 
         function copyRevengeLink() {
             let link = document.getElementById('revenge-link').innerText;
-            navigator.clipboard.writeText(link).then(() => {
-                alert("已複製！快啲去 WhatsApp 群組報仇啦！");
-            }).catch(() => {
-                prompt("請手動複製連結：", link);
-            });
+            navigator.clipboard.writeText(link).then(() => alert("已複製！快啲去報仇啦！"))
+            .catch(() => prompt("請手動複製連結：", link));
         }
     </script>
 </body>
