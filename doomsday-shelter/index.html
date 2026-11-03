@@ -6,98 +6,46 @@
 <title>☢️ 末日避難所：地下城生存</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
-    
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    body { background: #000; color: #ccc; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
     
-    body { 
-        background: #000; color: #ccc; font-family: 'Noto Sans HK', sans-serif; 
-        height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; 
-    }
-
-    /* 3D 畫布 */
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
 
-    /* UI 層 */
     .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
     .ui-layer > * { pointer-events: auto; }
 
-    /* 返回大廳 */
-    .back-btn { 
-        position: absolute; top: 15px; left: 15px; padding: 8px 16px; 
-        background: rgba(0,0,0,0.8); color: #ffaa00; border: 1px solid #ffaa00; 
-        border-radius: 4px; text-decoration: none; font-family: 'Orbitron', sans-serif; 
-        font-weight: bold; font-size: 13px; z-index: 100; box-shadow: 0 0 10px rgba(255,170,0,0.3); 
-        transition: 0.2s;
-    }
-    .back-btn:active { transform: scale(0.95); background: #ffaa00; color: #000; }
+    .back-btn { position: absolute; top: 15px; left: 15px; padding: 8px 16px; background: rgba(0,0,0,0.8); color: #ffaa00; border: 1px solid #ffaa00; border-radius: 4px; text-decoration: none; font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 13px; z-index: 100; }
     
-    /* 頂部資源列 */
-    .hud-top { 
-        display: flex; justify-content: center; gap: 10px; padding: 15px; 
-        background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%); 
-        font-family: 'Orbitron', sans-serif; flex-wrap: wrap;
-    }
-    .res-box { 
-        display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: bold; 
-        background: rgba(20,20,20,0.85); padding: 6px 12px; border-radius: 4px; 
-        border: 1px solid #333; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-    .res-box.energy { color: #f1c40f; border-color: #f1c40f; }
-    .res-box.water { color: #00d2d3; border-color: #00d2d3; }
-    .res-box.food { color: #2ecc71; border-color: #2ecc71; }
-    .res-box.crystal { color: #e056fd; border-color: #e056fd; }
+    /* 頂部 HUD */
+    .hud-top { display: flex; justify-content: space-between; padding: 10px 15px; background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 10px; }
+    .res-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .res-box { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold; background: rgba(20,20,20,0.85); padding: 5px 10px; border-radius: 4px; border: 1px solid #333; }
+    .res-box.energy { color: #f1c40f; } .res-box.water { color: #00d2d3; } .res-box.food { color: #2ecc71; } .res-box.crystal { color: #e056fd; }
+    .time-box { font-size: 14px; font-weight: bold; color: #ffaa00; background: rgba(255,170,0,0.1); padding: 5px 12px; border-radius: 4px; border: 1px solid #ffaa00; text-align: center; }
+    .door-hp-box { font-size: 12px; font-weight: bold; color: #ff3b3b; text-align: center; width: 100%; margin-top: 5px; }
+    .hp-bar-bg { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-top: 3px; overflow: hidden; }
+    .hp-bar-fill { height: 100%; background: #ff3b3b; width: 100%; transition: width 0.3s; }
 
-    /* 廣播文字 */
-    .broadcast-box { 
-        position: absolute; top: 70px; left: 50%; transform: translateX(-50%); 
-        width: 90%; max-width: 500px; background: rgba(255, 170, 0, 0.1); 
-        border: 1px solid #ffaa00; color: #ffaa00; padding: 10px; font-size: 12px; 
-        text-align: center; border-radius: 4px; font-weight: bold; opacity: 0; 
-        transition: opacity 0.3s; pointer-events: none; box-shadow: 0 0 15px rgba(255,170,0,0.2);
-    }
+    .broadcast-box { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(255, 170, 0, 0.15); border: 1px solid #ffaa00; color: #ffaa00; padding: 8px; font-size: 12px; text-align: center; border-radius: 4px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; }
     .broadcast-box.show { opacity: 1; }
 
-    /* 居民列表 */
-    .pop-list { 
-        position: absolute; right: 15px; top: 70px; width: 160px; background: rgba(0,0,0,0.85); 
-        border: 1px solid #444; border-radius: 5px; padding: 10px; font-size: 11px; 
-        box-shadow: 0 0 10px rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-    }
-    .pop-list h4 { color: #fff; margin-bottom: 8px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 4px; }
-    .pop-item { display: flex; justify-content: space-between; margin-bottom: 4px; padding: 2px 0; }
-    .pop-item .awakened { color: #e056fd; font-weight: bold; text-shadow: 0 0 5px #e056fd; }
+    .pop-list { position: absolute; right: 10px; top: 95px; width: 140px; background: rgba(0,0,0,0.85); border: 1px solid #444; border-radius: 5px; padding: 8px; font-size: 11px; }
+    .pop-list h4 { color: #fff; margin-bottom: 5px; font-size: 11px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+    .pop-item { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .pop-item.awakened { color: #e056fd; font-weight: bold; }
 
-    /* 底部控制台 */
-    .console { 
-        margin: 15px; background: rgba(15,15,15,0.95); border: 1px solid #444; 
-        border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; 
-        max-width: 600px; margin-left: auto; margin-right: auto; width: calc(100% - 30px); 
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
-    }
+    .console { margin: 10px; background: rgba(15,15,15,0.95); border: 1px solid #444; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; max-width: 600px; margin-left: auto; margin-right: auto; width: calc(100% - 20px); }
+    .weather-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding-bottom: 5px; border-bottom: 1px solid #333; color: #aaa; }
     
-    .weather-status { 
-        display: flex; justify-content: space-between; align-items: center; 
-        font-size: 13px; padding-bottom: 10px; border-bottom: 1px solid #333; color: #aaa; 
-    }
-    .weather-status span { font-weight: bold; }
-
-    .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .btn { 
-        padding: 10px 5px; background: #1a1a1a; color: #ccc; border: 1px solid #444; 
-        border-radius: 5px; font-weight: bold; font-size: 12px; cursor: pointer; 
-        text-align: center; transition: 0.1s; 
-    }
+    .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .btn { padding: 8px 4px; background: #1a1a1a; color: #ccc; border: 1px solid #444; border-radius: 5px; font-weight: bold; font-size: 11px; cursor: pointer; text-align: center; transition: 0.1s; }
     .btn:active { transform: scale(0.95); }
-    .btn.active { background: #333; border-color: #ffaa00; color: #ffaa00; box-shadow: 0 0 10px rgba(255,170,0,0.3); }
-    .btn.crystal-btn { color: #e056fd; border-color: #e056fd; background: rgba(224,86,253,0.1); }
-    .btn.crystal-btn:active { background: #e056fd; color: #000; }
-
-    @media (max-width: 400px) {
-        .res-box { font-size: 11px; padding: 4px 8px; }
-        .pop-list { width: 130px; font-size: 10px; }
-        .btn { font-size: 11px; padding: 8px 4px; }
-    }
+    .btn.active { background: #333; border-color: #ffaa00; color: #ffaa00; }
+    .btn.danger { border-color: #ff3b3b; color: #ff3b3b; background: rgba(255,59,59,0.1); }
+    .btn.build { border-color: #00d2d3; color: #00d2d3; background: rgba(0,210,211,0.1); }
+    
+    @media (max-width: 400px) { .res-box { font-size: 10px; padding: 4px 6px; } .pop-list { width: 120px; font-size: 10px; } .btn { font-size: 10px; } }
 </style>
 </head>
 <body>
@@ -107,181 +55,135 @@
     <div id="canvas-container"></div>
 
     <div class="ui-layer">
-        <!-- 頂部資源 -->
         <div class="hud-top">
-            <div class="res-box energy">⚡ <span id="ui-energy">100</span></div>
-            <div class="res-box water">💧 <span id="ui-water">100</span></div>
-            <div class="res-box food">🥩 <span id="ui-food">100</span></div>
-            <div class="res-box crystal">💎 <span id="ui-crystal">0</span></div>
+            <div class="res-group">
+                <div class="res-box energy">⚡ <span id="ui-energy">100</span></div>
+                <div class="res-box water">💧 <span id="ui-water">100</span></div>
+                <div class="res-box food">🥩 <span id="ui-food">100</span></div>
+                <div class="res-box crystal">💎 <span id="ui-crystal">0</span></div>
+            </div>
+            <div class="time-box" id="ui-time">☀️ Day 1 - 08:00</div>
+            <div class="door-hp-box">
+                🚪 避難所大門：<span id="ui-door-hp">1000</span> / 1000
+                <div class="hp-bar-bg"><div class="hp-bar-fill" id="ui-door-bar"></div></div>
+            </div>
         </div>
 
         <div class="broadcast-box" id="broadcast-box">系統廣播：避難所已啟動</div>
 
-        <!-- 居民狀態 -->
         <div class="pop-list" id="pop-list">
             <h4>👥 居民狀態</h4>
-            <!-- 動態生成 -->
         </div>
 
-        <!-- 底部控制台 -->
         <div class="console">
-            <div class="weather-status">
-                <div>🌍 地表天氣：<span id="ui-weather">晴天</span></div>
-                <div>☢️ 輻射：<span id="ui-rad">5%</span></div>
+            <div class="weather-row">
+                <div>🌍 地表：<span id="ui-weather">晴天</span></div>
+                <div>🧱 堡壘等級：<span id="ui-fort">Lv.1</span></div>
             </div>
             
             <div class="actions">
                 <button class="btn active" id="btn-speak" onclick="toggleSpeech()">🔊 語音：開</button>
-                <button class="btn active" id="btn-auto" onclick="toggleAutoWeather()">🔄 自動天氣：開</button>
-                <button class="btn" onclick="allocate('power')">⚡ 分配發電</button>
-                <button class="btn" onclick="allocate('water')">💧 分配淨水</button>
-            </div>
-            
-            <div class="actions" style="grid-template-columns: repeat(3, 1fr);">
-                <button class="btn" style="color:#aaa;" onclick="setWeather('clear')">☀️ 晴天</button>
+                <button class="btn danger" onclick="buyTurret()">🔫 升級砲塔 (500電)</button>
                 <button class="btn" style="color:#00d2d3;" onclick="setWeather('rain')">🌧️ 落雨</button>
                 <button class="btn" style="color:#2ecc71;" onclick="setWeather('acid_rain')">☢️ 酸雨</button>
             </div>
 
-            <div class="actions" style="grid-template-columns: 1fr;">
-                <button class="btn crystal-btn" onclick="forceAwaken()">💎 強制覺醒 (消耗 10 晶石)</button>
+            <div class="actions" style="grid-template-columns: 1fr 1fr;">
+                <button class="btn build" onclick="buildFortress()">🧱 建造堡壘 (10晶石)</button>
+                <button class="btn" style="color:#e056fd;" onclick="forceAwaken()">💎 強制覺醒 (10晶石)</button>
             </div>
         </div>
     </div>
 
-    <!-- 引入 Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
-        // --- 遊戲數據 ---
         let energy = 100, water = 100, food = 100, crystals = 0;
-        let weather = 'clear'; // clear, rain, acid_rain
-        let weatherTimer = 20;
-        let autoWeather = true;
+        let doorHp = 1000, maxDoorHp = 1000;
+        let turretLevel = 0;
+        let fortressLevel = 1;
+        let gameTime = 8, day = 1, wave = 1;
         let speechEnabled = true;
         
+        // 居民現在有 3D 實體了
         let residents = [
-            { id: 1, name: '平民 #042', awakened: false, job: 'idle' },
-            { id: 2, name: '平民 #109', awakened: false, job: 'idle' }
+            { id: 1, name: '平民 #042', awakened: false, mesh: null, state: 'idle', targetCrystal: null },
+            { id: 2, name: '平民 #109', awakened: false, mesh: null, state: 'idle', targetCrystal: null }
         ];
 
-        // --- 語音系統 ---
         let synth = window.speechSynthesis;
         function speak(text) {
             if (!speechEnabled || !synth) return;
-            try {
-                synth.cancel(); // 停止當前語音
-                let utter = new SpeechSynthesisUtterance(text);
-                utter.lang = 'zh-HK';
-                utter.rate = 1.0;
-                utter.pitch = 0.8; // 低沉機械感
-                synth.speak(utter);
-            } catch(e) {}
+            try { synth.cancel(); let utter = new SpeechSynthesisUtterance(text); utter.lang = 'zh-HK'; utter.rate = 1.0; utter.pitch = 0.8; synth.speak(utter); } catch(e) {}
         }
-        
-        function toggleSpeech() {
-            speechEnabled = !speechEnabled;
-            let btn = document.getElementById('btn-speak');
-            btn.innerText = `🔊 語音：${speechEnabled ? '開' : '關'}`;
-            btn.classList.toggle('active', speechEnabled);
-            if (speechEnabled) speak("語音廣播已開啟。");
-        }
+        function toggleSpeech() { speechEnabled = !speechEnabled; document.getElementById('btn-speak').innerText = `🔊 語音：${speechEnabled ? '開' : '關'}`; document.getElementById('btn-speak').classList.toggle('active', speechEnabled); }
+        function broadcast(text) { let box = document.getElementById('broadcast-box'); box.innerText = `📡 ${text}`; box.classList.add('show'); speak(text); clearTimeout(window.bcTimer); window.bcTimer = setTimeout(() => box.classList.remove('show'), 4000); }
 
-        function broadcast(text) {
-            let box = document.getElementById('broadcast-box');
-            box.innerText = `📡 ${text}`;
-            box.classList.add('show');
-            speak(text);
-            clearTimeout(window.bcTimer);
-            window.bcTimer = setTimeout(() => box.classList.remove('show'), 5000);
-        }
+        // --- 3D 場景變數 ---
+        let scene, camera, renderer;
+        let ambientLight, sunLight, moonLight, doorLight;
+        let rainParticles, crystalMesh;
+        let zombies = []; 
+        let droppedCrystals = []; // 地下的晶石
+        let turretBullets = [];
+        let doorMesh, fortressMesh;
 
-        // --- Three.js 3D 場景初始化 ---
-        let scene, camera, renderer, rainParticles, crystalMesh;
-        let rainVelocity = 0.5;
-        
         function init3D() {
             try {
                 const container = document.getElementById('canvas-container');
                 scene = new THREE.Scene();
-                scene.fog = new THREE.FogExp2(0x050505, 0.015);
-                
+                scene.fog = new THREE.FogExp2(0x000000, 0.02);
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 8, 28);
-                camera.lookAt(0, 0, 0);
-
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderer.shadowMap.enabled = true;
                 container.appendChild(renderer.domElement);
 
-                // 燈光
-                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-                scene.add(ambientLight);
-                
-                const pointLight = new THREE.PointLight(0xffaa00, 1.2, 50);
-                pointLight.position.set(0, 5, 5);
-                scene.add(pointLight);
+                ambientLight = new THREE.AmbientLight(0xffffff, 0.5); scene.add(ambientLight);
+                sunLight = new THREE.DirectionalLight(0xffeedd, 1); sunLight.position.set(10, 20, 10); scene.add(sunLight);
+                moonLight = new THREE.DirectionalLight(0x4466ff, 0); moonLight.position.set(-10, 20, 10); scene.add(moonLight);
+                doorLight = new THREE.PointLight(0xff3b3b, 0, 30); doorLight.position.set(0, 0, 6); scene.add(doorLight);
 
-                // 避難所建築
-                const metalMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.6, metalness: 0.9 });
-                
-                // 三層地板
+                // 建築
+                const metalMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, metalness: 0.8 });
                 for(let i = 0; i < 3; i++) {
                     const floor = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 10), metalMat);
-                    floor.position.set(0, i * 4 - 4, 0);
-                    floor.receiveShadow = true;
-                    scene.add(floor);
+                    floor.position.set(0, i * 4 - 4, 0); scene.add(floor);
                 }
+                const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 12, 10), metalMat); wallL.position.set(-12, 0, 0); scene.add(wallL);
+                const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 12, 10), metalMat); wallR.position.set(12, 0, 0); scene.add(wallR);
+                const wallB = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 0.5), metalMat); wallB.position.set(0, 0, -5); scene.add(wallB);
                 
-                // 兩側牆壁
-                const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 12, 10), metalMat);
-                wallL.position.set(-12, 0, 0); scene.add(wallL);
-                const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 12, 10), metalMat);
-                wallR.position.set(12, 0, 0); scene.add(wallR);
-                
-                // 後牆
-                const wallB = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 0.5), metalMat);
-                wallB.position.set(0, 0, -5); scene.add(wallB);
+                // 大門
+                const doorMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 1, roughness: 0.2 });
+                doorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 10, 8), doorMat);
+                doorMesh.position.set(12, 0, 0); scene.add(doorMesh);
 
-                // 警示紅燈
-                const redLight = new THREE.PointLight(0xff0000, 0.8, 20);
-                redLight.position.set(10, 8, -4);
-                scene.add(redLight);
+                // 堡壘防禦層 (預設隱藏，升級後顯示)
+                fortressMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 10), new THREE.MeshStandardMaterial({ color: 0x00d2d3, emissive: 0x00d2d3, transparent: true, opacity: 0.5 }));
+                fortressMesh.position.set(12.5, 0, 0); fortressMesh.visible = false; scene.add(fortressMesh);
 
-                // 雨水粒子系統
+                // 雨水
                 const rainGeo = new THREE.BufferGeometry();
-                const rainCount = 2000;
-                const posArray = new Float32Array(rainCount * 3);
-                for(let i=0; i<rainCount*3; i+=3) {
-                    posArray[i] = (Math.random() - 0.5) * 60;     // X
-                    posArray[i+1] = Math.random() * 25 + 5;       // Y
-                    posArray[i+2] = (Math.random() - 0.5) * 40;   // Z
-                }
+                const posArray = new Float32Array(2000 * 3);
+                for(let i=0; i<2000*3; i+=3) { posArray[i] = (Math.random() - 0.5) * 60; posArray[i+1] = Math.random() * 25 + 5; posArray[i+2] = (Math.random() - 0.5) * 40; }
                 rainGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                const rainMat = new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.15, transparent: true, opacity: 0.6 });
-                rainParticles = new THREE.Points(rainGeo, rainMat);
-                rainParticles.visible = false;
-                scene.add(rainParticles);
+                rainParticles = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.15, transparent: true, opacity: 0.6 }));
+                rainParticles.visible = false; scene.add(rainParticles);
 
-                // 3D 晶石模型 (懸浮喺中間)
-                const crystalGeo = new THREE.OctahedronGeometry(1.5, 0);
-                const crystalMat = new THREE.MeshStandardMaterial({ 
-                    color: 0xe056fd, emissive: 0x8a2be2, roughness: 0.1, metalness: 0.8 
+                // 居民 3D 實體
+                residents.forEach(r => {
+                    const rMat = new THREE.MeshStandardMaterial({ color: 0x3498db });
+                    r.mesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 1, 4, 8), rMat);
+                    r.mesh.position.set(-5, -3.2, Math.random() * 4 - 2); // 初始位置
+                    scene.add(r.mesh);
                 });
-                crystalMesh = new THREE.Mesh(crystalGeo, crystalMat);
-                crystalMesh.position.set(0, 2, 2); // 放喺避難所中間
-                crystalMesh.visible = false;
-                scene.add(crystalMesh);
 
                 window.addEventListener('resize', onWindowResize, false);
                 animate();
-            } catch(e) {
-                console.error("3D 初始化失敗", e);
-                document.body.style.background = '#111';
-            }
+            } catch(e) { console.error("3D 初始化失敗", e); }
         }
 
         function onWindowResize() {
@@ -293,186 +195,226 @@
         function animate() {
             requestAnimationFrame(animate);
             try {
-                // 雨水動畫
-                if (rainParticles.visible) {
-                    const positions = rainParticles.geometry.attributes.position.array;
-                    for(let i=1; i<positions.length; i+=3) {
-                        positions[i] -= rainVelocity;
-                        if (positions[i] < -10) positions[i] = 25; // 重置到頂部
-                    }
-                    rainParticles.geometry.attributes.position.needsUpdate = true;
-                }
-                
-                // 晶石旋轉與懸浮
-                if (crystalMesh && crystalMesh.visible) {
-                    crystalMesh.rotation.y += 0.02;
-                    crystalMesh.rotation.x += 0.01;
-                    crystalMesh.position.y = 2 + Math.sin(Date.now() * 0.002) * 0.5; // 上下浮動
+                // 日夜光影
+                if (gameTime >= 6 && gameTime < 18) {
+                    let progress = (gameTime - 6) / 12;
+                    sunLight.intensity = Math.sin(progress * Math.PI) * 1.5;
+                    ambientLight.intensity = 0.3 + Math.sin(progress * Math.PI) * 0.4;
+                    moonLight.intensity = 0; doorLight.intensity = 0;
+                    scene.background = new THREE.Color().setHSL(0.6, 0.5, 0.1 + progress * 0.4);
+                } else {
+                    sunLight.intensity = 0; ambientLight.intensity = 0.1;
+                    moonLight.intensity = 0.4; doorLight.intensity = 1.5;
+                    scene.background = new THREE.Color(0x020205);
                 }
 
-                // 攝影機微微漂浮
-                camera.position.x = Math.sin(Date.now() * 0.0005) * 2;
-                camera.lookAt(0, 0, 0);
+                // 喪屍 AI
+                for (let i = zombies.length - 1; i >= 0; i--) {
+                    let z = zombies[i];
+                    z.mesh.position.x -= z.speed;
+                    z.mesh.rotation.z = Math.sin(Date.now() * 0.01) * 0.2;
+                    
+                    if (z.mesh.position.x <= 10) {
+                        z.mesh.position.x = 10;
+                        // 如果有堡壘，扣血減半
+                        let dmgTaken = z.dmg * 0.016 * (fortressLevel > 1 ? 0.5 : 1);
+                        doorHp -= dmgTaken;
+                        if (doorHp < 0) doorHp = 0;
+                        z.mesh.position.z = Math.sin(Date.now() * 0.05) * 0.5;
+                    }
+                }
+
+                // 居民 AI (自動執晶石)
+                residents.forEach(r => {
+                    if (r.state === 'idle' && droppedCrystals.length > 0) {
+                        // 尋找最近的晶石
+                        r.targetCrystal = droppedCrystals[0];
+                        r.state = 'collecting';
+                    }
+                    
+                    if (r.state === 'collecting' && r.targetCrystal) {
+                        // 移動到晶石
+                        let targetPos = r.targetCrystal.mesh.position;
+                        r.mesh.position.lerp(targetPos, 0.05);
+                        r.mesh.position.y = -3.2; // 貼地
+                        
+                        // 執到
+                        if (r.mesh.position.distanceTo(targetPos) < 1) {
+                            crystals += r.targetCrystal.amount;
+                            scene.remove(r.targetCrystal.mesh);
+                            droppedCrystals = droppedCrystals.filter(c => c !== r.targetCrystal);
+                            r.targetCrystal = null;
+                            r.state = 'returning';
+                            updateUI();
+                        }
+                    } else if (r.state === 'returning') {
+                        // 行返原位
+                        r.mesh.position.lerp(new THREE.Vector3(-5, -3.2, 0), 0.05);
+                        if (r.mesh.position.distanceTo(new THREE.Vector3(-5, -3.2, 0)) < 0.5) {
+                            r.state = 'idle';
+                        }
+                    }
+                });
+
+                // 子彈
+                for (let i = turretBullets.length - 1; i >= 0; i--) {
+                    let b = turretBullets[i];
+                    if (!b.target || b.target.hp <= 0) { scene.remove(b.mesh); turretBullets.splice(i, 1); continue; }
+                    b.mesh.position.lerp(b.target.mesh.position, 0.2);
+                    if (b.mesh.position.distanceTo(b.target.mesh.position) < 1) {
+                        b.target.hp -= turretLevel * 50;
+                        scene.remove(b.mesh); turretBullets.splice(i, 1);
+                        if (b.target.hp <= 0) killZombie(b.target);
+                    }
+                }
+
+                if (turretLevel > 0 && zombies.length > 0 && Math.random() < turretLevel * 0.05) {
+                    let target = zombies[0];
+                    turretBullets.push({ mesh: new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshBasicMaterial({color: 0xffff00})), target: target });
+                    scene.add(turretBullets[turretBullets.length-1].mesh);
+                }
+
                 renderer.render(scene, camera);
             } catch(e) {}
         }
 
-        // --- UI 更新 ---
+        // 生成喪屍
+        function spawnZombie(isBoss = false) {
+            let color = isBoss ? 0x9b59b6 : (wave > 10 ? 0x3498db : wave > 5 ? 0xe74c3c : 0x2ecc71);
+            let size = isBoss ? 3 : (wave > 10 ? 2 : wave > 5 ? 1.5 : 1);
+            let hp = isBoss ? 5000 : (wave > 10 ? 500 : wave > 5 ? 250 : 100);
+            let speed = isBoss ? 0.02 : (wave > 5 ? 0.06 : 0.04);
+            let dmg = isBoss ? 100 : (wave > 10 ? 30 : wave > 5 ? 20 : 10);
+
+            const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.8 });
+            let zGroup = new THREE.Group();
+            zGroup.add(new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), mat));
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), mat); head.position.y = 1.2; zGroup.add(head);
+            
+            zGroup.position.set(25, -4, (Math.random() - 0.5) * 5);
+            zGroup.scale.set(size, size, size);
+            scene.add(zGroup);
+            zombies.push({ mesh: zGroup, hp: hp, speed: speed, dmg: dmg, isBoss: isBoss });
+        }
+
+        // 擊殺喪屍 (掉落晶石)
+        function killZombie(z) {
+            scene.remove(z.mesh);
+            zombies = zombies.filter(item => item !== z);
+            
+            // 生成掉落物
+            let dropAmount = z.isBoss ? 50 : 1;
+            const dropMat = new THREE.MeshStandardMaterial({ color: 0xe056fd, emissive: 0xe056fd });
+            let dropMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.3), dropMat);
+            dropMesh.position.copy(z.mesh.position);
+            dropMesh.position.y = -3.5; // 跌落地
+            scene.add(dropMesh);
+            
+            droppedCrystals.push({ mesh: dropMesh, amount: dropAmount });
+
+            if (z.isBoss) broadcast("👑 喪屍王死亡！掉落大量晶石！");
+        }
+
+        // 建造堡壘
+        function buildFortress() {
+            if (crystals < 10) { broadcast("❌ 晶石不足，無法建造！"); return; }
+            crystals -= 10;
+            fortressLevel++;
+            doorHp = Math.min(maxDoorHp + (fortressLevel - 1) * 500, doorHp + 500); // 升級回血
+            maxDoorHp = 1000 + (fortressLevel - 1) * 500;
+            
+            fortressMesh.visible = true; // 顯示 3D 防禦罩
+            fortressMesh.scale.set(fortressLevel * 0.5, 1, 1);
+            
+            broadcast(`🧱 堡壘升級至 Lv.${fortressLevel}！大門獲得加固！`);
+            updateUI();
+        }
+
         function updateUI() {
             document.getElementById('ui-energy').innerText = Math.floor(energy);
             document.getElementById('ui-water').innerText = Math.floor(water);
             document.getElementById('ui-food').innerText = Math.floor(food);
             document.getElementById('ui-crystal').innerText = Math.floor(crystals);
+            document.getElementById('ui-door-hp').innerText = Math.floor(doorHp);
+            document.getElementById('ui-door-bar').style.width = `${(doorHp/maxDoorHp)*100}%`;
+            document.getElementById('ui-fort').innerText = `Lv.${fortressLevel}`;
             
+            let hour = Math.floor(gameTime).toString().padStart(2, '0');
+            let icon = (gameTime >= 6 && gameTime < 18) ? '☀️' : '🌙';
+            document.getElementById('ui-time').innerText = `${icon} Day ${day} - ${hour}:00`;
+
             const popList = document.getElementById('pop-list');
             let html = '<h4>👥 居民狀態</h4>';
             residents.forEach(r => {
-                let jobText = r.job === 'power' ? '⚡' : r.job === 'water' ? '💧' : '💤';
-                html += `<div class="pop-item">
-                    <span>${r.name} ${jobText}</span> 
-                    <span class="${r.awakened?'awakened':''}">${r.awakened?'異能者':'正常'}</span>
+                let statusText = r.state === 'collecting' ? '🏃 執緊晶石' : r.state === 'returning' ? '🏠 返緊屋企' : '💤 待機';
+                html += `<div class="pop-item ${r.awakened?'awakened':''}">
+                    <span>${r.name}</span> 
+                    <span>${statusText}</span>
                 </div>`;
             });
             popList.innerHTML = html;
         }
 
-        // --- 天氣控制 ---
-        function toggleAutoWeather() {
-            autoWeather = !autoWeather;
-            let btn = document.getElementById('btn-auto');
-            btn.innerText = `🔄 自動天氣：${autoWeather ? '開' : '關'}`;
-            btn.classList.toggle('active', autoWeather);
-            broadcast(autoWeather ? "系統：已開啟自動天氣切換。" : "系統：已關閉自動天氣，改為手動控制。");
-        }
-
         function setWeather(type) {
-            weather = type;
             let weatherText = document.getElementById('ui-weather');
-            let radText = document.getElementById('ui-rad');
-            
-            if (type === 'clear') {
-                weatherText.innerText = '晴天';
-                weatherText.style.color = '#aaa';
-                radText.innerText = '5%';
-                radText.style.color = '#aaa';
-                rainParticles.visible = false;
-                broadcast("廣播：地表天氣轉晴，輻射指數回落。");
-            } 
-            else if (type === 'rain') {
-                weatherText.innerText = '落雨';
-                weatherText.style.color = '#00d2d3';
-                radText.innerText = '30%';
-                radText.style.color = '#f1c40f';
-                rainVelocity = 0.4;
-                rainParticles.material.color.setHex(0xaaaaaa);
-                rainParticles.visible = true;
-                broadcast("氣象警告：地表開始落雨，輻射指數輕微上升。");
-            } 
-            else if (type === 'acid_rain') {
-                weatherText.innerText = '☢️ 酸雨';
-                weatherText.style.color = '#2ecc71';
-                radText.innerText = '85%';
-                radText.style.color = '#2ecc71';
-                rainVelocity = 1.2;
-                rainParticles.material.color.setHex(0x2ecc71);
-                rainParticles.visible = true;
-                broadcast("☢️ 緊急警告：酸雨來襲！高輻射隨時令居民覺醒！");
-            }
-            weatherTimer = 20; 
+            if (type === 'clear') { weatherText.innerText = '晴天'; rainParticles.visible = false; }
+            else if (type === 'rain') { weatherText.innerText = '落雨'; rainParticles.material.color.setHex(0xaaaaaa); rainParticles.visible = true; }
+            else if (type === 'acid_rain') { weatherText.innerText = '☢️ 酸雨'; rainParticles.material.color.setHex(0x2ecc71); rainParticles.visible = true; }
         }
 
-        // --- 居民工作分配 ---
-        function allocate(job) {
-            let assigned = false;
-            for(let r of residents) {
-                if(r.job === 'idle') {
-                    r.job = job;
-                    assigned = true;
-                    broadcast(`系統：${r.name} 已被分配至 ${job === 'power' ? '發電站' : '淨水廠'}。`);
-                    break;
-                }
-            }
-            if(!assigned) broadcast("警告：沒有閒置居民！請等待自然覺醒或購買。");
+        function buyTurret() {
+            if (energy < 500) { broadcast("❌ 電力不足！"); return; }
+            energy -= 500; turretLevel++;
+            broadcast(`🔫 自動砲塔升級至 Lv.${turretLevel}！`);
             updateUI();
         }
 
-        // --- 強制覺醒 ---
         function forceAwaken() {
-            if (crystals < 10) {
-                broadcast("❌ 晶石不足，無法強制催化覺醒。");
-                return;
-            }
-            let unawakened = residents.filter(r => !r.awakened);
-            if (unawakened.length === 0) {
-                broadcast("系統：避難所內所有居民均已覺醒。");
-                return;
-            }
-            
+            if (crystals < 10) { broadcast("❌ 晶石不足！"); return; }
+            let un = residents.filter(r => !r.awakened);
+            if (un.length === 0) { broadcast("全部居民已覺醒！"); return; }
             crystals -= 10;
-            let target = unawakened[Math.floor(Math.random() * unawakened.length)];
-            target.awakened = true;
-            broadcast(`💎 晶石催化成功！居民 ${target.name} 強行覺醒異能！`);
+            let t = un[Math.floor(Math.random() * un.length)];
+            t.awakened = true;
+            // 覺醒變色
+            t.mesh.material.color.setHex(0xe056fd);
+            broadcast(`💎 催化成功！${t.name} 覺醒！`);
             updateUI();
         }
 
-        // --- 核心邏輯循環 ---
+        let tickCount = 0;
         function tick() {
-            // 資源消耗
-            energy -= 0.5;
-            water -= 0.5;
-            food -= 0.5;
+            tickCount++;
+            gameTime += 0.5; 
+            if (gameTime >= 24) { gameTime = 0; day++; broadcast(`📅 第 ${day} 天開始。`); }
 
-            // 晶石收集 (酸雨時)
-            if (weather === 'acid_rain' && Math.random() < 0.15) {
-                crystals += 1;
-                if (Math.random() < 0.3) broadcast("系統：過濾器收集到微量高濃度結晶。");
+            energy = Math.max(0, energy - 1);
+            water = Math.max(0, water - 1);
+            food = Math.max(0, food - 1);
+
+            if (tickCount % 5 === 0) {
+                if (day % 3 === 0 && zombies.length === 0) spawnZombie(true);
+                else if (Math.random() < 0.6) spawnZombie(false);
+                wave++;
             }
 
-            // 天氣倒數
-            if (autoWeather) {
-                weatherTimer--;
-                if(weatherTimer <= 0) {
-                    weatherTimer = 20;
-                    let r = Math.random();
-                    if(r < 0.5) setWeather('clear');
-                    else if(r < 0.8) setWeather('rain');
-                    else setWeather('acid_rain');
+            if (doorHp <= 0) {
+                doorHp = 0;
+                if (Math.random() < 0.1 && residents.length > 0) {
+                    let dead = residents.pop();
+                    if(dead.mesh) scene.remove(dead.mesh);
+                    broadcast("💀 大門失守！一名居民死亡！");
                 }
-            }
-
-            // 酸雨自然覺醒機制
-            if (weather === 'acid_rain' && Math.random() < 0.05) {
-                let unawakened = residents.filter(r => !r.awakened);
-                if(unawakened.length > 0) {
-                    let target = unawakened[Math.floor(Math.random() * unawakened.length)];
-                    target.awakened = true;
-                    broadcast(`🧬 異變發生！居民 ${target.name} 吸收輻射，覺醒了異能！`);
-                }
-            }
-
-            // 3D 晶石顯示狀態
-            if (crystalMesh) {
-                crystalMesh.visible = (crystals > 0);
-            }
-
-            // 資源警告
-            if(energy <= 0 || water <= 0 || food <= 0) {
-                if(Math.random() < 0.2) broadcast("⚠️ 資源枯竭警告！請立即分配工作！");
+                energy = Math.max(0, energy - 50);
             }
 
             updateUI();
         }
 
-        // 初始化
         window.onload = () => {
-            init3D();
-            updateUI();
-            setInterval(tick, 1000); // 每秒執行一次邏輯
-            
-            // 首句廣播延遲，等瀏覽器允許語音
-            setTimeout(() => {
-                broadcast("系統啟動完成。歡迎來到末日避難所。");
-            }, 1000);
+            init3D(); updateUI();
+            setInterval(tick, 1000); 
+            setTimeout(() => { broadcast("系統啟動。居民會自動執拾地面晶石。"); }, 1000);
         };
     </script>
 </body>
