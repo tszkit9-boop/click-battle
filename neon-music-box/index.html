@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>霓虹音樂盒 - 自由編曲</title>
+    <title>霓虹音樂盒</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
         body {
@@ -58,13 +58,13 @@
             border-color: #fff; transform: scale(1.15); box-shadow: 0 0 15px currentColor;
         }
 
-        #canvas-container { flex: 1; position: relative; cursor: crosshair; background: #050510; }
+        #canvas-container { flex: 1; position: relative; cursor: crosshair; background: #050510; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; }
         
         #instructions {
             position: absolute; bottom: 15px; width: 100%; text-align: center;
             color: rgba(255,255,255,0.6); font-size: 12px; pointer-events: none;
-            line-height: 1.6; text-shadow: 0 2px 4px #000;
+            line-height: 1.6; text-shadow: 0 2px 4px #000; z-index: 10;
         }
     </style>
 </head>
@@ -77,7 +77,8 @@
         </div>
         <div class="btn-group">
             <button class="magic" onclick="loadFanXing()">✨ 載入《凡星》</button>
-            <button onclick="shareTrack()">🔗 分享歌曲</button>
+            <button class="magic" onclick="importScore()">📝 輸入曲譜</button>
+            <button onclick="shareTrack()">🔗 分享</button>
         </div>
     </div>
     
@@ -138,7 +139,6 @@
             delayNode.connect(audioCtx.destination);
         }
 
-        // 音階設定 (基礎 Do Re Mi Fa Sol La Ti)
         const BASE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
         const NOTE_NAMES = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti'];
         const NOTE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6'];
@@ -146,7 +146,6 @@
         let currentOctave = 0; 
         let currentNoteIndex = 0; 
 
-        // 生成音符按鈕
         NOTE_NAMES.forEach((name, idx) => {
             let btn = document.createElement('button');
             btn.className = 'note-btn' + (idx === 0 ? ' selected' : '');
@@ -204,7 +203,7 @@
             osc1.stop(audioCtx.currentTime + 1.0); osc2.stop(audioCtx.currentTime + 1.0);
         }
 
-        // --- 2. 遊戲物件 ---
+        // --- 2. 遊戲物件與相機 ---
         let plates = [];
         let isPlaying = false;
         let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 8, lastHitPlate: null, trail: [], isDead: false, deadTimer: 0 };
@@ -218,50 +217,87 @@
         const PLATE_H = 16;
         const GRID_SIZE = 40; 
 
-        // --- 🎵 載入《凡星》樂譜 ---
-        function loadFanXing() {
+        // 【新增】相機 Y 軸偏移量
+        let cameraY = 0;
+        let targetCameraY = 0;
+
+        // --- 🎵 核心：簡譜解析器 ---
+        function buildTrackFromString(scoreStr) {
             plates = [];
             if (isPlaying) togglePlay();
+            cameraY = 0; targetCameraY = 0; // 重置相機
             
-            // 《凡星》副歌旋律 (Do=0, Re=1, Mi=2, Fa=3, Sol=4, La=5, Ti=6, 高音Do=7)
-            // 大概這就叫作 凡星在漆黑中拼命發光
-            // 5 5 6 1' 6 | 5 3 3 5 6 5 3 | 2 2 3 5 3 | 2 1 1 2 3 2 1
-            const melody = [
-                { note: 4, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 5, oct: 0, delay: 1 }, { note: 0, oct: 1, delay: 1 }, { note: 5, oct: 0, delay: 2 },
-                { note: 4, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 5, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 2 },
-                { note: 1, oct: 0, delay: 1 }, { note: 1, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 2 },
-                { note: 1, oct: 0, delay: 1 }, { note: 0, oct: 0, delay: 1 }, { note: 0, oct: 0, delay: 1 }, { note: 1, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 1, oct: 0, delay: 1 }, { note: 0, oct: 0, delay: 2 }
-            ];
+            let cleanStr = scoreStr.replace(/[^0-9\+\-\,\s]/g, '');
+            let tokens = cleanStr.split(/\s+/).filter(t => t.length > 0);
+            
+            if (tokens.length === 0) return alert("請輸入有效曲譜！");
 
             let startY = 100;
             let currentY = startY;
-            let side = 1; 
+            let side = 1;
 
-            melody.forEach((m, i) => {
-                // 每隔幾粒音交替方向，形成靚嘅軌道
+            tokens.forEach((token, i) => {
+                if (token.includes(',')) {
+                    currentY += 80; 
+                    token = token.replace(/,/g, '');
+                }
+
+                if (token === '') return;
+
+                let octave = 0;
+                let noteChar = token[0];
+                if (token.includes('+')) octave = 1;
+                if (token.includes('-')) octave = -1;
+
+                let noteIdx = parseInt(noteChar);
+                if (isNaN(noteIdx) || noteIdx < 0 || noteIdx > 6) return; 
+
                 if (i % 3 === 0) side *= -1;
-
                 let xPos = W / 2 + (side * W / 4); 
-                
+
                 plates.push({
                     x: xPos - PLATE_W / 2,
                     y: currentY,
                     w: PLATE_W,
                     h: PLATE_H,
-                    noteIndex: m.note,
-                    octave: m.oct
+                    noteIndex: noteIdx,
+                    octave: octave
                 });
 
-                // 根據 delay 決定垂直距離 (delay 越大，跌得越遠，時間越長)
-                currentY += m.delay * 45; 
+                currentY += 45; 
             });
 
-            // 設定發射器位置
             emitter.x = plates[0].x + PLATE_W / 2;
             ball.x = emitter.x; ball.y = emitter.y + 20;
             
-            // 自動播放
             setTimeout(togglePlay, 100); 
+        }
+
+        // --- 預設歌曲 (完整版《凡星》) ---
+        function loadFanXing() {
+            // 加長版凡星 (包含前奏、主歌、副歌)
+            let score = 
+                // 前奏
+                "4 5 0+ 5 4 2, 3 4 5 4 2 1, " +
+                // 主歌
+                "0 1 2 3 4 2, 0 1 2 3 2 1, 0 1 2 3 4 5, 4 3 2 1 0, " +
+                // 副歌「大概這就叫作 凡星在漆黑中拼命發光」
+                "4 4 5 0+ 5, 4 2 2 4 5 4 2, 1 1 2 4 2, 1 0 0 1 2 1 0, " +
+                // 副歌重複
+                "4 4 5 0+ 5, 4 2 2 4 5 4 2, 1 1 2 4 2, 1 0 0 1 2 1 0";
+            buildTrackFromString(score);
+        }
+
+        function importScore() {
+            let msg = "請輸入簡譜 (數字 0-6 代表 Do-Si)：\n" +
+                      "• 用空格隔開每個音\n" +
+                      "• 加逗號 , 代表延長/停頓\n" +
+                      "• 加 + 代表高音，加 - 代表低音\n\n" +
+                      "例子 (生日快樂)：\n" +
+                      "4 4 5 4 0+ 6, 4 4 5 4 1+ 0+";
+            
+            let input = prompt(msg, "4 4 5 4 0+ 6, 4 4 5 4 1+ 0+");
+            if (input) buildTrackFromString(input);
         }
 
         // --- 3. 互動控制 ---
@@ -283,7 +319,9 @@
             initAudio(); 
             
             const pos = getPos(e);
-            
+            // 將螢幕座標轉換為世界座標
+            let worldY = pos.y + cameraY; 
+
             if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
                 isDraggingEmitter = true;
                 return;
@@ -292,7 +330,7 @@
             let clickedPlate = null;
             for (let i = plates.length - 1; i >= 0; i--) {
                 let p = plates[i];
-                if (pos.x > p.x - 15 && pos.x < p.x + p.w + 15 && pos.y > p.y - 15 && pos.y < p.y + p.h + 15) {
+                if (pos.x > p.x - 15 && pos.x < p.x + p.w + 15 && worldY > p.y - 15 && worldY < p.y + p.h + 15) {
                     clickedPlate = p; break;
                 }
             }
@@ -305,15 +343,15 @@
                 
                 dragPlate = clickedPlate;
                 isDraggingPlate = false;
-                startX = pos.x; startY = pos.y;
+                startX = pos.x; startY = worldY;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
                 let alignX = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
-                let alignY = Math.round(pos.y / GRID_SIZE) * GRID_SIZE;
+                let alignY = Math.round(worldY / GRID_SIZE) * GRID_SIZE;
 
                 let newPlate = {
                     x: Math.max(0, Math.min(W - PLATE_W, alignX - PLATE_W/2)), 
-                    y: Math.max(emitter.y + 60, Math.min(H - PLATE_H, alignY - PLATE_H/2)),
+                    y: Math.max(emitter.y + 60, alignY - PLATE_H/2),
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: currentNoteIndex,
                     octave: currentOctave
@@ -326,7 +364,8 @@
         function handleMove(e) {
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
-            hoverPos = pos;
+            let worldY = pos.y + cameraY;
+            hoverPos = { x: pos.x, y: worldY };
 
             if (isDraggingEmitter) {
                 emitter.x = Math.max(20, Math.min(W - 20, pos.x));
@@ -336,14 +375,14 @@
 
             if (!dragPlate) return;
             let dx = pos.x - startX;
-            let dy = pos.y - startY;
+            let dy = worldY - startY;
             if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
                 isDraggingPlate = true;
                 clearTimeout(pressTimer);
             }
             if (isDraggingPlate) {
                 dragPlate.x = Math.max(0, Math.min(W - dragPlate.w, initialX + dx));
-                dragPlate.y = Math.max(emitter.y + 60, Math.min(H - dragPlate.h, initialY + dy));
+                dragPlate.y = Math.max(emitter.y + 60, initialY + dy);
             }
         }
 
@@ -389,6 +428,7 @@
                 ball.isDead = true;
                 ball.trail = [];
                 ball.x = emitter.x; ball.y = emitter.y + 20;
+                cameraY = 0; targetCameraY = 0;
             } 
         }
         
@@ -416,6 +456,7 @@
                 ball.lastHitPlate = null;
                 ball.trail = [];
                 ball.isDead = false;
+                cameraY = 0; targetCameraY = 0; // 重播時鏡頭返頂部
             } else {
                 playBtn.innerText = "▶ 播放"; playBtn.classList.remove('active');
             }
@@ -442,11 +483,13 @@
             if (!isPlaying) return;
 
             if (ball.isDead) {
-                if (Date.now() - ball.deadTimer > 1000) {
+                if (Date.now() - ball.deadTimer > 1500) {
+                    // 死亡後重生
                     ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
                     ball.lastHitPlate = null; 
                     ball.trail = [];
                     ball.isDead = false;
+                    cameraY = 0; targetCameraY = 0;
                 } else {
                     return; 
                 }
@@ -494,7 +537,6 @@
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            // 根據垂直距離動態調整飛行動作，保持音樂節奏感
                             let t = Math.max(25, Math.min(70, minDy * 0.7));
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
@@ -510,7 +552,12 @@
                 }
             }
 
-            if (ball.y > H + 50) {
+            // 【核心】相機跟隨計算
+            // 確保鏡頭不會高過頂部 (0)，並讓鐵珠保持在畫面偏下方
+            targetCameraY = Math.max(0, ball.y - H * 0.6);
+            cameraY += (targetCameraY - cameraY) * 0.1; // 平滑跟隨
+
+            if (ball.y > H + 50 + cameraY) {
                 ball.isDead = true;
                 ball.deadTimer = Date.now();
                 ball.vx = 0; ball.vy = 0;
@@ -525,11 +572,23 @@
             bgGrd.addColorStop(1, '#050510');
             ctx.fillStyle = bgGrd; 
             ctx.fillRect(0, 0, W, H);
-            
-            ctx.strokeStyle = 'rgba(0, 210, 211, 0.08)'; ctx.lineWidth = 1;
-            for (let i = 0; i < W; i += GRID_SIZE) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
-            for (let i = 0; i < H; i += GRID_SIZE) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
+            ctx.save();
+            // 應用相機偏移
+            ctx.translate(0, -cameraY);
+
+            // 繪製網格 (動態延伸)
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.08)'; ctx.lineWidth = 1;
+            let startY = Math.floor(cameraY / GRID_SIZE) * GRID_SIZE;
+            let endY = cameraY + H + GRID_SIZE;
+            for (let i = 0; i < W; i += GRID_SIZE) { 
+                ctx.beginPath(); ctx.moveTo(i, startY); ctx.lineTo(i, endY); ctx.stroke(); 
+            }
+            for (let i = startY; i < endY; i += GRID_SIZE) { 
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); 
+            }
+
+            // 發射器 (只在頂部可見)
             ctx.fillStyle = '#111';
             ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
@@ -537,7 +596,10 @@
             ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             ctx.shadowBlur = 0;
             
+            // 繪製鋼片 (只畫相機可見範圍，優化效能)
             for (let p of plates) {
+                if (p.y + p.h < cameraY - 50 || p.y > cameraY + H + 50) continue; // 剔除畫面外
+
                 let color = NOTE_COLORS[p.noteIndex];
                 if (p.octave === -1) color = '#818cf8'; 
                 if (p.octave === 1) color = '#f472b6'; 
@@ -566,6 +628,7 @@
                 ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 13);
             }
 
+            // 預覽 (世界座標)
             if(hoverPos && !dragPlate && !isDraggingEmitter && hoverPos.y > emitter.y + 60) {
                 let alignX = Math.round(hoverPos.x / GRID_SIZE) * GRID_SIZE;
                 let alignY = Math.round(hoverPos.y / GRID_SIZE) * GRID_SIZE;
@@ -579,12 +642,14 @@
                 ctx.globalAlpha = 1;
             }
 
+            // 火花
             for(let s of sparks) {
                 ctx.globalAlpha = s.life; ctx.fillStyle = s.color;
                 ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
+            // 鐵珠尾跡
             for(let i=0; i<ball.trail.length; i++) {
                 let t = ball.trail[i];
                 ctx.globalAlpha = (i / ball.trail.length) * 0.5;
@@ -593,13 +658,16 @@
             }
             ctx.globalAlpha = 1;
 
-            if (!ball.isDead && ball.y < H) {
+            // 鐵珠
+            if (!ball.isDead && ball.y < cameraY + H + 50) {
                 ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
                 
                 ctx.beginPath(); ctx.arc(ball.x - 2, ball.y - 2, ball.radius * 0.4, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
             }
+
+            ctx.restore(); // 恢復相機狀態
         }
 
         // --- 7. 主循環 ---
