@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>☢️ 末日避難所</title>
+<title>☢️ 末日避難所：自動追蹤版</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    body { background: #cbd5e1; color: #1e293b; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+    body { background: #0f172a; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
     
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
@@ -15,48 +15,48 @@
     .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
     .ui-layer > * { pointer-events: auto; }
 
-    .hud-top { display: flex; justify-content: center; align-items: center; padding: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; gap: 10px; flex-wrap: wrap; }
-    .stat-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 900; background: #ffffff; color: #334155; padding: 6px 12px; border-radius: 6px; border: 2px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .stat-box.energy { color: #d97706; border-color: #fcd34d; } .stat-box.crystal { color: #9333ea; border-color: #d8b4fe; }
-    .stat-box.ammo { color: #dc2626; border-color: #fca5a5; } .stat-box.hp { color: #ef4444; border-color: #fca5a5; }
-    .stat-box.door { color: #2563eb; border-color: #93c5fd; }
+    .hud-top { display: flex; justify-content: center; align-items: center; padding: 10px; background: linear-gradient(180deg, rgba(15,23,42,0.95) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; gap: 10px; flex-wrap: wrap; }
+    .stat-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 900; background: #1e293b; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; border: 2px solid #334155; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+    .stat-box.energy { color: #fbbf24; border-color: #f59e0b; } .stat-box.crystal { color: #c084fc; border-color: #9333ea; }
+    .stat-box.ammo { color: #f87171; border-color: #ef4444; } .stat-box.hp { color: #f87171; border-color: #ef4444; }
+    .stat-box.door { color: #60a5fa; border-color: #3b82f6; }
     
-    .back-btn { padding: 6px 12px; background: #ffffff; color: #f97316; border: 2px solid #f97316; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .back-btn { padding: 6px 12px; background: #1e293b; color: #f97316; border: 2px solid #f97316; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; transition: 0.2s; }
 
-    .crosshair { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.8; }
+    .crosshair { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.6; }
     .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #ef4444; box-shadow: 0 0 5px #ef4444; }
     .crosshair::before { top: 14px; left: 0; width: 30px; height: 2px; }
     .crosshair::after { left: 14px; top: 0; width: 2px; height: 30px; }
 
-    .joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 120px; height: 120px; background: rgba(255,255,255,0.5); border: 2px solid #94a3b8; border-radius: 50%; z-index: 20; display: flex; justify-content: center; align-items: center; }
-    .joystick-stick { width: 50px; height: 50px; background: #3b82f6; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+    .joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid #64748b; border-radius: 50%; z-index: 20; display: flex; justify-content: center; align-items: center; }
+    .joystick-stick { width: 50px; height: 50px; background: #3b82f6; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
     .action-zone { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 20; align-items: flex-end; }
-    .action-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; font-weight: 900; font-size: 14px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; }
+    .action-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; font-weight: 900; font-size: 14px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
     .action-btn:active { transform: scale(0.9); }
     
     .btn-repair { background: #10b981; color: #fff; display: none; width: 80px; height: 80px; }
     .btn-melee { background: #f59e0b; color: #fff; }
     .btn-shoot { background: #ef4444; color: #fff; width: 80px; height: 80px; font-size: 18px; }
 
-    .toggle-switch { position: absolute; top: 70px; right: 15px; background: #fff; border: 2px solid #cbd5e1; border-radius: 20px; padding: 5px 10px; font-size: 12px; font-weight: bold; cursor: pointer; z-index: 20; display: flex; align-items: center; gap: 5px; }
-    .toggle-switch.active { border-color: #9333ea; color: #9333ea; background: #faf5ff; }
+    .toggle-switch { position: absolute; top: 70px; right: 15px; background: #1e293b; color: #cbd5e1; border: 2px solid #475569; border-radius: 20px; padding: 5px 10px; font-size: 12px; font-weight: bold; cursor: pointer; z-index: 20; display: flex; align-items: center; gap: 5px; }
+    .toggle-switch.active { border-color: #9333ea; color: #c084fc; background: #2e1065; }
 
-    .shop-toggle { position: absolute; top: 70px; left: 15px; background: #fff; border: 2px solid #d97706; color: #d97706; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 20; }
+    .shop-toggle { position: absolute; top: 70px; left: 15px; background: #1e293b; border: 2px solid #d97706; color: #fbbf24; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 20; }
 
-    .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .modal.active { display: flex; }
-    .modal-box { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .modal-box h2 { color: #1e293b; font-family: 'Orbitron', sans-serif; margin-bottom: 15px; text-align: center; }
+    .modal-box { background: #1e293b; border: 1px solid #475569; border-radius: 12px; padding: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .modal-box h2 { color: #f8fafc; font-family: 'Orbitron', sans-serif; margin-bottom: 15px; text-align: center; }
     
-    .shop-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-    .shop-info b { display: block; font-size: 14px; color: #1e293b; }
-    .shop-info small { font-size: 11px; color: #64748b; }
+    .shop-item { display: flex; justify-content: space-between; align-items: center; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .shop-info b { display: block; font-size: 14px; color: #f8fafc; }
+    .shop-info small { font-size: 11px; color: #94a3b8; }
     .shop-buy { padding: 8px 15px; background: #3b82f6; color: #fff; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-    .shop-buy:disabled { background: #94a3b8; cursor: not-allowed; }
+    .shop-buy:disabled { background: #475569; cursor: not-allowed; }
     .close-modal { width: 100%; padding: 10px; background: #475569; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
-    .broadcast-box { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(255, 255, 255, 0.95); border: 2px solid #f59e0b; color: #d97706; padding: 10px; font-size: 13px; text-align: center; border-radius: 6px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; }
+    .broadcast-box { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(15, 23, 42, 0.95); border: 2px solid #f59e0b; color: #fbbf24; padding: 10px; font-size: 13px; text-align: center; border-radius: 6px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; }
     .broadcast-box.show { opacity: 1; }
 </style>
 </head>
@@ -74,7 +74,7 @@
             <div class="stat-box energy">⚡ <span id="ui-energy">1000</span></div>
             <div class="stat-box crystal">💎 <span id="ui-crystal">0</span></div>
         </div>
-        <div class="broadcast-box" id="broadcast-box">系統廣播：士兵，請用左下搖桿移動，右下瞄準射擊！</div>
+        <div class="broadcast-box" id="broadcast-box">系統廣播：已開啟自動追蹤！瘋狂撳「射擊」就得！</div>
     </div>
 
     <div class="toggle-switch active" id="auto-pickup-btn" onclick="toggleAutoPickup()">🧲 自動吸納：開</div>
@@ -118,13 +118,11 @@
         let energy = 1000, crystals = 0;
         let hasShotgun = false, autoPickup = true, wave = 1, isGameOver = false;
 
-        let scene, camera, renderer, raycaster;
+        let scene, camera, renderer;
         let player, gunMuzzle, doorMesh;
         let zombies = [], pickups = [];
         
         let moveVector = new THREE.Vector3(0, 0, 0);
-        let cameraAngle = 0; 
-        let cameraPitch = 0.4; // 稍微俯視
         let joystickActive = false;
         let joystickStart = {x: 0, y: 0};
 
@@ -139,7 +137,6 @@
 
         function createPlayer() {
             let group = new THREE.Group();
-            // 士兵外觀
             let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5 }); 
             let armorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.6 });
             let whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
@@ -153,22 +150,19 @@
             let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 1, 6), suitMat); legL.position.set(-0.25, 0, 0); group.add(legL);
             let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 1, 6), suitMat); legR.position.set(0.25, 0, 0); group.add(legR);
             
-            // 槍械 (移向右邊，配合越肩視角)
             let gunGroup = new THREE.Group();
             let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 1.4), whiteMat);
             let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1), armorMat); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -1);
             gunGroup.add(gunBody); gunGroup.add(barrel);
-            gunGroup.position.set(0.6, 1.2, -0.5); // 舉高少少，向右少少
+            gunGroup.position.set(0.5, 1.2, -0.6); 
             group.add(gunGroup);
 
-            // 槍口發射點
             gunMuzzle = new THREE.Object3D(); 
-            gunMuzzle.position.set(0, 0, -1.5); // 喺槍管最前端
+            gunMuzzle.position.set(0, 0, -1.5); 
             gunGroup.add(gunMuzzle);
             
-            // 手臂連埋去槍度
             let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1, 6), suitMat);
-            armR.position.set(0.5, 1.1, 0.2); armR.rotation.x = -Math.PI / 3; group.add(armR);
+            armR.position.set(0.4, 1.1, 0.1); armR.rotation.x = -Math.PI / 3; group.add(armR);
 
             return group;
         }
@@ -203,45 +197,40 @@
         function init3D() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0f172a); // 深藍灰背景，增加對比
-            scene.fog = new THREE.Fog(0x0f172a, 20, 50);
+            scene.background = new THREE.Color(0x0f172a); 
             
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 固定視角：永遠由後上方望住
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
-            raycaster = new THREE.Raycaster();
-
             scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
             const dirLight = new THREE.DirectionalLight(0xffffff, 1.0); dirLight.position.set(10, 20, 10); scene.add(dirLight);
 
-            // 地板 (灰色)
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 }));
+            // 地板
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 60), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 }));
             floor.rotation.x = -Math.PI / 2; floor.position.y = -1; scene.add(floor);
-            const grid = new THREE.GridHelper(40, 20, 0x1e293b, 0x334155); grid.position.y = -0.95; scene.add(grid);
+            const grid = new THREE.GridHelper(60, 30, 0x334155, 0x1e293b); grid.position.y = -0.95; scene.add(grid);
 
-            // 兩側牆身 (深灰)
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-            const wall1 = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 1), wallMat); wall1.position.set(0, 4, -15); scene.add(wall1);
-            const wall2 = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 1), wallMat); wall2.position.set(0, 4, 15); scene.add(wall2);
-            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 40), wallMat); wall3.position.set(-15, 4, 0); scene.add(wall3);
-            const wall4 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 40), wallMat); wall4.position.set(15, 4, 0); scene.add(wall4);
+            // 兩側牆身
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 60), wallMat); wall3.position.set(-15, 4, 0); scene.add(wall3);
+            const wall4 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 60), wallMat); wall4.position.set(15, 4, 0); scene.add(wall4);
 
-            // 大門 (拉近到 Z = -8)
-            doorMesh = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 1), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9 }));
-            doorMesh.position.set(0, 2, -8); scene.add(doorMesh);
-            // 大門黃黑警告條
+            // 大門 (放喺正前方)
+            doorMesh = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 1), new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9 }));
+            doorMesh.position.set(0, 2, -20); scene.add(doorMesh);
             for(let i=0; i<3; i++) {
-                let stripe = new THREE.Mesh(new THREE.BoxGeometry(6, 0.4, 1.1), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
-                stripe.position.set(0, 0.5 + i*1.5, -8); scene.add(stripe);
+                let stripe = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, 1.1), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+                stripe.position.set(0, 0.5 + i*1.5, -20); scene.add(stripe);
             }
 
-            // 玩家 (Z = 2)
+            // 玩家
             player = createPlayer();
-            player.position.set(0, 0, 2); 
+            player.position.set(0, 0, 0); 
             scene.add(player);
 
             window.addEventListener('resize', onWindowResize);
@@ -260,8 +249,6 @@
         function setupControls() {
             const zone = document.getElementById('joystick-zone');
             const stick = document.getElementById('joystick-stick');
-            let isDragging = false;
-            let lastX = 0, lastY = 0;
 
             zone.addEventListener('touchstart', (e) => {
                 joystickActive = true;
@@ -283,33 +270,6 @@
                 stick.style.transform = `translate(0px, 0px)`;
             });
 
-            const container = document.getElementById('canvas-container');
-            container.addEventListener('touchstart', (e) => {
-                if(e.target.closest('.ui-layer') || e.target.closest('.joystick-zone') || e.target.closest('.action-zone') || e.target.closest('.toggle-switch') || e.target.closest('.shop-toggle')) return;
-                isDragging = true;
-                lastX = e.touches[0].clientX;
-                lastY = e.touches[0].clientY;
-            });
-            container.addEventListener('touchmove', (e) => {
-                if(!isDragging) return;
-                let dx = e.touches[0].clientX - lastX;
-                let dy = e.touches[0].clientY - lastY;
-                cameraAngle -= dx * 0.005;
-                cameraPitch -= dy * 0.005;
-                cameraPitch = Math.max(0.1, Math.min(1.0, cameraPitch)); 
-                lastX = e.touches[0].clientX;
-                lastY = e.touches[0].clientY;
-            });
-            container.addEventListener('touchend', () => { isDragging = false; });
-
-            // 電腦支援
-            container.addEventListener('mousemove', (e) => {
-                if(e.buttons === 1) { 
-                    cameraAngle -= e.movementX * 0.005;
-                    cameraPitch -= e.movementY * 0.005;
-                    cameraPitch = Math.max(0.1, Math.min(1.0, cameraPitch));
-                }
-            });
             document.addEventListener('keydown', (e) => {
                 if(e.key === 'w') moveVector.z = -1;
                 if(e.key === 's') moveVector.z = 1;
@@ -320,42 +280,48 @@
             document.addEventListener('keyup', () => { moveVector.set(0,0,0); });
         }
 
+        // 🎯 自動追蹤射擊系統
         function shoot() {
             if (isGameOver || ammo <= 0) return;
             ammo--;
             
-            // 獲取槍口世界座標
             let startPos = new THREE.Vector3(); 
             gunMuzzle.getWorldPosition(startPos);
 
-            // 屏幕中心射線 (準星)
-            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-
-            let allZ = zombies.map(z => z.mesh);
-            let intersects = raycaster.intersectObjects(allZ, true);
-            
             let endPos = new THREE.Vector3();
-            if (intersects.length > 0) {
-                endPos = intersects[0].point;
-                let hitGroup = intersects[0].object;
-                while (hitGroup.parent && !hitGroup.userData.legL) { hitGroup = hitGroup.parent; }
-                let targetZ = zombies.find(z => z.mesh === hitGroup);
-                if (targetZ) {
-                    let dmg = hasShotgun ? 150 : 50;
-                    targetZ.hp -= dmg;
-                    createHitEffect(endPos, 0xef4444);
-                    if (targetZ.hp <= 0) killZombie(targetZ);
-                }
+            let targetZ = null;
+            let minDist = 999;
+
+            // 1. 自動搵最近嘅喪屍
+            zombies.forEach(z => {
+                let d = player.position.distanceTo(z.mesh.position);
+                if(d < minDist) { minDist = d; targetZ = z; }
+            });
+
+            // 2. 如果有目標，射向佢；冇目標就射向正前方
+            if (targetZ) {
+                endPos.copy(targetZ.mesh.position);
+                endPos.y += 1.5; // 瞄準身體
+
+                let dmg = hasShotgun ? 150 : 50;
+                targetZ.hp -= dmg;
+                createHitEffect(endPos, 0xef4444);
+                if (targetZ.hp <= 0) killZombie(targetZ);
+
+                // 玩家自動轉向目標
+                player.lookAt(targetZ.mesh.position.x, player.position.y, targetZ.mesh.position.z);
             } else {
-                // 如果冇打中，射向準星指向嘅遠方
-                raycaster.ray.at(50, endPos);
+                let forward = new THREE.Vector3(0, 1.5, -20);
+                forward.add(player.position);
+                endPos.copy(forward);
             }
 
-            // 雷射從槍口 (startPos) 射向目標點 (endPos)
+            // 3. 畫出雷射
             let flash = new THREE.PointLight(0x2563eb, 2, 5); flash.position.copy(startPos); scene.add(flash); setTimeout(() => scene.remove(flash), 50);
-            let beamMat = new THREE.LineBasicMaterial({ color: hasShotgun ? 0xf59e0b : 0x00ffff });
+            let beamMat = new THREE.LineBasicMaterial({ color: hasShotgun ? 0xf59e0b : 0x00ffff, linewidth: 2 });
             let beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([startPos, endPos]), beamMat);
             scene.add(beam); setTimeout(() => scene.remove(beam), 50);
+            
             updateUI();
         }
 
@@ -391,7 +357,7 @@
         function startWave() {
             if (isGameOver) return;
             let isHorde = (wave % 5 === 0);
-            let count = isHorde ? 20 : 3 + wave * 2;
+            let count = isHorde ? 15 : 3 + wave * 2;
             if (isHorde) broadcast("🚨 警告：大型屍潮來襲！");
             else broadcast(`🌊 第 ${wave} 波喪屍來襲！`);
 
@@ -400,12 +366,12 @@
                     if(isGameOver) return;
                     let isElite = Math.random() < 0.2 || isHorde; 
                     let zGroup = createZombieModel(isElite);
-                    let spawnX = (Math.random() - 0.5) * 6; 
-                    // 由大門 (Z=-8) 衝出嚟
-                    zGroup.position.set(spawnX, 0, -7); 
+                    let spawnX = (Math.random() - 0.5) * 10; 
+                    // 全部喺正前方大門位 (Z = -20) 衝出嚟
+                    zGroup.position.set(spawnX, 0, -20); 
                     scene.add(zGroup);
                     zombies.push({ mesh: zGroup, hp: isElite ? 200 : 100, speed: isElite ? 0.06 : 0.04 });
-                }, i * (isHorde ? 300 : 1000));
+                }, i * (isHorde ? 400 : 1000));
             }
             wave++;
         }
@@ -428,45 +394,35 @@
             requestAnimationFrame(animate);
             if (isGameOver) return;
 
-            // 玩家移動
-            let forward = new THREE.Vector3(-Math.sin(cameraAngle), 0, -Math.cos(cameraAngle));
-            let right = new THREE.Vector3(Math.cos(cameraAngle), 0, -Math.sin(cameraAngle));
-            let moveDir = forward.multiplyScalar(-moveVector.z).add(right.multiplyScalar(moveVector.x));
+            // 玩家移動 (鎖定 X 軸，只可以左右行，或者前後行)
+            let moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.z);
             if (moveDir.length() > 1) moveDir.normalize();
             player.position.add(moveDir.multiplyScalar(0.2)); 
-            player.rotation.y = cameraAngle + Math.PI; 
-
-            // 【越肩視角】相機偏向右邊，唔會遮擋準星
-            let camDist = 7; 
-            let camOffsetX = 1.5; // 向右偏移
-            let camX = player.position.x + Math.sin(cameraAngle) * camDist * Math.cos(cameraPitch) + Math.cos(cameraAngle) * camOffsetX;
-            let camZ = player.position.z + Math.cos(cameraAngle) * camDist * Math.cos(cameraPitch) - Math.sin(cameraAngle) * camOffsetX;
-            let camY = player.position.y + 3 + Math.sin(cameraPitch) * camDist;
             
-            camera.position.set(camX, camY, camZ);
-            // 鏡頭望向玩家前方少少嘅位置
-            camera.lookAt(player.position.x + Math.sin(cameraAngle)*5, player.position.y + 1.5, player.position.z + Math.cos(cameraAngle)*5);
+            // 限制玩家範圍
+            player.position.x = Math.max(-10, Math.min(10, player.position.x));
+            player.position.z = Math.max(-10, Math.min(5, player.position.z));
+
+            // 玩家永遠面向前面 (如果冇射擊目標)
+            if(zombies.length === 0) player.rotation.y = 0;
+
+            // 【死死鎖定鏡頭】永遠喺玩家正後上方
+            camera.position.set(player.position.x, player.position.y + 8, player.position.z + 15);
+            camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z - 10);
 
             // 喪屍邏輯
             zombies.forEach(z => {
-                let targetPos = (doorHP > 0 && z.mesh.position.z < -5) ? doorMesh.position : player.position;
-                if (doorHP <= 0) targetPos = player.position;
-
+                let targetPos = player.position;
                 let dir = targetPos.clone().sub(z.mesh.position);
                 dir.y = 0; dir.normalize();
                 z.mesh.position.add(dir.multiplyScalar(z.speed));
                 z.mesh.rotation.y = Math.atan2(dir.x, dir.z);
 
+                // 咬人判定
                 if (z.mesh.position.distanceTo(targetPos) < 2.5) {
-                    if (doorHP > 0 && targetPos === doorMesh.position) {
-                        doorHP -= 10; 
-                        if (Math.random() < 0.1) createHitEffect(doorMesh.position, 0xff0000);
-                        if (doorHP <= 0) { doorHP = 0; broadcast("⚠️ 大門被攻破！喪屍衝入嚟啦！"); }
-                    } else if (targetPos === player.position) {
-                        playerHP -= 5; 
-                        if (playerHP <= 0) gameOver();
-                        if (Math.random() < 0.1) createHitEffect(player.position, 0xff0000);
-                    }
+                    playerHP -= 5; 
+                    if (playerHP <= 0) gameOver();
+                    if (Math.random() < 0.1) createHitEffect(player.position, 0xff0000);
                 }
             });
 
@@ -484,8 +440,8 @@
                 }
             }
 
-            // 修理判定
-            if (player.position.distanceTo(doorMesh.position) < 6 && doorHP < 1000) {
+            // 修理判定 (行近大門先有得修)
+            if (player.position.z < -10 && doorHP < 1000) {
                 btnRepair.style.display = 'flex';
             } else {
                 btnRepair.style.display = 'none';
