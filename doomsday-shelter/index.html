@@ -3,24 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>☢️ 末日避難所：第三人稱防線</title>
+<title>☢️ 末日避難所</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    /* 背景改為淺灰色 */
     body { background: #e2e8f0; color: #333; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; cursor: crosshair; }
     
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
     
-    /* 移除原本嘅暗角特效，改為好淡嘅白邊 */
     .overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle at center, transparent 60%, rgba(255,255,255,0.4) 100%); }
     .scanlines { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 1px, transparent 1px, transparent 2px); }
 
     .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
     .ui-layer > * { pointer-events: auto; }
 
-    /* 頂部控制欄：全部置中 */
     .hud-top { display: flex; justify-content: center; align-items: center; padding: 15px; background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 10px; }
     
     .back-btn { padding: 8px 16px; background: rgba(255,255,255,0.9); color: #ff8800; border: 2px solid #ff8800; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -30,12 +27,10 @@
     .res-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.9); color: #333; padding: 6px 12px; border-radius: 4px; border: 2px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .res-box.energy { color: #d97706; border-color: #d97706; } .res-box.crystal { color: #9333ea; border-color: #9333ea; }
     
-    /* 大門血條：顏色加深 */
     .door-hp-box { position: absolute; top: 75px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 900; color: #dc2626; text-align: center; width: 80%; max-width: 400px; font-family: 'Orbitron', sans-serif; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
     .hp-bar-bg { width: 100%; height: 10px; background: #cbd5e1; border-radius: 5px; margin-top: 5px; overflow: hidden; border: 2px solid #dc2626; box-shadow: 0 2px 10px rgba(220,38,38,0.3); }
     .hp-bar-fill { height: 100%; background: linear-gradient(90deg, #dc2626, #f87171); width: 100%; transition: width 0.3s; }
 
-    /* 準星：改為深色 */
     .crosshair { position: absolute; width: 34px; height: 34px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.8; display: none; }
     .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #2563eb; box-shadow: 0 0 5px #2563eb; }
     .crosshair::before { top: 16px; left: 0; width: 34px; height: 2px; }
@@ -69,7 +64,6 @@
 
     <div class="ui-layer">
         <div class="hud-top">
-            <!-- 返回大廳同資源全部放喺中間 -->
             <a href="../" class="back-btn">⬅ 返回大廳</a>
             <div class="res-group">
                 <div class="res-box energy">⚡ <span id="ui-energy">1000</span></div>
@@ -88,7 +82,8 @@
         <div class="console">
             <div class="actions">
                 <button class="btn weapon" onclick="upgradeWeapon()">🔫 升級步槍 (<span id="ui-weapon-cost">200</span>電)</button>
-                <button class="btn power" id="btn-power" onclick="usePower()" disabled>🔥 釋放異能 (充能中)</button>
+                <!-- 將原本嘅異能掣改為手動解鎖 -->
+                <button class="btn power" id="btn-power" onclick="unlockPower()">🔮 解鎖異能 (10晶石)</button>
                 <button class="btn ultimate" id="btn-ultimate" onclick="useUltimate()" disabled>☄️ 死光 (0%)</button>
             </div>
         </div>
@@ -98,6 +93,7 @@
     <script>
         window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
+        // --- 遊戲數據 (包含存檔功能) ---
         let energy = 1000, crystals = 0, kills = 0;
         let doorHp = 1000, maxDoorHp = 1000;
         let weaponLevel = 1, weaponCost = 200;
@@ -105,6 +101,31 @@
         let powerCharge = 0, ultimateCharge = 0;
         let wave = 1;
         let shakeTime = 0;
+
+        // 讀取存檔
+        function loadSave() {
+            try {
+                let saved = JSON.parse(localStorage.getItem('doomsday_survivor_save'));
+                if (saved) {
+                    energy = saved.energy || 1000;
+                    crystals = saved.crystals || 0;
+                    kills = saved.kills || 0;
+                    weaponLevel = saved.weaponLevel || 1;
+                    weaponCost = saved.weaponCost || 200;
+                    hasPower = saved.hasPower || false;
+                    powerType = saved.powerType || null;
+                }
+            } catch(e) {}
+        }
+
+        // 儲存進度
+        function saveGame() {
+            try {
+                localStorage.setItem('doomsday_survivor_save', JSON.stringify({
+                    energy, crystals, kills, weaponLevel, weaponCost, hasPower, powerType
+                }));
+            } catch(e) {}
+        }
 
         // 3D 變數
         let scene, camera, renderer, raycaster, mouse;
@@ -125,37 +146,28 @@
         // --- 建立特種士兵模型 ---
         function createPlayer() {
             let group = new THREE.Group();
-            let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5, metalness: 0.3 }); // 藍色戰術服
-            let armorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.6 }); // 深色背心
-            let whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc }); // 白色塗裝
-            let visorMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0ea5e9, emissiveIntensity: 0.6 }); // 發光護目鏡
+            let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5, metalness: 0.3 });
+            let armorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.6 });
+            let whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
+            let visorMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0ea5e9, emissiveIntensity: 0.6 });
 
             let torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), suitMat); 
             torso.position.y = 0.7; group.add(torso);
-            
             let vest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.6), armorMat); 
             vest.position.y = 0.8; group.add(vest);
-            
             let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), whiteMat); 
             head.position.y = 1.6; head.scale.set(1, 1.2, 1.1); group.add(head);
-            
             let visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), visorMat); 
             visor.position.set(0, 1.65, 0.2); group.add(visor);
 
-            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); 
-            legL.position.set(-0.2, 0, 0); group.add(legL);
-            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); 
-            legR.position.set(0.2, 0, 0); group.add(legR);
-            
-            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.8, 6), suitMat); 
-            armR.position.set(0.4, 1, 0.3); armR.rotation.x = -Math.PI / 3; group.add(armR);
+            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); legL.position.set(-0.2, 0, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); legR.position.set(0.2, 0, 0); group.add(legR);
+            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.8, 6), suitMat); armR.position.set(0.4, 1, 0.3); armR.rotation.x = -Math.PI / 3; group.add(armR);
             
             let gun = new THREE.Group();
             let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.2), whiteMat);
-            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8), armorMat); 
-            barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
-            let scope = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 6), visorMat); 
-            scope.rotation.x = Math.PI / 2; scope.position.set(0, 0.15, -0.2);
+            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8), armorMat); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
+            let scope = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 6), visorMat); scope.rotation.x = Math.PI / 2; scope.position.set(0, 0.15, -0.2);
             gun.add(gunBody); gun.add(barrel); gun.add(scope);
             gun.position.set(0.4, 0.8, 0.8); group.add(gun);
 
@@ -166,111 +178,75 @@
         // --- 建立恐怖喪屍模型 ---
         function createZombieModel(isBoss) {
             let group = new THREE.Group();
-            
-            let skinColor = isBoss ? 0x7e22ce : (wave > 5 ? 0xb91c1c : 0x15803d); // 紫 / 血紅 / 喪屍綠
+            let skinColor = isBoss ? 0x7e22ce : (wave > 5 ? 0xb91c1c : 0x15803d); 
             let skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.8 });
-            let shirtMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 }); // 破爛灰藍衣
+            let shirtMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 });
             let bloodMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.7 });
-            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 }); // 紅眼
+            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
 
             let body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.2, 8), shirtMat);
-            body.position.y = 1.1; body.rotation.x = 0.3; 
-            group.add(body);
+            body.position.y = 1.1; body.rotation.x = 0.3; group.add(body);
             
             for(let i=0; i<3; i++) {
                 let rib = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 4), bloodMat);
-                rib.rotation.z = Math.PI / 2; rib.position.set(0, 0.9 + i*0.2, 0.25); 
-                body.add(rib);
+                rib.rotation.z = Math.PI / 2; rib.position.set(0, 0.9 + i*0.2, 0.25); body.add(rib);
             }
 
             let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), skinMat);
-            head.position.set(0.1, 1.8, 0.1); head.rotation.z = 0.4; 
-            group.add(head);
+            head.position.set(0.1, 1.8, 0.1); head.rotation.z = 0.4; group.add(head);
 
-            let jaw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.3), bloodMat);
-            jaw.position.set(0, -0.15, 0.15); head.add(jaw);
-
+            let jaw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.3), bloodMat); jaw.position.set(0, -0.15, 0.15); head.add(jaw);
             let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), eyeMat); eyeL.position.set(-0.1, 0.1, 0.25); head.add(eyeL);
             let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), eyeMat); eyeR.position.set(0.1, 0.1, 0.25); head.add(eyeR);
 
-            let armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.9, 6), skinMat);
-            armL.position.set(-0.4, 1.1, 0.4); armL.rotation.x = -Math.PI / 2 + 0.2;
-            group.add(armL);
-            
-            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), skinMat);
-            armR.position.set(0.4, 0.9, 0); armR.rotation.x = 0.5; armR.rotation.z = -0.2;
-            group.add(armR);
-
-            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.9, 6), skinMat);
-            legL.position.set(-0.15, 0.1, 0); group.add(legL);
-            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.6, 6), skinMat);
-            legR.position.set(0.15, -0.05, 0); group.add(legR);
+            let armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.9, 6), skinMat); armL.position.set(-0.4, 1.1, 0.4); armL.rotation.x = -Math.PI / 2 + 0.2; group.add(armL);
+            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), skinMat); armR.position.set(0.4, 0.9, 0); armR.rotation.x = 0.5; armR.rotation.z = -0.2; group.add(armR);
+            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.9, 6), skinMat); legL.position.set(-0.15, 0.1, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.6, 6), skinMat); legR.position.set(0.15, -0.05, 0); group.add(legR);
 
             if (isBoss) {
-                body.scale.set(1.2, 1.2, 1.2);
-                head.scale.set(1.3, 1.3, 1.3);
+                body.scale.set(1.2, 1.2, 1.2); head.scale.set(1.3, 1.3, 1.3);
                 let spikeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309 });
                 for(let i=0; i<5; i++) {
                     let spike = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 4), spikeMat);
                     let angle = (i / 5) * Math.PI * 2;
-                    spike.position.set(Math.cos(angle)*0.3, 0.3, Math.sin(angle)*0.3);
-                    spike.rotation.x = angle;
-                    head.add(spike);
+                    spike.position.set(Math.cos(angle)*0.3, 0.3, Math.sin(angle)*0.3); spike.rotation.x = angle; head.add(spike);
                 }
             }
-
-            group.userData.armL = armL;
-            group.userData.legL = legL;
-            group.userData.legR = legR;
-
+            group.userData.armL = armL; group.userData.legL = legL; group.userData.legR = legR;
             return group;
         }
 
-        // --- 3D 初始化 (白底風格) ---
         function init3D() {
             try {
                 const container = document.getElementById('canvas-container');
                 scene = new THREE.Scene();
-                // 背景改為白色
                 scene.background = new THREE.Color(0xf8fafc);
-                // 霧氣改為白色
                 scene.fog = new THREE.Fog(0xf8fafc, 20, 60);
                 
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 4, 12); // 稍微拉近，等大門大隻啲
-                camera.lookAt(0, 1, -10);
+                camera.position.set(0, 4, 12); camera.lookAt(0, 1, -10);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.0; 
+                renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0; 
                 container.appendChild(renderer.domElement);
 
-                raycaster = new THREE.Raycaster();
-                mouse = new THREE.Vector2();
+                raycaster = new THREE.Raycaster(); mouse = new THREE.Vector2();
                 renderer.domElement.addEventListener('pointerdown', onShoot);
                 renderer.domElement.addEventListener('pointermove', onAim);
 
-                // 燈光 (超光白底)
                 scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); 
-                dirLight.position.set(0, 15, 0); scene.add(dirLight);
-                
-                // 盡頭大門紅光 (保留少少點綴)
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); dirLight.position.set(0, 15, 0); scene.add(dirLight);
                 const doorLight = new THREE.PointLight(0xff0000, 2, 30); doorLight.position.set(0, 3, -19); scene.add(doorLight);
 
-                // 走廊地板 (淺色反光金屬)
                 const floorGeo = new THREE.PlaneGeometry(24, 50);
                 const floorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, metalness: 0.1 }); 
-                const floor = new THREE.Mesh(floorGeo, floorMat);
-                floor.rotation.x = -Math.PI / 2; floor.position.set(0, -1, -15); scene.add(floor);
+                const floor = new THREE.Mesh(floorGeo, floorMat); floor.rotation.x = -Math.PI / 2; floor.position.set(0, -1, -15); scene.add(floor);
 
-                // 發光格線 (淺藍色)
-                const grid = new THREE.GridHelper(50, 25, 0x94a3b8, 0xcbd5e1);
-                grid.position.set(0, -0.95, -15); scene.add(grid);
+                const grid = new THREE.GridHelper(50, 25, 0x94a3b8, 0xcbd5e1); grid.position.set(0, -0.95, -15); scene.add(grid);
 
-                // 牆身同管道
                 const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.8 });
                 const pipeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.5, roughness: 0.4 });
                 
@@ -278,48 +254,30 @@
                 const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 50), wallMat); rightWall.position.set(12, 5, -15); scene.add(rightWall);
 
                 for(let z = 10; z > -25; z -= 6) {
-                    let pipeL = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6), pipeMat);
-                    pipeL.rotation.x = Math.PI/2; pipeL.position.set(-10, 8, z); scene.add(pipeL);
-                    let pipeR = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6), pipeMat);
-                    pipeR.rotation.x = Math.PI/2; pipeR.position.set(10, 8, z); scene.add(pipeR);
+                    let pipeL = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6), pipeMat); pipeL.rotation.x = Math.PI/2; pipeL.position.set(-10, 8, z); scene.add(pipeL);
+                    let pipeR = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6), pipeMat); pipeR.rotation.x = Math.PI/2; pipeR.position.set(10, 8, z); scene.add(pipeR);
                 }
 
-                // --- 盡頭大門大改造 ---
-                // 1. 盡頭嘅金屬牆 (有門框感覺)
                 const endWallMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.4 });
-                const endWall = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 2), endWallMat);
-                endWall.position.set(0, 5, -21); scene.add(endWall);
+                const endWall = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 2), endWallMat); endWall.position.set(0, 5, -21); scene.add(endWall);
 
-                // 2. 真正嘅避難所大門 (深色金屬，有紅光)
                 doorMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 1), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.2 }));
                 doorMesh.position.set(0, 3, -20); scene.add(doorMesh);
                 
-                // 大門黃黑警告條
                 for(let i=0; i<4; i++) {
                     let stripe = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 1.1), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
                     stripe.position.set(0, 1 + i*1.5, -20); scene.add(stripe);
                 }
                 
-                // 大門上方嘅紅色警告燈
-                const warningLight = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
-                warningLight.position.set(0, 8, -20); scene.add(warningLight);
-                
-                // 大門兩側嘅紅光
-                const doorLightL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 1), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
-                doorLightL.position.set(-5.5, 3, -20); scene.add(doorLightL);
-                const doorLightR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 1), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
-                doorLightR.position.set(5.5, 3, -20); scene.add(doorLightR);
+                const warningLight = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 })); warningLight.position.set(0, 8, -20); scene.add(warningLight);
+                const doorLightL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 1), new THREE.MeshBasicMaterial({ color: 0xef4444 })); doorLightL.position.set(-5.5, 3, -20); scene.add(doorLightL);
+                const doorLightR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 1), new THREE.MeshBasicMaterial({ color: 0xef4444 })); doorLightR.position.set(5.5, 3, -20); scene.add(doorLightR);
 
-                // 3. 地下引導線 (指去大門)
                 const guideGeo = new THREE.PlaneGeometry(0.5, 15);
                 const guideMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-                const guideLine = new THREE.Mesh(guideGeo, guideMat);
-                guideLine.rotation.x = -Math.PI / 2; guideLine.position.set(0, -0.9, -12); scene.add(guideLine);
+                const guideLine = new THREE.Mesh(guideGeo, guideMat); guideLine.rotation.x = -Math.PI / 2; guideLine.position.set(0, -0.9, -12); scene.add(guideLine);
 
-                // 生成玩家
-                playerModel = createPlayer();
-                playerModel.position.set(0, -1, 6);
-                scene.add(playerModel);
+                playerModel = createPlayer(); playerModel.position.set(0, -1, 6); scene.add(playerModel);
 
                 window.addEventListener('resize', onWindowResize, false);
                 animate();
@@ -327,12 +285,10 @@
         }
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- 瞄準 ---
         function onAim(event) {
             crosshairEl.style.display = 'block';
             crosshairEl.style.left = event.clientX + 'px';
@@ -346,18 +302,13 @@
             let targetPoint = new THREE.Vector3();
             raycaster.ray.intersectPlane(plane, targetPoint);
 
-            if (targetPoint && playerModel) {
-                playerModel.lookAt(targetPoint.x, playerModel.position.y, targetPoint.z);
-            }
+            if (targetPoint && playerModel) { playerModel.lookAt(targetPoint.x, playerModel.position.y, targetPoint.z); }
         }
 
-        // --- 開火 ---
         function onShoot(event) {
-            playerModel.position.z = 6.2; 
-            setTimeout(() => playerModel.position.z = 6, 50);
+            playerModel.position.z = 6.2; setTimeout(() => playerModel.position.z = 6, 50);
 
-            let startPos = new THREE.Vector3();
-            gunMuzzle.getWorldPosition(startPos);
+            let startPos = new THREE.Vector3(); gunMuzzle.getWorldPosition(startPos);
 
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -370,33 +321,23 @@
             if (intersects.length > 0) {
                 endPos = intersects[0].point;
                 let hitGroup = intersects[0].object;
-                while (hitGroup.parent && !hitGroup.userData.legL) {
-                    hitGroup = hitGroup.parent;
-                }
+                while (hitGroup.parent && !hitGroup.userData.legL) { hitGroup = hitGroup.parent; }
                 let targetZ = zombies.find(z => z.mesh === hitGroup);
                 if (targetZ) {
                     targetZ.hp -= (weaponLevel * 50);
-                    createHitEffect(endPos, 0xef4444); // 紅色血花
+                    createHitEffect(endPos, 0xef4444); 
                     if (targetZ.hp <= 0) killZombie(targetZ);
                 }
             } else {
                 raycaster.ray.at(50, endPos);
             }
 
-            // 槍口火光 (深藍色)
-            let flash = new THREE.PointLight(0x2563eb, 2, 5);
-            flash.position.copy(startPos); scene.add(flash);
-            setTimeout(() => scene.remove(flash), 50);
-
-            // 子彈軌跡 (深藍色)
+            let flash = new THREE.PointLight(0x2563eb, 2, 5); flash.position.copy(startPos); scene.add(flash); setTimeout(() => scene.remove(flash), 50);
             let beamGeo = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
             let beamMat = new THREE.LineBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 1 });
-            let beam = new THREE.Line(beamGeo, beamMat);
-            scene.add(beam);
-            setTimeout(() => scene.remove(beam), 50);
+            let beam = new THREE.Line(beamGeo, beamMat); scene.add(beam); setTimeout(() => scene.remove(beam), 50);
         }
 
-        // --- 主循環 ---
         function animate() {
             requestAnimationFrame(animate);
             try {
@@ -404,9 +345,7 @@
                     shakeTime -= 0.016;
                     cameraShakeOffset.set((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, 0);
                     camera.position.copy(new THREE.Vector3(0, 4, 12).add(cameraShakeOffset));
-                } else {
-                    camera.position.lerp(new THREE.Vector3(0, 4, 12), 0.1);
-                }
+                } else { camera.position.lerp(new THREE.Vector3(0, 4, 12), 0.1); }
                 camera.lookAt(0, 1, -10);
 
                 for (let i = zombies.length - 1; i >= 0; i--) {
@@ -430,10 +369,8 @@
                 for (let i = particles.length - 1; i >= 0; i--) {
                     let p = particles[i];
                     p.mesh.position.add(p.velocity);
-                    p.velocity.y -= 0.1; 
-                    p.mesh.rotation.x += 0.1; p.mesh.rotation.y += 0.1;
-                    p.life -= 0.02;
-                    p.mesh.material.opacity = p.life;
+                    p.velocity.y -= 0.1; p.mesh.rotation.x += 0.1; p.mesh.rotation.y += 0.1;
+                    p.life -= 0.02; p.mesh.material.opacity = p.life;
                     if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
                 }
 
@@ -445,22 +382,15 @@
             } catch(e) {}
         }
 
-        // --- 生成喪屍 ---
         function spawnZombie(isBoss = false) {
             let size = isBoss ? 2.2 : (wave > 5 ? 1.2 : 1);
             let hp = isBoss ? 3000 : (wave > 5 ? 300 : 100);
-            
             let group = createZombieModel(isBoss);
             group.position.set((Math.random() - 0.5) * 16, -1, -35 - Math.random()*10);
             group.scale.set(size, size, size);
             scene.add(group);
-            
             zombies.push({ mesh: group, hp: hp, speed: isBoss ? 0.03 : 0.06, dmg: isBoss ? 50 : 10 });
-            
-            if (isBoss) {
-                broadcast("🚨 警告：巨型喪屍王從走廊深處逼近！");
-                shakeTime = 0.5;
-            }
+            if (isBoss) { broadcast("🚨 警告：巨型喪屍王從走廊深處逼近！"); shakeTime = 0.5; }
         }
 
         function killZombie(z) {
@@ -469,39 +399,62 @@
             zombies = zombies.filter(item => item !== z);
             
             kills++;
-            crystals += z.mesh.scale.x > 1.5 ? 20 : 2;
+            // 擊殺首領掉更多晶石
+            let rewardCrystals = z.mesh.scale.x > 1.5 ? 20 : 2;
+            crystals += rewardCrystals;
             energy += z.mesh.scale.x > 1.5 ? 500 : 50;
             ultimateCharge = Math.min(100, ultimateCharge + 8);
             shakeTime = z.mesh.scale.x > 1.5 ? 0.5 : 0.1;
+            
+            saveGame(); // 擊殺後自動存檔
         }
 
         function createHitEffect(pos, color) {
             for(let i=0; i<10; i++) {
                 let geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
                 let mat = new THREE.MeshBasicMaterial({ color: color, transparent: true });
-                let mesh = new THREE.Mesh(geo, mat);
-                mesh.position.copy(pos);
-                scene.add(mesh);
-                particles.push({
-                    mesh: mesh, life: 1,
-                    velocity: new THREE.Vector3((Math.random()-0.5)*0.8, Math.random()*0.8, (Math.random()-0.5)*0.8)
-                });
+                let mesh = new THREE.Mesh(geo, mat); mesh.position.copy(pos); scene.add(mesh);
+                particles.push({ mesh: mesh, life: 1, velocity: new THREE.Vector3((Math.random()-0.5)*0.8, Math.random()*0.8, (Math.random()-0.5)*0.8) });
             }
         }
 
         // --- 按鈕 ---
         function upgradeWeapon() {
-            if (energy < weaponCost) return;
+            if (energy < weaponCost) { broadcast("❌ 電力不足！"); return; }
             energy -= weaponCost; weaponLevel++; weaponCost = Math.floor(weaponCost * 1.5);
             broadcast(`🔫 步槍升級至 Lv.${weaponLevel}！傷害大增！`);
+            saveGame(); // 升級後自動存檔
         }
 
-        function usePower() {
-            if (!hasPower || powerCharge < 100) return;
-            powerCharge = 0;
-            broadcast(`💥 釋放異能：${POWER_NAMES[powerType].name}！`);
-            shakeTime = 0.8;
-            zombies.forEach(z => { z.hp -= 500; createHitEffect(z.mesh.position, POWER_NAMES[powerType].color); if(z.hp<=0) killZombie(z); });
+        // 手動解鎖異能
+        function unlockPower() {
+            if (hasPower) {
+                // 已有異能，則作為充能大招使用
+                if (powerCharge < 100) { broadcast("❌ 異能充能中！"); return; }
+                powerCharge = 0;
+                broadcast(`💥 釋放異能：${POWER_NAMES[powerType].name}！`);
+                shakeTime = 0.8;
+                zombies.forEach(z => { z.hp -= 500; createHitEffect(z.mesh.position, POWER_NAMES[powerType].color); if(z.hp<=0) killZombie(z); });
+                return;
+            }
+
+            if (crystals < 10) { broadcast("❌ 晶石不足！需要 10 粒晶石。"); return; }
+            
+            // 扣除晶石並解鎖
+            crystals -= 10;
+            hasPower = true;
+            let keys = Object.keys(POWER_NAMES); 
+            powerType = keys[Math.floor(Math.random() * keys.length)];
+            
+            let pInfo = POWER_NAMES[powerType];
+            broadcast(`💎 解鎖專屬異能：${pInfo.name}！`);
+            
+            let popup = document.createElement('div');
+            popup.style.cssText = `position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:24px; font-weight:900; text-shadow:0 0 20px #fff; z-index:999; pointer-events:none; text-align:center; background:rgba(0,0,0,0.7); padding:15px; border-radius:10px; border:2px solid ${pInfo.color};`;
+            popup.innerText = `💎 解鎖異能！\n${pInfo.name}`;
+            document.body.appendChild(popup); setTimeout(() => popup.remove(), 3000);
+            
+            saveGame(); // 解鎖後自動存檔
         }
 
         function useUltimate() {
@@ -524,14 +477,14 @@
             document.getElementById('ui-weapon-cost').innerText = weaponCost;
 
             let pBtn = document.getElementById('btn-power');
-            if (!hasPower && crystals >= 10) {
-                crystals -= 10; hasPower = true;
-                let keys = Object.keys(POWER_NAMES); powerType = keys[Math.floor(Math.random() * keys.length)];
-                pBtn.disabled = false; pBtn.style.color = '#' + POWER_NAMES[powerType].color.toString(16).padStart(6, '0');
-                broadcast(`💎 解鎖異能：${POWER_NAMES[powerType].name}！`);
-            } else if (hasPower) {
-                if (powerCharge >= 100) { pBtn.disabled = false; pBtn.innerText = `🔥 異能就緒`; }
-                else { pBtn.disabled = true; pBtn.innerText = `🔥 充能 (${Math.floor(powerCharge)}%)`; }
+            if (!hasPower) {
+                pBtn.innerText = `🔮 解鎖異能 (10晶石)`;
+                pBtn.style.color = crystals >= 10 ? '#9333ea' : '#94a3b8';
+            } else {
+                let pInfo = POWER_NAMES[powerType];
+                pBtn.style.color = '#' + pInfo.color.toString(16).padStart(6, '0');
+                if (powerCharge >= 100) { pBtn.disabled = false; pBtn.innerText = `${pInfo.name.split(' ')[0]} 異能就緒`; }
+                else { pBtn.disabled = true; pBtn.innerText = `${pInfo.name.split(' ')[0]} 充能 (${Math.floor(powerCharge)}%)`; }
             }
 
             let uBtn = document.getElementById('btn-ultimate');
@@ -539,7 +492,14 @@
             else { uBtn.disabled = true; uBtn.innerText = `☄️ 死光 (${Math.floor(ultimateCharge)}%)`; }
         }
 
-        setInterval(() => { if (doorHp <= 0) { broadcast("💀 大門被攻破！遊戲結束。"); setTimeout(() => location.reload(), 2000); } }, 1000);
+        setInterval(() => { 
+            if (doorHp <= 0) { 
+                broadcast("💀 大門被攻破！遊戲結束。"); 
+                // 死咗就清走個存檔，重新開始
+                localStorage.removeItem('doomsday_survivor_save');
+                setTimeout(() => location.reload(), 2000); 
+            } 
+        }, 1000);
 
         let spawnTimer = 0;
         setInterval(() => {
@@ -549,7 +509,9 @@
         }, 1000);
 
         window.onload = () => {
+            loadSave(); // 載入存檔
             init3D(); 
+            updateUI();
             setTimeout(() => { spawnZombie(false); broadcast("士兵，喪屍從前方走廊來襲！點擊螢幕開火！"); }, 1000);
         };
     </script>
