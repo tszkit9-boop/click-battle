@@ -84,6 +84,7 @@
 
         let audioCtx = null;
         let delayNode = null, feedbackGain = null, filterNode = null;
+        let lastNoteTime = 0; // 用於防止重音
 
         function initAudio() {
             if (audioCtx) return;
@@ -92,10 +93,10 @@
             delayNode = audioCtx.createDelay();
             delayNode.delayTime.value = 0.4; 
             feedbackGain = audioCtx.createGain();
-            feedbackGain.gain.value = 0.4; 
+            feedbackGain.gain.value = 0.3; 
             filterNode = audioCtx.createBiquadFilter();
             filterNode.type = 'lowpass';
-            filterNode.frequency.value = 1500; 
+            filterNode.frequency.value = 1200; // 降低濾波頻率，令回音更柔和
 
             delayNode.connect(feedbackGain);
             feedbackGain.connect(filterNode);
@@ -114,7 +115,6 @@
             return baseFreq;
         }
 
-        // --- 震動與閃光特效變數 ---
         let screenShake = 0;
         let flashColor = null;
         let flashAlpha = 0;
@@ -123,13 +123,17 @@
             if (!audioCtx) initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
+            // 【核心優化】防止重音 (80ms 防抖)
+            let now = audioCtx.currentTime;
+            if (now - lastNoteTime < 0.08) return; 
+            lastNoteTime = now;
+            
             let freq = getFrequency(noteIdx, octave);
             let color = NOTE_COLORS[noteIdx];
             
-            // 觸發視覺特效
-            screenShake = 8;
+            screenShake = 6; // 震動減輕少少
             flashColor = color;
-            flashAlpha = 0.2;
+            flashAlpha = 0.15;
             createSparks(ball.x, ball.y, color);
 
             const osc1 = audioCtx.createOscillator();
@@ -139,18 +143,19 @@
             
             const gain = audioCtx.createGain();
             const osc2Gain = audioCtx.createGain();
-            osc2Gain.gain.value = 0.1; 
+            osc2Gain.gain.value = 0.08; // 泛音減細
 
+            // 【核心優化】平滑 Attack，減少爆音
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8); 
+            gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.05); 
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0); // 尾音拉長
 
             osc1.connect(gain); osc2.connect(osc2Gain); osc2Gain.connect(gain);
             gain.connect(audioCtx.destination); 
             gain.connect(delayNode); 
 
             osc1.start(); osc2.start();
-            osc1.stop(audioCtx.currentTime + 1.0); osc2.stop(audioCtx.currentTime + 1.0);
+            osc1.stop(audioCtx.currentTime + 1.2); osc2.stop(audioCtx.currentTime + 1.2);
         }
 
         // --- 2. 遊戲物件 ---
@@ -167,7 +172,7 @@
         const PLATE_H = 16;
         let cameraY = 0;
 
-        // --- 🎵 核心：簡譜解析器 (加入打橫跳) ---
+        // --- 🎵 核心：簡譜解析器 ---
         function buildTrackFromString(scoreStr) {
             plates = [];
             if (isPlaying) togglePlay();
@@ -179,9 +184,8 @@
             if (tokens.length === 0) return alert("請輸入有效曲譜！");
 
             let currentY = 100;
-            const BASE_SPACING = 60; 
+            const BASE_SPACING = 85; // 【核心優化】拉大距離，防重音同睇得清楚
 
-            // 打橫跳嘅位置比例 (左、右、中左、中右)
             const xPatterns = [0.2, 0.8, 0.35, 0.65, 0.5]; 
 
             tokens.forEach((token, i) => {
@@ -200,7 +204,6 @@
                 let noteIdx = parseInt(noteChar);
                 if (isNaN(noteIdx) || noteIdx < 0 || noteIdx > 6) return;
 
-                // 【核心改動】大幅度隨機橫跳，唔再局限喺左右兩邊
                 let pFactor = xPatterns[(i + Math.floor(Math.random() * 2)) % xPatterns.length];
                 let xPos = W * pFactor;
 
@@ -473,7 +476,8 @@
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            let t = Math.max(40, Math.min(100, minDy * 0.9));
+                            // 【核心優化】拉長飛行時間，令節奏更從容
+                            let t = Math.max(50, Math.min(120, minDy * 0.9));
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
                             
