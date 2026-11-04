@@ -101,6 +101,7 @@
         .game-card h2 { margin: 0; font-size: 22px; z-index: 2; transition: all 0.3s; }
         .game-card p { color: #a4b0be; font-size: 12px; z-index: 2; margin-top: 10px; transition: all 0.3s; text-align: center; padding: 0 10px; }
         
+        /* 🔥 總遊玩人數標籤 (右上角) */
         .hot-badge {
             position: absolute; top: 10px; right: 10px;
             background: rgba(255, 71, 87, 0.9); color: #fff;
@@ -110,6 +111,7 @@
             z-index: 10; display: none; pointer-events: none;
         }
 
+        /* 🟢 即時在線人數標籤 (左上角) */
         .online-badge {
             position: absolute; top: 10px; left: 10px;
             background: rgba(46, 204, 113, 0.9); color: #fff;
@@ -329,7 +331,6 @@
         db = firebase.database();
     } catch (e) { console.warn("Firebase 初始化失敗", e); }
 
-    // 🔥 總遊玩次數點擊 +1
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', function(e) {
             if (!db) return;
@@ -340,7 +341,6 @@
     });
 
     if (db) {
-        // 🔥 讀取總人數
         db.ref('game_stats').on('value', (snapshot) => {
             const stats = snapshot.val() || {};
             document.querySelectorAll('.game-card').forEach(card => {
@@ -352,7 +352,6 @@
             });
         });
 
-        // 🟢 讀取即時在線人數
         db.ref('online_status').on('value', (snapshot) => {
             const onlineData = snapshot.val() || {};
             document.querySelectorAll('.game-card').forEach(card => {
@@ -365,7 +364,6 @@
         });
     }
 
-    // 搜尋與分類
     let currentCategory = 'all';
     function setCategory(cat, btn) {
         currentCategory = cat;
@@ -385,7 +383,6 @@
         });
     }
 
-    // 排行榜
     function openLeaderboard() {
         let list = document.getElementById('leaderboard-list');
         list.innerHTML = '';
