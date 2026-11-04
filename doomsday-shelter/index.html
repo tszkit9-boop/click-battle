@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>☢️ 末日避難所：自由防線</title>
+<title>☢️ 末日避難所</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    body { background: #e2e8f0; color: #1e293b; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+    body { background: #cbd5e1; color: #1e293b; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
     
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
@@ -124,7 +124,7 @@
         
         let moveVector = new THREE.Vector3(0, 0, 0);
         let cameraAngle = 0; 
-        let cameraPitch = 0.5; 
+        let cameraPitch = 0.4; // 稍微俯視
         let joystickActive = false;
         let joystickStart = {x: 0, y: 0};
 
@@ -139,46 +139,62 @@
 
         function createPlayer() {
             let group = new THREE.Group();
-            let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5 });
-            let armorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.6 });
+            // 士兵外觀
+            let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5 }); 
+            let armorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.6 });
             let whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
-            let visorMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0ea5e9, emissiveIntensity: 0.6 });
+            let visorMat = new THREE.MeshStandardMaterial({ color: 0x06b6d4, emissive: 0x06b6d4, emissiveIntensity: 0.8 });
 
-            let torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), suitMat); torso.position.y = 0.7; group.add(torso);
-            let vest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.6), armorMat); vest.position.y = 0.8; group.add(vest);
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), whiteMat); head.position.y = 1.6; group.add(head);
-            let visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), visorMat); visor.position.set(0, 1.65, 0.2); group.add(visor);
+            let torso = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.4, 8), suitMat); torso.position.y = 0.8; group.add(torso);
+            let vest = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.7), armorMat); vest.position.y = 0.9; group.add(vest);
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), whiteMat); head.position.y = 1.8; group.add(head);
+            let visor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.5), visorMat); visor.position.set(0, 1.85, 0.25); group.add(visor);
 
-            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); legL.position.set(-0.2, 0, 0); group.add(legL);
-            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); legR.position.set(0.2, 0, 0); group.add(legR);
+            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 1, 6), suitMat); legL.position.set(-0.25, 0, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 1, 6), suitMat); legR.position.set(0.25, 0, 0); group.add(legR);
             
-            let gun = new THREE.Group();
-            let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.2), whiteMat);
-            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8), armorMat); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
-            gun.add(gunBody); gun.add(barrel);
-            gun.position.set(0.4, 0.8, -0.8); // 槍喺前面
-            group.add(gun);
+            // 槍械 (移向右邊，配合越肩視角)
+            let gunGroup = new THREE.Group();
+            let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 1.4), whiteMat);
+            let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1), armorMat); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -1);
+            gunGroup.add(gunBody); gunGroup.add(barrel);
+            gunGroup.position.set(0.6, 1.2, -0.5); // 舉高少少，向右少少
+            group.add(gunGroup);
 
-            gunMuzzle = new THREE.Object3D(); gunMuzzle.position.set(0, 0, -1.4); gun.add(gunMuzzle);
+            // 槍口發射點
+            gunMuzzle = new THREE.Object3D(); 
+            gunMuzzle.position.set(0, 0, -1.5); // 喺槍管最前端
+            gunGroup.add(gunMuzzle);
+            
+            // 手臂連埋去槍度
+            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1, 6), suitMat);
+            armR.position.set(0.5, 1.1, 0.2); armR.rotation.x = -Math.PI / 3; group.add(armR);
+
             return group;
         }
 
         function createZombieModel(isElite) {
             let group = new THREE.Group();
-            let skinColor = isElite ? 0xb91c1c : 0x15803d;
+            let skinColor = isElite ? 0xdc2626 : 0x16a34a; 
             let skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.8 });
-            let shirtMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 });
-            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+            let shirtMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9 });
+            let eyeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); 
 
-            let body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.2, 8), shirtMat); body.position.y = 1.1; body.rotation.x = 0.3; group.add(body);
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), skinMat); head.position.set(0.1, 1.8, 0.1); head.rotation.z = 0.4; group.add(head);
-            let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), eyeMat); eyeL.position.set(-0.1, 0.1, 0.25); head.add(eyeL);
-            let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), eyeMat); eyeR.position.set(0.1, 0.1, 0.25); head.add(eyeR);
+            let body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 1.4, 8), shirtMat); body.position.y = 1.2; body.rotation.x = 0.2; group.add(body);
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), skinMat); head.position.set(0.1, 2, 0.1); group.add(head);
+            
+            let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 4), eyeMat); eyeL.position.set(-0.12, 0.1, 0.3); head.add(eyeL);
+            let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 4), eyeMat); eyeR.position.set(0.12, 0.1, 0.3); head.add(eyeR);
 
-            let armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.9, 6), skinMat); armL.position.set(-0.4, 1.1, 0.4); armL.rotation.x = -Math.PI / 2 + 0.2; group.add(armL);
-            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), skinMat); armR.position.set(0.4, 0.9, 0); armR.rotation.x = 0.5; group.add(armR);
-            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.9, 6), skinMat); legL.position.set(-0.15, 0.1, 0); group.add(legL);
-            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.6, 6), skinMat); legR.position.set(0.15, -0.05, 0); group.add(legR);
+            let armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 1.1, 6), skinMat); armL.position.set(-0.5, 1.2, 0.5); armL.rotation.x = -Math.PI / 2 + 0.2; group.add(armL);
+            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.8, 6), skinMat); armR.position.set(0.5, 1, 0); armR.rotation.x = 0.5; group.add(armR);
+            let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.1, 1, 6), skinMat); legL.position.set(-0.2, 0.2, 0); group.add(legL);
+            let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.1, 0.7, 6), skinMat); legR.position.set(0.2, 0, 0); group.add(legR);
+
+            let hpBarBg = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.15), new THREE.MeshBasicMaterial({ color: 0x000000, depthTest: false }));
+            hpBarBg.position.set(0, 2.8, 0); group.add(hpBarBg);
+            let hpBar = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.15), new THREE.MeshBasicMaterial({ color: 0xff0000, depthTest: false }));
+            hpBar.position.set(0, 2.8, 0.01); group.add(hpBar);
 
             group.userData.legL = legL; group.userData.legR = legR;
             return group;
@@ -187,9 +203,10 @@
         function init3D() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf8fafc); // 白底
+            scene.background = new THREE.Color(0x0f172a); // 深藍灰背景，增加對比
+            scene.fog = new THREE.Fog(0x0f172a, 20, 50);
             
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -199,36 +216,39 @@
             raycaster = new THREE.Raycaster();
 
             scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); dirLight.position.set(10, 20, 10); scene.add(dirLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.0); dirLight.position.set(10, 20, 10); scene.add(dirLight);
 
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3 }));
+            // 地板 (灰色)
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 }));
             floor.rotation.x = -Math.PI / 2; floor.position.y = -1; scene.add(floor);
-            const grid = new THREE.GridHelper(60, 30, 0x94a3b8, 0xcbd5e1); grid.position.y = -0.95; scene.add(grid);
+            const grid = new THREE.GridHelper(40, 20, 0x1e293b, 0x334155); grid.position.y = -0.95; scene.add(grid);
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9 });
-            const wall1 = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 1), wallMat); wall1.position.set(0, 4, -30); scene.add(wall1);
-            const wall2 = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 1), wallMat); wall2.position.set(0, 4, 30); scene.add(wall2);
-            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 60), wallMat); wall3.position.set(-30, 4, 0); scene.add(wall3);
-            const wall4 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 60), wallMat); wall4.position.set(30, 4, 0); scene.add(wall4);
+            // 兩側牆身 (深灰)
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+            const wall1 = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 1), wallMat); wall1.position.set(0, 4, -15); scene.add(wall1);
+            const wall2 = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 1), wallMat); wall2.position.set(0, 4, 15); scene.add(wall2);
+            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 40), wallMat); wall3.position.set(-15, 4, 0); scene.add(wall3);
+            const wall4 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 40), wallMat); wall4.position.set(15, 4, 0); scene.add(wall4);
 
-            // 障礙物
-            for(let i=0; i<4; i++) {
-                let obs = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 3), new THREE.MeshStandardMaterial({ color: 0x94a3b8 }));
-                obs.position.set((Math.random()-0.5)*30, 2, (Math.random()-0.5)*30);
-                scene.add(obs);
+            // 大門 (拉近到 Z = -8)
+            doorMesh = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 1), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9 }));
+            doorMesh.position.set(0, 2, -8); scene.add(doorMesh);
+            // 大門黃黑警告條
+            for(let i=0; i<3; i++) {
+                let stripe = new THREE.Mesh(new THREE.BoxGeometry(6, 0.4, 1.1), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+                stripe.position.set(0, 0.5 + i*1.5, -8); scene.add(stripe);
             }
 
-            doorMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 1), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 }));
-            doorMesh.position.set(0, 3, -28); scene.add(doorMesh);
-
+            // 玩家 (Z = 2)
             player = createPlayer();
-            player.position.set(0, 0, 15); // 玩家初始位置
+            player.position.set(0, 0, 2); 
             scene.add(player);
 
             window.addEventListener('resize', onWindowResize);
             setupControls();
             animate();
-            startWave();
+            
+            setTimeout(startWave, 1000);
         }
 
         function onWindowResize() {
@@ -276,7 +296,7 @@
                 let dy = e.touches[0].clientY - lastY;
                 cameraAngle -= dx * 0.005;
                 cameraPitch -= dy * 0.005;
-                cameraPitch = Math.max(0.1, Math.min(1.2, cameraPitch)); // 限制上下視角
+                cameraPitch = Math.max(0.1, Math.min(1.0, cameraPitch)); 
                 lastX = e.touches[0].clientX;
                 lastY = e.touches[0].clientY;
             });
@@ -287,7 +307,7 @@
                 if(e.buttons === 1) { 
                     cameraAngle -= e.movementX * 0.005;
                     cameraPitch -= e.movementY * 0.005;
-                    cameraPitch = Math.max(0.1, Math.min(1.2, cameraPitch));
+                    cameraPitch = Math.max(0.1, Math.min(1.0, cameraPitch));
                 }
             });
             document.addEventListener('keydown', (e) => {
@@ -304,7 +324,11 @@
             if (isGameOver || ammo <= 0) return;
             ammo--;
             
-            let startPos = new THREE.Vector3(); gunMuzzle.getWorldPosition(startPos);
+            // 獲取槍口世界座標
+            let startPos = new THREE.Vector3(); 
+            gunMuzzle.getWorldPosition(startPos);
+
+            // 屏幕中心射線 (準星)
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
 
             let allZ = zombies.map(z => z.mesh);
@@ -323,11 +347,13 @@
                     if (targetZ.hp <= 0) killZombie(targetZ);
                 }
             } else {
+                // 如果冇打中，射向準星指向嘅遠方
                 raycaster.ray.at(50, endPos);
             }
 
+            // 雷射從槍口 (startPos) 射向目標點 (endPos)
             let flash = new THREE.PointLight(0x2563eb, 2, 5); flash.position.copy(startPos); scene.add(flash); setTimeout(() => scene.remove(flash), 50);
-            let beamMat = new THREE.LineBasicMaterial({ color: hasShotgun ? 0xf59e0b : 0x2563eb });
+            let beamMat = new THREE.LineBasicMaterial({ color: hasShotgun ? 0xf59e0b : 0x00ffff });
             let beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([startPos, endPos]), beamMat);
             scene.add(beam); setTimeout(() => scene.remove(beam), 50);
             updateUI();
@@ -357,7 +383,7 @@
 
         function spawnPickup(pos, type) {
             let color = type === 'ammo' ? 0xf59e0b : 0x9333ea;
-            let mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: color }));
+            let mesh = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshBasicMaterial({ color: color }));
             mesh.position.copy(pos); mesh.position.y = 0.5; scene.add(mesh);
             pickups.push({ mesh: mesh, type: type });
         }
@@ -367,17 +393,18 @@
             let isHorde = (wave % 5 === 0);
             let count = isHorde ? 20 : 3 + wave * 2;
             if (isHorde) broadcast("🚨 警告：大型屍潮來襲！");
+            else broadcast(`🌊 第 ${wave} 波喪屍來襲！`);
 
             for(let i=0; i<count; i++) {
                 setTimeout(() => {
                     if(isGameOver) return;
                     let isElite = Math.random() < 0.2 || isHorde; 
                     let zGroup = createZombieModel(isElite);
-                    let spawnX = (Math.random() - 0.5) * 20;
-                    zGroup.position.set(spawnX, 0, -25 - Math.random()*3);
-                    zGroup.scale.set(1.2, 1.2, 1.2); // 放大少少易睇啲
+                    let spawnX = (Math.random() - 0.5) * 6; 
+                    // 由大門 (Z=-8) 衝出嚟
+                    zGroup.position.set(spawnX, 0, -7); 
                     scene.add(zGroup);
-                    zombies.push({ mesh: zGroup, hp: isElite ? 200 : 100, speed: isElite ? 0.08 : 0.05 });
+                    zombies.push({ mesh: zGroup, hp: isElite ? 200 : 100, speed: isElite ? 0.06 : 0.04 });
                 }, i * (isHorde ? 300 : 1000));
             }
             wave++;
@@ -406,21 +433,23 @@
             let right = new THREE.Vector3(Math.cos(cameraAngle), 0, -Math.sin(cameraAngle));
             let moveDir = forward.multiplyScalar(-moveVector.z).add(right.multiplyScalar(moveVector.x));
             if (moveDir.length() > 1) moveDir.normalize();
-            player.position.add(moveDir.multiplyScalar(0.3)); 
-            player.rotation.y = cameraAngle + Math.PI; // 面向視線方向
+            player.position.add(moveDir.multiplyScalar(0.2)); 
+            player.rotation.y = cameraAngle + Math.PI; 
 
-            // 修正鏡頭位置 (唔會跌落地下)
-            let camDist = 12;
-            let camX = player.position.x + Math.sin(cameraAngle) * camDist * Math.cos(cameraPitch);
-            let camZ = player.position.z + Math.cos(cameraAngle) * camDist * Math.cos(cameraPitch);
-            let camY = player.position.y + Math.sin(cameraPitch) * camDist;
-            if (camY < 2) camY = 2; // 鎖定最低高度
+            // 【越肩視角】相機偏向右邊，唔會遮擋準星
+            let camDist = 7; 
+            let camOffsetX = 1.5; // 向右偏移
+            let camX = player.position.x + Math.sin(cameraAngle) * camDist * Math.cos(cameraPitch) + Math.cos(cameraAngle) * camOffsetX;
+            let camZ = player.position.z + Math.cos(cameraAngle) * camDist * Math.cos(cameraPitch) - Math.sin(cameraAngle) * camOffsetX;
+            let camY = player.position.y + 3 + Math.sin(cameraPitch) * camDist;
+            
             camera.position.set(camX, camY, camZ);
-            camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+            // 鏡頭望向玩家前方少少嘅位置
+            camera.lookAt(player.position.x + Math.sin(cameraAngle)*5, player.position.y + 1.5, player.position.z + Math.cos(cameraAngle)*5);
 
             // 喪屍邏輯
             zombies.forEach(z => {
-                let targetPos = (doorHP > 0 && z.mesh.position.z < -20) ? doorMesh.position : player.position;
+                let targetPos = (doorHP > 0 && z.mesh.position.z < -5) ? doorMesh.position : player.position;
                 if (doorHP <= 0) targetPos = player.position;
 
                 let dir = targetPos.clone().sub(z.mesh.position);
@@ -456,7 +485,7 @@
             }
 
             // 修理判定
-            if (player.position.distanceTo(doorMesh.position) < 10 && doorHP < 1000) {
+            if (player.position.distanceTo(doorMesh.position) < 6 && doorHP < 1000) {
                 btnRepair.style.display = 'flex';
             } else {
                 btnRepair.style.display = 'none';
