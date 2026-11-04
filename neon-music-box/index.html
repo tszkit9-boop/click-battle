@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>霓虹音樂盒</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
@@ -10,43 +10,61 @@
             margin: 0; padding: 0; background-color: #050510; color: #fff;
             font-family: 'Orbitron', 'PingFang HK', sans-serif; overflow: hidden;
             display: flex; flex-direction: column; height: 100dvh; height: 100vh;
-            touch-action: none; user-select: none;
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
         #toolbar {
-            height: 60px; background: #111; display: flex; align-items: center;
-            justify-content: space-between; padding: 0 10px; z-index: 10;
-            border-bottom: 2px solid #00d2d3; box-shadow: 0 0 15px rgba(0,210,211,0.3);
-            flex-wrap: wrap;
+            height: auto; min-height: 60px; background: rgba(17, 17, 17, 0.95); display: flex; align-items: center;
+            justify-content: space-between; padding: 5px 15px; z-index: 10;
+            border-bottom: 2px solid #00d2d3; box-shadow: 0 0 20px rgba(0,210,211,0.4);
+            flex-wrap: wrap; backdrop-filter: blur(10px);
         }
-        .btn-group { display: flex; gap: 5px; margin: 5px 0; align-items: center; }
+        .btn-group { display: flex; gap: 8px; margin: 5px 0; align-items: center; flex-wrap: wrap; }
         button, .back-btn {
             background: transparent; color: #00d2d3; border: 2px solid #00d2d3;
-            padding: 6px 10px; font-family: 'Orbitron', sans-serif; font-weight: bold;
-            border-radius: 5px; cursor: pointer; font-size: 12px; transition: all 0.2s;
+            padding: 6px 12px; font-family: 'Orbitron', sans-serif; font-weight: bold;
+            border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s;
             text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 10px rgba(0,210,211,0.1);
         }
-        button:hover, .back-btn:hover { background: #00d2d3; color: #000; }
+        button:hover, .back-btn:hover { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
         button.active { background: #00d2d3; color: #000; box-shadow: 0 0 15px #00d2d3; }
-        button.danger { color: #ff4757; border-color: #ff4757; }
-        button.danger:hover { background: #ff4757; color: #000; }
+        button.danger { color: #ff4757; border-color: #ff4757; box-shadow: 0 0 10px rgba(255,71,87,0.1); }
+        button.danger:hover { background: #ff4757; color: #000; box-shadow: 0 0 20px #ff4757; }
         button.record { color: #ff4757; border-color: #ff4757; }
         button.record.active { background: #ff4757; color: #fff; animation: pulse 1s infinite; }
         button.download { color: #2ed573; border-color: #2ed573; display: none; }
         button.download.active { display: inline-block; background: #2ed573; color: #000; }
         @keyframes pulse { 0%, 100% { box-shadow: 0 0 5px #ff4757; } 50% { box-shadow: 0 0 20px #ff4757; } }
-        #canvas-container { flex: 1; position: relative; }
+        
+        /* 新增：音符選擇器 */
+        #note-selector {
+            display: flex; gap: 5px; padding: 8px 15px; background: rgba(0,0,0,0.6);
+            border-bottom: 1px solid #222; overflow-x: auto; scrollbar-width: none;
+        }
+        #note-selector::-webkit-scrollbar { display: none; }
+        .note-btn {
+            flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid #333; background: #111; color: #fff; font-size: 14px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            transition: 0.2s; font-family: 'Orbitron', sans-serif;
+        }
+        .note-btn.selected {
+            border-color: #fff; transform: scale(1.1); box-shadow: 0 0 15px currentColor;
+        }
+
+        #canvas-container { flex: 1; position: relative; cursor: crosshair; background: #050510; }
         canvas { display: block; width: 100%; height: 100%; }
+        
         #instructions {
-            position: absolute; bottom: 10px; width: 100%; text-align: center;
-            color: rgba(255,255,255,0.5); font-size: 12px; pointer-events: none;
-            line-height: 1.5;
+            position: absolute; bottom: 15px; width: 100%; text-align: center;
+            color: rgba(255,255,255,0.6); font-size: 12px; pointer-events: none;
+            line-height: 1.6; text-shadow: 0 2px 4px #000;
         }
     </style>
 </head>
 <body>
     <div id="toolbar">
         <div class="btn-group">
-            <!-- 加入返回大廳按鈕 -->
             <a href="../" class="back-btn">⬅ 返回</a>
             <button id="btn-play" onclick="togglePlay()">▶ 播放</button>
             <button id="btn-reset" class="danger" onclick="clearAll()">🗑 清空</button>
@@ -57,63 +75,116 @@
             <button onclick="shareTrack()">🔗 分享</button>
         </div>
     </div>
+    
+    <!-- 音符選擇器 -->
+    <div id="note-selector"></div>
+
     <div id="canvas-container">
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
-            👆 點擊空白處放鋼片 | 拖曳頂部紅框決定鐵珠起點<br>
-            點擊鋼片切換 (1-8 或 0停頓) | 長按刪除
+            👆 選擇上方音符，點擊畫布放置鋼片<br>
+            👆 點擊現有鋼片切換下一個音符 | 長按刪除
         </div>
     </div>
 
     <script>
+        // --- 1. 全局變數與音頻初始化 ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const playBtn = document.getElementById('btn-play');
         const recordBtn = document.getElementById('btn-record');
         const downloadBtn = document.getElementById('btn-download');
+        const noteSelector = document.getElementById('note-selector');
 
-        let W, H;
+        let W, H, DPR;
         function resize() {
+            DPR = window.devicePixelRatio || 1;
             W = canvas.parentElement.clientWidth;
             H = canvas.parentElement.clientHeight;
-            canvas.width = W;
-            canvas.height = H;
+            canvas.width = W * DPR;
+            canvas.height = H * DPR;
+            ctx.scale(DPR, DPR); 
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // --- 音頻系統與錄音 ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const dest = audioCtx.createMediaStreamDestination();
-        let mediaRecorder, audioChunks = [], audioUrl = "";
-        let isRecording = false;
+        let audioCtx = null;
+        let dest = null;
+        let delayNode = null, feedbackGain = null, filterNode = null;
 
-        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 0];
-        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#e056fd', '#7f8c8d'];
-        const NOTE_NAMES = ['1', '2', '3', '4', '5', '6', '7', '8', '0'];
-
-        function playNote(freq, color) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            createSparks(ball.x, ball.y, color);
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            dest = audioCtx.createMediaStreamDestination();
             
-            if (freq === 0) return; 
+            delayNode = audioCtx.createDelay();
+            delayNode.delayTime.value = 0.3; 
+            feedbackGain = audioCtx.createGain();
+            feedbackGain.gain.value = 0.3; 
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = 2000; 
 
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-            osc.connect(gain); gain.connect(audioCtx.destination); gain.connect(dest);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            delayNode.connect(feedbackGain);
+            feedbackGain.connect(filterNode);
+            filterNode.connect(delayNode); 
+            delayNode.connect(audioCtx.destination);
+            delayNode.connect(dest);
         }
 
-        // --- 遊戲物件 ---
+        // 音階設定 (C大調)
+        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 0];
+        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#e056fd', '#7f8c8d'];
+        const NOTE_NAMES = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti', 'Do', '停'];
+        let currentNoteIndex = 0; // 預設揀 Do
+
+        // 生成音符選擇器按鈕
+        NOTE_NAMES.forEach((name, idx) => {
+            let btn = document.createElement('button');
+            btn.className = 'note-btn' + (idx === 0 ? ' selected' : '');
+            btn.innerText = name;
+            btn.style.color = SCALE_COLORS[idx];
+            btn.onclick = () => {
+                currentNoteIndex = idx;
+                document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            };
+            noteSelector.appendChild(btn);
+        });
+
+        function playNote(freq, color) {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            createSparks(ball.x, ball.y, color);
+            if (freq === 0) return; 
+
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            osc1.type = 'sine'; osc1.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc2.type = 'triangle'; osc2.frequency.setValueAtTime(freq * 2, audioCtx.currentTime); 
+            
+            const gain = audioCtx.createGain();
+            const osc2Gain = audioCtx.createGain();
+            osc2Gain.gain.value = 0.1; 
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8); 
+
+            osc1.connect(gain); osc2.connect(osc2Gain); osc2Gain.connect(gain);
+            gain.connect(audioCtx.destination); 
+            gain.connect(dest);
+            gain.connect(delayNode); 
+
+            osc1.start(); osc2.start();
+            osc1.stop(audioCtx.currentTime + 1.0); osc2.stop(audioCtx.currentTime + 1.0);
+        }
+
+        // --- 2. 遊戲物件與預設歌曲 ---
         let plates = [];
         let isPlaying = false;
-        // 【核心改動】加入 lastHitPlate 記錄啱啱撞過邊塊板
-        let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 10, lastHitPlate: null };
+        let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 8, lastHitPlate: null, trail: [], isDead: false, deadTimer: 0 };
         let sparks = [];
         
         let emitter = { x: 100, y: 30, w: 40, h: 20 };
@@ -121,19 +192,32 @@
 
         const GRAVITY = 0.25; 
         const PLATE_W = 80; 
-        const PLATE_H = 15;
+        const PLATE_H = 16;
 
-        function loadDefault() {
+        // 預設載入《小星星》完整版
+        function loadDefaultSong() {
             plates = [];
-            let startX = 100;
+            // 小星星簡譜：1 1 5 5 6 6 5 | 4 4 3 3 2 2 1 | 5 5 4 4 3 3 2 | 5 5 4 4 3 3 2 | 1 1 5 5 6 6 5 | 4 4 3 3 2 2 1
+            // 對應索引：0 0 4 4 5 5 4 | 3 3 2 2 1 1 0 | 4 4 3 3 2 2 1 | 4 4 3 3 2 2 1 | 0 0 4 4 5 5 4 | 3 3 2 2 1 1 0
+            const melody = [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0, 4, 4, 3, 3, 2, 2, 1, 4, 4, 3, 3, 2, 2, 1, 0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0];
+            
+            let startX = W / 2;
             let startY = 120;
-            let defaultSong = [0, 0, 4, 4, 5, 5, 4, 8]; 
-            for(let i=0; i<defaultSong.length; i++) {
+            
+            for(let i = 0; i < melody.length; i++) {
+                // 讓 X 座標左右交錯，形成階梯狀
+                let offsetX = (i % 2 === 0) ? -80 : 80;
+                // 如果連續同一個音，就強制換邊，避免疊埋
+                if (i > 0 && melody[i] === melody[i-1]) {
+                    offsetX = (plates[i-1].x > startX) ? -80 : 80;
+                }
+
                 plates.push({
-                    x: startX + (i%2 === 0 ? 0 : 80), 
-                    y: startY + i*90, 
-                    w: PLATE_W, h: PLATE_H, 
-                    noteIndex: defaultSong[i]
+                    x: startX + offsetX - PLATE_W/2, 
+                    y: startY + i * 60, 
+                    w: PLATE_W, 
+                    h: PLATE_H, 
+                    noteIndex: melody[i]
                 });
             }
             emitter.x = plates[0].x + PLATE_W / 2; 
@@ -141,17 +225,25 @@
             ball.lastHitPlate = null;
         }
 
+        // 載入分享連結或預設歌曲
         const urlParams = new URLSearchParams(window.location.search);
         const sharedData = urlParams.get('track');
         if (sharedData) {
-            try { plates = JSON.parse(decodeURIComponent(atob(sharedData))); } catch(e) { loadDefault(); }
-        } else { loadDefault(); }
+            try { 
+                let minified = JSON.parse(decodeURIComponent(atob(sharedData)));
+                plates = minified.map(p => ({ x: p[0], y: p[1], w: PLATE_W, h: PLATE_H, noteIndex: p[2] }));
+            } catch(e) { loadDefaultSong(); }
+        } else { 
+            // 等 W 加載完先載入預設歌曲
+            setTimeout(loadDefaultSong, 100); 
+        }
 
-        // --- 互動控制 ---
+        // --- 3. 互動控制 ---
         let dragPlate = null;
         let pressTimer = null;
         let isDraggingPlate = false;
         let startX, startY, initialX, initialY;
+        let hoverPos = null; 
 
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
@@ -162,8 +254,11 @@
 
         function handleDown(e) {
             if (e.cancelable) e.preventDefault();
+            initAudio(); 
+            
             const pos = getPos(e);
             
+            // 判斷係咪撳發射器
             if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
                 isDraggingEmitter = true;
                 return;
@@ -172,7 +267,7 @@
             let clickedPlate = null;
             for (let i = plates.length - 1; i >= 0; i--) {
                 let p = plates[i];
-                if (pos.x > p.x - 20 && pos.x < p.x + p.w + 20 && pos.y > p.y - 20 && pos.y < p.y + p.h + 20) {
+                if (pos.x > p.x - 15 && pos.x < p.x + p.w + 15 && pos.y > p.y - 15 && pos.y < p.y + p.h + 15) {
                     clickedPlate = p; break;
                 }
             }
@@ -181,30 +276,28 @@
                 pressTimer = setTimeout(() => {
                     plates = plates.filter(p => p !== clickedPlate);
                     pressTimer = null;
-                }, 800);
+                }, 600); 
                 
                 dragPlate = clickedPlate;
                 isDraggingPlate = false;
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                let idx = Math.floor(Math.random() * 9); 
+                // 新增鋼片 (使用當前選擇的音符)
                 let newPlate = {
-                    x: pos.x - PLATE_W/2, y: pos.y - PLATE_H/2,
-                    w: PLATE_W, h: PLATE_H, noteIndex: idx
+                    x: Math.max(0, Math.min(W - PLATE_W, pos.x - PLATE_W/2)), 
+                    y: Math.max(emitter.y + 60, Math.min(H - PLATE_H, pos.y - PLATE_H/2)),
+                    w: PLATE_W, h: PLATE_H, noteIndex: currentNoteIndex
                 };
                 plates.push(newPlate);
-                playPreviewNote(idx);
-
-                if (plates.length === 1 && !isPlaying) {
-                    ball.x = emitter.x; ball.y = emitter.y + 20;
-                }
+                playPreviewNote(currentNoteIndex);
             }
         }
 
         function handleMove(e) {
             if (e.cancelable) e.preventDefault();
             const pos = getPos(e);
+            hoverPos = pos;
 
             if (isDraggingEmitter) {
                 emitter.x = Math.max(20, Math.min(W - 20, pos.x));
@@ -220,18 +313,20 @@
                 clearTimeout(pressTimer);
             }
             if (isDraggingPlate) {
-                dragPlate.x = initialX + dx;
-                dragPlate.y = initialY + dy;
+                dragPlate.x = Math.max(0, Math.min(W - dragPlate.w, initialX + dx));
+                dragPlate.y = Math.max(emitter.y + 60, Math.min(H - dragPlate.h, initialY + dy));
             }
         }
 
         function handleUp(e) {
             if (isDraggingEmitter) { isDraggingEmitter = false; return; }
+            hoverPos = null;
             
             if (pressTimer) {
                 clearTimeout(pressTimer);
                 pressTimer = null;
                 if (!isDraggingPlate && dragPlate) {
+                    // 點擊切換下一個音符
                     dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 9;
                     playPreviewNote(dragPlate.noteIndex);
                 }
@@ -248,18 +343,22 @@
         window.addEventListener('touchend', handleUp);
 
         function playPreviewNote(idx) {
+            if (!audioCtx) initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (SCALE_FREQS[idx] === 0) return; 
-
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.type = 'sine'; osc.frequency.setValueAtTime(SCALE_FREQS[idx], audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        // --- 錄音與功能 ---
+        // --- 4. 錄音與分享 ---
+        let mediaRecorder, audioChunks = [], audioUrl = "";
+        let isRecording = false;
+
         function toggleRecord() {
+            if (!audioCtx) initAudio();
             if (!isRecording) {
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 audioChunks = []; downloadBtn.classList.remove('active'); downloadBtn.style.display = 'none';
@@ -288,11 +387,20 @@
             alert("音軌已下載！請去手機『檔案』搵返。");
         }
 
-        function clearAll() { if(confirm("確定清空？")) { plates = []; if(isPlaying) togglePlay(); } }
+        function clearAll() { 
+            if(confirm("確定清空？")) { 
+                plates = []; 
+                if(isPlaying) togglePlay(); 
+                ball.isDead = true;
+                ball.trail = [];
+                ball.x = emitter.x; ball.y = emitter.y + 20;
+            } 
+        }
         
         function shareTrack() {
             if (plates.length === 0) return alert("請先放置鋼片！");
-            let encoded = btoa(encodeURIComponent(JSON.stringify(plates)));
+            let minified = plates.map(p => [Math.round(p.x), Math.round(p.y), p.noteIndex]);
+            let encoded = btoa(encodeURIComponent(JSON.stringify(minified)));
             let url = window.location.href.split('?')[0] + '?track=' + encoded;
             navigator.clipboard.writeText(url).then(() => alert("已複製分享連結！")).catch(() => prompt("複製連結：", url));
         }
@@ -301,43 +409,66 @@
             isPlaying = !isPlaying;
             if (isPlaying) {
                 playBtn.innerText = "⏸ 暫停"; playBtn.classList.add('active');
+                if (!audioCtx) initAudio();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 
                 if (plates.length > 0) {
+                    // 重新搵最高嗰塊板做起點
                     let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
                     emitter.x = topPlate.x + topPlate.w / 2;
                 }
                 
                 ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
-                ball.lastHitPlate = null; // 重設
+                ball.lastHitPlate = null;
+                ball.trail = [];
+                ball.isDead = false;
             } else {
                 playBtn.innerText = "▶ 播放"; playBtn.classList.remove('active');
             }
         }
 
-        // --- 物理與碰撞 ---
+        // --- 5. 物理與碰撞優化 ---
         function createSparks(x, y, color) {
-            for(let i=0; i<10; i++) sparks.push({ x: x, y: y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6 - 2, life: 1, color: color });
+            for(let i=0; i<15; i++) sparks.push({ 
+                x: x, y: y, 
+                vx: (Math.random() - 0.5) * 8, 
+                vy: (Math.random() - 0.5) * 8 - 2, 
+                life: 1, color: color,
+                size: Math.random() * 3 + 1
+            });
         }
 
         function update() {
             for(let i = sparks.length - 1; i >= 0; i--) {
-                let s = sparks[i]; s.x += s.vx; s.y += s.vy; s.vy += 0.2; s.life -= 0.05;
+                let s = sparks[i]; 
+                s.x += s.vx; s.y += s.vy; s.vy += 0.2; s.life -= 0.04;
                 if(s.life <= 0) sparks.splice(i, 1);
             }
 
             if (!isPlaying) return;
 
+            if (ball.isDead) {
+                if (Date.now() - ball.deadTimer > 1000) {
+                    ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
+                    ball.lastHitPlate = null; 
+                    ball.trail = [];
+                    ball.isDead = false;
+                } else {
+                    return; 
+                }
+            }
+
             ball.vy += GRAVITY;
             ball.x += ball.vx;
             ball.y += ball.vy;
             
+            ball.trail.push({x: ball.x, y: ball.y});
+            if(ball.trail.length > 10) ball.trail.shift();
+            
             if (ball.x < 10) { ball.x = 10; ball.vx *= -0.8; }
             if (ball.x > W - 10) { ball.x = W - 10; ball.vx *= -0.8; }
 
-            // 鋼片碰撞檢測
             for (let p of plates) {
-                // 【核心改動】如果呢塊板係啱啱撞過嗰塊，直接跳過，防止連環彈跳
                 if (p === ball.lastHitPlate) continue; 
 
                 if (ball.vy > 0 && 
@@ -347,10 +478,8 @@
                     if (ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.w) {
                         
                         ball.y = p.y - ball.radius;
-                        // 【核心改動】記錄呢塊板做 lastHitPlate
                         ball.lastHitPlate = p; 
                         
-                        // 【完美追蹤魔法】
                         let nextPlate = null;
                         let minDy = Infinity;
                         
@@ -365,14 +494,14 @@
                             }
                         }
 
+                        // 拋物線計算 (令佢一定飛到落下一塊板)
                         if (nextPlate) {
                             let targetX = nextPlate.x + nextPlate.w / 2;
                             let targetY = nextPlate.y;
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            // 慢速飛行 (t = 45幀)
-                            let t = 45;
+                            let t = 35; // 固定飛行時間，令節奏感更好
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
                             
@@ -388,54 +517,108 @@
             }
 
             if (ball.y > H + 50) {
-                setTimeout(() => {
-                    if(isPlaying) {
-                        ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
-                        ball.lastHitPlate = null; // 重生時清空記錄
-                    }
-                }, 1000);
-                ball.y = H + 100; 
+                ball.isDead = true;
+                ball.deadTimer = Date.now();
                 ball.vx = 0; ball.vy = 0;
             }
         }
 
+        // --- 6. 渲染繪製 ---
         function draw() {
-            ctx.fillStyle = '#050510'; ctx.fillRect(0, 0, W, H);
+            ctx.clearRect(0, 0, W, H);
+            let bgGrd = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, Math.max(W,H));
+            bgGrd.addColorStop(0, '#0a0a1a');
+            bgGrd.addColorStop(1, '#050510');
+            ctx.fillStyle = bgGrd; 
+            ctx.fillRect(0, 0, W, H);
+            
             ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)'; ctx.lineWidth = 1;
             for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
             for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
+            // 發射器
             ctx.fillStyle = '#111';
             ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
+            ctx.shadowBlur = 10; ctx.shadowColor = '#ff4757';
             ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
+            ctx.shadowBlur = 0;
             
             ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)';
             ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(emitter.x, emitter.y + emitter.h); ctx.lineTo(emitter.x, H); ctx.stroke();
             ctx.setLineDash([]);
 
+            // 繪製鋼片
             for (let p of plates) {
                 let color = SCALE_COLORS[p.noteIndex];
-                ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fillStyle = color;
-                ctx.fillRect(p.x, p.y, p.w, p.h);
-                ctx.shadowBlur = 0; ctx.fillStyle = '#fff';
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(p.x + 2, p.y + 2, p.w, p.h);
+
+                let grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+                grd.addColorStop(0, color);
+                grd.addColorStop(1, 'rgba(0,0,0,0.5)');
+                
+                ctx.shadowBlur = 15; ctx.shadowColor = color; 
+                ctx.fillStyle = grd;
+                
+                ctx.beginPath();
+                if(ctx.roundRect) ctx.roundRect(p.x, p.y, p.w, p.h, 5);
+                else ctx.rect(p.x, p.y, p.w, p.h);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0; 
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = '#fff';
                 ctx.font = 'bold 12px "Orbitron", sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 12);
+                ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 13);
             }
 
+            // 預覽
+            if(hoverPos && !dragPlate && !isDraggingEmitter && hoverPos.y > emitter.y + 60) {
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = SCALE_COLORS[currentNoteIndex];
+                ctx.beginPath();
+                if(ctx.roundRect) ctx.roundRect(hoverPos.x - PLATE_W/2, hoverPos.y - PLATE_H/2, PLATE_W, PLATE_H, 5);
+                else ctx.rect(hoverPos.x - PLATE_W/2, hoverPos.y - PLATE_H/2, PLATE_W, PLATE_H);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+
+            // 火花
             for(let s of sparks) {
                 ctx.globalAlpha = s.life; ctx.fillStyle = s.color;
-                ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
-            if (ball.y < H) {
+            // 鐵珠尾跡
+            for(let i=0; i<ball.trail.length; i++) {
+                let t = ball.trail[i];
+                ctx.globalAlpha = (i / ball.trail.length) * 0.5;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(t.x, t.y, ball.radius * (i/ball.trail.length), 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // 鐵珠
+            if (!ball.isDead && ball.y < H) {
                 ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+                
+                ctx.beginPath(); ctx.arc(ball.x - 2, ball.y - 2, ball.radius * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
             }
         }
 
-        function loop() { update(); draw(); requestAnimationFrame(loop); }
+        // --- 7. 主循環 ---
+        function loop() { 
+            update(); 
+            draw(); 
+            requestAnimationFrame(loop); 
+        }
         loop();
     </script>
 </body>
