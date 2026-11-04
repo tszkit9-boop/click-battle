@@ -101,7 +101,6 @@
         .game-card h2 { margin: 0; font-size: 22px; z-index: 2; transition: all 0.3s; }
         .game-card p { color: #a4b0be; font-size: 12px; z-index: 2; margin-top: 10px; transition: all 0.3s; text-align: center; padding: 0 10px; }
         
-        /* 🔥 總遊玩人數標籤 (右上角) */
         .hot-badge {
             position: absolute; top: 10px; right: 10px;
             background: rgba(255, 71, 87, 0.9); color: #fff;
@@ -111,7 +110,6 @@
             z-index: 10; display: none; pointer-events: none;
         }
 
-        /* 🟢 即時在線人數標籤 (左上角) */
         .online-badge {
             position: absolute; top: 10px; left: 10px;
             background: rgba(46, 204, 113, 0.9); color: #fff;
@@ -123,77 +121,46 @@
 
         .card-grudge:hover { border-color: #ff4757; box-shadow: 0 0 30px rgba(255, 71, 87, 0.6); transform: translateY(-10px); }
         .card-grudge h2 { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
-        
         .card-line:hover { border-color: #66fcf1; box-shadow: 0 0 30px rgba(102, 252, 241, 0.6); transform: translateY(-10px); }
         .card-line h2 { color: #66fcf1; text-shadow: 0 0 10px #66fcf1; }
-
         .card-music:hover { border-color: #e056fd; box-shadow: 0 0 30px rgba(224, 86, 253, 0.6); transform: translateY(-10px); }
         .card-music h2 { color: #e056fd; text-shadow: 0 0 10px #e056fd; }
-
         .card-maze:hover { border-color: #2ed573; box-shadow: 0 0 30px rgba(46, 213, 115, 0.6); transform: translateY(-10px); }
         .card-maze h2 { color: #2ed573; text-shadow: 0 0 10px #2ed573; }
-
         .card-monopoly:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
         .card-monopoly h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
-
         .card-miner:hover { border-color: #b87333; box-shadow: 0 0 30px rgba(184, 115, 51, 0.6); transform: translateY(-10px); }
         .card-miner h2 { color: #b87333; text-shadow: 0 0 10px #b87333; }
-
         .card-survivor:hover { border-color: #c084fc; box-shadow: 0 0 30px rgba(192, 132, 252, 0.6); transform: translateY(-10px); }
         .card-survivor h2 { color: #c084fc; text-shadow: 0 0 10px #c084fc; }
-
         .card-escape:hover { border-color: #00d2d3; box-shadow: 0 0 30px rgba(0, 210, 211, 0.6); transform: translateY(-10px); }
         .card-escape h2 { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
-
         .card-trader:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
         .card-trader h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
-
         .card-hole:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.6); transform: translateY(-10px); }
         .card-hole h2 { color: #9b59b6; text-shadow: 0 0 10px #9b59b6; }
-
         .card-slave:hover { border-color: #e67e22; box-shadow: 0 0 30px rgba(230, 126, 34, 0.6); transform: translateY(-10px); }
         .card-slave h2 { color: #e67e22; text-shadow: 0 0 10px #e67e22; }
-
         .card-gingerbread:hover { border-color: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.6); transform: translateY(-10px); }
         .card-gingerbread h2 { color: #e74c3c; text-shadow: 0 0 10px #e74c3c; }
-
         .card-zen:hover { border-color: #a29bfe; box-shadow: 0 0 30px rgba(162, 155, 254, 0.6); transform: translateY(-10px); }
         .card-zen h2 { color: #a29bfe; text-shadow: 0 0 10px #a29bfe; }
-
         .card-carpet:hover { border-color: #00cec9; box-shadow: 0 0 30px rgba(0, 206, 201, 0.6); transform: translateY(-10px); }
         .card-carpet h2 { color: #00cec9; text-shadow: 0 0 10px #00cec9; }
-
         .card-loan { border-color: rgba(241, 196, 15, 0.3); }
         .card-loan:hover { border-color: #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.6); transform: translateY(-10px); }
         .card-loan h2 { color: #f1c40f; text-shadow: 0 0 10px #f1c40f; }
-
         .card-judge { border-color: rgba(142, 68, 173, 0.3); }
         .card-judge:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.8); transform: translateY(-10px); }
         .card-judge h2 { color: #d2b4de; text-shadow: 0 0 10px #9b59b6, 0 0 20px #9b59b6; }
 
-        /* ★ 九龍城寨保衛戰 — 霓虹紫金塔防 ★ */
         .card-klt { border-color: rgba(199, 125, 255, 0.4); }
-        .card-klt:hover {
-            border-color: #c77dff;
-            box-shadow: 0 0 30px rgba(199, 125, 255, 0.7), 0 0 60px rgba(255, 209, 102, 0.25);
-            transform: translateY(-10px);
-        }
-        .card-klt h2 {
-            color: #c77dff;
-            text-shadow: 0 0 10px #c77dff, 0 0 20px #ffd166;
-        }
+        .card-klt:hover { border-color: #c77dff; box-shadow: 0 0 30px rgba(199, 125, 255, 0.7), 0 0 60px rgba(255, 209, 102, 0.25); transform: translateY(-10px); }
+        .card-klt h2 { color: #c77dff; text-shadow: 0 0 10px #c77dff, 0 0 20px #ffd166; }
 
-        /* ★ 新增：末日避難所 — 輻射廢土風 ★ */
         .card-doomsday { border-color: rgba(46, 204, 113, 0.3); }
-        .card-doomsday:hover {
-            border-color: #2ecc71;
-            box-shadow: 0 0 30px rgba(46, 204, 113, 0.6), inset 0 0 20px rgba(46, 204, 113, 0.2);
-            transform: translateY(-10px);
-        }
-        .card-doomsday h2 {
-            color: #2ecc71;
-            text-shadow: 0 0 10px #2ecc71, 0 0 20px #f1c40f;
-        }
+        .card-doomsday:hover { border-color: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.6), inset 0 0 20px rgba(46, 204, 113, 0.2); transform: translateY(-10px); }
+        .card-doomsday h2 { color: #2ecc71; text-shadow: 0 0 10px #2ecc71, 0 0 20px #f1c40f; }
 
         .game-card::before {
             content: ''; position: absolute; top: -50%; left: -50%;
@@ -234,10 +201,7 @@
         }
         .close-modal:active { background: #555; }
 
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -265,25 +229,18 @@
             <button class="tag-btn" onclick="setCategory('hardcore', this)">硬核</button>
         </div>
 
-        <button class="rank-btn-main" onclick="openLeaderboard()">
-            🏆 全站成就排行榜
-        </button>
+        <button class="rank-btn-main" onclick="openLeaderboard()">🏆 全站成就排行榜</button>
     </div>
 
     <div class="games-container" id="games-container">
-        <!-- ★ 模擬：末日避難所 ★ -->
         <a href="./doomsday-shelter/" class="game-card card-doomsday" data-category="sim">
             <h2>末日避難所</h2>
             <p>3D 輻射生存！分配人手、抵抗酸雨、覺醒異能！</p>
         </a>
-
-        <!-- ★ 主打：九龍城寨保衛戰（策略） ★ -->
         <a href="./klt-defense/" class="game-card card-klt" data-category="strategy">
             <h2>九龍城寨保衛戰</h2>
             <p>霓虹塔防！30 級塔、15 英雄、科研樹、城堡養成！擋住收數佬同地產霸權！</p>
         </a>
-
-        <!-- 動作 -->
         <a href="./black-hole/" class="game-card card-hole" data-category="action">
             <h2>黑洞吞噬</h2>
             <p>引力爆發、Boss 追擊！由微塵進化成宇宙巨獸！</p>
@@ -296,8 +253,6 @@
             <h2>一筆定生死</h2>
             <p>畫一條完美光線，避開致命陷阱</p>
         </a>
-        
-        <!-- 休閒 -->
         <a href="./zen-reliever/" class="game-card card-zen" data-category="casual">
             <h2>無限減壓艙</h2>
             <p>氣泡紙、星塵引力、療癒琴鍵！一撳即時放鬆！</p>
@@ -310,8 +265,6 @@
             <h2>極致洗地毯</h2>
             <p>吸塵、噴泡、刷洗！挑戰無限關卡，成為洗地王！</p>
         </a>
-
-        <!-- 策略 -->
         <a href="./cyber-trader/" class="game-card card-trader" data-category="strategy">
             <h2>賽博股神</h2>
             <p>做多、做空、100倍槓桿！一撳定生死！</p>
@@ -328,8 +281,6 @@
             <h2>賽博密室</h2>
             <p>20 關極限挑戰！解謎、逃生，對抗恐怖幻覺</p>
         </a>
-
-        <!-- 模擬 -->
         <a href="./office-slave/" class="game-card card-slave" data-category="sim">
             <h2>社畜人生</h2>
             <p>由見工到退休，體驗打工仔嘅血淚辛酸史</p>
@@ -338,8 +289,6 @@
             <h2>薑餅人建屋</h2>
             <p>親手畫出薑餅人，疊出最高嘅聖誕大廈！</p>
         </a>
-
-        <!-- 硬核 -->
         <a href="./time-loan-shark/" class="game-card card-loan" data-category="hardcore">
             <h2>時間高利貸</h2>
             <p>借時間打怪，但利息會令你加速死亡！</p>
@@ -358,303 +307,153 @@
         </a>
     </div>
 
-    <!-- 排行榜彈窗 -->
     <div id="leaderboard-modal" class="modal">
         <div class="modal-box">
             <h2>🏆 全站成就排行榜</h2>
-            <div id="leaderboard-list">
-                <!-- 動態生成 -->
-            </div>
+            <div id="leaderboard-list"></div>
             <button class="close-modal" onclick="closeLeaderboard()">關閉</button>
         </div>
     </div>
 
-    <!-- 🔥 引入 Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // ==========================================
-    // 🔥 Firebase 初始化
-    // ==========================================
     const firebaseConfig = {
         databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
     
     let db = null;
     try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.database();
-    } catch (e) {
-        console.warn("Firebase 初始化失敗", e);
-    }
+    } catch (e) { console.warn("Firebase 初始化失敗", e); }
 
-    // ==========================================
-    // 🔥 總遊玩次數統計
-    // ==========================================
+    // 🔥 總遊玩次數點擊 +1
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', function(e) {
             if (!db) return;
             let gameId = this.getAttribute('href').replace('./', '').replace('/', '');
             if (!gameId) return;
-
-            let gameRef = db.ref('game_stats/' + gameId);
-            gameRef.transaction(function(currentCount) {
-                return (currentCount || 0) + 1;
-            });
+            db.ref('game_stats/' + gameId).transaction(c => (c || 0) + 1);
         });
     });
 
     if (db) {
+        // 🔥 讀取總人數
         db.ref('game_stats').on('value', (snapshot) => {
-            const stats = snapshot.val();
-            if (!stats) return;
-
+            const stats = snapshot.val() || {};
             document.querySelectorAll('.game-card').forEach(card => {
                 let gameId = card.getAttribute('href').replace('./', '').replace('/', '');
                 let count = stats[gameId] || 0;
-                
                 let badge = card.querySelector('.hot-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'hot-badge';
-                    card.appendChild(badge);
-                }
-
-                if (count > 0) {
-                    badge.innerText = `🔥 ${count} 人玩過`;
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
+                if (!badge) { badge = document.createElement('div'); badge.className = 'hot-badge'; card.appendChild(badge); }
+                if (count > 0) { badge.innerText = `🔥 ${count} 人玩過`; badge.style.display = 'block'; } else { badge.style.display = 'none'; }
             });
         });
 
-        // ==========================================
-        // 🟢 即時在線人數統計
-        // ==========================================
+        // 🟢 讀取即時在線人數
         db.ref('online_status').on('value', (snapshot) => {
             const onlineData = snapshot.val() || {};
-            
             document.querySelectorAll('.game-card').forEach(card => {
                 let gameId = card.getAttribute('href').replace('./', '').replace('/', '');
                 let onlineCount = onlineData[gameId] ? Object.keys(onlineData[gameId]).length : 0;
-                
                 let badge = card.querySelector('.online-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'online-badge';
-                    card.appendChild(badge);
-                }
-
-                if (onlineCount > 0) {
-                    badge.innerText = `🟢 ${onlineCount} 人正在玩`;
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
+                if (!badge) { badge = document.createElement('div'); badge.className = 'online-badge'; card.appendChild(badge); }
+                if (onlineCount > 0) { badge.innerText = `🟢 ${onlineCount} 人正在玩`; badge.style.display = 'block'; } else { badge.style.display = 'none'; }
             });
         });
     }
 
-    // ==========================================
-    // 搜尋與分類邏輯
-    // ==========================================
+    // 搜尋與分類
     let currentCategory = 'all';
-
     function setCategory(cat, btn) {
         currentCategory = cat;
         document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         filterGames();
     }
-
     function filterGames() {
         let keyword = document.getElementById('search-input').value.toLowerCase();
-        let cards = document.querySelectorAll('.game-card');
-
-        cards.forEach(card => {
+        document.querySelectorAll('.game-card').forEach(card => {
             let title = card.querySelector('h2').innerText.toLowerCase();
             let desc = card.querySelector('p').innerText.toLowerCase();
             let cat = card.getAttribute('data-category');
-            
-            let matchSearch = title.includes(keyword) || desc.includes(keyword);
-            let matchCat = (currentCategory === 'all') || (cat === currentCategory);
-
-            if (matchSearch && matchCat) {
-                card.style.display = 'flex';
-                card.style.animation = 'popIn 0.3s ease';
-            } else {
-                card.style.display = 'none';
-            }
+            if ((title.includes(keyword) || desc.includes(keyword)) && (currentCategory === 'all' || cat === currentCategory)) {
+                card.style.display = 'flex'; card.style.animation = 'popIn 0.3s ease';
+            } else { card.style.display = 'none'; }
         });
     }
 
-    // ==========================================
-    // 全站成就排行榜邏輯 (LocalStorage)
-    // ==========================================
+    // 排行榜
     function openLeaderboard() {
         let list = document.getElementById('leaderboard-list');
         list.innerHTML = '';
-        
         let hasData = false;
 
-        // 1. 末日避難所
         try {
             let dsData = JSON.parse(localStorage.getItem('doomsday_record')) || null;
             if (dsData) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #2ecc71;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">☢️</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">末日避難所</span>
-                                <span style="font-size:12px; color:#aaa;">存活 ${dsData.days || 0} 天</span>
-                            </div>
-                        </div>
-                        <div class="rank-score" style="color:#2ecc71;">${dsData.pop || 0} 人</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item" style="border-left-color: #2ecc71;"><div style="display:flex; align-items:center;"><span class="rank-icon">☢️</span><div class="rank-info"><span class="rank-game-name">末日避難所</span><span style="font-size:12px; color:#aaa;">存活 ${dsData.days || 0} 天</span></div></div><div class="rank-score" style="color:#2ecc71;">${dsData.pop || 0} 人</div></div>`;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 2. 極致洗地毯
         try {
             let carpetData = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
             if (carpetData.length > 0) {
                 carpetData.sort((a, b) => b.level - a.level || b.score - a.score);
                 let top = carpetData[0];
-                list.innerHTML += `
-                    <div class="rank-item">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🧹</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">極致洗地毯</span>
-                                <span style="font-size:12px; color:#aaa;">最高 Lv.${top.level}</span>
-                            </div>
-                        </div>
-                        <div class="rank-score">${top.score} 分</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item"><div style="display:flex; align-items:center;"><span class="rank-icon">🧹</span><div class="rank-info"><span class="rank-game-name">極致洗地毯</span><span style="font-size:12px; color:#aaa;">最高 Lv.${top.level}</span></div></div><div class="rank-score">${top.score} 分</div></div>`;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 3. 時間高利貸
         try {
             let rate = parseFloat(localStorage.getItem('loan_best_rate')) || 1.0;
             let combo = parseInt(localStorage.getItem('loan_best_combo')) || 0;
             if (rate > 1.0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #f1c40f;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">💸</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">時間高利貸</span>
-                                <span style="font-size:12px; color:#aaa;">最高連擊 ${combo}</span>
-                            </div>
-                        </div>
-                        <div class="rank-score" style="color:#e74c3c;">${rate.toFixed(1)}x</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item" style="border-left-color: #f1c40f;"><div style="display:flex; align-items:center;"><span class="rank-icon">💸</span><div class="rank-info"><span class="rank-game-name">時間高利貸</span><span style="font-size:12px; color:#aaa;">最高連擊 ${combo}</span></div></div><div class="rank-score" style="color:#e74c3c;">${rate.toFixed(1)}x</div></div>`;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 4. 賽博判官
         try {
             let record = parseInt(localStorage.getItem('judge_record')) || 0;
             if (record > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #9b59b6;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🧑‍⚖️</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">賽博判官</span>
-                                <span style="font-size:12px; color:#aaa;">最高連續判案</span>
-                            </div>
-                        </div>
-                        <div class="rank-score" style="color:#9b59b6;">${record} 宗</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item" style="border-left-color: #9b59b6;"><div style="display:flex; align-items:center;"><span class="rank-icon">🧑‍⚖️</span><div class="rank-info"><span class="rank-game-name">賽博判官</span><span style="font-size:12px; color:#aaa;">最高連續判案</span></div></div><div class="rank-score" style="color:#9b59b6;">${record} 宗</div></div>`;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 5. 深淵礦工
         try {
             let minerData = JSON.parse(localStorage.getItem('deepMinerSave')) || {};
             if (minerData.maxDepthRecord > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #b87333;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">⛏️</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">深淵礦工</span>
-                                <span style="font-size:12px; color:#aaa;">最深挖掘紀錄</span>
-                            </div>
-                        </div>
-                        <div class="rank-score" style="color:#b87333;">${minerData.maxDepthRecord}m</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item" style="border-left-color: #b87333;"><div style="display:flex; align-items:center;"><span class="rank-icon">⛏️</span><div class="rank-info"><span class="rank-game-name">深淵礦工</span><span style="font-size:12px; color:#aaa;">最深挖掘紀錄</span></div></div><div class="rank-score" style="color:#b87333;">${minerData.maxDepthRecord}m</div></div>`;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 6. 九龍城寨保衛戰
         try {
             let kltLB = JSON.parse(localStorage.getItem('klt_leaderboard')) || [];
             let kltWave = parseInt(localStorage.getItem('klt_wave_record')) || 0;
             if (kltLB.length > 0) {
                 kltLB.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.wave || 0) - (a.wave || 0));
                 let top = kltLB[0];
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #c77dff;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🏢</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">九龍城寨保衛戰</span>
-                                <span style="font-size:12px; color:#aaa;">守住 ${top.wave || 0} 波 · ${top.name || '無名氏'}</span>
-                            </div>
-                        </div>
-                        <div class="rank-score" style="color:#c77dff;">${top.score || 0} 分</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item" style="border-left-color: #c77dff;"><div style="display:flex; align-items:center;"><span class="rank-icon">🏢</span><div class="rank-info"><span class="rank-game-name">九龍城寨保衛戰</span><span style="font-size:12px; color:#aaa;">守住 ${top.wave || 0} 波 · ${top.name || '無名氏'}</span></div></div><div class="rank-score" style="color:#c77dff;">${top.score || 0} 分</div></div>`;
                 hasData = true;
             } else if (kltWave > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #c77dff;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🏢</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">九龍城寨保衛戰</span>
-                                <span style="font-size:12px; color:#aaa;">最高波數紀錄</span>
-                            </div>
-                        </div>
-                        <div class="rank-score" style="color:#c77dff;">${kltWave} 波</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="rank-item" style="border-left-color: #c77dff;"><div style="display:flex; align-items:center;"><span class="rank-icon">🏢</span><div class="rank-info"><span class="rank-game-name">九龍城寨保衛戰</span><span style="font-size:12px; color:#aaa;">最高波數紀錄</span></div></div><div class="rank-score" style="color:#c77dff;">${kltWave} 波</div></div>`;
                 hasData = true;
             }
         } catch(e) {}
 
-        if (!hasData) {
-            list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">暫時未有任何紀錄，快啲去玩下啦！</div>';
-        }
-
+        if (!hasData) list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">暫時未有任何紀錄，快啲去玩下啦！</div>';
         document.getElementById('leaderboard-modal').classList.add('active');
     }
 
-    function closeLeaderboard() {
-        document.getElementById('leaderboard-modal').classList.remove('active');
-    }
-
-    document.getElementById('leaderboard-modal').addEventListener('click', function(e) {
-        if (e.target === this) closeLeaderboard();
-    });
+    function closeLeaderboard() { document.getElementById('leaderboard-modal').classList.remove('active'); }
+    document.getElementById('leaderboard-modal').addEventListener('click', function(e) { if (e.target === this) closeLeaderboard(); });
 </script>
 </body>
 </html>
