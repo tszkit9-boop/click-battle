@@ -7,39 +7,45 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
         body {
-            margin: 0; padding: 0; background-color: #050510; color: #fff;
+            margin: 0; padding: 0; background-color: #020205; color: #fff;
             font-family: 'Orbitron', 'PingFang HK', sans-serif; overflow: hidden;
             display: flex; flex-direction: column; height: 100dvh; height: 100vh;
             touch-action: none; user-select: none; -webkit-user-select: none;
         }
+        /* 頂部懸浮控制台 (玻璃質感) */
         #toolbar {
-            height: auto; min-height: 60px; background: rgba(17, 17, 17, 0.95); display: flex; align-items: center;
-            justify-content: space-between; padding: 5px 15px; z-index: 10;
-            border-bottom: 2px solid #00d2d3; box-shadow: 0 0 20px rgba(0,210,211,0.4);
-            flex-wrap: wrap; backdrop-filter: blur(10px);
+            height: auto; min-height: 60px; background: rgba(15, 15, 25, 0.7); display: flex; align-items: center;
+            justify-content: space-between; padding: 8px 20px; z-index: 10;
+            border-bottom: 1px solid rgba(0, 210, 211, 0.3); box-shadow: 0 5px 25px rgba(0,0,0,0.8);
+            flex-wrap: wrap; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         }
-        .btn-group { display: flex; gap: 8px; margin: 5px 0; align-items: center; flex-wrap: wrap; }
+        .btn-group { display: flex; gap: 12px; margin: 5px 0; align-items: center; flex-wrap: wrap; }
         button, .back-btn {
-            background: transparent; color: #00d2d3; border: 2px solid #00d2d3;
-            padding: 6px 12px; font-family: 'Orbitron', sans-serif; font-weight: bold;
-            border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.05); color: #00d2d3; border: 1px solid #00d2d3;
+            padding: 8px 16px; font-family: 'Orbitron', sans-serif; font-weight: bold;
+            border-radius: 10px; cursor: pointer; font-size: 13px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
             box-shadow: 0 0 10px rgba(0,210,211,0.1);
         }
-        button:hover, .back-btn:hover { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
-        button.active { background: #00d2d3; color: #000; box-shadow: 0 0 15px #00d2d3; }
+        button:hover, .back-btn:hover { 
+            background: #00d2d3; color: #000; 
+            box-shadow: 0 0 20px #00d2d3, inset 0 0 10px rgba(255,255,255,0.5); 
+            transform: translateY(-2px);
+        }
+        button.active { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
         button.danger { color: #ff4757; border-color: #ff4757; box-shadow: 0 0 10px rgba(255,71,87,0.1); }
         button.danger:hover { background: #ff4757; color: #000; box-shadow: 0 0 20px #ff4757; }
-        button.magic { color: #feca57; border-color: #feca57; box-shadow: 0 0 10px rgba(254,202,87,0.2); }
+        button.magic { color: #feca57; border-color: #feca57; box-shadow: 0 0 10px rgba(254,202,87,0.1); }
         button.magic:hover { background: #feca57; color: #000; box-shadow: 0 0 20px #feca57; }
         
-        #canvas-container { flex: 1; position: relative; cursor: crosshair; background: #050510; overflow: hidden; }
+        #canvas-container { flex: 1; position: relative; cursor: crosshair; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; }
         
         #instructions {
-            position: absolute; bottom: 15px; width: 100%; text-align: center;
-            color: rgba(255,255,255,0.6); font-size: 12px; pointer-events: none;
-            line-height: 1.6; text-shadow: 0 2px 4px #000; z-index: 5;
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            color: rgba(255,255,255,0.5); font-size: 13px; pointer-events: none;
+            line-height: 1.8; text-shadow: 0 2px 5px #000; z-index: 5;
+            font-family: 'Noto Sans HK', sans-serif; font-weight: bold; letter-spacing: 1px;
         }
     </style>
 </head>
@@ -159,18 +165,25 @@
         // --- 2. 遊戲物件 ---
         let plates = [];
         let isPlaying = false;
-        let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 8, targetPlate: null, trail: [], isDead: false, deadTimer: 0 };
-        let sparks = [];
         
-        let emitter = { x: 100, y: 30, w: 40, h: 20 };
+        // 鐵珠狀態
+        let ball = { x: 100, y: 50, radius: 8, trail: [], isDead: false, deadTimer: 0 };
+        let sparkArr = [];
+        
+        let emitter = { x: 100, y: 30, w: 50, h: 20 };
         let isDraggingEmitter = false;
 
-        const GRAVITY = 0.15; 
         const PLATE_W = 80; 
-        const PLATE_H = 16;
+        const PLATE_H = 22;
         let cameraY = 0;
 
-        // --- 🎵 核心：簡譜解析器 (單向斜線下降) ---
+        // 動畫狀態機
+        let currentIdx = 0;
+        let jumpT = 0; // 0 到 1
+        let startX = 0, startY = 0, endX = 0, endY = 0;
+        let jumpSpeed = 0.04; // 飛行速度
+
+        // --- 🎵 核心：簡譜解析器 (蛇形矩陣排版) ---
         function buildTrackFromString(scoreStr) {
             plates = [];
             if (isPlaying) togglePlay();
@@ -181,10 +194,9 @@
             
             if (tokens.length === 0) return alert("請輸入有效曲譜！");
 
-            let currentX = 50;
-            let currentY = 100;
-            const X_SPACING = 80; // 每次向右 80px
-            const Y_SPACING = 60; // 每次向下 60px
+            const cols = 4; // 每行固定 4 粒音 (適合手機畫面)
+            const colWidth = W / cols;
+            const rowHeight = 100; // 行距
 
             tokens.forEach((token, i) => {
                 let extraDelay = 0;
@@ -202,28 +214,29 @@
                 let noteIdx = parseInt(noteChar);
                 if (isNaN(noteIdx) || noteIdx < 0 || noteIdx > 6) return;
 
+                let row = Math.floor(i / cols);
+                let col = i % cols;
+                
+                // 蛇形走位：雙數行由左至右，單數行由右至左
+                if (row % 2 !== 0) {
+                    col = cols - 1 - col;
+                }
+
+                let xPos = (col * colWidth) + (colWidth - PLATE_W) / 2;
+                let yPos = 120 + row * rowHeight + extraDelay;
+
                 plates.push({
-                    x: currentX,
-                    y: currentY,
+                    x: xPos,
+                    y: yPos,
                     w: PLATE_W,
                     h: PLATE_H,
                     noteIndex: noteIdx,
                     octave: octave
                 });
-
-                // 向右下移動
-                currentX += X_SPACING;
-                currentY += Y_SPACING + extraDelay;
-                
-                // 如果超出右邊界，就返去左邊，並增加少少 Y 避免重疊
-                if (currentX > W - PLATE_W - 20) {
-                    currentX = 40;
-                    currentY += 60; 
-                }
             });
 
             emitter.x = plates[0].x + PLATE_W / 2;
-            emitter.y = plates[0].y - 40;
+            emitter.y = plates[0].y - 60;
             ball.x = emitter.x; ball.y = emitter.y + 20;
             
             setTimeout(togglePlay, 100); 
@@ -256,7 +269,7 @@
         let dragPlate = null;
         let pressTimer = null;
         let isDraggingPlate = false;
-        let startX, startY, initialX, initialY;
+        let startMouseX, startMouseY, initialX, initialY;
         let hoverPos = null; 
 
         function getPos(e) {
@@ -272,7 +285,7 @@
             
             const pos = getPos(e);
             
-            if (pos.y < emitter.y + 40 && pos.y > emitter.y - 40 && Math.abs(pos.x - emitter.x) < 40) {
+            if (pos.y < emitter.y + 50 && pos.y > emitter.y - 50 && Math.abs(pos.x - emitter.x) < 50) {
                 isDraggingEmitter = true;
                 return;
             }
@@ -293,7 +306,7 @@
                 
                 dragPlate = clickedPlate;
                 isDraggingPlate = false;
-                startX = pos.x; startY = pos.y;
+                startMouseX = pos.x; startMouseY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
                 let newPlate = {
@@ -320,8 +333,8 @@
             }
 
             if (!dragPlate) return;
-            let dx = pos.x - startX;
-            let dy = pos.y - startY;
+            let dx = pos.x - startMouseX;
+            let dy = pos.y - startMouseY;
             if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
                 isDraggingPlate = true;
                 clearTimeout(pressTimer);
@@ -376,14 +389,21 @@
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 
                 if (plates.length > 0) {
-                    let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
-                    emitter.x = topPlate.x + topPlate.w / 2;
-                    emitter.y = topPlate.y - 40;
-                    cameraY = Math.max(0, emitter.y - H/2);
-                    ball.targetPlate = topPlate;
+                    currentIdx = 0;
+                    jumpT = 0;
+                    ball.x = plates[0].x + plates[0].w/2;
+                    ball.y = plates[0].y - ball.radius;
+                    
+                    cameraY = Math.max(0, ball.y - H/2);
+                    
+                    if (plates.length > 1) {
+                        startX = ball.x;
+                        startY = ball.y;
+                        endX = plates[1].x + plates[1].w/2;
+                        endY = plates[1].y - ball.radius;
+                    }
                 }
                 
-                ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
                 ball.trail = [];
                 ball.isDead = false;
             } else {
@@ -391,105 +411,86 @@
             }
         }
 
-        // --- 5. 物理與碰撞優化 (絕對追蹤) ---
+        // --- 5. 絕對插值飛行動畫 (100% 唔會漏接) ---
         function createSparks(x, y, color) {
-            for(let i=0; i<15; i++) sparks.push({ 
+            for(let i=0; i<15; i++) sparkArr.push({ 
                 x: x, y: y, 
-                vx: (Math.random() - 0.5) * 6, 
-                vy: (Math.random() - 0.5) * 6 - 1, 
+                vx: (Math.random() - 0.5) * 8, 
+                vy: (Math.random() - 0.5) * 8 - 2, 
                 life: 1, color: color,
-                size: Math.random() * 3 + 1
+                size: Math.random() * 4 + 1
             });
         }
 
         function update() {
-            for(let i = sparks.length - 1; i >= 0; i--) {
-                let s = sparks[i]; 
+            for(let i = sparkArr.length - 1; i >= 0; i--) {
+                let s = sparkArr[i]; 
                 s.x += s.vx; s.y += s.vy; s.vy += 0.15; s.life -= 0.04;
-                if(s.life <= 0) sparks.splice(i, 1);
+                if(s.life <= 0) sparkArr.splice(i, 1);
             }
 
             if (screenShake > 0) screenShake -= 0.5;
             if (flashAlpha > 0) flashAlpha -= 0.02;
 
             if (!isPlaying) return;
+            
+            if (plates.length <= 1) return;
 
             if (ball.isDead) {
                 if (Date.now() - ball.deadTimer > 1500) {
-                    if (plates.length > 0) {
-                        let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
-                        emitter.x = topPlate.x + topPlate.w / 2;
-                        emitter.y = topPlate.y - 40;
-                        cameraY = Math.max(0, emitter.y - H/2);
-                        ball.targetPlate = topPlate;
-                    } else {
-                        cameraY = 0;
-                    }
-                    ball.x = emitter.x; ball.y = emitter.y + 20; ball.vx = 0; ball.vy = 0;
-                    ball.trail = [];
-                    ball.isDead = false;
+                    togglePlay(); // 重新開始
                 } else {
                     return; 
                 }
             }
 
-            // 絕對追蹤邏輯
-            if (ball.targetPlate) {
-                let target = ball.targetPlate;
-                let targetX = target.x + target.w / 2;
-                let targetY = target.y - ball.radius;
+            // 🎯 核心飛行動畫
+            jumpT += jumpSpeed;
+            
+            if (jumpT >= 1) {
+                // 到達目標板
+                jumpT = 1;
+                ball.x = endX;
+                ball.y = endY;
+                currentIdx++;
                 
-                // 如果鐵珠掂到目標板
-                if (ball.vy > 0 && ball.y >= targetY) {
-                    ball.y = targetY;
-                    playNote(target.noteIndex, target.octave);
+                playNote(plates[currentIdx].noteIndex, plates[currentIdx].octave);
+                
+                if (currentIdx < plates.length - 1) {
+                    // 設定下一個目標
+                    startX = endX;
+                    startY = endY;
+                    endX = plates[currentIdx + 1].x + plates[currentIdx + 1].w/2;
+                    endY = plates[currentIdx + 1].y - ball.radius;
                     
-                    let idx = plates.indexOf(target);
-                    if (idx !== -1 && idx < plates.length - 1) {
-                        let nextTarget = plates[idx + 1];
-                        ball.targetPlate = nextTarget;
-                        
-                        // 計拋物線飛去下一個目標
-                        let nextX = nextTarget.x + nextTarget.w / 2;
-                        let nextY = nextTarget.y - ball.radius;
-                        let dx = nextX - ball.x;
-                        let dy = nextY - ball.y;
-                        
-                        // 固定飛行時間 (t) 決定速度
-                        let t = Math.max(35, Math.min(80, dx * 0.3 + 35)); 
-                        
-                        ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
-                        ball.vx = dx / t;
-                    } else {
-                        ball.targetPlate = null;
-                        ball.vy = -3;
-                        ball.vx = 0;
-                    }
+                    // 根據距離動態調整速度 (距離越遠飛得越耐)
+                    let dist = Math.hypot(endX - startX, endY - startY);
+                    jumpSpeed = 0.04 - (dist / 5000); 
+                    jumpSpeed = Math.max(0.015, Math.min(0.06, jumpSpeed)); // 限制速度範圍
+                    
+                    jumpT = 0;
                 } else {
-                    ball.vy += GRAVITY;
-                    ball.x += ball.vx;
-                    ball.y += ball.vy;
+                    // 播完啦
+                    ball.targetPlate = null;
+                    ball.isDead = true;
+                    ball.deadTimer = Date.now() + 1000; // 延遲重生
                 }
             } else {
-                ball.vy += GRAVITY;
-                ball.x += ball.vx;
-                ball.y += ball.vy;
+                // 飛行中 (插值計算)
+                ball.x = startX + (endX - startX) * jumpT;
+                // 用 Sin 整出一個完美嘅拋物線
+                let arcHeight = 60; 
+                ball.y = startY + (endY - startY) * jumpT - Math.sin(jumpT * Math.PI) * arcHeight;
             }
 
             let targetCamY = Math.max(0, ball.y - H * 0.6);
             cameraY += (targetCamY - cameraY) * 0.1; 
             
             ball.trail.push({x: ball.x, y: ball.y});
-            if(ball.trail.length > 8) ball.trail.shift();
-            
-            if (ball.y > cameraY + H + 100) {
-                ball.isDead = true;
-                ball.deadTimer = Date.now();
-                ball.vx = 0; ball.vy = 0;
-            }
+            if(ball.trail.length > 12) ball.trail.shift();
         }
 
-        // --- 6. 渲染繪製 ---
+        // --- 6. 渲染繪製 (玻璃霓虹) ---
         function draw() {
             ctx.clearRect(0, 0, W, H);
             
@@ -501,11 +502,21 @@
             ctx.save();
             ctx.translate(sx, sy);
 
+            // 星空漸變背景
             let bgGrd = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, Math.max(W,H));
-            bgGrd.addColorStop(0, '#0a0a1a');
-            bgGrd.addColorStop(1, '#050510');
+            bgGrd.addColorStop(0, '#0a1226');
+            bgGrd.addColorStop(1, '#020205');
             ctx.fillStyle = bgGrd; 
             ctx.fillRect(0, 0, W, H);
+
+            // 背景網格
+            let gridOffset = cameraY % 60;
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)'; ctx.lineWidth = 1;
+            for (let i = 0; i < W; i += 60) { ctx.beginPath(); ctx.moveTo(i, -60); ctx.lineTo(i, H + 60); ctx.stroke(); }
+            for (let i = -60; i < H + 60; i += 60) { 
+                let drawY = i - gridOffset;
+                ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(W, drawY); ctx.stroke(); 
+            }
 
             if (flashAlpha > 0 && flashColor) {
                 ctx.fillStyle = flashColor;
@@ -514,26 +525,34 @@
                 ctx.globalAlpha = 1;
             }
             
-            let gridOffset = cameraY % 40;
-            ctx.strokeStyle = 'rgba(0, 210, 211, 0.08)'; ctx.lineWidth = 1;
-            for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, -40); ctx.lineTo(i, H + 40); ctx.stroke(); }
-            for (let i = -40; i < H + 40; i += 40) { 
-                let drawY = i - gridOffset;
-                ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(W, drawY); ctx.stroke(); 
-            }
-
             ctx.save();
             ctx.translate(0, -cameraY);
 
+            // 發光賽道 (連接線)
+            if (plates.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(plates[0].x + plates[0].w/2, plates[0].y + plates[0].h/2);
+                for(let i=1; i<plates.length; i++) {
+                    ctx.lineTo(plates[i].x + plates[i].w/2, plates[i].y + plates[i].h/2);
+                }
+                ctx.strokeStyle = 'rgba(0, 210, 211, 0.15)';
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+
+            // 發射器
             if (cameraY < emitter.y + 100) {
                 ctx.fillStyle = '#111';
                 ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
                 ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
-                ctx.shadowBlur = 10; ctx.shadowColor = '#ff4757';
+                ctx.shadowBlur = 15; ctx.shadowColor = '#ff4757';
                 ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
                 ctx.shadowBlur = 0;
             }
             
+            // 玻璃質感鋼片
             for (let p of plates) {
                 if (p.y < cameraY - 100 || p.y > cameraY + H + 100) continue;
 
@@ -541,50 +560,71 @@
                 if (p.octave === -1) color = '#818cf8'; 
                 if (p.octave === 1) color = '#f472b6'; 
 
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(p.x + 2, p.y + 2, p.w, p.h);
+                // 陰影
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.beginPath();
+                if(ctx.roundRect) ctx.roundRect(p.x + 3, p.y + 5, p.w, p.h, p.h/2);
+                else ctx.rect(p.x + 3, p.y + 5, p.w, p.h);
+                ctx.fill();
 
+                // 漸變玻璃
                 let grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
-                grd.addColorStop(0, color);
-                grd.addColorStop(1, 'rgba(0,0,0,0.5)');
+                grd.addColorStop(0, color + 'cc'); 
+                grd.addColorStop(1, color + '44'); 
                 
-                ctx.shadowBlur = 15; ctx.shadowColor = color; 
+                ctx.shadowBlur = 20; ctx.shadowColor = color; 
                 ctx.fillStyle = grd;
                 
                 ctx.beginPath();
-                if(ctx.roundRect) ctx.roundRect(p.x, p.y, p.w, p.h, 5);
+                if(ctx.roundRect) ctx.roundRect(p.x, p.y, p.w, p.h, p.h/2);
                 else ctx.rect(p.x, p.y, p.w, p.h);
                 ctx.fill();
                 
+                // 邊框
                 ctx.shadowBlur = 0; 
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
                 ctx.stroke();
 
+                // 高光
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(p.x + p.h/2, p.y + 3);
+                ctx.lineTo(p.x + p.w - p.h/2, p.y + 3);
+                ctx.stroke();
+
+                // 文字
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px "Orbitron", sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 13);
+                ctx.font = 'bold 14px "Orbitron", sans-serif'; ctx.textAlign = 'center';
+                ctx.shadowBlur = 4; ctx.shadowColor = '#000';
+                ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 16);
+                ctx.shadowBlur = 0;
             }
 
-            for(let s of sparks) {
+            // 火花
+            for(let s of sparkArr) {
                 ctx.globalAlpha = s.life; ctx.fillStyle = s.color;
+                ctx.shadowBlur = 10; ctx.shadowColor = s.color;
                 ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
             }
-            ctx.globalAlpha = 1;
+            ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 
+            // 鐵珠尾跡
             for(let i=0; i<ball.trail.length; i++) {
                 let t = ball.trail[i];
-                ctx.globalAlpha = (i / ball.trail.length) * 0.5;
-                ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(t.x, t.y, ball.radius * (i/ball.trail.length), 0, Math.PI * 2); ctx.fill();
+                let ratio = i / ball.trail.length;
+                ctx.globalAlpha = ratio * 0.6;
+                ctx.fillStyle = '#00d2d3';
+                ctx.beginPath(); ctx.arc(t.x, t.y, ball.radius * ratio, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
+            // 鐵珠
             if (!ball.isDead) {
                 ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff'; ctx.shadowBlur = 30; ctx.shadowColor = '#00ffff'; ctx.fill(); 
                 
                 ctx.beginPath(); ctx.arc(ball.x - 2, ball.y - 2, ball.radius * 0.4, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = 0; ctx.fill();
             }
 
             ctx.restore(); 
