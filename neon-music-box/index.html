@@ -170,7 +170,7 @@
         const PLATE_H = 16;
         let cameraY = 0;
 
-        // --- 🎵 核心：簡譜解析器 (矩陣式排列) ---
+        // --- 🎵 核心：簡譜解析器 (單向斜線下降) ---
         function buildTrackFromString(scoreStr) {
             plates = [];
             if (isPlaying) togglePlay();
@@ -181,15 +181,15 @@
             
             if (tokens.length === 0) return alert("請輸入有效曲譜！");
 
-            // 自動計算每行可以放幾多粒音 (確保唔會出界)
-            const cols = Math.floor(W / 110); 
-            const colWidth = W / cols;
-            const rowHeight = 80; // 每行嘅高度
+            let currentX = 50;
+            let currentY = 100;
+            const X_SPACING = 80; // 每次向右 80px
+            const Y_SPACING = 60; // 每次向下 60px
 
             tokens.forEach((token, i) => {
                 let extraDelay = 0;
                 if (token.includes(',')) {
-                    extraDelay = 40; 
+                    extraDelay = 50; 
                     token = token.replace(/,/g, '');
                 }
                 if (token === '') return;
@@ -202,25 +202,24 @@
                 let noteIdx = parseInt(noteChar);
                 if (isNaN(noteIdx) || noteIdx < 0 || noteIdx > 6) return;
 
-                // 計算行列 (蛇形排列)
-                let row = Math.floor(i / cols);
-                let col = i % cols;
-                // 如果係單數行，就反轉方向 (由右至左)
-                if (row % 2 !== 0) {
-                    col = cols - 1 - col;
-                }
-
-                let xPos = (col * colWidth) + (colWidth - PLATE_W) / 2;
-                let yPos = 100 + row * rowHeight + extraDelay;
-
                 plates.push({
-                    x: xPos,
-                    y: yPos,
+                    x: currentX,
+                    y: currentY,
                     w: PLATE_W,
                     h: PLATE_H,
                     noteIndex: noteIdx,
                     octave: octave
                 });
+
+                // 向右下移動
+                currentX += X_SPACING;
+                currentY += Y_SPACING + extraDelay;
+                
+                // 如果超出右邊界，就返去左邊，並增加少少 Y 避免重疊
+                if (currentX > W - PLATE_W - 20) {
+                    currentX = 40;
+                    currentY += 60; 
+                }
             });
 
             emitter.x = plates[0].x + PLATE_W / 2;
@@ -381,8 +380,6 @@
                     emitter.x = topPlate.x + topPlate.w / 2;
                     emitter.y = topPlate.y - 40;
                     cameraY = Math.max(0, emitter.y - H/2);
-                    
-                    // 重新設定目標隊列
                     ball.targetPlate = topPlate;
                 }
                 
@@ -436,65 +433,55 @@
                 }
             }
 
-            // 如果仲有目標
+            // 絕對追蹤邏輯
             if (ball.targetPlate) {
                 let target = ball.targetPlate;
+                let targetX = target.x + target.w / 2;
+                let targetY = target.y - ball.radius;
                 
-                // 核心判斷：如果鐵珠掂到目標板
-                if (ball.vy > 0 && 
-                    ball.y + ball.radius >= target.y && 
-                    ball.y - ball.radius <= target.y + target.h &&
-                    ball.x + ball.radius > target.x && 
-                    ball.x - ball.radius < target.x + target.w) {
-                    
-                    ball.y = target.y - ball.radius;
+                // 如果鐵珠掂到目標板
+                if (ball.vy > 0 && ball.y >= targetY) {
+                    ball.y = targetY;
                     playNote(target.noteIndex, target.octave);
                     
-                    // 尋找下一個目標
                     let idx = plates.indexOf(target);
                     if (idx !== -1 && idx < plates.length - 1) {
                         let nextTarget = plates[idx + 1];
                         ball.targetPlate = nextTarget;
                         
                         // 計拋物線飛去下一個目標
-                        let targetX = nextTarget.x + nextTarget.w / 2;
-                        let targetY = nextTarget.y;
-                        let dx = targetX - ball.x;
-                        let dy = targetY - ball.y;
+                        let nextX = nextTarget.x + nextTarget.w / 2;
+                        let nextY = nextTarget.y - ball.radius;
+                        let dx = nextX - ball.x;
+                        let dy = nextY - ball.y;
                         
-                        // 動態計算時間 (距離越遠，飛得越耐)
-                        let dist = Math.hypot(dx, dy);
-                        let t = Math.max(30, Math.min(90, dist * 0.8)); 
+                        // 固定飛行時間 (t) 決定速度
+                        let t = Math.max(35, Math.min(80, dx * 0.3 + 35)); 
                         
                         ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                         ball.vx = dx / t;
                     } else {
-                        // 呢首歌彈完啦
                         ball.targetPlate = null;
                         ball.vy = -3;
                         ball.vx = 0;
                     }
                 } else {
-                    // 未掂到，繼續飛
                     ball.vy += GRAVITY;
                     ball.x += ball.vx;
                     ball.y += ball.vy;
                 }
             } else {
-                // 冇目標 (彈完之後自由落體)
                 ball.vy += GRAVITY;
                 ball.x += ball.vx;
                 ball.y += ball.vy;
             }
 
-            // 鏡頭跟隨
             let targetCamY = Math.max(0, ball.y - H * 0.6);
             cameraY += (targetCamY - cameraY) * 0.1; 
             
             ball.trail.push({x: ball.x, y: ball.y});
             if(ball.trail.length > 8) ball.trail.shift();
             
-            // 跌落街
             if (ball.y > cameraY + H + 100) {
                 ball.isDead = true;
                 ball.deadTimer = Date.now();
@@ -538,7 +525,6 @@
             ctx.save();
             ctx.translate(0, -cameraY);
 
-            // 發射器
             if (cameraY < emitter.y + 100) {
                 ctx.fillStyle = '#111';
                 ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
