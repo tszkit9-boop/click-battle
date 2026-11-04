@@ -12,7 +12,6 @@
             display: flex; flex-direction: column; height: 100dvh; height: 100vh;
             touch-action: none; user-select: none; -webkit-user-select: none;
         }
-        /* 頂部懸浮控制台 (玻璃質感) */
         #toolbar {
             height: auto; min-height: 60px; background: rgba(15, 15, 25, 0.7); display: flex; align-items: center;
             justify-content: space-between; padding: 8px 20px; z-index: 10;
@@ -65,7 +64,7 @@
     <div id="canvas-container">
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
-            👆 畫面會自動跟隨鐵珠捲動 | 點擊空白處可自行加音<br>
+            👆 畫面會自動向右跟隨鐵珠捲動 | 點擊空白處可自行加音<br>
             👆 長按刪除鋼片 | 點擊切換音高
         </div>
     </div>
@@ -166,42 +165,41 @@
         let plates = [];
         let isPlaying = false;
         
-        // 鐵珠狀態
         let ball = { x: 100, y: 50, radius: 8, trail: [], isDead: false, deadTimer: 0 };
         let sparkArr = [];
         
-        let emitter = { x: 100, y: 30, w: 50, h: 20 };
+        let emitter = { x: 100, y: H/2, w: 50, h: 20 };
         let isDraggingEmitter = false;
 
         const PLATE_W = 80; 
         const PLATE_H = 22;
-        let cameraY = 0;
+        let cameraX = 0; // 改為橫向捲動
 
         // 動畫狀態機
         let currentIdx = 0;
-        let jumpT = 0; // 0 到 1
+        let jumpT = 0; 
         let startX = 0, startY = 0, endX = 0, endY = 0;
-        let jumpSpeed = 0.04; // 飛行速度
+        let jumpSpeed = 0.04; 
 
-        // --- 🎵 核心：簡譜解析器 (蛇形矩陣排版) ---
+        // --- 🎵 核心：簡譜解析器 (橫向無限延伸) ---
         function buildTrackFromString(scoreStr) {
             plates = [];
             if (isPlaying) togglePlay();
-            cameraY = 0;
+            cameraX = 0;
             
             let cleanStr = scoreStr.replace(/[^0-9\+\-\,\s]/g, '');
             let tokens = cleanStr.split(/\s+/).filter(t => t.length > 0);
             
             if (tokens.length === 0) return alert("請輸入有效曲譜！");
 
-            const cols = 4; // 每行固定 4 粒音 (適合手機畫面)
-            const colWidth = W / cols;
-            const rowHeight = 100; // 行距
+            let currentX = 150;
+            const X_SPACING = 160; // 橫向間距
+            const Y_BASE = H / 2; // 中間高度
 
             tokens.forEach((token, i) => {
                 let extraDelay = 0;
                 if (token.includes(',')) {
-                    extraDelay = 50; 
+                    extraDelay = 80; 
                     token = token.replace(/,/g, '');
                 }
                 if (token === '') return;
@@ -214,30 +212,28 @@
                 let noteIdx = parseInt(noteChar);
                 if (isNaN(noteIdx) || noteIdx < 0 || noteIdx > 6) return;
 
-                let row = Math.floor(i / cols);
-                let col = i % cols;
-                
-                // 蛇形走位：雙數行由左至右，單數行由右至左
-                if (row % 2 !== 0) {
-                    col = cols - 1 - col;
-                }
+                // 音高決定 Y 軸高度 (Do 最低，Ti 最高)
+                let yOffset = (noteIdx - 3) * 40; // 3 係中間
+                if (octave === 1) yOffset -= 40;
+                if (octave === -1) yOffset += 40;
 
-                let xPos = (col * colWidth) + (colWidth - PLATE_W) / 2;
-                let yPos = 120 + row * rowHeight + extraDelay;
+                let yPos = Y_BASE + yOffset;
 
                 plates.push({
-                    x: xPos,
+                    x: currentX,
                     y: yPos,
                     w: PLATE_W,
                     h: PLATE_H,
                     noteIndex: noteIdx,
                     octave: octave
                 });
+
+                currentX += X_SPACING + extraDelay; 
             });
 
-            emitter.x = plates[0].x + PLATE_W / 2;
-            emitter.y = plates[0].y - 60;
-            ball.x = emitter.x; ball.y = emitter.y + 20;
+            emitter.x = 80;
+            emitter.y = plates[0].y;
+            ball.x = emitter.x + 20; ball.y = emitter.y;
             
             setTimeout(togglePlay, 100); 
         }
@@ -276,7 +272,7 @@
             const rect = canvas.getBoundingClientRect();
             let cx = e.clientX || (e.touches && e.touches[0].clientX);
             let cy = e.clientY || (e.touches && e.touches[0].clientY);
-            return { x: cx - rect.left, y: cy - rect.top + cameraY };
+            return { x: cx - rect.left + cameraX, y: cy - rect.top };
         }
 
         function handleDown(e) {
@@ -285,7 +281,7 @@
             
             const pos = getPos(e);
             
-            if (pos.y < emitter.y + 50 && pos.y > emitter.y - 50 && Math.abs(pos.x - emitter.x) < 50) {
+            if (Math.abs(pos.x - emitter.x) < 50 && Math.abs(pos.y - emitter.y) < 50) {
                 isDraggingEmitter = true;
                 return;
             }
@@ -309,8 +305,9 @@
                 startMouseX = pos.x; startMouseY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
+                // 加新板
                 let newPlate = {
-                    x: Math.max(10, Math.min(W - PLATE_W - 10, pos.x - PLATE_W/2)), 
+                    x: pos.x - PLATE_W/2, 
                     y: pos.y - PLATE_H/2,
                     w: PLATE_W, h: PLATE_H, 
                     noteIndex: 0, 
@@ -327,8 +324,8 @@
             hoverPos = pos;
 
             if (isDraggingEmitter) {
-                emitter.x = Math.max(20, Math.min(W - 20, pos.x));
-                if (!isPlaying) { ball.x = emitter.x; ball.y = emitter.y + 20; }
+                emitter.y = Math.max(50, Math.min(H - 50, pos.y));
+                if (!isPlaying) { ball.y = emitter.y; }
                 return;
             }
 
@@ -340,8 +337,8 @@
                 clearTimeout(pressTimer);
             }
             if (isDraggingPlate) {
-                dragPlate.x = Math.max(10, Math.min(W - dragPlate.w - 10, initialX + dx));
-                dragPlate.y = initialY + dy;
+                dragPlate.x = initialX + dx;
+                dragPlate.y = Math.max(50, Math.min(H - 50, initialY + dy));
             }
         }
 
@@ -373,11 +370,11 @@
             if(confirm("確定清空所有音符？")) { 
                 plates = []; 
                 if(isPlaying) togglePlay(); 
-                cameraY = 0;
+                cameraX = 0;
                 ball.isDead = true;
                 ball.trail = [];
-                emitter.y = 30;
-                ball.x = emitter.x; ball.y = emitter.y + 20;
+                emitter.y = H / 2;
+                ball.x = emitter.x; ball.y = emitter.y;
             } 
         }
 
@@ -393,8 +390,7 @@
                     jumpT = 0;
                     ball.x = plates[0].x + plates[0].w/2;
                     ball.y = plates[0].y - ball.radius;
-                    
-                    cameraY = Math.max(0, ball.y - H/2);
+                    cameraX = Math.max(0, ball.x - W/2);
                     
                     if (plates.length > 1) {
                         startX = ball.x;
@@ -411,7 +407,7 @@
             }
         }
 
-        // --- 5. 絕對插值飛行動畫 (100% 唔會漏接) ---
+        // --- 5. 絕對插值飛行動畫 (橫向) ---
         function createSparks(x, y, color) {
             for(let i=0; i<15; i++) sparkArr.push({ 
                 x: x, y: y, 
@@ -432,23 +428,19 @@
             if (screenShake > 0) screenShake -= 0.5;
             if (flashAlpha > 0) flashAlpha -= 0.02;
 
-            if (!isPlaying) return;
-            
-            if (plates.length <= 1) return;
+            if (!isPlaying || plates.length <= 1) return;
 
             if (ball.isDead) {
                 if (Date.now() - ball.deadTimer > 1500) {
-                    togglePlay(); // 重新開始
+                    togglePlay(); 
                 } else {
                     return; 
                 }
             }
 
-            // 🎯 核心飛行動畫
             jumpT += jumpSpeed;
             
             if (jumpT >= 1) {
-                // 到達目標板
                 jumpT = 1;
                 ball.x = endX;
                 ball.y = endY;
@@ -457,40 +449,36 @@
                 playNote(plates[currentIdx].noteIndex, plates[currentIdx].octave);
                 
                 if (currentIdx < plates.length - 1) {
-                    // 設定下一個目標
                     startX = endX;
                     startY = endY;
                     endX = plates[currentIdx + 1].x + plates[currentIdx + 1].w/2;
                     endY = plates[currentIdx + 1].y - ball.radius;
                     
-                    // 根據距離動態調整速度 (距離越遠飛得越耐)
-                    let dist = Math.hypot(endX - startX, endY - startY);
-                    jumpSpeed = 0.04 - (dist / 5000); 
-                    jumpSpeed = Math.max(0.015, Math.min(0.06, jumpSpeed)); // 限制速度範圍
+                    let dist = Math.abs(endX - startX);
+                    jumpSpeed = 0.04 - (dist / 8000); 
+                    jumpSpeed = Math.max(0.015, Math.min(0.06, jumpSpeed)); 
                     
                     jumpT = 0;
                 } else {
-                    // 播完啦
-                    ball.targetPlate = null;
                     ball.isDead = true;
-                    ball.deadTimer = Date.now() + 1000; // 延遲重生
+                    ball.deadTimer = Date.now() + 1000;
                 }
             } else {
-                // 飛行中 (插值計算)
                 ball.x = startX + (endX - startX) * jumpT;
-                // 用 Sin 整出一個完美嘅拋物線
-                let arcHeight = 60; 
+                // 拋物線：根據音高差決定弧度，有高有低
+                let arcHeight = 40 + Math.abs(endY - startY) * 0.3; 
                 ball.y = startY + (endY - startY) * jumpT - Math.sin(jumpT * Math.PI) * arcHeight;
             }
 
-            let targetCamY = Math.max(0, ball.y - H * 0.6);
-            cameraY += (targetCamY - cameraY) * 0.1; 
+            // 🎥 橫向鏡頭跟隨
+            let targetCamX = Math.max(0, ball.x - W * 0.3);
+            cameraX += (targetCamX - cameraX) * 0.1; 
             
             ball.trail.push({x: ball.x, y: ball.y});
             if(ball.trail.length > 12) ball.trail.shift();
         }
 
-        // --- 6. 渲染繪製 (玻璃霓虹) ---
+        // --- 6. 渲染繪製 ---
         function draw() {
             ctx.clearRect(0, 0, W, H);
             
@@ -502,21 +490,21 @@
             ctx.save();
             ctx.translate(sx, sy);
 
-            // 星空漸變背景
+            // 星空背景
             let bgGrd = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, Math.max(W,H));
             bgGrd.addColorStop(0, '#0a1226');
             bgGrd.addColorStop(1, '#020205');
             ctx.fillStyle = bgGrd; 
             ctx.fillRect(0, 0, W, H);
 
-            // 背景網格
-            let gridOffset = cameraY % 60;
+            // 橫向捲動網格
+            let gridOffset = cameraX % 60;
             ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)'; ctx.lineWidth = 1;
-            for (let i = 0; i < W; i += 60) { ctx.beginPath(); ctx.moveTo(i, -60); ctx.lineTo(i, H + 60); ctx.stroke(); }
-            for (let i = -60; i < H + 60; i += 60) { 
-                let drawY = i - gridOffset;
-                ctx.beginPath(); ctx.moveTo(0, drawY); ctx.lineTo(W, drawY); ctx.stroke(); 
+            for (let i = -60; i < W + 60; i += 60) { 
+                let drawX = i - gridOffset;
+                ctx.beginPath(); ctx.moveTo(drawX, 0); ctx.lineTo(drawX, H); ctx.stroke(); 
             }
+            for (let i = 0; i < H; i += 60) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
             if (flashAlpha > 0 && flashColor) {
                 ctx.fillStyle = flashColor;
@@ -526,9 +514,9 @@
             }
             
             ctx.save();
-            ctx.translate(0, -cameraY);
+            ctx.translate(-cameraX, 0); // 橫向偏移
 
-            // 發光賽道 (連接線)
+            // 發光賽道 (橫向連接線)
             if (plates.length > 1) {
                 ctx.beginPath();
                 ctx.moveTo(plates[0].x + plates[0].w/2, plates[0].y + plates[0].h/2);
@@ -543,18 +531,19 @@
             }
 
             // 發射器
-            if (cameraY < emitter.y + 100) {
+            if (cameraX < emitter.x + 100) {
                 ctx.fillStyle = '#111';
-                ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
+                ctx.fillRect(emitter.x - emitter.w/2, emitter.y - emitter.h/2, emitter.w, emitter.h);
                 ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
                 ctx.shadowBlur = 15; ctx.shadowColor = '#ff4757';
-                ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
+                ctx.strokeRect(emitter.x - emitter.w/2, emitter.y - emitter.h/2, emitter.w, emitter.h);
                 ctx.shadowBlur = 0;
             }
             
-            // 玻璃質感鋼片
+            // 繪製鋼片
             for (let p of plates) {
-                if (p.y < cameraY - 100 || p.y > cameraY + H + 100) continue;
+                // 只畫畫面可見範圍
+                if (p.x < cameraX - 150 || p.x > cameraX + W + 150) continue;
 
                 let color = NOTE_COLORS[p.noteIndex];
                 if (p.octave === -1) color = '#818cf8'; 
@@ -567,7 +556,7 @@
                 else ctx.rect(p.x + 3, p.y + 5, p.w, p.h);
                 ctx.fill();
 
-                // 漸變玻璃
+                // 玻璃漸變
                 let grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
                 grd.addColorStop(0, color + 'cc'); 
                 grd.addColorStop(1, color + '44'); 
