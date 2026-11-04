@@ -101,6 +101,16 @@
         .game-card h2 { margin: 0; font-size: 22px; z-index: 2; transition: all 0.3s; }
         .game-card p { color: #a4b0be; font-size: 12px; z-index: 2; margin-top: 10px; transition: all 0.3s; text-align: center; padding: 0 10px; }
         
+        /* 🔥 新增：全站真實遊玩人數標籤 */
+        .hot-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255, 71, 87, 0.9); color: #fff;
+            padding: 4px 8px; border-radius: 12px; font-size: 11px;
+            font-weight: bold; font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+            z-index: 10; display: none; pointer-events: none;
+        }
+
         .card-grudge:hover { border-color: #ff4757; box-shadow: 0 0 30px rgba(255, 71, 87, 0.6); transform: translateY(-10px); }
         .card-grudge h2 { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
         
@@ -349,7 +359,72 @@
         </div>
     </div>
 
+    <!-- 🔥 引入 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
+    // ==========================================
+    // 🔥 Firebase 初始化與熱門統計
+    // ==========================================
+    const firebaseConfig = {
+        databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+    
+    let db = null;
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+    } catch (e) {
+        console.warn("Firebase 初始化失敗，可能係未連線或規則錯誤", e);
+    }
+
+    // 監聽所有遊戲卡片嘅點擊，並向 Firebase 發送 +1 信號
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (!db) return;
+            // 用遊戲嘅網址作為唯一 Key，例如 "klt-defense"
+            let gameId = this.getAttribute('href').replace('./', '').replace('/', '');
+            if (!gameId) return;
+
+            let gameRef = db.ref('game_stats/' + gameId);
+            
+            // 使用 transaction 安全地 +1
+            gameRef.transaction(function(currentCount) {
+                return (currentCount || 0) + 1;
+            });
+        });
+    });
+
+    // 讀取真實遊玩人數並顯示喺卡片上
+    if (db) {
+        db.ref('game_stats').on('value', (snapshot) => {
+            const stats = snapshot.val();
+            if (!stats) return;
+
+            document.querySelectorAll('.game-card').forEach(card => {
+                let gameId = card.getAttribute('href').replace('./', '').replace('/', '');
+                let count = stats[gameId] || 0;
+                
+                // 檢查卡片係咪已經有熱門標籤
+                let badge = card.querySelector('.hot-badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'hot-badge';
+                    // 將標籤加喺卡片入面
+                    card.appendChild(badge);
+                }
+
+                if (count > 0) {
+                    badge.innerText = `🔥 ${count} 人玩過`;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        });
+    }
+
     // ==========================================
     // 搜尋與分類邏輯
     // ==========================================
