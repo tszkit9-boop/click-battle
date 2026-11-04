@@ -3,89 +3,125 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>☢️ 末日避難所</title>
+<title>☢️ 末日避難所：自由防線</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+HK:wght@400;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    body { background: #e2e8f0; color: #333; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; cursor: crosshair; }
+    body { background: #e2e8f0; color: #1e293b; font-family: 'Noto Sans HK', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
     
     #canvas-container { position: absolute; inset: 0; z-index: 1; }
     canvas { display: block; width: 100%; height: 100%; }
-    
-    .overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle at center, transparent 60%, rgba(255,255,255,0.4) 100%); }
-    .scanlines { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 1px, transparent 1px, transparent 2px); }
 
+    /* UI 層 */
     .ui-layer { position: absolute; inset: 0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
     .ui-layer > * { pointer-events: auto; }
 
-    .hud-top { display: flex; justify-content: center; align-items: center; padding: 15px; background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; flex-wrap: wrap; gap: 10px; }
+    /* 頂部 HUD */
+    .hud-top { display: flex; justify-content: center; align-items: center; padding: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, transparent 100%); font-family: 'Orbitron', sans-serif; gap: 10px; flex-wrap: wrap; }
+    .stat-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 900; background: #ffffff; color: #334155; padding: 6px 12px; border-radius: 6px; border: 2px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .stat-box.energy { color: #d97706; border-color: #fcd34d; } .stat-box.crystal { color: #9333ea; border-color: #d8b4fe; }
+    .stat-box.ammo { color: #dc2626; border-color: #fca5a5; } .stat-box.hp { color: #ef4444; border-color: #fca5a5; }
+    .stat-box.door { color: #2563eb; border-color: #93c5fd; }
     
-    .back-btn { padding: 8px 16px; background: rgba(255,255,255,0.9); color: #ff8800; border: 2px solid #ff8800; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .back-btn:active { background: #ff8800; color: #fff; }
+    .back-btn { padding: 6px 12px; background: #ffffff; color: #f97316; border: 2px solid #f97316; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-    .res-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-    .res-box { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.9); color: #333; padding: 6px 12px; border-radius: 4px; border: 2px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .res-box.energy { color: #d97706; border-color: #d97706; } .res-box.crystal { color: #9333ea; border-color: #9333ea; }
+    /* 準星 */
+    .crosshair { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.8; }
+    .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #ef4444; box-shadow: 0 0 5px #ef4444; }
+    .crosshair::before { top: 14px; left: 0; width: 30px; height: 2px; }
+    .crosshair::after { left: 14px; top: 0; width: 2px; height: 30px; }
+
+    /* 左下角：虛擬搖桿 */
+    .joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 120px; height: 120px; background: rgba(255,255,255,0.5); border: 2px solid #94a3b8; border-radius: 50%; z-index: 20; display: flex; justify-content: center; align-items: center; }
+    .joystick-stick { width: 50px; height: 50px; background: #3b82f6; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+    /* 右下角：操作按鈕 */
+    .action-zone { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 20; align-items: flex-end; }
+    .action-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; font-weight: 900; font-size: 14px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; }
+    .action-btn:active { transform: scale(0.9); }
     
-    .door-hp-box { position: absolute; top: 75px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 900; color: #dc2626; text-align: center; width: 80%; max-width: 400px; font-family: 'Orbitron', sans-serif; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
-    .hp-bar-bg { width: 100%; height: 10px; background: #cbd5e1; border-radius: 5px; margin-top: 5px; overflow: hidden; border: 2px solid #dc2626; box-shadow: 0 2px 10px rgba(220,38,38,0.3); }
-    .hp-bar-fill { height: 100%; background: linear-gradient(90deg, #dc2626, #f87171); width: 100%; transition: width 0.3s; }
+    .btn-repair { background: #10b981; color: #fff; display: none; width: 80px; height: 80px; }
+    .btn-melee { background: #f59e0b; color: #fff; }
+    .btn-shoot { background: #ef4444; color: #fff; width: 80px; height: 80px; font-size: 18px; }
 
-    .crosshair { position: absolute; width: 34px; height: 34px; transform: translate(-50%, -50%); pointer-events: none; z-index: 50; opacity: 0.8; display: none; }
-    .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #2563eb; box-shadow: 0 0 5px #2563eb; }
-    .crosshair::before { top: 16px; left: 0; width: 34px; height: 2px; }
-    .crosshair::after { left: 16px; top: 0; width: 2px; height: 34px; }
-    .crosshair-dot { position: absolute; top: 15px; left: 15px; width: 4px; height: 4px; background: #ef4444; border-radius: 50%; }
+    /* 頂部開關 */
+    .toggle-switch { position: absolute; top: 70px; right: 15px; background: #fff; border: 2px solid #cbd5e1; border-radius: 20px; padding: 5px 10px; font-size: 12px; font-weight: bold; cursor: pointer; z-index: 20; display: flex; align-items: center; gap: 5px; }
+    .toggle-switch.active { border-color: #9333ea; color: #9333ea; background: #faf5ff; }
 
-    .console { margin: 10px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border: 2px solid #cbd5e1; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin-left: auto; margin-right: auto; width: calc(100% - 20px); pointer-events: auto; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+    /* 彈窗系統 */
+    .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .modal.active { display: flex; }
+    .modal-box { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-box h2 { color: #1e293b; font-family: 'Orbitron', sans-serif; margin-bottom: 15px; text-align: center; }
     
-    .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .btn { padding: 12px 4px; background: #f8fafc; color: #475569; border: 2px solid #cbd5e1; border-radius: 5px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif; }
-    .btn:active { transform: scale(0.95); }
-    .btn.weapon { border-color: #d97706; color: #d97706; background: #fffbeb; }
-    .btn.power { border-color: #9333ea; color: #9333ea; background: #faf5ff; }
-    .btn.ultimate { background: linear-gradient(45deg, #ef4444, #f59e0b); color: #fff; font-size: 14px; border: none; box-shadow: 0 4px 15px rgba(239,68,68,0.4); border-radius: 8px; font-weight: 900; }
-    .btn.ultimate:disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; pointer-events: none; }
+    .shop-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .shop-info b { display: block; font-size: 14px; color: #1e293b; }
+    .shop-info small { font-size: 11px; color: #64748b; }
+    .shop-buy { padding: 8px 15px; background: #3b82f6; color: #fff; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    .shop-buy:disabled { background: #94a3b8; cursor: not-allowed; }
 
-    .broadcast-box { position: absolute; top: 115px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(255, 255, 255, 0.95); border: 2px solid #f59e0b; color: #d97706; padding: 10px; font-size: 13px; text-align: center; border-radius: 4px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .close-modal { width: 100%; padding: 10px; background: #475569; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+    /* 廣播 */
+    .broadcast-box { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(255, 255, 255, 0.95); border: 2px solid #f59e0b; color: #d97706; padding: 10px; font-size: 13px; text-align: center; border-radius: 6px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .broadcast-box.show { opacity: 1; }
+
+    /* 槍鋪按鈕 */
+    .shop-toggle { position: absolute; top: 70px; left: 15px; background: #fff; border: 2px solid #d97706; color: #d97706; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 20; }
 </style>
 </head>
 <body>
 
-    <div class="overlay"></div>
-    <div class="scanlines"></div>
-    
-    <div class="crosshair" id="crosshair">
-        <div class="crosshair-dot"></div>
-    </div>
-
     <div id="canvas-container"></div>
+    <div class="crosshair"></div>
 
+    <!-- 頂部 HUD -->
     <div class="ui-layer">
         <div class="hud-top">
-            <a href="../" class="back-btn">⬅ 返回大廳</a>
-            <div class="res-group">
-                <div class="res-box energy">⚡ <span id="ui-energy">1000</span></div>
-                <div class="res-box crystal">💎 <span id="ui-crystal">0</span></div>
-                <div class="res-box" style="color:#2563eb; border-color:#2563eb;">🎯 擊殺：<span id="ui-kills">0</span></div>
-            </div>
+            <a href="../" class="back-btn">⬅ 返回</a>
+            <div class="stat-box hp">❤️ <span id="ui-hp">100</span></div>
+            <div class="stat-box door">🚪 <span id="ui-door">1000</span></div>
+            <div class="stat-box ammo">🔫 <span id="ui-ammo">150</span> / 600</div>
+            <div class="stat-box energy">⚡ <span id="ui-energy">1000</span></div>
+            <div class="stat-box crystal">💎 <span id="ui-crystal">0</span></div>
         </div>
 
-        <div class="door-hp-box">
-            🚪 避難所大門：<span id="ui-door-hp">1000</span> / 1000
-            <div class="hp-bar-bg"><div class="hp-bar-fill" id="ui-door-bar"></div></div>
-        </div>
+        <div class="broadcast-box" id="broadcast-box">系統廣播：士兵，請用左下搖桿移動，右下瞄準射擊！</div>
+    </div>
 
-        <div class="broadcast-box" id="broadcast-box">系統廣播：士兵，請點擊螢幕上的喪屍開火！</div>
+    <!-- 開關與槍鋪 -->
+    <div class="toggle-switch active" id="auto-pickup-btn" onclick="toggleAutoPickup()">🧲 自動吸納：開</div>
+    <div class="shop-toggle" onclick="openShop()">🏪 槍鋪</div>
 
-        <div class="console">
-            <div class="actions">
-                <button class="btn weapon" onclick="upgradeWeapon()">🔫 升級步槍 (<span id="ui-weapon-cost">200</span>電)</button>
-                <!-- 將原本嘅異能掣改為手動解鎖 -->
-                <button class="btn power" id="btn-power" onclick="unlockPower()">🔮 解鎖異能 (10晶石)</button>
-                <button class="btn ultimate" id="btn-ultimate" onclick="useUltimate()" disabled>☄️ 死光 (0%)</button>
+    <!-- 左下角搖桿 -->
+    <div class="joystick-zone" id="joystick-zone">
+        <div class="joystick-stick" id="joystick-stick"></div>
+    </div>
+
+    <!-- 右下角按鈕 -->
+    <div class="action-zone">
+        <button class="action-btn btn-repair" id="btn-repair" onclick="repairDoor()">🔧 修理</button>
+        <button class="action-btn btn-melee" id="btn-melee" onclick="doMelee()">🥊 扑擊</button>
+        <button class="action-btn btn-shoot" onclick="shoot()">🔥 射擊</button>
+    </div>
+
+    <!-- 槍鋪彈窗 -->
+    <div class="modal" id="shop-modal">
+        <div class="modal-box">
+            <h2>🏪 末日槍鋪</h2>
+            <div class="shop-item">
+                <div class="shop-info"><b>📦 補充彈藥 (100發)</b><small>花費 200 ⚡ 電力</small></div>
+                <button class="shop-buy" onclick="buyAmmo()">購買</button>
             </div>
+            <div class="shop-item">
+                <div class="shop-info"><b>💉 醫療包 (回滿血)</b><small>花費 5 💎 晶石</small></div>
+                <button class="shop-buy" onclick="buyHeal()">購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info"><b>🔫 散彈槍 (一發打一群)</b><small>花費 30 💎 晶石</small></div>
+                <button class="shop-buy" id="buy-shotgun" onclick="buyWeapon('shotgun')">解鎖</button>
+            </div>
+            <button class="close-modal" onclick="closeShop()">關閉</button>
         </div>
     </div>
 
@@ -93,427 +129,482 @@
     <script>
         window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
-        // --- 遊戲數據 (包含存檔功能) ---
-        let energy = 1000, crystals = 0, kills = 0;
-        let doorHp = 1000, maxDoorHp = 1000;
-        let weaponLevel = 1, weaponCost = 200;
-        let hasPower = false, powerType = null;
-        let powerCharge = 0, ultimateCharge = 0;
+        // --- 遊戲狀態 ---
+        let playerHP = 100;
+        let doorHP = 1000;
+        let ammo = 150, maxAmmo = 600;
+        let energy = 1000, crystals = 0;
+        let hasShotgun = false;
+        let autoPickup = true;
         let wave = 1;
-        let shakeTime = 0;
-
-        // 讀取存檔
-        function loadSave() {
-            try {
-                let saved = JSON.parse(localStorage.getItem('doomsday_survivor_save'));
-                if (saved) {
-                    energy = saved.energy || 1000;
-                    crystals = saved.crystals || 0;
-                    kills = saved.kills || 0;
-                    weaponLevel = saved.weaponLevel || 1;
-                    weaponCost = saved.weaponCost || 200;
-                    hasPower = saved.hasPower || false;
-                    powerType = saved.powerType || null;
-                }
-            } catch(e) {}
-        }
-
-        // 儲存進度
-        function saveGame() {
-            try {
-                localStorage.setItem('doomsday_survivor_save', JSON.stringify({
-                    energy, crystals, kills, weaponLevel, weaponCost, hasPower, powerType
-                }));
-            } catch(e) {}
-        }
+        let isGameOver = false;
 
         // 3D 變數
-        let scene, camera, renderer, raycaster, mouse;
-        let zombies = [], particles = [];
-        let doorMesh, gunMuzzle, playerModel;
-        let cameraShakeOffset = new THREE.Vector3();
+        let scene, camera, renderer, raycaster;
+        let player, gunMuzzle, doorMesh;
+        let zombies = [], pickups = [], bullets = [];
+        let obstacles = []; // 障礙物
 
-        const POWER_NAMES = {
-            'fire': { name: '🔥 火焰風暴', color: 0xef4444 },
-            'ice': { name: '❄️ 絕對零度', color: 0x0ea5e9 },
-            'thunder': { name: '⚡ 雷霆萬鈞', color: 0xeab308 },
-            'psychic': { name: '🧠 念力爆破', color: 0xd946ef }
-        };
+        // 移動與視角控制
+        let moveVector = new THREE.Vector3(0, 0, 0);
+        let cameraAngle = 0; // 水平旋轉
+        let cameraPitch = 0.5; // 垂直俯仰
+        let joystickActive = false;
+        let joystickStart = {x: 0, y: 0};
+        let joystickCurrent = {x: 0, y: 0};
 
-        const crosshairEl = document.getElementById('crosshair');
+        const POWER_NAMES = { 'fire': '🔥 火焰', 'ice': '❄️ 冰霜', 'thunder': '⚡ 雷電' };
+        
+        // UI 元素
+        const uiHP = document.getElementById('ui-hp');
+        const uiDoor = document.getElementById('ui-door');
+        const uiAmmo = document.getElementById('ui-ammo');
+        const uiEnergy = document.getElementById('ui-energy');
+        const uiCrystal = document.getElementById('ui-crystal');
+        const btnRepair = document.getElementById('btn-repair');
+
         function broadcast(text) { let box = document.getElementById('broadcast-box'); box.innerText = `📡 ${text}`; box.classList.add('show'); clearTimeout(window.bcTimer); window.bcTimer = setTimeout(() => box.classList.remove('show'), 3000); }
 
-        // --- 建立特種士兵模型 ---
+        // --- 建立玩家 ---
         function createPlayer() {
             let group = new THREE.Group();
-            let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5, metalness: 0.3 });
+            let suitMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.5 });
             let armorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.6 });
             let whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
             let visorMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0ea5e9, emissiveIntensity: 0.6 });
 
-            let torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), suitMat); 
-            torso.position.y = 0.7; group.add(torso);
-            let vest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.6), armorMat); 
-            vest.position.y = 0.8; group.add(vest);
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), whiteMat); 
-            head.position.y = 1.6; head.scale.set(1, 1.2, 1.1); group.add(head);
-            let visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), visorMat); 
-            visor.position.set(0, 1.65, 0.2); group.add(visor);
+            let torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), suitMat); torso.position.y = 0.7; group.add(torso);
+            let vest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.6), armorMat); vest.position.y = 0.8; group.add(vest);
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), whiteMat); head.position.y = 1.6; group.add(head);
+            let visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), visorMat); visor.position.set(0, 1.65, 0.2); group.add(visor);
 
             let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); legL.position.set(-0.2, 0, 0); group.add(legL);
             let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.9, 6), suitMat); legR.position.set(0.2, 0, 0); group.add(legR);
-            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.8, 6), suitMat); armR.position.set(0.4, 1, 0.3); armR.rotation.x = -Math.PI / 3; group.add(armR);
             
             let gun = new THREE.Group();
             let gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.2), whiteMat);
             let barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8), armorMat); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0, -0.9);
-            let scope = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 6), visorMat); scope.rotation.x = Math.PI / 2; scope.position.set(0, 0.15, -0.2);
-            gun.add(gunBody); gun.add(barrel); gun.add(scope);
+            gun.add(gunBody); gun.add(barrel);
             gun.position.set(0.4, 0.8, 0.8); group.add(gun);
 
             gunMuzzle = new THREE.Object3D(); gunMuzzle.position.set(0, 0, -1.4); gun.add(gunMuzzle);
             return group;
         }
 
-        // --- 建立恐怖喪屍模型 ---
-        function createZombieModel(isBoss) {
+        // --- 建立喪屍 ---
+        function createZombieModel(isElite) {
             let group = new THREE.Group();
-            let skinColor = isBoss ? 0x7e22ce : (wave > 5 ? 0xb91c1c : 0x15803d); 
+            let skinColor = isElite ? 0xb91c1c : 0x15803d;
             let skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.8 });
             let shirtMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 });
-            let bloodMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.7 });
             let eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
 
-            let body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.2, 8), shirtMat);
-            body.position.y = 1.1; body.rotation.x = 0.3; group.add(body);
-            
-            for(let i=0; i<3; i++) {
-                let rib = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 4), bloodMat);
-                rib.rotation.z = Math.PI / 2; rib.position.set(0, 0.9 + i*0.2, 0.25); body.add(rib);
-            }
-
-            let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), skinMat);
-            head.position.set(0.1, 1.8, 0.1); head.rotation.z = 0.4; group.add(head);
-
-            let jaw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.3), bloodMat); jaw.position.set(0, -0.15, 0.15); head.add(jaw);
+            let body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.2, 8), shirtMat); body.position.y = 1.1; body.rotation.x = 0.3; group.add(body);
+            let head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), skinMat); head.position.set(0.1, 1.8, 0.1); head.rotation.z = 0.4; group.add(head);
             let eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), eyeMat); eyeL.position.set(-0.1, 0.1, 0.25); head.add(eyeL);
             let eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), eyeMat); eyeR.position.set(0.1, 0.1, 0.25); head.add(eyeR);
 
             let armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.9, 6), skinMat); armL.position.set(-0.4, 1.1, 0.4); armL.rotation.x = -Math.PI / 2 + 0.2; group.add(armL);
-            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), skinMat); armR.position.set(0.4, 0.9, 0); armR.rotation.x = 0.5; armR.rotation.z = -0.2; group.add(armR);
+            let armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), skinMat); armR.position.set(0.4, 0.9, 0); armR.rotation.x = 0.5; group.add(armR);
             let legL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.9, 6), skinMat); legL.position.set(-0.15, 0.1, 0); group.add(legL);
             let legR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.6, 6), skinMat); legR.position.set(0.15, -0.05, 0); group.add(legR);
 
-            if (isBoss) {
-                body.scale.set(1.2, 1.2, 1.2); head.scale.set(1.3, 1.3, 1.3);
-                let spikeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309 });
-                for(let i=0; i<5; i++) {
-                    let spike = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 4), spikeMat);
-                    let angle = (i / 5) * Math.PI * 2;
-                    spike.position.set(Math.cos(angle)*0.3, 0.3, Math.sin(angle)*0.3); spike.rotation.x = angle; head.add(spike);
-                }
-            }
-            group.userData.armL = armL; group.userData.legL = legL; group.userData.legR = legR;
+            group.userData.legL = legL; group.userData.legR = legR;
             return group;
         }
 
+        // --- 初始化 3D ---
         function init3D() {
-            try {
-                const container = document.getElementById('canvas-container');
-                scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xf8fafc);
-                scene.fog = new THREE.Fog(0xf8fafc, 20, 60);
-                
-                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 4, 12); camera.lookAt(0, 1, -10);
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fafc);
+            scene.fog = new THREE.Fog(0xf8fafc, 20, 60);
+            
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
 
-                renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0; 
-                container.appendChild(renderer.domElement);
+            raycaster = new THREE.Raycaster();
 
-                raycaster = new THREE.Raycaster(); mouse = new THREE.Vector2();
-                renderer.domElement.addEventListener('pointerdown', onShoot);
-                renderer.domElement.addEventListener('pointermove', onAim);
+            scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); dirLight.position.set(10, 20, 10); scene.add(dirLight);
 
-                scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); dirLight.position.set(0, 15, 0); scene.add(dirLight);
-                const doorLight = new THREE.PointLight(0xff0000, 2, 30); doorLight.position.set(0, 3, -19); scene.add(doorLight);
+            // 地板與牆壁
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3 }));
+            floor.rotation.x = -Math.PI / 2; floor.position.y = -1; scene.add(floor);
+            const grid = new THREE.GridHelper(60, 30, 0x94a3b8, 0xcbd5e1); grid.position.y = -0.95; scene.add(grid);
 
-                const floorGeo = new THREE.PlaneGeometry(24, 50);
-                const floorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3, metalness: 0.1 }); 
-                const floor = new THREE.Mesh(floorGeo, floorMat); floor.rotation.x = -Math.PI / 2; floor.position.set(0, -1, -15); scene.add(floor);
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9 });
+            const wall1 = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 1), wallMat); wall1.position.set(0, 4, -30); scene.add(wall1);
+            const wall2 = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 1), wallMat); wall2.position.set(0, 4, 30); scene.add(wall2);
+            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 60), wallMat); wall3.position.set(-30, 4, 0); scene.add(wall3);
+            const wall4 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 60), wallMat); wall4.position.set(30, 4, 0); scene.add(wall4);
 
-                const grid = new THREE.GridHelper(50, 25, 0x94a3b8, 0xcbd5e1); grid.position.set(0, -0.95, -15); scene.add(grid);
+            // 障礙物 (幾條柱俾你躲)
+            for(let i=0; i<4; i++) {
+                let obs = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 3), new THREE.MeshStandardMaterial({ color: 0x94a3b8 }));
+                obs.position.set((Math.random()-0.5)*40, 2, (Math.random()-0.5)*40);
+                scene.add(obs); obstacles.push(obs);
+            }
 
-                const wallMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.8 });
-                const pipeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.5, roughness: 0.4 });
-                
-                const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 50), wallMat); leftWall.position.set(-12, 5, -15); scene.add(leftWall);
-                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 50), wallMat); rightWall.position.set(12, 5, -15); scene.add(rightWall);
+            // 大門 (喺最遠處 Z = -28)
+            doorMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 1), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 }));
+            doorMesh.position.set(0, 3, -28); scene.add(doorMesh);
 
-                for(let z = 10; z > -25; z -= 6) {
-                    let pipeL = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6), pipeMat); pipeL.rotation.x = Math.PI/2; pipeL.position.set(-10, 8, z); scene.add(pipeL);
-                    let pipeR = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 6), pipeMat); pipeR.rotation.x = Math.PI/2; pipeR.position.set(10, 8, z); scene.add(pipeR);
-                }
+            player = createPlayer();
+            player.position.set(0, 0, 20); // 初始位置
+            scene.add(player);
 
-                const endWallMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.4 });
-                const endWall = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 2), endWallMat); endWall.position.set(0, 5, -21); scene.add(endWall);
-
-                doorMesh = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 1), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.2 }));
-                doorMesh.position.set(0, 3, -20); scene.add(doorMesh);
-                
-                for(let i=0; i<4; i++) {
-                    let stripe = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 1.1), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
-                    stripe.position.set(0, 1 + i*1.5, -20); scene.add(stripe);
-                }
-                
-                const warningLight = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 })); warningLight.position.set(0, 8, -20); scene.add(warningLight);
-                const doorLightL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 1), new THREE.MeshBasicMaterial({ color: 0xef4444 })); doorLightL.position.set(-5.5, 3, -20); scene.add(doorLightL);
-                const doorLightR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 1), new THREE.MeshBasicMaterial({ color: 0xef4444 })); doorLightR.position.set(5.5, 3, -20); scene.add(doorLightR);
-
-                const guideGeo = new THREE.PlaneGeometry(0.5, 15);
-                const guideMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-                const guideLine = new THREE.Mesh(guideGeo, guideMat); guideLine.rotation.x = -Math.PI / 2; guideLine.position.set(0, -0.9, -12); scene.add(guideLine);
-
-                playerModel = createPlayer(); playerModel.position.set(0, -1, 6); scene.add(playerModel);
-
-                window.addEventListener('resize', onWindowResize, false);
-                animate();
-            } catch(e) { console.error("3D 失敗", e); }
+            window.addEventListener('resize', onWindowResize);
+            setupControls();
+            animate();
+            startWave();
         }
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function onAim(event) {
-            crosshairEl.style.display = 'block';
-            crosshairEl.style.left = event.clientX + 'px';
-            crosshairEl.style.top = event.clientY + 'px';
+        // --- 控制系統 (搖桿與視角) ---
+        function setupControls() {
+            const zone = document.getElementById('joystick-zone');
+            const stick = document.getElementById('joystick-stick');
+            const rect = zone.getBoundingClientRect();
+            const center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
 
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
+            zone.addEventListener('touchstart', (e) => {
+                joystickActive = true;
+                joystickStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            });
+            zone.addEventListener('touchmove', (e) => {
+                if(!joystickActive) return;
+                let dx = e.touches[0].clientX - joystickStart.x;
+                let dy = e.touches[0].clientY - joystickStart.y;
+                let dist = Math.min(Math.hypot(dx, dy), 40);
+                let angle = Math.atan2(dy, dx);
+                
+                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+                
+                // 轉換為 3D 移動向量
+                moveVector.x = (dx / 40);
+                moveVector.z = (dy / 40);
+            });
+            const endTouch = () => {
+                joystickActive = false;
+                moveVector.set(0, 0, 0);
+                stick.style.transform = `translate(0px, 0px)`;
+            };
+            zone.addEventListener('touchend', endTouch);
+
+            // 右邊畫面拖拽轉視角
+            let isDragging = false;
+            let lastX = 0, lastY = 0;
             
-            let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 20);
-            let targetPoint = new THREE.Vector3();
-            raycaster.ray.intersectPlane(plane, targetPoint);
-
-            if (targetPoint && playerModel) { playerModel.lookAt(targetPoint.x, playerModel.position.y, targetPoint.z); }
+            document.getElementById('canvas-container').addEventListener('touchstart', (e) => {
+                // 確保唔係撳落 UI 或者搖桿
+                if(e.target.closest('.ui-layer') || e.target.closest('.joystick-zone') || e.target.closest('.action-zone')) return;
+                isDragging = true;
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+            });
+            document.getElementById('canvas-container').addEventListener('touchmove', (e) => {
+                if(!isDragging) return;
+                let dx = e.touches[0].clientX - lastX;
+                let dy = e.touches[0].clientY - lastY;
+                
+                cameraAngle -= dx * 0.005;
+                cameraPitch -= dy * 0.005;
+                cameraPitch = Math.max(0.1, Math.min(Math.PI/2.5, cameraPitch));
+                
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+            });
+            document.getElementById('canvas-container').addEventListener('touchend', () => { isDragging = false; });
         }
 
-        function onShoot(event) {
-            playerModel.position.z = 6.2; setTimeout(() => playerModel.position.z = 6, 50);
-
+        // --- 射擊系統 ---
+        function shoot() {
+            if (isGameOver || ammo <= 0) return;
+            ammo--;
+            
+            // 取得槍口世界座標
             let startPos = new THREE.Vector3(); gunMuzzle.getWorldPosition(startPos);
+            
+            // 獲取相機中心射線
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
 
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-
-            let allZombies = zombies.map(z => z.mesh);
-            let intersects = raycaster.intersectObjects(allZombies, true);
+            // 檢查射中邊隻喪屍
+            let allZ = zombies.map(z => z.mesh);
+            let intersects = raycaster.intersectObjects(allZ, true);
             
             let endPos = new THREE.Vector3();
+            let hit = false;
             if (intersects.length > 0) {
                 endPos = intersects[0].point;
                 let hitGroup = intersects[0].object;
                 while (hitGroup.parent && !hitGroup.userData.legL) { hitGroup = hitGroup.parent; }
                 let targetZ = zombies.find(z => z.mesh === hitGroup);
                 if (targetZ) {
-                    targetZ.hp -= (weaponLevel * 50);
-                    createHitEffect(endPos, 0xef4444); 
+                    let dmg = hasShotgun ? 150 : 50; // 散彈槍更高傷
+                    targetZ.hp -= dmg;
+                    createHitEffect(endPos, 0xef4444);
                     if (targetZ.hp <= 0) killZombie(targetZ);
+                    hit = true;
                 }
             } else {
                 raycaster.ray.at(50, endPos);
             }
 
+            // 槍口火光同雷射
             let flash = new THREE.PointLight(0x2563eb, 2, 5); flash.position.copy(startPos); scene.add(flash); setTimeout(() => scene.remove(flash), 50);
-            let beamGeo = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
-            let beamMat = new THREE.LineBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 1 });
-            let beam = new THREE.Line(beamGeo, beamMat); scene.add(beam); setTimeout(() => scene.remove(beam), 50);
-        }
+            let beamMat = new THREE.LineBasicMaterial({ color: hasShotgun ? 0xf59e0b : 0x2563eb });
+            let beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([startPos, endPos]), beamMat);
+            scene.add(beam); setTimeout(() => scene.remove(beam), 50);
 
-        function animate() {
-            requestAnimationFrame(animate);
-            try {
-                if (shakeTime > 0) {
-                    shakeTime -= 0.016;
-                    cameraShakeOffset.set((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, 0);
-                    camera.position.copy(new THREE.Vector3(0, 4, 12).add(cameraShakeOffset));
-                } else { camera.position.lerp(new THREE.Vector3(0, 4, 12), 0.1); }
-                camera.lookAt(0, 1, -10);
-
-                for (let i = zombies.length - 1; i >= 0; i--) {
-                    let z = zombies[i];
-                    z.mesh.position.z += z.speed; 
-                    
-                    let t = Date.now() * 0.008;
-                    z.mesh.userData.legL.rotation.x = Math.sin(t) * 0.4;
-                    z.mesh.userData.legR.rotation.x = Math.sin(t + Math.PI) * 0.2; 
-                    z.mesh.userData.armL.rotation.x = -Math.PI / 2 + Math.sin(t*0.5) * 0.2;
-                    z.mesh.rotation.z = Math.sin(t*0.5) * 0.08; 
-
-                    if (z.mesh.position.z >= -19) {
-                        z.mesh.position.z = -19;
-                        doorHp -= z.dmg * 0.016;
-                        if (doorHp < 0) doorHp = 0;
-                        if (Math.random() < 0.1) shakeTime = 0.1;
+            if (hasShotgun && hit) {
+                // 散彈槍範圍傷害
+                zombies.forEach(z => {
+                    if (z.mesh.position.distanceTo(endPos) < 5 && z.mesh !== hitGroup) {
+                        z.hp -= 50; createHitEffect(z.mesh.position, 0xf59e0b); if(z.hp <= 0) killZombie(z);
                     }
-                }
-
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    let p = particles[i];
-                    p.mesh.position.add(p.velocity);
-                    p.velocity.y -= 0.1; p.mesh.rotation.x += 0.1; p.mesh.rotation.y += 0.1;
-                    p.life -= 0.02; p.mesh.material.opacity = p.life;
-                    if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
-                }
-
-                if (powerCharge < 100) powerCharge += 0.2;
-                if (ultimateCharge < 100) ultimateCharge += 0.1;
-                updateUI();
-
-                renderer.render(scene, camera);
-            } catch(e) {}
+                });
+            }
+            updateUI();
         }
 
-        function spawnZombie(isBoss = false) {
-            let size = isBoss ? 2.2 : (wave > 5 ? 1.2 : 1);
-            let hp = isBoss ? 3000 : (wave > 5 ? 300 : 100);
-            let group = createZombieModel(isBoss);
-            group.position.set((Math.random() - 0.5) * 16, -1, -35 - Math.random()*10);
-            group.scale.set(size, size, size);
-            scene.add(group);
-            zombies.push({ mesh: group, hp: hp, speed: isBoss ? 0.03 : 0.06, dmg: isBoss ? 50 : 10 });
-            if (isBoss) { broadcast("🚨 警告：巨型喪屍王從走廊深處逼近！"); shakeTime = 0.5; }
+        // --- 近戰 (槍托) ---
+        function doMelee() {
+            if (isGameOver) return;
+            let closestZ = null; let minDist = 5;
+            zombies.forEach(z => {
+                let d = player.position.distanceTo(z.mesh.position);
+                if(d < minDist) { minDist = d; closestZ = z; }
+            });
+            if(closestZ) {
+                closestZ.hp -= 50;
+                closestZ.mesh.position.add(player.position.clone().sub(closestZ.mesh.position).normalize().multiplyScalar(-5)); // 擊退
+                createHitEffect(closestZ.mesh.position, 0xffffff);
+                if(closestZ.hp <= 0) killZombie(closestZ);
+            }
+        }
+
+        // --- 修理大門 ---
+        let isRepairing = false;
+        function repairDoor() {
+            if (doorHP >= 1000 || energy < 50) return;
+            doorHP += 10; if (doorHP > 1000) doorHP = 1000;
+            energy -= 50;
+            updateUI();
+        }
+        // 按住修理掣
+        btnRepair.addEventListener('touchstart', () => { isRepairing = true; repairDoor(); });
+        btnRepair.addEventListener('touchend', () => { isRepairing = false; });
+
+        // --- 拾取系統 ---
+        function toggleAutoPickup() {
+            autoPickup = !autoPickup;
+            const btn = document.getElementById('auto-pickup-btn');
+            btn.innerText = `🧲 自動吸納：${autoPickup ? '開' : '關'}`;
+            btn.classList.toggle('active', autoPickup);
+        }
+
+        function spawnPickup(pos, type) {
+            let color = type === 'ammo' ? 0xf59e0b : 0x9333ea;
+            let mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: color }));
+            mesh.position.copy(pos); mesh.position.y = 0.5; scene.add(mesh);
+            pickups.push({ mesh: mesh, type: type });
+        }
+
+        // --- 波次與屍潮 ---
+        function startWave() {
+            if (isGameOver) return;
+            let isHorde = (wave % 5 === 0);
+            let count = isHorde ? 30 : 5 + wave * 2;
+            
+            if (isHorde) broadcast("🚨 警告：大型屍潮來襲！");
+
+            for(let i=0; i<count; i++) {
+                setTimeout(() => {
+                    if(isGameOver) return;
+                    let isElite = Math.random() < 0.2 || isHorde; 
+                    let zGroup = createZombieModel(isElite);
+                    // 生成喺大門附近 (Z = -25 到 -28)
+                    let spawnX = (Math.random() - 0.5) * 20;
+                    zGroup.position.set(spawnX, 0, -25 - Math.random()*3);
+                    scene.add(zGroup);
+                    zombies.push({ mesh: zGroup, hp: isElite ? 200 : 100, speed: isElite ? 0.08 : 0.05 });
+                }, i * (isHorde ? 200 : 800));
+            }
+            wave++;
         }
 
         function killZombie(z) {
-            createHitEffect(z.mesh.position, 0xf59e0b);
+            createHitEffect(z.mesh.position, 0x15803d);
             scene.remove(z.mesh);
             zombies = zombies.filter(item => item !== z);
             
-            kills++;
-            // 擊殺首領掉更多晶石
-            let rewardCrystals = z.mesh.scale.x > 1.5 ? 20 : 2;
-            crystals += rewardCrystals;
-            energy += z.mesh.scale.x > 1.5 ? 500 : 50;
-            ultimateCharge = Math.min(100, ultimateCharge + 8);
-            shakeTime = z.mesh.scale.x > 1.5 ? 0.5 : 0.1;
+            // 掉子彈同晶石
+            if (Math.random() < 0.5) spawnPickup(z.mesh.position, 'ammo');
+            if (Math.random() < 0.8) spawnPickup(z.mesh.position, 'crystal');
             
-            saveGame(); // 擊殺後自動存檔
+            if (zombies.length === 0) {
+                setTimeout(startWave, 3000);
+            }
         }
 
         function createHitEffect(pos, color) {
-            for(let i=0; i<10; i++) {
-                let geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-                let mat = new THREE.MeshBasicMaterial({ color: color, transparent: true });
-                let mesh = new THREE.Mesh(geo, mat); mesh.position.copy(pos); scene.add(mesh);
-                particles.push({ mesh: mesh, life: 1, velocity: new THREE.Vector3((Math.random()-0.5)*0.8, Math.random()*0.8, (Math.random()-0.5)*0.8) });
+            let p = new THREE.PointLight(color, 3, 5); p.position.copy(pos); scene.add(p);
+            setTimeout(() => scene.remove(p), 100);
+        }
+
+        // --- 主循環 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isGameOver) return;
+
+            // 玩家移動 (基於搖桿與視角)
+            let forward = new THREE.Vector3(-Math.sin(cameraAngle), 0, -Math.cos(cameraAngle));
+            let right = new THREE.Vector3(Math.cos(cameraAngle), 0, -Math.sin(cameraAngle));
+            
+            let moveDir = forward.multiplyScalar(-moveVector.z).add(right.multiplyScalar(moveVector.x));
+            if (moveDir.length() > 1) moveDir.normalize();
+            
+            player.position.add(moveDir.multiplyScalar(0.3)); // 移動速度
+
+            // 玩家面向視線方向
+            player.rotation.y = cameraAngle;
+
+            // 相機跟隨
+            let camOffset = new THREE.Vector3(0, 6, 10).applyAxisAngle(new THREE.Vector3(1,0,0), cameraPitch);
+            camOffset.applyAxisAngle(new THREE.Vector3(0,1,0), cameraAngle);
+            camera.position.copy(player.position).add(camOffset);
+            camera.lookAt(player.position.x, player.position.y + 2, player.position.z);
+
+            // 喪屍移動與攻擊
+            zombies.forEach(z => {
+                let target = doorHP > 0 && z.mesh.position.z < -20 ? doorMesh : player;
+                let targetPos = doorHP > 0 && z.mesh.position.z < -20 ? doorMesh.position : player.position;
+                
+                // 如果大門爆咗，行向玩家
+                if (doorHP <= 0) targetPos = player.position;
+
+                let dir = targetPos.clone().sub(z.mesh.position);
+                dir.y = 0; dir.normalize();
+                z.mesh.position.add(dir.multiplyScalar(z.speed));
+                z.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+
+                // 攻擊判定
+                if (z.mesh.position.distanceTo(targetPos) < 2) {
+                    if (doorHP > 0 && targetPos === doorMesh.position) {
+                        doorHP -= 10; // 咬門
+                        if (Math.random() < 0.1) createHitEffect(doorMesh.position, 0xff0000);
+                        if (doorHP <= 0) { doorHP = 0; broadcast("⚠️ 大門被攻破！喪屍衝入嚟啦！"); }
+                    } else if (targetPos === player.position) {
+                        playerHP -= 5; // 咬玩家
+                        if (playerHP <= 0) gameOver();
+                        if (Math.random() < 0.1) createHitEffect(player.position, 0xff0000);
+                    }
+                }
+            });
+
+            // 拾取物
+            for (let i = pickups.length - 1; i >= 0; i--) {
+                let p = pickups[i];
+                let dist = player.position.distanceTo(p.mesh.position);
+                
+                if (autoPickup || dist < 2) {
+                    // 飛向玩家
+                    p.mesh.position.lerp(player.position, 0.1);
+                    if (dist < 1) {
+                        if (p.type === 'ammo') ammo = Math.min(maxAmmo, ammo + 30);
+                        else crystals += 2;
+                        scene.remove(p.mesh); pickups.splice(i, 1); updateUI();
+                    }
+                }
             }
-        }
 
-        // --- 按鈕 ---
-        function upgradeWeapon() {
-            if (energy < weaponCost) { broadcast("❌ 電力不足！"); return; }
-            energy -= weaponCost; weaponLevel++; weaponCost = Math.floor(weaponCost * 1.5);
-            broadcast(`🔫 步槍升級至 Lv.${weaponLevel}！傷害大增！`);
-            saveGame(); // 升級後自動存檔
-        }
-
-        // 手動解鎖異能
-        function unlockPower() {
-            if (hasPower) {
-                // 已有異能，則作為充能大招使用
-                if (powerCharge < 100) { broadcast("❌ 異能充能中！"); return; }
-                powerCharge = 0;
-                broadcast(`💥 釋放異能：${POWER_NAMES[powerType].name}！`);
-                shakeTime = 0.8;
-                zombies.forEach(z => { z.hp -= 500; createHitEffect(z.mesh.position, POWER_NAMES[powerType].color); if(z.hp<=0) killZombie(z); });
-                return;
-            }
-
-            if (crystals < 10) { broadcast("❌ 晶石不足！需要 10 粒晶石。"); return; }
-            
-            // 扣除晶石並解鎖
-            crystals -= 10;
-            hasPower = true;
-            let keys = Object.keys(POWER_NAMES); 
-            powerType = keys[Math.floor(Math.random() * keys.length)];
-            
-            let pInfo = POWER_NAMES[powerType];
-            broadcast(`💎 解鎖專屬異能：${pInfo.name}！`);
-            
-            let popup = document.createElement('div');
-            popup.style.cssText = `position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:24px; font-weight:900; text-shadow:0 0 20px #fff; z-index:999; pointer-events:none; text-align:center; background:rgba(0,0,0,0.7); padding:15px; border-radius:10px; border:2px solid ${pInfo.color};`;
-            popup.innerText = `💎 解鎖異能！\n${pInfo.name}`;
-            document.body.appendChild(popup); setTimeout(() => popup.remove(), 3000);
-            
-            saveGame(); // 解鎖後自動存檔
-        }
-
-        function useUltimate() {
-            if (ultimateCharge < 100) return;
-            ultimateCharge = 0;
-            broadcast("☄️ 軌道死光從天而降！全場蒸發！");
-            shakeTime = 1.5;
-            let flash = document.createElement('div');
-            flash.style.cssText = 'position:absolute; inset:0; background:#fff; z-index:999; opacity:1; transition:opacity 0.5s; pointer-events:none;';
-            document.body.appendChild(flash); setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 500); }, 100);
-            zombies.forEach(z => { z.hp -= 9999; createHitEffect(z.mesh.position, 0xf59e0b); if(z.hp<=0) killZombie(z); });
-        }
-
-        function updateUI() {
-            document.getElementById('ui-energy').innerText = Math.floor(energy);
-            document.getElementById('ui-crystal').innerText = Math.floor(crystals);
-            document.getElementById('ui-kills').innerText = kills;
-            document.getElementById('ui-door-hp').innerText = Math.floor(doorHp);
-            document.getElementById('ui-door-bar').style.width = `${(doorHp/maxDoorHp)*100}%`;
-            document.getElementById('ui-weapon-cost').innerText = weaponCost;
-
-            let pBtn = document.getElementById('btn-power');
-            if (!hasPower) {
-                pBtn.innerText = `🔮 解鎖異能 (10晶石)`;
-                pBtn.style.color = crystals >= 10 ? '#9333ea' : '#94a3b8';
+            // 檢查修理掣顯示
+            if (player.position.distanceTo(doorMesh.position) < 6 && doorHP < 1000) {
+                btnRepair.style.display = 'flex';
             } else {
-                let pInfo = POWER_NAMES[powerType];
-                pBtn.style.color = '#' + pInfo.color.toString(16).padStart(6, '0');
-                if (powerCharge >= 100) { pBtn.disabled = false; pBtn.innerText = `${pInfo.name.split(' ')[0]} 異能就緒`; }
-                else { pBtn.disabled = true; pBtn.innerText = `${pInfo.name.split(' ')[0]} 充能 (${Math.floor(powerCharge)}%)`; }
+                btnRepair.style.display = 'none';
             }
 
-            let uBtn = document.getElementById('btn-ultimate');
-            if (ultimateCharge >= 100) { uBtn.disabled = false; uBtn.innerText = '☄️ 死光就緒'; }
-            else { uBtn.disabled = true; uBtn.innerText = `☄️ 死光 (${Math.floor(ultimateCharge)}%)`; }
+            // 按住修理
+            if (isRepairing) repairDoor();
+
+            updateUI();
+            renderer.render(scene, camera);
         }
 
-        setInterval(() => { 
-            if (doorHp <= 0) { 
-                broadcast("💀 大門被攻破！遊戲結束。"); 
-                // 死咗就清走個存檔，重新開始
-                localStorage.removeItem('doomsday_survivor_save');
-                setTimeout(() => location.reload(), 2000); 
-            } 
-        }, 1000);
+        // --- UI 更新 ---
+        function updateUI() {
+            uiHP.innerText = Math.floor(playerHP);
+            uiDoor.innerText = Math.floor(doorHP);
+            uiAmmo.innerText = Math.floor(ammo);
+            uiEnergy.innerText = Math.floor(energy);
+            uiCrystal.innerText = Math.floor(crystals);
+            
+            if (doorHP <= 0) uiDoor.style.color = '#ef4444';
+            else uiDoor.style.color = '#2563eb';
+        }
 
-        let spawnTimer = 0;
-        setInterval(() => {
-            spawnTimer++;
-            if (spawnTimer % 2 === 0) spawnZombie(false);
-            if (spawnTimer % 15 === 0) { spawnZombie(true); wave++; }
-        }, 1000);
+        function gameOver() {
+            isGameOver = true;
+            broadcast("💀 士兵陣亡！避難所淪陷。");
+            setTimeout(() => location.reload(), 3000);
+        }
 
+        // --- 槍鋪 ---
+        function openShop() { document.getElementById('shop-modal').classList.add('active'); }
+        function closeShop() { document.getElementById('shop-modal').classList.remove('active'); }
+        
+        function buyAmmo() {
+            if(energy >= 200) { energy -= 200; ammo = Math.min(600, ammo + 100); updateUI(); }
+        }
+        function buyHeal() {
+            if(crystals >= 5) { crystals -= 5; playerHP = 100; updateUI(); }
+        }
+        function buyWeapon(type) {
+            if(type === 'shotgun' && !hasShotgun && crystals >= 30) {
+                crystals -= 30; hasShotgun = true;
+                document.getElementById('buy-shotgun').innerText = '已解鎖';
+                document.getElementById('buy-shotgun').disabled = true;
+                broadcast("🔫 解鎖散彈槍！傷害大增！");
+                updateUI();
+            }
+        }
+
+        // 啟動
         window.onload = () => {
-            loadSave(); // 載入存檔
-            init3D(); 
-            updateUI();
-            setTimeout(() => { spawnZombie(false); broadcast("士兵，喪屍從前方走廊來襲！點擊螢幕開火！"); }, 1000);
+            init3D();
+            setInterval(() => { 
+                if(!isGameOver) { energy += 5; updateUI(); } 
+            }, 1000);
         };
+
+        // 用 Mouse 支援電腦測試
+        document.getElementById('canvas-container').addEventListener('mousemove', (e) => {
+            if(e.buttons === 1) { // 按住左鍵拖拽
+                cameraAngle -= e.movementX * 0.005;
+                cameraPitch -= e.movementY * 0.005;
+                cameraPitch = Math.max(0.1, Math.min(Math.PI/2.5, cameraPitch));
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'w') moveVector.z = -1;
+            if(e.key === 's') moveVector.z = 1;
+            if(e.key === 'a') moveVector.x = -1;
+            if(e.key === 'd') moveVector.x = 1;
+            if(e.key === ' ') shoot();
+        });
+        document.addEventListener('keyup', () => { moveVector.set(0,0,0); });
+
     </script>
 </body>
 </html>
