@@ -84,7 +84,7 @@
 
         let audioCtx = null;
         let delayNode = null, feedbackGain = null, filterNode = null;
-        let lastNoteTime = 0; // 用於防止重音
+        let lastNoteTime = 0; 
 
         function initAudio() {
             if (audioCtx) return;
@@ -96,7 +96,7 @@
             feedbackGain.gain.value = 0.3; 
             filterNode = audioCtx.createBiquadFilter();
             filterNode.type = 'lowpass';
-            filterNode.frequency.value = 1200; // 降低濾波頻率，令回音更柔和
+            filterNode.frequency.value = 1200; 
 
             delayNode.connect(feedbackGain);
             feedbackGain.connect(filterNode);
@@ -123,7 +123,6 @@
             if (!audioCtx) initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            // 【核心優化】防止重音 (80ms 防抖)
             let now = audioCtx.currentTime;
             if (now - lastNoteTime < 0.08) return; 
             lastNoteTime = now;
@@ -131,7 +130,7 @@
             let freq = getFrequency(noteIdx, octave);
             let color = NOTE_COLORS[noteIdx];
             
-            screenShake = 6; // 震動減輕少少
+            screenShake = 6; 
             flashColor = color;
             flashAlpha = 0.15;
             createSparks(ball.x, ball.y, color);
@@ -143,12 +142,11 @@
             
             const gain = audioCtx.createGain();
             const osc2Gain = audioCtx.createGain();
-            osc2Gain.gain.value = 0.08; // 泛音減細
+            osc2Gain.gain.value = 0.08; 
 
-            // 【核心優化】平滑 Attack，減少爆音
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.05); 
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0); // 尾音拉長
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0); 
 
             osc1.connect(gain); osc2.connect(osc2Gain); osc2Gain.connect(gain);
             gain.connect(audioCtx.destination); 
@@ -172,7 +170,7 @@
         const PLATE_H = 16;
         let cameraY = 0;
 
-        // --- 🎵 核心：簡譜解析器 ---
+        // --- 🎵 核心：簡譜解析器 (橫向蛇形排列) ---
         function buildTrackFromString(scoreStr) {
             plates = [];
             if (isPlaying) togglePlay();
@@ -183,15 +181,16 @@
             
             if (tokens.length === 0) return alert("請輸入有效曲譜！");
 
+            let currentX = 100;
             let currentY = 100;
-            const BASE_SPACING = 85; // 【核心優化】拉大距離，防重音同睇得清楚
-
-            const xPatterns = [0.2, 0.8, 0.35, 0.65, 0.5]; 
+            const X_SPACING = 110; // 橫向間距
+            const Y_SPACING = 70;  // 換行時的縱向間距
+            let direction = 1; // 1 代表向右，-1 代表向左
 
             tokens.forEach((token, i) => {
                 let extraDelay = 0;
                 if (token.includes(',')) {
-                    extraDelay = 60; 
+                    extraDelay = 50; 
                     token = token.replace(/,/g, '');
                 }
                 if (token === '') return;
@@ -204,11 +203,8 @@
                 let noteIdx = parseInt(noteChar);
                 if (isNaN(noteIdx) || noteIdx < 0 || noteIdx > 6) return;
 
-                let pFactor = xPatterns[(i + Math.floor(Math.random() * 2)) % xPatterns.length];
-                let xPos = W * pFactor;
-
                 plates.push({
-                    x: Math.max(10, Math.min(W - PLATE_W - 10, xPos - PLATE_W / 2)),
+                    x: currentX,
                     y: currentY,
                     w: PLATE_W,
                     h: PLATE_H,
@@ -216,7 +212,20 @@
                     octave: octave
                 });
 
-                currentY += BASE_SPACING + extraDelay; 
+                // 打橫行，碰到邊界就掉頭 (蛇形)
+                currentX += X_SPACING * direction;
+                
+                if (currentX > W - PLATE_W - 20) {
+                    currentX = W - PLATE_W - 20;
+                    direction = -1;
+                    currentY += Y_SPACING + extraDelay;
+                } else if (currentX < 20) {
+                    currentX = 20;
+                    direction = 1;
+                    currentY += Y_SPACING + extraDelay;
+                } else {
+                    currentY += extraDelay;
+                }
             });
 
             emitter.x = plates[0].x + PLATE_W / 2;
@@ -226,7 +235,6 @@
             setTimeout(togglePlay, 100); 
         }
 
-        // --- 完整《凡星》曲譜 ---
         function loadFanXing() {
             let score = 
                 "3 3 3 4 5, 5 4 3 2, " +
@@ -476,7 +484,6 @@
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            // 【核心優化】拉長飛行時間，令節奏更從容
                             let t = Math.max(50, Math.min(120, minDy * 0.9));
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
