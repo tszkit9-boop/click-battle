@@ -698,5 +698,39 @@
     startGame();
     requestAnimationFrame(loop);
 </script>
+
+<!-- 🟢 在線人數統計 (已加入) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = {
+            databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 生成隨機玩家 ID
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        
+        // 獲取當前遊戲名 (會抓到 magic-survivor)
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        // 監聽 Firebase 連線狀態
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                // 當玩家斷線/關閉網頁時，自動移除在線狀態
+                userStatusRef.onDisconnect().remove();
+                // 標記為在線
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) {
+        console.log("在線統計未啟動", e);
+    }
+</script>
 </body>
 </html>
