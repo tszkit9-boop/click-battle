@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>霓虹音樂盒</title>
+    <title>霓虹音樂盒 - 自由編曲</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
         body {
@@ -30,18 +30,24 @@
         button.active { background: #00d2d3; color: #000; box-shadow: 0 0 15px #00d2d3; }
         button.danger { color: #ff4757; border-color: #ff4757; box-shadow: 0 0 10px rgba(255,71,87,0.1); }
         button.danger:hover { background: #ff4757; color: #000; box-shadow: 0 0 20px #ff4757; }
-        button.record { color: #ff4757; border-color: #ff4757; }
-        button.record.active { background: #ff4757; color: #fff; animation: pulse 1s infinite; }
-        button.download { color: #2ed573; border-color: #2ed573; display: none; }
-        button.download.active { display: inline-block; background: #2ed573; color: #000; }
-        @keyframes pulse { 0%, 100% { box-shadow: 0 0 5px #ff4757; } 50% { box-shadow: 0 0 20px #ff4757; } }
+        button.magic { color: #feca57; border-color: #feca57; box-shadow: 0 0 10px rgba(254,202,87,0.2); }
+        button.magic:hover { background: #feca57; color: #000; box-shadow: 0 0 20px #feca57; }
         
-        /* 新增：音符選擇器 */
+        /* 音階選擇器 */
         #note-selector {
-            display: flex; gap: 5px; padding: 8px 15px; background: rgba(0,0,0,0.6);
+            display: flex; gap: 8px; padding: 10px 15px; background: rgba(0,0,0,0.6);
             border-bottom: 1px solid #222; overflow-x: auto; scrollbar-width: none;
+            align-items: center;
         }
         #note-selector::-webkit-scrollbar { display: none; }
+        
+        .octave-btn {
+            flex: 0 0 auto; width: 50px; height: 40px; border-radius: 8px;
+            border: 2px solid #555; background: #111; color: #aaa; font-size: 12px;
+            cursor: pointer; transition: 0.2s; font-weight: bold;
+        }
+        .octave-btn.active { border-color: #feca57; color: #feca57; background: rgba(254, 202, 87, 0.1); }
+
         .note-btn {
             flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
             border: 2px solid #333; background: #111; color: #fff; font-size: 14px;
@@ -49,7 +55,7 @@
             transition: 0.2s; font-family: 'Orbitron', sans-serif;
         }
         .note-btn.selected {
-            border-color: #fff; transform: scale(1.1); box-shadow: 0 0 15px currentColor;
+            border-color: #fff; transform: scale(1.15); box-shadow: 0 0 15px currentColor;
         }
 
         #canvas-container { flex: 1; position: relative; cursor: crosshair; background: #050510; }
@@ -70,20 +76,25 @@
             <button id="btn-reset" class="danger" onclick="clearAll()">🗑 清空</button>
         </div>
         <div class="btn-group">
-            <button id="btn-record" class="record" onclick="toggleRecord()">🔴 錄製</button>
-            <button id="btn-download" class="download" onclick="downloadAudio()">⬇️ 存音軌</button>
-            <button onclick="shareTrack()">🔗 分享</button>
+            <button class="magic" onclick="loadFanXing()">✨ 載入《凡星》</button>
+            <button onclick="shareTrack()">🔗 分享歌曲</button>
         </div>
     </div>
     
-    <!-- 音符選擇器 -->
-    <div id="note-selector"></div>
+    <!-- 八度與音符選擇器 -->
+    <div id="note-selector">
+        <button class="octave-btn" id="oct-low" onclick="setOctave(-1)">低音</button>
+        <button class="octave-btn active" id="oct-mid" onclick="setOctave(0)">中音</button>
+        <button class="octave-btn" id="oct-high" onclick="setOctave(1)">高音</button>
+        <div style="width: 1px; height: 30px; background: #333; margin: 0 5px;"></div>
+        <div id="note-buttons" style="display: flex; gap: 8px;"></div>
+    </div>
 
     <div id="canvas-container">
         <canvas id="gameCanvas"></canvas>
         <div id="instructions">
-            👆 選擇上方音符，點擊畫布放置鋼片<br>
-            👆 點擊現有鋼片切換下一個音符 | 長按刪除
+            👆 揀選上方音符，點擊畫布放鋼片 (自動對齊格線)<br>
+            👆 鋼片垂直距離越遠，節奏越慢 | 點擊切換音高 | 長按刪除
         </div>
     </div>
 
@@ -92,9 +103,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const playBtn = document.getElementById('btn-play');
-        const recordBtn = document.getElementById('btn-record');
-        const downloadBtn = document.getElementById('btn-download');
-        const noteSelector = document.getElementById('note-selector');
+        const noteButtonsContainer = document.getElementById('note-buttons');
 
         let W, H, DPR;
         function resize() {
@@ -109,13 +118,11 @@
         resize();
 
         let audioCtx = null;
-        let dest = null;
         let delayNode = null, feedbackGain = null, filterNode = null;
 
         function initAudio() {
             if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            dest = audioCtx.createMediaStreamDestination();
             
             delayNode = audioCtx.createDelay();
             delayNode.delayTime.value = 0.3; 
@@ -129,35 +136,52 @@
             feedbackGain.connect(filterNode);
             filterNode.connect(delayNode); 
             delayNode.connect(audioCtx.destination);
-            delayNode.connect(dest);
         }
 
-        // 音階設定 (C大調)
-        const SCALE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 0];
-        const SCALE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6', '#e056fd', '#7f8c8d'];
-        const NOTE_NAMES = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti', 'Do', '停'];
-        let currentNoteIndex = 0; // 預設揀 Do
+        // 音階設定 (基礎 Do Re Mi Fa Sol La Ti)
+        const BASE_FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+        const NOTE_NAMES = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti'];
+        const NOTE_COLORS = ['#ff4757', '#ff9f43', '#feca57', '#2ed573', '#00d2d3', '#5352ed', '#9b59b6'];
 
-        // 生成音符選擇器按鈕
+        let currentOctave = 0; 
+        let currentNoteIndex = 0; 
+
+        // 生成音符按鈕
         NOTE_NAMES.forEach((name, idx) => {
             let btn = document.createElement('button');
             btn.className = 'note-btn' + (idx === 0 ? ' selected' : '');
             btn.innerText = name;
-            btn.style.color = SCALE_COLORS[idx];
+            btn.style.color = NOTE_COLORS[idx];
             btn.onclick = () => {
                 currentNoteIndex = idx;
                 document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
             };
-            noteSelector.appendChild(btn);
+            noteButtonsContainer.appendChild(btn);
         });
 
-        function playNote(freq, color) {
+        function setOctave(oct) {
+            currentOctave = oct;
+            document.querySelectorAll('.octave-btn').forEach(b => b.classList.remove('active'));
+            if(oct === -1) document.getElementById('oct-low').classList.add('active');
+            if(oct === 0) document.getElementById('oct-mid').classList.add('active');
+            if(oct === 1) document.getElementById('oct-high').classList.add('active');
+        }
+
+        function getFrequency(noteIdx, octave) {
+            let baseFreq = BASE_FREQS[noteIdx];
+            if (octave === -1) return baseFreq / 2;
+            if (octave === 1) return baseFreq * 2;
+            return baseFreq;
+        }
+
+        function playNote(noteIdx, octave) {
             if (!audioCtx) initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
+            let freq = getFrequency(noteIdx, octave);
+            let color = NOTE_COLORS[noteIdx];
             createSparks(ball.x, ball.y, color);
-            if (freq === 0) return; 
 
             const osc1 = audioCtx.createOscillator();
             const osc2 = audioCtx.createOscillator();
@@ -174,14 +198,13 @@
 
             osc1.connect(gain); osc2.connect(osc2Gain); osc2Gain.connect(gain);
             gain.connect(audioCtx.destination); 
-            gain.connect(dest);
             gain.connect(delayNode); 
 
             osc1.start(); osc2.start();
             osc1.stop(audioCtx.currentTime + 1.0); osc2.stop(audioCtx.currentTime + 1.0);
         }
 
-        // --- 2. 遊戲物件與預設歌曲 ---
+        // --- 2. 遊戲物件 ---
         let plates = [];
         let isPlaying = false;
         let ball = { x: 100, y: 50, vx: 0, vy: 0, radius: 8, lastHitPlate: null, trail: [], isDead: false, deadTimer: 0 };
@@ -193,49 +216,52 @@
         const GRAVITY = 0.25; 
         const PLATE_W = 80; 
         const PLATE_H = 16;
+        const GRID_SIZE = 40; 
 
-        // 預設載入《小星星》完整版
-        function loadDefaultSong() {
+        // --- 🎵 載入《凡星》樂譜 ---
+        function loadFanXing() {
             plates = [];
-            // 小星星簡譜：1 1 5 5 6 6 5 | 4 4 3 3 2 2 1 | 5 5 4 4 3 3 2 | 5 5 4 4 3 3 2 | 1 1 5 5 6 6 5 | 4 4 3 3 2 2 1
-            // 對應索引：0 0 4 4 5 5 4 | 3 3 2 2 1 1 0 | 4 4 3 3 2 2 1 | 4 4 3 3 2 2 1 | 0 0 4 4 5 5 4 | 3 3 2 2 1 1 0
-            const melody = [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0, 4, 4, 3, 3, 2, 2, 1, 4, 4, 3, 3, 2, 2, 1, 0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0];
+            if (isPlaying) togglePlay();
             
-            let startX = W / 2;
-            let startY = 120;
-            
-            for(let i = 0; i < melody.length; i++) {
-                // 讓 X 座標左右交錯，形成階梯狀
-                let offsetX = (i % 2 === 0) ? -80 : 80;
-                // 如果連續同一個音，就強制換邊，避免疊埋
-                if (i > 0 && melody[i] === melody[i-1]) {
-                    offsetX = (plates[i-1].x > startX) ? -80 : 80;
-                }
+            // 《凡星》副歌旋律 (Do=0, Re=1, Mi=2, Fa=3, Sol=4, La=5, Ti=6, 高音Do=7)
+            // 大概這就叫作 凡星在漆黑中拼命發光
+            // 5 5 6 1' 6 | 5 3 3 5 6 5 3 | 2 2 3 5 3 | 2 1 1 2 3 2 1
+            const melody = [
+                { note: 4, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 5, oct: 0, delay: 1 }, { note: 0, oct: 1, delay: 1 }, { note: 5, oct: 0, delay: 2 },
+                { note: 4, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 5, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 2 },
+                { note: 1, oct: 0, delay: 1 }, { note: 1, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 4, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 2 },
+                { note: 1, oct: 0, delay: 1 }, { note: 0, oct: 0, delay: 1 }, { note: 0, oct: 0, delay: 1 }, { note: 1, oct: 0, delay: 1 }, { note: 2, oct: 0, delay: 1 }, { note: 1, oct: 0, delay: 1 }, { note: 0, oct: 0, delay: 2 }
+            ];
 
+            let startY = 100;
+            let currentY = startY;
+            let side = 1; 
+
+            melody.forEach((m, i) => {
+                // 每隔幾粒音交替方向，形成靚嘅軌道
+                if (i % 3 === 0) side *= -1;
+
+                let xPos = W / 2 + (side * W / 4); 
+                
                 plates.push({
-                    x: startX + offsetX - PLATE_W/2, 
-                    y: startY + i * 60, 
-                    w: PLATE_W, 
-                    h: PLATE_H, 
-                    noteIndex: melody[i]
+                    x: xPos - PLATE_W / 2,
+                    y: currentY,
+                    w: PLATE_W,
+                    h: PLATE_H,
+                    noteIndex: m.note,
+                    octave: m.oct
                 });
-            }
-            emitter.x = plates[0].x + PLATE_W / 2; 
-            ball.x = emitter.x; ball.y = emitter.y + 20;
-            ball.lastHitPlate = null;
-        }
 
-        // 載入分享連結或預設歌曲
-        const urlParams = new URLSearchParams(window.location.search);
-        const sharedData = urlParams.get('track');
-        if (sharedData) {
-            try { 
-                let minified = JSON.parse(decodeURIComponent(atob(sharedData)));
-                plates = minified.map(p => ({ x: p[0], y: p[1], w: PLATE_W, h: PLATE_H, noteIndex: p[2] }));
-            } catch(e) { loadDefaultSong(); }
-        } else { 
-            // 等 W 加載完先載入預設歌曲
-            setTimeout(loadDefaultSong, 100); 
+                // 根據 delay 決定垂直距離 (delay 越大，跌得越遠，時間越長)
+                currentY += m.delay * 45; 
+            });
+
+            // 設定發射器位置
+            emitter.x = plates[0].x + PLATE_W / 2;
+            ball.x = emitter.x; ball.y = emitter.y + 20;
+            
+            // 自動播放
+            setTimeout(togglePlay, 100); 
         }
 
         // --- 3. 互動控制 ---
@@ -258,7 +284,6 @@
             
             const pos = getPos(e);
             
-            // 判斷係咪撳發射器
             if (pos.y < emitter.y + 40 && Math.abs(pos.x - emitter.x) < 40) {
                 isDraggingEmitter = true;
                 return;
@@ -283,14 +308,18 @@
                 startX = pos.x; startY = pos.y;
                 initialX = clickedPlate.x; initialY = clickedPlate.y;
             } else {
-                // 新增鋼片 (使用當前選擇的音符)
+                let alignX = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
+                let alignY = Math.round(pos.y / GRID_SIZE) * GRID_SIZE;
+
                 let newPlate = {
-                    x: Math.max(0, Math.min(W - PLATE_W, pos.x - PLATE_W/2)), 
-                    y: Math.max(emitter.y + 60, Math.min(H - PLATE_H, pos.y - PLATE_H/2)),
-                    w: PLATE_W, h: PLATE_H, noteIndex: currentNoteIndex
+                    x: Math.max(0, Math.min(W - PLATE_W, alignX - PLATE_W/2)), 
+                    y: Math.max(emitter.y + 60, Math.min(H - PLATE_H, alignY - PLATE_H/2)),
+                    w: PLATE_W, h: PLATE_H, 
+                    noteIndex: currentNoteIndex,
+                    octave: currentOctave
                 };
                 plates.push(newPlate);
-                playPreviewNote(currentNoteIndex);
+                playPreviewNote(currentNoteIndex, currentOctave);
             }
         }
 
@@ -326,9 +355,8 @@
                 clearTimeout(pressTimer);
                 pressTimer = null;
                 if (!isDraggingPlate && dragPlate) {
-                    // 點擊切換下一個音符
-                    dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 9;
-                    playPreviewNote(dragPlate.noteIndex);
+                    dragPlate.noteIndex = (dragPlate.noteIndex + 1) % 7;
+                    playPreviewNote(dragPlate.noteIndex, dragPlate.octave);
                 }
             }
             dragPlate = null;
@@ -342,53 +370,20 @@
         window.addEventListener('touchmove', handleMove, {passive: false});
         window.addEventListener('touchend', handleUp);
 
-        function playPreviewNote(idx) {
+        function playPreviewNote(idx, oct) {
             if (!audioCtx) initAudio();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (SCALE_FREQS[idx] === 0) return; 
+            let freq = getFrequency(idx, oct);
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'sine'; osc.frequency.setValueAtTime(SCALE_FREQS[idx], audioCtx.currentTime);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        // --- 4. 錄音與分享 ---
-        let mediaRecorder, audioChunks = [], audioUrl = "";
-        let isRecording = false;
-
-        function toggleRecord() {
-            if (!audioCtx) initAudio();
-            if (!isRecording) {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                audioChunks = []; downloadBtn.classList.remove('active'); downloadBtn.style.display = 'none';
-                mediaRecorder = new MediaRecorder(dest.stream);
-                mediaRecorder.ondataavailable = event => { if (event.data.size > 0) audioChunks.push(event.data); };
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                    audioUrl = URL.createObjectURL(blob);
-                    downloadBtn.style.display = 'inline-block'; downloadBtn.classList.add('active');
-                };
-                mediaRecorder.start(); isRecording = true;
-                recordBtn.innerText = "⏹ 停止錄音"; recordBtn.classList.add('active');
-                if (!isPlaying) togglePlay();
-            } else {
-                mediaRecorder.stop(); isRecording = false;
-                recordBtn.innerText = "🔴 錄製"; recordBtn.classList.remove('active');
-                if (isPlaying) togglePlay();
-            }
-        }
-
-        function downloadAudio() {
-            if (!audioUrl) return;
-            const a = document.createElement('a'); a.style.display = 'none';
-            a.href = audioUrl; a.download = 'neon-music-box.webm'; 
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            alert("音軌已下載！請去手機『檔案』搵返。");
-        }
-
+        // --- 4. 其他功能 ---
         function clearAll() { 
-            if(confirm("確定清空？")) { 
+            if(confirm("確定清空所有音符？")) { 
                 plates = []; 
                 if(isPlaying) togglePlay(); 
                 ball.isDead = true;
@@ -399,7 +394,7 @@
         
         function shareTrack() {
             if (plates.length === 0) return alert("請先放置鋼片！");
-            let minified = plates.map(p => [Math.round(p.x), Math.round(p.y), p.noteIndex]);
+            let minified = plates.map(p => [Math.round(p.x), Math.round(p.y), p.noteIndex, p.octave]);
             let encoded = btoa(encodeURIComponent(JSON.stringify(minified)));
             let url = window.location.href.split('?')[0] + '?track=' + encoded;
             navigator.clipboard.writeText(url).then(() => alert("已複製分享連結！")).catch(() => prompt("複製連結：", url));
@@ -413,7 +408,6 @@
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 
                 if (plates.length > 0) {
-                    // 重新搵最高嗰塊板做起點
                     let topPlate = plates.reduce((prev, curr) => (prev.y < curr.y) ? prev : curr);
                     emitter.x = topPlate.x + topPlate.w / 2;
                 }
@@ -494,14 +488,14 @@
                             }
                         }
 
-                        // 拋物線計算 (令佢一定飛到落下一塊板)
                         if (nextPlate) {
                             let targetX = nextPlate.x + nextPlate.w / 2;
                             let targetY = nextPlate.y;
                             let dx = targetX - ball.x;
                             let dy = targetY - ball.y;
                             
-                            let t = 35; // 固定飛行時間，令節奏感更好
+                            // 根據垂直距離動態調整飛行動作，保持音樂節奏感
+                            let t = Math.max(25, Math.min(70, minDy * 0.7));
                             ball.vy = (dy - 0.5 * GRAVITY * t * t) / t;
                             ball.vx = dx / t;
                             
@@ -511,7 +505,7 @@
                             ball.vx = direction * 3;
                         }
                         
-                        playNote(SCALE_FREQS[p.noteIndex], SCALE_COLORS[p.noteIndex]);
+                        playNote(p.noteIndex, p.octave);
                     }
                 }
             }
@@ -532,11 +526,10 @@
             ctx.fillStyle = bgGrd; 
             ctx.fillRect(0, 0, W, H);
             
-            ctx.strokeStyle = 'rgba(0, 210, 211, 0.05)'; ctx.lineWidth = 1;
-            for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
-            for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.08)'; ctx.lineWidth = 1;
+            for (let i = 0; i < W; i += GRID_SIZE) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
+            for (let i = 0; i < H; i += GRID_SIZE) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
-            // 發射器
             ctx.fillStyle = '#111';
             ctx.fillRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2;
@@ -544,14 +537,11 @@
             ctx.strokeRect(emitter.x - emitter.w/2, emitter.y, emitter.w, emitter.h);
             ctx.shadowBlur = 0;
             
-            ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)';
-            ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(emitter.x, emitter.y + emitter.h); ctx.lineTo(emitter.x, H); ctx.stroke();
-            ctx.setLineDash([]);
-
-            // 繪製鋼片
             for (let p of plates) {
-                let color = SCALE_COLORS[p.noteIndex];
-                
+                let color = NOTE_COLORS[p.noteIndex];
+                if (p.octave === -1) color = '#818cf8'; 
+                if (p.octave === 1) color = '#f472b6'; 
+
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(p.x + 2, p.y + 2, p.w, p.h);
 
@@ -576,25 +566,25 @@
                 ctx.fillText(NOTE_NAMES[p.noteIndex], p.x + p.w/2, p.y + 13);
             }
 
-            // 預覽
             if(hoverPos && !dragPlate && !isDraggingEmitter && hoverPos.y > emitter.y + 60) {
+                let alignX = Math.round(hoverPos.x / GRID_SIZE) * GRID_SIZE;
+                let alignY = Math.round(hoverPos.y / GRID_SIZE) * GRID_SIZE;
+                
                 ctx.globalAlpha = 0.3;
-                ctx.fillStyle = SCALE_COLORS[currentNoteIndex];
+                ctx.fillStyle = NOTE_COLORS[currentNoteIndex];
                 ctx.beginPath();
-                if(ctx.roundRect) ctx.roundRect(hoverPos.x - PLATE_W/2, hoverPos.y - PLATE_H/2, PLATE_W, PLATE_H, 5);
-                else ctx.rect(hoverPos.x - PLATE_W/2, hoverPos.y - PLATE_H/2, PLATE_W, PLATE_H);
+                if(ctx.roundRect) ctx.roundRect(alignX - PLATE_W/2, alignY - PLATE_H/2, PLATE_W, PLATE_H, 5);
+                else ctx.rect(alignX - PLATE_W/2, alignY - PLATE_H/2, PLATE_W, PLATE_H);
                 ctx.fill();
                 ctx.globalAlpha = 1;
             }
 
-            // 火花
             for(let s of sparks) {
                 ctx.globalAlpha = s.life; ctx.fillStyle = s.color;
                 ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
             }
             ctx.globalAlpha = 1;
 
-            // 鐵珠尾跡
             for(let i=0; i<ball.trail.length; i++) {
                 let t = ball.trail[i];
                 ctx.globalAlpha = (i / ball.trail.length) * 0.5;
@@ -603,7 +593,6 @@
             }
             ctx.globalAlpha = 1;
 
-            // 鐵珠
             if (!ball.isDead && ball.y < H) {
                 ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; ctx.fill(); ctx.shadowBlur = 0;
