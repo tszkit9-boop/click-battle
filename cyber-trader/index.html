@@ -220,6 +220,14 @@
     let candles = [], tickCount = 0, currentCandle = { o: 100, h: 100, l: 100, c: 100, v: 0 };
     let particles = [], shakeTime = 0;
     let lastPrice = 100;
+    let highestAsset = parseInt(localStorage.getItem('cyberTrader_best')) || 0;
+
+    function updateHighScore() {
+        if (cash > highestAsset) {
+            highestAsset = cash;
+            localStorage.setItem('cyberTrader_best', highestAsset);
+        }
+    }
 
     function startGame(mode = 'classic') {
         cash = mode === 'survival' ? 1000 : 10000;
@@ -378,6 +386,7 @@
         posInfo.style.display = 'none';
         resetButtons();
         updateUI();
+        updateHighScore(); // 👈 更新最高資產
     }
 
     function resetButtons() {
@@ -399,6 +408,7 @@
                 playSound('crash'); shakeTime = 30;
                 alert('🛡️ 爆倉！但觸發免死金牌，保留 50% 保證金！');
                 resetButtons();
+                updateHighScore(); // 👈 更新最高資產
             } else {
                 cash = 0;
                 position = null;
@@ -410,6 +420,7 @@
                 clearInterval(window.gameLoopInterval);
                 endScreen.style.display = 'flex';
                 document.getElementById('end-stats').innerText = `最終資產：$${Math.floor(cash).toLocaleString()}\n\n💥 你被爆倉了！`;
+                updateHighScore(); // 👈 更新最高資產
             }
         }
     }
@@ -528,8 +539,40 @@
         requestAnimationFrame(draw);
     }
 
+    // checkTPSL 為空，保留呼叫以避免報錯
+    function checkTPSL() {}
+
     startGame('classic');
     requestAnimationFrame(draw);
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
 </script>
 </body>
 </html>
