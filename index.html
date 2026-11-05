@@ -241,10 +241,16 @@
     </div>
 
     <div class="games-container" id="games-container">
-        <!-- ★ 最新：茶餐廳大亨 ★ -->
+        <!-- ★ 第一隻：茶記大亨：樓面生存戰 ★ -->
         <a href="./cha-chaan-teng/" class="game-card card-chachaan" data-category="sim">
-            <h2>茶餐廳大亨</h2>
-            <p>澳牛極速節奏！考驗你嘅記憶力同反應，喺客人發脾氣前完美出餐！</p>
+            <h2>茶記大亨：樓面生存戰</h2>
+            <p>半邊餐廳視角！控制公仔行來行去，招呼客人兼擴建升級！</p>
+        </a>
+
+        <!-- ★ 第二隻：茶記點餐：記憶大考驗 ★ -->
+        <a href="./cha-chaan-teng-2/" class="game-card card-chachaan" data-category="sim">
+            <h2>茶記點餐：記憶大考驗</h2>
+            <p>澳牛極速節奏！張單限時消失，考驗你嘅記憶力同反應！</p>
         </a>
 
         <!-- 雞蛋仔大挑戰 -->
@@ -479,7 +485,7 @@
         
         let hasData = false;
 
-        // 1. 茶餐廳大亨
+        // 1. 茶記大亨：樓面生存戰 (共用或分開皆可，依家假設讀取同一個 Key)
         try {
             let val = parseInt(localStorage.getItem('chaChaanTeng_best')) || 0;
             if (val > 0) {
@@ -487,7 +493,7 @@
                     <div class="rank-item" style="border-left-color: #e67e22;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">🍳</span>
-                            <div class="rank-info"><span class="rank-game-name">茶餐廳大亨</span><span style="font-size:12px; color:#aaa;">單日最高營業額</span></div>
+                            <div class="rank-info"><span class="rank-game-name">茶記大亨 (生存戰)</span><span style="font-size:12px; color:#aaa;">單日最高營業額</span></div>
                         </div>
                         <div class="rank-score" style="color:#e67e22;">$${val}</div>
                     </div>
@@ -496,7 +502,26 @@
             }
         } catch(e) {}
 
-        // 2. 雞蛋仔大挑戰
+        // 2. 茶記點餐：記憶大考驗
+        try {
+            let val = parseInt(localStorage.getItem('chaChaanTeng_best')) || 0; 
+            // 如果記憶大考驗有自己獨立嘅 Key，例如 'chaChaanMemory_best'，可以改呢度。
+            // 為咗唔好令玩家混亂，暫時兩隻遊戲共享同一個茶餐廳最高營業額紀錄。
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #ffd32a;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🧠</span>
+                            <div class="rank-info"><span class="rank-game-name">茶記點餐 (記憶考驗)</span><span style="font-size:12px; color:#aaa;">單日最高營業額</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#ffd32a;">$${val}</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 3. 雞蛋仔大挑戰
         try {
             let val = parseInt(localStorage.getItem('eggWaffle_money')) || 0;
             if (val > 0) {
@@ -513,7 +538,7 @@
             }
         } catch(e) {}
 
-        // 3. 末日避難所
+        // 4. 末日避難所
         try {
             let data = JSON.parse(localStorage.getItem('doomsday_record')) || null;
             if (data && data.days) {
@@ -530,7 +555,7 @@
             }
         } catch(e) {}
 
-        // 4. 九龍城寨 (讀取 Leaderboard)
+        // 5. 九龍城寨
         try {
             let lb = JSON.parse(localStorage.getItem('klt_leaderboard')) || [];
             if (lb.length > 0) {
@@ -548,7 +573,7 @@
             }
         } catch(e) {}
 
-        // 5. 黑洞吞噬
+        // 6. 黑洞吞噬
         try {
             let val = parseInt(localStorage.getItem('blackHole_highscore')) || 0;
             if (val > 0) {
@@ -565,7 +590,7 @@
             }
         } catch(e) {}
 
-        // 6. 極致洗地毯
+        // 7. 極致洗地毯
         try {
             let data = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
             if (data.length > 0) {
@@ -584,7 +609,7 @@
             }
         } catch(e) {}
 
-        // 7. 賽博股神
+        // 8. 賽博股神
         try {
             let val = parseInt(localStorage.getItem('cyberTrader_best')) || 0;
             if (val > 0) {
@@ -601,7 +626,7 @@
             }
         } catch(e) {}
 
-        // 8. 無盡迷宮
+        // 9. 無盡迷宮
         try {
             let val = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
             if (val > 0) {
@@ -618,7 +643,7 @@
             }
         } catch(e) {}
 
-        // 9. 賽博密室
+        // 10. 賽博密室
         try {
             let val = parseInt(localStorage.getItem('escapeMaxLevel')) || 0;
             if (val > 0) {
@@ -635,7 +660,7 @@
             }
         } catch(e) {}
 
-        // 10. 薑餅人建屋
+        // 11. 薑餅人建屋
         try {
             let val = parseInt(localStorage.getItem('gingerbread_highscore')) || 0;
             if (val > 0) {
@@ -652,7 +677,7 @@
             }
         } catch(e) {}
 
-        // 11. 時間高利貸
+        // 12. 時間高利貸
         try {
             let rate = parseFloat(localStorage.getItem('loan_best_rate')) || 1.0;
             let combo = parseInt(localStorage.getItem('loan_best_combo')) || 0;
@@ -670,7 +695,7 @@
             }
         } catch(e) {}
 
-        // 12. 賽博判官
+        // 13. 賽博判官
         try {
             let val = parseInt(localStorage.getItem('cyberJudge_highscore')) || 0;
             if (val > 0) {
@@ -687,7 +712,7 @@
             }
         } catch(e) {}
 
-        // 13. 會記仇的遊戲
+        // 14. 會記仇的遊戲
         try {
             let val = parseInt(localStorage.getItem('grudgeHighScore')) || 0;
             if (val > 0) {
@@ -704,7 +729,7 @@
             }
         } catch(e) {}
 
-        // 14. 深淵礦工
+        // 15. 深淵礦工
         try {
             let data = JSON.parse(localStorage.getItem('deepMinerSave')) || null;
             if (data && data.maxDepthRecord) {
