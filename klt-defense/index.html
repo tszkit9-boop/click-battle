@@ -10,7 +10,6 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#f1f5f9;font
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
 #stage{position:relative;flex:1;min-height:0;overflow:hidden}
-/* 移除掃描線同暗角，令畫面更乾淨 */
 .vignette{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.05) 100%)}
 
 .hud{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:4px;padding:6px 8px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(255,255,255,.95) 0%,rgba(255,255,255,.7) 70%,transparent 100%);pointer-events:none}
@@ -73,7 +72,6 @@ canvas{display:block;width:100%;height:100%}
 .toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);z-index:30;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:900;background:#ffffff;border:2px solid #0284c7;color:#0284c7;box-shadow:0 8px 25px rgba(2,132,199,.25);opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
-/* 基地面板 */
 .base-overlay{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;background:#f8fafc}
 .base-overlay.show{display:flex}
 .base-head{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:2px solid #e2e8f0;background:#ffffff}
@@ -104,7 +102,6 @@ canvas{display:block;width:100%;height:100%}
 .bcard-btn.gold{border-color:#d97706;background:#fffbeb;color:#b45309}
 .bcard-btn.red{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
 
-/* 裝備圈圈 */
 .eq-circles{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
 .eq-c{width:8px;height:8px;border-radius:50%;border:2px solid #cbd5e1;background:transparent}
 .eq-c.filled{background:#0284c7;border-color:#0284c7}
@@ -537,7 +534,7 @@ function getTowerStats(t){
     if(sp.fireMul)fireMul*=sp.fireMul;
     if(sp.slowStrong){slow=0.75;slowDur=3}
     if(sp.burn)burn=1;
-    if(sp.splashMul)splashMul=sp.splashMul;
+    if(sp.splashMul)splashMul*=sp.splashMul;
     if(sp.crit)crit=sp.crit;
     if(sp.multi)multi=sp.multi;
   }
@@ -803,13 +800,9 @@ function render(){
 
 function drawPath(){
   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-  // 外發光
   ctx.strokeStyle='rgba(2,132,199,0.15)';ctx.lineWidth=70;ctx.shadowColor='#0284c7';ctx.shadowBlur=20;ctx.stroke(PATH_2D);
-  // 路面底色
   ctx.shadowBlur=0;ctx.strokeStyle='#cbd5e1';ctx.lineWidth=54;ctx.stroke(PATH_2D);
-  // 中心虛線
   ctx.strokeStyle='#0284c7';ctx.lineWidth=3;ctx.setLineDash([14,16]);ctx.lineDashOffset=-(G.time*40)%30;ctx.stroke(PATH_2D);
-  // 流動光點
   ctx.setLineDash([]);ctx.shadowBlur=0;
   for(let i=0;i<8;i++){const t=((G.time*90+i*PATH_LEN/8)%PATH_LEN),p=pointAt(t);ctx.fillStyle='#ffffff';ctx.shadowColor='#0284c7';ctx.shadowBlur=8;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()}
   ctx.restore();
@@ -827,7 +820,6 @@ function drawTower(t){
   const def=TOWER_DEFS[t.type];const st=getTowerStats(t);
   const pulse=1+Math.sin(G.time*3+t.x*0.02)*0.06;
   ctx.save();
-  // 底座
   ctx.fillStyle='rgba(255,255,255,0.9)';
   ctx.shadowColor=def.color;ctx.shadowBlur=10;
   ctx.strokeStyle=def.color;ctx.lineWidth=3;
@@ -836,7 +828,6 @@ function drawTower(t){
   if(t.type==='gate'){ctx.globalAlpha=0.15;ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(t.x,t.y,st.range,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
   ctx.shadowBlur=0;ctx.font='20px "Segoe UI Emoji",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(def.icon,t.x,t.y+1);
   
-  // 等級圈圈
   const lvColor=t.level>=25?'#d97706':t.level>=15?'#9333ea':t.level>=10?'#0284c7':'#64748b';
   ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(t.x+13,t.y-13,9,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle=lvColor;ctx.lineWidth=2;ctx.stroke();
@@ -1458,6 +1449,35 @@ function init(){
 }
 init();
 })();
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
 </script>
 </body>
 </html>
