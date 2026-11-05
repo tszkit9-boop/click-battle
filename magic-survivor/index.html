@@ -699,7 +699,7 @@
     requestAnimationFrame(loop);
 </script>
 
-<!-- 🟢 在線人數統計 (已加入) -->
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
@@ -710,8 +710,12 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        // 生成隨機玩家 ID
-        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
         
         // 獲取當前遊戲名 (會抓到 magic-survivor)
         let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
