@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🥚 雞蛋仔大挑戰</title>
+    <title>🥚 雞蛋仔大挑戰 - 終極評級版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700&display=swap');
         
@@ -31,11 +31,16 @@
         }
         .back-btn:active { transform: scale(0.95); background: #ff9f43; color: #000; }
 
-        .stats { display: flex; gap: 20px; font-family: 'Orbitron', sans-serif; text-align: center; }
+        .stats { display: flex; gap: 20px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
         .stat-box { display: flex; flex-direction: column; }
         .stat-label { font-size: 11px; color: #a4b0be; letter-spacing: 1px; }
         .stat-val { font-size: 22px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 15px #ffd32a; }
         .stat-val.combo { color: #ff4757; text-shadow: 0 0 15px #ff4757; }
+
+        .flavor-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid #ff9f43; color: #fff;
+            padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
 
         /* 遊戲畫布 */
         #canvas-container {
@@ -74,6 +79,26 @@
         }
         #status-text.show { opacity: 1; }
 
+        /* 評級彈出特效 */
+        #rating-popup {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-family: 'Orbitron', sans-serif; font-size: 120px; font-weight: 900;
+            pointer-events: none; opacity: 0; z-index: 25; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 30px currentColor;
+        }
+        #rating-popup.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        #rating-popup.sss { color: #ffd700; animation: rainbow 2s infinite linear; }
+        #rating-popup.ss { color: #ff00ff; }
+        #rating-popup.s { color: #00d2d3; }
+        #rating-popup.a { color: #2ed573; }
+        #rating-popup.b { color: #ff9f43; }
+        #rating-popup.c { color: #ff4757; }
+
+        @keyframes rainbow { 
+            0% { filter: hue-rotate(0deg); } 
+            100% { filter: hue-rotate(360deg); } 
+        }
+
         /* 玩法說明與結束畫面 */
         .modal {
             position: absolute; inset: 0; background: rgba(10,5,0,0.95);
@@ -104,6 +129,7 @@
                 <span class="stat-label">連擊</span>
                 <span class="stat-val combo" id="combo-val">0</span>
             </div>
+            <button class="flavor-btn" id="flavor-btn" onclick="changeFlavor()">🍦 原味</button>
         </div>
         <div style="width: 80px;"></div>
     </div>
@@ -111,15 +137,18 @@
     <div id="canvas-container">
         <canvas id="gameCanvas"></canvas>
         <div id="status-text">完美！外脆內軟！</div>
+        <div id="rating-popup">S</div>
         
         <!-- 玩法說明 -->
         <div id="intro-modal" class="modal active">
-            <h2>🥚 雞蛋仔大挑戰</h2>
+            <h2>🥚 終極雞蛋仔</h2>
             <p>
-                <b>1. 🥣 較漿：</b> 瘋狂點擊螢幕，將粉漿攪拌均勻！<br><br>
-                <b>2. 🥄 倒漿：</b> 長按倒漿掣，控制份量（太少或滿瀉都唔得！）<br><br>
-                <b>3. 🔥 翻轉：</b> 留意火候進度條，進入<b>綠色完美區</b>時點擊翻轉！<br><br>
-                <b>4. 🍽️ 出餐：</b> 烤完另一面，再次進入完美區就可以起爐！
+                <b>1. 🥣 較漿：</b> 瘋狂點擊，拌勻粉漿！<br>
+                <b>2. 🥄 倒漿：</b> 長按控制份量（完美區 50%-85%）。<br>
+                <b>3. 🔥 翻轉：</b> 火候入綠區時翻轉！<br>
+                <b>4. 🍽️ 出餐：</b> 再次入綠區起爐！<br><br>
+                誤差越細，評級越高：<br>
+                <b style="color:#ff4757">C (唔合格)</b> ➡️ B ➡️ A ➡️ S ➡️ SS ➡️ <b style="color:#ffd700">SSS (傳說)</b>
             </p>
             <button onclick="startGame()">開始整雞蛋仔</button>
         </div>
@@ -150,6 +179,8 @@
         const statusText = document.getElementById('status-text');
         const gameoverScreen = document.getElementById('gameover');
         const introModal = document.getElementById('intro-modal');
+        const ratingPopup = document.getElementById('rating-popup');
+        const flavorBtn = document.getElementById('flavor-btn');
 
         const btnMix = document.getElementById('btn-mix');
         const btnPour = document.getElementById('btn-pour');
@@ -161,6 +192,21 @@
         const CANVAS_H = 500;
         canvas.width = CANVAS_W;
         canvas.height = CANVAS_H;
+
+        // 口味系統
+        const FLAVORS = [
+            { name: '原味', color: '#ff9f43', rawColor: '#f5cd79', perfectColor: '#ffd32a' },
+            { name: '朱古力', color: '#6d4c41', rawColor: '#a1887f', perfectColor: '#3e2723' },
+            { name: '抹茶', color: '#558b2f', rawColor: '#aed581', perfectColor: '#33691e' },
+            { name: '鹹蛋黃', color: '#fbc02d', rawColor: '#fff59d', perfectColor: '#f57f17' }
+        ];
+        let flavorIdx = 0;
+        function changeFlavor() {
+            if (state !== 'menu' && state !== 'mix') return; // 遊戲中途唔俾轉
+            flavorIdx = (flavorIdx + 1) % FLAVORS.length;
+            flavorBtn.innerText = `🍦 ${FLAVORS[flavorIdx].name}`;
+            flavorBtn.style.borderColor = FLAVORS[flavorIdx].color;
+        }
 
         // 音效系統
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -202,27 +248,30 @@
         }
 
         // 遊戲狀態機
-        // 'menu' -> 'mix' -> 'pour' -> 'bake' -> 'result'
         let state = 'menu'; 
         let score = 0;
         let combo = 0;
         let maxCombo = 0;
 
-        // 較漿狀態
+        // 較漿
         let mixProgress = 0;
         let mixDecayTimer = 0;
 
-        // 倒漿狀態
+        // 倒漿
         let pourAmount = 0;
 
-        // 烘焙狀態
+        // 烘焙與評級
         let bakeProgress = 0;
         let bakeSpeed = 1.2;
         let perfectZoneStart = 60;
         let perfectZoneEnd = 80;
         let isFlipped = false;
+        
+        // 誤差計算 (用於評級)
+        let errorPour = 0;
+        let errorFlip1 = 0;
+        let errorFlip2 = 0;
 
-        // 粒子特效
         let particles = [];
 
         function initGame() {
@@ -251,13 +300,14 @@
             pourAmount = 0;
             bakeProgress = 0;
             isFlipped = false;
+            errorPour = 0; errorFlip1 = 0; errorFlip2 = 0;
             
-            let zoneWidth = Math.max(12, 25 - combo * 2);
+            let zoneWidth = Math.max(10, 25 - combo * 2);
             let center = 65 + (Math.random() * 10 - 5);
             perfectZoneStart = center - zoneWidth / 2;
             perfectZoneEnd = center + zoneWidth / 2;
             
-            bakeSpeed = 1.2 + combo * 0.1;
+            bakeSpeed = 1.2 + combo * 0.15;
 
             btnMix.style.display = 'flex';
             btnPour.style.display = 'none';
@@ -271,6 +321,7 @@
             
             btnMix.innerText = '🥣 瘋狂較漿 (0%)';
             statusText.classList.remove('show');
+            ratingPopup.classList.remove('show');
             particles = [];
         }
 
@@ -287,7 +338,7 @@
             setTimeout(() => statusText.classList.remove('show'), 1000);
         }
 
-        // --- 1. 較漿階段 ---
+        // --- 較漿 ---
         btnMix.addEventListener('click', () => {
             if (state !== 'mix') return;
             mixProgress += 8;
@@ -306,7 +357,7 @@
             }
         });
 
-        // --- 2. 倒漿階段 ---
+        // --- 倒漿 ---
         let pourInterval = null;
         btnPour.addEventListener('mousedown', startPour);
         btnPour.addEventListener('touchstart', (e) => { e.preventDefault(); startPour(); }, {passive: false});
@@ -319,7 +370,7 @@
             pourInterval = setInterval(() => {
                 pourAmount += 1.5;
                 if (pourAmount > 100) pourAmount = 100;
-                createParticles(CANVAS_W/2, 200, '#ff9f43', 2);
+                createParticles(CANVAS_W/2, 200, FLAVORS[flavorIdx].color, 2);
             }, 20);
         }
 
@@ -328,10 +379,13 @@
             clearInterval(pourInterval);
             btnPour.style.display = 'none';
             
+            // 計算倒漿誤差 (完美係 67.5)
+            errorPour = Math.abs(pourAmount - 67.5) / 32.5; // 歸一化為 0-1
+            
             if (pourAmount > 85) {
-                endRound(false, '滿瀉啦！');
+                endRound(false, '滿瀉啦！', 'C');
             } else if (pourAmount < 50) {
-                endRound(false, '倒得太少啦！');
+                endRound(false, '倒得太少啦！', 'C');
             } else {
                 state = 'bake';
                 btnFlip.style.display = 'flex';
@@ -339,9 +393,12 @@
             }
         }
 
-        // --- 3. 烘焙階段 ---
+        // --- 烘焙與翻轉 ---
         btnFlip.addEventListener('click', () => {
             if (state !== 'bake' || isFlipped) return;
+            
+            let center = (perfectZoneStart + perfectZoneEnd) / 2;
+            errorFlip1 = Math.abs(bakeProgress - center) / 50; // 歸一化
             
             if (bakeProgress >= perfectZoneStart && bakeProgress <= perfectZoneEnd) {
                 playSound('ding');
@@ -350,10 +407,10 @@
                 showStatus('完美翻面！', '#2ed573');
                 createParticles(CANVAS_W/2, CANVAS_H/2, '#2ed573', 30);
                 
-                let zoneWidth = Math.max(12, 25 - combo * 2);
-                let center = 65 + (Math.random() * 10 - 5);
-                perfectZoneStart = center - zoneWidth / 2;
-                perfectZoneEnd = center + zoneWidth / 2;
+                let zoneWidth = Math.max(10, 25 - combo * 2);
+                let newCenter = 65 + (Math.random() * 10 - 5);
+                perfectZoneStart = newCenter - zoneWidth / 2;
+                perfectZoneEnd = newCenter + zoneWidth / 2;
                 
                 setTimeout(() => {
                     if (state === 'bake') {
@@ -362,63 +419,83 @@
                     }
                 }, 1000);
             } else {
-                endRound(false, '第一面燶咗/未熟！');
+                endRound(false, '第一面燶咗/未熟！', 'C');
             }
         });
 
-        // --- 4. 出餐階段 ---
+        // --- 出餐 ---
         btnServe.addEventListener('click', () => {
             if (state !== 'bake') return;
+            
+            let center = (perfectZoneStart + perfectZoneEnd) / 2;
+            errorFlip2 = Math.abs(bakeProgress - center) / 50;
             
             if (bakeProgress >= perfectZoneStart && bakeProgress <= perfectZoneEnd) {
                 endRound(true);
             } else {
-                endRound(false, '第二面燶咗！');
+                endRound(false, '第二面燶咗！', 'C');
             }
         });
 
-        function endRound(isSuccess, reason = '') {
+        // --- 結算與評級 ---
+        function endRound(isSuccess, reason = '', forcedRating = null) {
             state = 'result';
             btnPour.style.display = 'none';
             btnFlip.style.display = 'none';
             btnServe.style.display = 'none';
             btnMix.style.display = 'none';
 
+            let rating = forcedRating;
+            
             if (isSuccess) {
-                combo++;
-                if (combo > maxCombo) maxCombo = combo;
-                let pts = 10 * combo;
-                score += pts;
-                updateHUD();
-                playSound('ding');
-                showStatus(`外脆內軟！+${pts} 分`, '#ffd32a');
+                // 計算總誤差 (0 最好)
+                let totalError = errorPour * 0.3 + errorFlip1 * 0.35 + errorFlip2 * 0.35;
                 
-                // 香氣特效
-                for(let i=0; i<20; i++) {
-                    createParticles(CANVAS_W/2 + (Math.random()-0.5)*100, CANVAS_H/2 + (Math.random()-0.5)*100, 'rgba(255,255,255,0.8)', 1);
-                }
-                
-                setTimeout(() => {
-                    if (state === 'result') resetRound();
-                }, 1500);
-            } else {
+                // 評級系統
+                if (totalError < 0.03) rating = 'SSS';
+                else if (totalError < 0.08) rating = 'SS';
+                else if (totalError < 0.15) rating = 'S';
+                else if (totalError < 0.25) rating = 'A';
+                else if (totalError < 0.4) rating = 'B';
+                else rating = 'C';
+            }
+
+            // 顯示評級
+            ratingPopup.innerText = rating;
+            ratingPopup.className = `show ${rating.toLowerCase()}`;
+            
+            // 計算分數
+            if (rating === 'C') {
                 combo = 0;
                 updateHUD();
                 playSound('fail');
-                showStatus(reason, '#ff4757');
-                
+                showStatus('C 級 - 唔合格！', '#ff4757');
                 for(let i=0; i<30; i++) {
                     createParticles(CANVAS_W/2 + (Math.random()-0.5)*80, CANVAS_H/2, 'rgba(50,50,50,0.8)', 1);
                 }
-
-                setTimeout(() => {
-                    if (score > 0 || maxCombo > 0) {
-                        gameOver();
-                    } else {
-                        resetRound();
-                    }
-                }, 1500);
+            } else {
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                
+                let basePts = { 'B': 10, 'A': 20, 'S': 50, 'SS': 100, 'SSS': 200 }[rating];
+                let pts = basePts * combo;
+                score += pts;
+                updateHUD();
+                playSound('ding');
+                showStatus(`${rating} 級！+${pts} 分`, '#ffd32a');
+                
+                for(let i=0; i<30; i++) {
+                    createParticles(CANVAS_W/2 + (Math.random()-0.5)*100, CANVAS_H/2 + (Math.random()-0.5)*100, 'rgba(255,255,255,0.8)', 1);
+                }
             }
+
+            setTimeout(() => {
+                if (rating === 'C' && (score > 0 || maxCombo > 0)) {
+                    gameOver();
+                } else {
+                    resetRound();
+                }
+            }, 2000);
         }
 
         function gameOver() {
@@ -442,7 +519,6 @@
 
         // --- 遊戲循環 ---
         function update() {
-            // 較漿衰退機制
             if (state === 'mix') {
                 mixDecayTimer += 1;
                 if (mixDecayTimer > 10 && mixProgress > 0) {
@@ -451,16 +527,14 @@
                 }
             }
 
-            // 更新火候
             if (state === 'bake') {
                 bakeProgress += bakeSpeed;
                 if (bakeProgress >= 100) {
-                    endRound(false, '完全燶晒！');
+                    endRound(false, '完全燶晒！', 'C');
                 }
                 if (Math.random() < 0.05) playSound('sizzle');
             }
 
-            // 更新粒子
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx;
@@ -474,7 +548,7 @@
         function draw() {
             ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-            // 廚房背景
+            // 背景
             ctx.fillStyle = '#2c3e50';
             ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
             ctx.strokeStyle = '#34495e';
@@ -509,7 +583,7 @@
             ctx.save();
             ctx.translate(CANVAS_W/2, CANVAS_H/2);
             
-            // 鐵夾底座
+            // 鐵夾
             ctx.fillStyle = '#1e272e';
             ctx.beginPath();
             ctx.roundRect(-120, -120, 240, 240, 20);
@@ -518,16 +592,15 @@
             ctx.lineWidth = 5;
             ctx.stroke();
 
-            // 較漿階段
+            let flavor = FLAVORS[flavorIdx];
+
             if (state === 'mix') {
-                // 畫大碗
                 ctx.fillStyle = '#ecf0f1';
                 ctx.beginPath();
                 ctx.arc(0, 0, 100, 0, Math.PI);
                 ctx.fill();
                 
-                // 畫漿液
-                ctx.fillStyle = 'rgba(255, 159, 67, 0.8)';
+                ctx.fillStyle = flavor.color;
                 ctx.beginPath();
                 ctx.arc(0, 10, 90 * (mixProgress/100 + 0.1), 0, Math.PI);
                 ctx.fill();
@@ -538,10 +611,9 @@
                 ctx.fillText('快啲撳掣攪勻佢！', 0, -150);
             }
 
-            // 倒漿階段
             if (state === 'pour') {
                 let pourH = (pourAmount / 100) * 200;
-                ctx.fillStyle = 'rgba(255, 159, 67, 0.8)';
+                ctx.fillStyle = flavor.color;
                 ctx.beginPath();
                 ctx.roundRect(-100, 100 - pourH, 200, pourH, 10);
                 ctx.fill();
@@ -549,23 +621,22 @@
                 ctx.fillStyle = '#7f8c8d';
                 ctx.fillRect(-20, -160, 40, 80);
                 if (pourAmount > 0) {
-                    ctx.fillStyle = '#ff9f43';
+                    ctx.fillStyle = flavor.color;
                     ctx.fillRect(-10, -80, 20, 100 - pourH + 20);
                 }
             }
 
-            // 烘焙階段
             if (state === 'bake' || state === 'result') {
                 for (let r = -3; r <= 3; r++) {
                     for (let c = -3; c <= 3; c++) {
                         ctx.beginPath();
                         ctx.arc(c * 30, r * 30, 12, 0, Math.PI * 2);
                         if (bakeProgress > perfectZoneEnd) {
-                            ctx.fillStyle = '#111';
+                            ctx.fillStyle = '#111'; // 燶
                         } else if (bakeProgress > perfectZoneStart) {
-                            ctx.fillStyle = '#ffd32a';
+                            ctx.fillStyle = flavor.perfectColor; // 完美
                         } else {
-                            ctx.fillStyle = '#f5cd79';
+                            ctx.fillStyle = flavor.rawColor; // 未熟
                         }
                         ctx.fill();
                     }
@@ -604,7 +675,6 @@
             }
             ctx.restore();
 
-            // 粒子
             for (let p of particles) {
                 ctx.globalAlpha = p.life;
                 ctx.fillStyle = p.color;
@@ -624,7 +694,7 @@
         loop();
     </script>
 
-    <!-- 🟢 在線人數統計 (已加入) -->
+    <!-- 🟢 在線人數統計 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
@@ -647,9 +717,7 @@
                     userStatusRef.set(true);
                 }
             });
-        } catch(e) {
-            console.log("在線統計未啟動");
-        }
+        } catch(e) {}
     </script>
 </body>
 </html>
