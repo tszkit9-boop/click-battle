@@ -74,7 +74,6 @@
         .customer-container.angry { animation: shake 0.3s infinite; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-        /* 對話氣泡 (已限制最大闊度防撐爆) */
         .speech-bubble {
             background: #fff; color: #000; border-radius: 15px; padding: 8px 10px;
             font-weight: 900; font-size: 12px; position: relative; margin-bottom: 15px;
@@ -109,44 +108,53 @@
             height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear, background 0.3s;
         }
 
-        /* 👇 手機完美自適應底部 👇 */
+        /* 👇 底部控制區優化 👇 */
         #controls {
-            height: auto; max-height: 48vh; background: rgba(20, 20, 20, 0.95);
+            height: auto; max-height: 50vh; background: rgba(20, 20, 20, 0.95);
             border-top: 4px solid #ff0055; display: flex; flex-direction: column;
             padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             z-index: 20; flex-shrink: 0;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.8); border-radius: 20px 20px 0 0;
-            overflow-y: auto;
+            overflow: hidden;
         }
         
         .tray-area {
             min-height: 36px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
             background: #000; border-radius: 10px; margin-bottom: 10px; border: 1px dashed #555;
             color: #aaa; font-size: 13px; font-weight: bold; padding: 5px; gap: 5px;
+            flex-shrink: 0;
         }
         .tray-item { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
         @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
-        /* 👇 菜單網格化，一眼睇哂 👇 */
-        .menu-section { margin-bottom: 8px; }
-        .category-title { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 4px; text-align: left; padding-left: 5px; }
+        /* 👇 菜單滾動區 👇 */
+        .menu-scroll-area {
+            flex: 1; overflow-y: auto; margin-bottom: 8px; padding-right: 2px;
+            scrollbar-width: thin; scrollbar-color: #ff0055 #333;
+        }
+        .menu-scroll-area::-webkit-scrollbar { width: 4px; }
+        .menu-scroll-area::-webkit-scrollbar-thumb { background: #ff0055; border-radius: 4px; }
+
+        .menu-section { margin-bottom: 10px; }
+        .category-title { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 5px; text-align: left; padding-left: 5px; }
         
+        /* 自適應網格：每行自動塞 4-5 個 */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 每行 4 個 */
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
             gap: 6px;
         }
         
         .menu-btn {
             background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
-            border-radius: 8px; color: #fff; font-size: 12px; font-weight: bold;
+            border-radius: 8px; color: #fff; font-size: 11px; font-weight: bold;
             display: flex; align-items: center; justify-content: center; gap: 2px;
             box-shadow: 0 3px 0 #000; transition: 0.1s; cursor: pointer;
-            padding: 8px 2px; white-space: nowrap;
+            padding: 8px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .menu-btn:active { transform: translateY(3px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
 
-        .action-row { display: flex; gap: 10px; margin-top: 5px; height: 45px; flex-shrink: 0; }
+        .action-row { display: flex; gap: 10px; height: 45px; flex-shrink: 0; }
         .btn-serve {
             flex: 2; background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff;
             border: none; border-radius: 10px; font-size: 18px; font-weight: 900;
@@ -240,30 +248,41 @@
             點擊下方餐點加入托盤
         </div>
         
-        <!-- 飲品區塊 -->
-        <div class="menu-section">
-            <div class="category-title">🍹 飲品</div>
-            <div class="menu-grid">
-                <button class="menu-btn" onclick="addToTray('凍檸茶', '🍹')">🍹 凍檸茶</button>
-                <button class="menu-btn" onclick="addToTray('熱奶茶', '☕')">☕ 熱奶茶</button>
-                <button class="menu-btn" onclick="addToTray('凍鴛鴦', '🧋')">🧋 凍鴛鴦</button>
-                <button class="menu-btn" onclick="addToTray('紅豆冰', '🧊')">🧊 紅豆冰</button>
-                <button class="menu-btn" onclick="addToTray('檸檬水', '🍋')">🍋 檸檬水</button>
-                <button class="menu-btn" onclick="addToTray('凍咖啡', '🥤')">🥤 凍咖啡</button>
+        <div class="menu-scroll-area">
+            <!-- 飲品區塊 -->
+            <div class="menu-section">
+                <div class="category-title">🍹 飲品</div>
+                <div class="menu-grid">
+                    <button class="menu-btn" onclick="addToTray('凍檸茶', '🍹')">🍹凍檸茶</button>
+                    <button class="menu-btn" onclick="addToTray('熱奶茶', '☕')">☕熱奶茶</button>
+                    <button class="menu-btn" onclick="addToTray('凍鴛鴦', '🧋')">🧋凍鴛鴦</button>
+                    <button class="menu-btn" onclick="addToTray('紅豆冰', '🧊')">🧊紅豆冰</button>
+                    <button class="menu-btn" onclick="addToTray('檸檬水', '🍋')">🍋檸檬水</button>
+                    <button class="menu-btn" onclick="addToTray('凍咖啡', '🥤')">🥤凍咖啡</button>
+                    <button class="menu-btn" onclick="addToTray('阿華田', '🍫')">🍫阿華田</button>
+                    <button class="menu-btn" onclick="addToTray('好立克', '🥛')">🥛好立克</button>
+                    <button class="menu-btn" onclick="addToTray('凍檸蜜', '🍯')">🍯凍檸蜜</button>
+                    <button class="menu-btn" onclick="addToTray('利賓納', '🍇')">🍇利賓納</button>
+                </div>
             </div>
-        </div>
 
-        <!-- 食物區塊 -->
-        <div class="menu-section">
-            <div class="category-title">🍞 食物</div>
-            <div class="menu-grid">
-                <button class="menu-btn" onclick="addToTray('西多士', '🍞')">🍞 西多士</button>
-                <button class="menu-btn" onclick="addToTray('干炒牛河', '🍜')">🍜 乾炒牛河</button>
-                <button class="menu-btn" onclick="addToTray('菠蘿油', '🍔')">🍔 菠蘿油</button>
-                <button class="menu-btn" onclick="addToTray('酥皮蛋撻', '🥧')">🥧 蛋撻</button>
-                <button class="menu-btn" onclick="addToTray('沙嗲牛麵', '🍲')">🍲 沙嗲牛麵</button>
-                <button class="menu-btn" onclick="addToTray('焗豬扒飯', '🍛')">🍛 焗豬扒飯</button>
-                <button class="menu-btn" onclick="addToTray('揚州炒飯', '🍚')">🍚 揚州炒飯</button>
+            <!-- 食物區塊 -->
+            <div class="menu-section">
+                <div class="category-title">🍞 食物</div>
+                <div class="menu-grid">
+                    <button class="menu-btn" onclick="addToTray('西多士', '🍞')">🍞西多士</button>
+                    <button class="menu-btn" onclick="addToTray('干炒牛河', '🍜')">🍜干炒牛河</button>
+                    <button class="menu-btn" onclick="addToTray('菠蘿油', '🍔')">🍔菠蘿油</button>
+                    <button class="menu-btn" onclick="addToTray('酥皮蛋撻', '🥧')">🥧酥皮蛋撻</button>
+                    <button class="menu-btn" onclick="addToTray('沙嗲牛麵', '🍲')">🍲沙嗲牛麵</button>
+                    <button class="menu-btn" onclick="addToTray('焗豬扒飯', '🍛')">🍛焗豬扒飯</button>
+                    <button class="menu-btn" onclick="addToTray('揚州炒飯', '🍚')">🍚揚州炒飯</button>
+                    <button class="menu-btn" onclick="addToTray('餐蛋麵', '🍳')">🍳餐蛋麵</button>
+                    <button class="menu-btn" onclick="addToTray('叉燒飯', '🍖')">🍖叉燒飯</button>
+                    <button class="menu-btn" onclick="addToTray('菠蘿包', '🥯')">🥯菠蘿包</button>
+                    <button class="menu-btn" onclick="addToTray('奶油豬', '🧈')">🧈奶油豬</button>
+                    <button class="menu-btn" onclick="addToTray('蛋治', '🥪')">🥪蛋治</button>
+                </div>
             </div>
         </div>
 
@@ -325,8 +344,9 @@
         let tray = [];
         let customerIdCounter = 0;
 
-        const DRINKS = ['凍檸茶', '熱奶茶', '凍鴛鴦', '紅豆冰', '檸檬水', '凍咖啡'];
-        const FOODS = ['西多士', '干炒牛河', '菠蘿油', '酥皮蛋撻', '沙嗲牛麵', '焗豬扒飯', '揚州炒飯'];
+        // 更新菜單陣列 (對應上方 HTML)
+        const DRINKS = ['凍檸茶', '熱奶茶', '凍鴛鴦', '紅豆冰', '檸檬水', '凍咖啡', '阿華田', '好立克', '凍檸蜜', '利賓納'];
+        const FOODS = ['西多士', '干炒牛河', '菠蘿油', '酥皮蛋撻', '沙嗲牛麵', '焗豬扒飯', '揚州炒飯', '餐蛋麵', '叉燒飯', '菠蘿包', '奶油豬', '蛋治'];
 
         const NAMES = ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'];
         const SHIRTS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
