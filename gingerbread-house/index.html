@@ -98,6 +98,7 @@
         <div id="score-ui">
             <h1 id="height-val">0m</h1>
             <p>得分: <span id="score-val">0</span></p>
+            <p style="font-size:12px; color:#00d2d3;">歷史最高: <span id="best-score-val">0</span></p>
         </div>
         <div id="perfect-text">PERFECT!</div>
         <canvas id="buildCanvas" width="400" height="550" style="background:#0a1120;"></canvas>
@@ -248,7 +249,11 @@
     const shareBtn = document.getElementById('shareBtn');
     const heightVal = document.getElementById('height-val');
     const scoreVal = document.getElementById('score-val');
+    const bestScoreVal = document.getElementById('best-score-val');
     const perfectText = document.getElementById('perfect-text');
+
+    let bestScore = parseInt(localStorage.getItem('gingerbread_highscore') || '0');
+    bestScoreVal.innerText = bestScore;
 
     let blocks = [];
     let currentBlock = null;
@@ -283,8 +288,8 @@
         isWin = false;
         cameraY = 0;
         
-        shareBtn.classList.add('hidden'); // 重置時隱藏分享按鈕
-        resetBtn.style.marginLeft = '0'; // 重置按鈕居中
+        shareBtn.classList.add('hidden'); 
+        resetBtn.style.marginLeft = '0'; 
         
         blocks.push({ x: buildCanvas.width/2 - 150, y: buildCanvas.height - 40, w: 300, h: 40, color: '#e0f7fa', isBase: true });
         
@@ -323,6 +328,14 @@
         let heightMeters = Math.max(0, Math.floor((buildCanvas.height - (cameraY + 300)) / 20));
         heightVal.innerText = heightMeters + 'm';
         scoreVal.innerText = score;
+    }
+
+    function saveHighScore() {
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('gingerbread_highscore', bestScore);
+            bestScoreVal.innerText = bestScore;
+        }
     }
 
     function showPerfect() {
@@ -422,7 +435,6 @@
                 ctxBuild.fillText('最終高度: ' + heightVal.innerText, buildCanvas.width/2, buildCanvas.height/2 + 40);
             }
             
-            // 顯示分享按鈕
             shareBtn.classList.remove('hidden');
             resetBtn.style.marginLeft = '10px'; 
             
@@ -458,6 +470,7 @@
                     
                     if (blocks.length >= 51) {
                         isWin = true;
+                        saveHighScore();
                         playSound('win');
                         return;
                     }
@@ -534,6 +547,7 @@
 
     function gameOver() {
         isGameOver = true;
+        saveHighScore();
         playSound('gameover');
         let shake = setInterval(() => {
             buildCanvas.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px) rotate(${Math.random()*2-1}deg)`;
@@ -548,21 +562,17 @@
     const ctxShare = shareCanvas.getContext('2d');
 
     shareBtn.addEventListener('click', async () => {
-        // 設定分享圖片尺寸 (加高少少用嚟寫字)
         shareCanvas.width = buildCanvas.width;
         shareCanvas.height = buildCanvas.height + 100;
 
-        // 畫上遊戲畫面
         ctxShare.drawImage(buildCanvas, 0, 0);
 
-        // 畫底部裝飾同文字
         let grad = ctxShare.createLinearGradient(0, buildCanvas.height, 0, shareCanvas.height);
         grad.addColorStop(0, '#0a1120');
         grad.addColorStop(1, '#1a2a40');
         ctxShare.fillStyle = grad;
         ctxShare.fillRect(0, buildCanvas.height, shareCanvas.width, 100);
 
-        // 畫啲聖誕雪花裝飾
         ctxShare.fillStyle = 'rgba(255,255,255,0.5)';
         for(let i=0; i<20; i++) {
             ctxShare.beginPath();
@@ -570,7 +580,6 @@
             ctxShare.fill();
         }
 
-        // 寫上文字
         ctxShare.fillStyle = '#f1c40f';
         ctxShare.font = 'bold 26px "Fredoka One", sans-serif';
         ctxShare.textAlign = 'center';
@@ -580,12 +589,10 @@
         ctxShare.font = '18px sans-serif';
         ctxShare.fillText(`高度: ${heightVal.innerText} | 得分: ${score}`, shareCanvas.width/2, buildCanvas.height + 70);
 
-        // 將 Canvas 轉為 Blob/File 並分享
         shareCanvas.toBlob(async (blob) => {
             if (!blob) return;
             const file = new File([blob], 'gingerbread-house.png', { type: 'image/png' });
 
-            // 檢查瀏覽器支援唔支援 Web Share API
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
@@ -595,10 +602,9 @@
                     });
                 } catch (error) {
                     console.log('分享失敗', error);
-                    downloadImage(); // 如果分享失敗，改為下載
+                    downloadImage();
                 }
             } else {
-                // 如果唔支援分享 (例如電腦)，直接下載
                 downloadImage();
             }
         });
@@ -634,6 +640,35 @@
         this.closePath();
         return this;
     };
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
 </script>
 </body>
 </html>
