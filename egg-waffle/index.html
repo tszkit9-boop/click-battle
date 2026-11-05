@@ -59,7 +59,15 @@
             flex: 1; position: relative; display: flex; justify-content: center;
             align-items: center; overflow: hidden;
         }
-        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* 👇 修正 1：保持正方形比例，防止拉伸 👇 */
+        canvas { 
+            display: block; 
+            max-width: 100%; 
+            max-height: 100%; 
+            aspect-ratio: 1 / 1; 
+            margin: auto;
+        }
 
         /* 底部控制 */
         #controls {
@@ -256,13 +264,25 @@
         const btnNext = document.getElementById('btn-next');
         const btnRetry = document.getElementById('btn-retry');
 
+        // 👇 修正 2：精準計算容器大小，防止變形 👇
         function resizeCanvas() {
-            let size = Math.min(window.innerWidth, window.innerHeight - 220);
-            size = Math.max(size, 280);
-            canvas.width = size;
-            canvas.height = size;
+            try {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+                let w = container.clientWidth;
+                let h = container.clientHeight;
+                let size = Math.min(w, h);
+                size = Math.max(size, 280);
+                canvas.width = size;
+                canvas.height = size;
+                canvas.style.width = size + 'px';
+                canvas.style.height = size + 'px';
+            } catch(e) {
+                console.error('resizeCanvas error', e);
+            }
         }
         window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 50);
         resizeCanvas();
 
         let totalMoney = parseInt(localStorage.getItem('eggWaffle_money') || '0');
@@ -699,7 +719,8 @@
 
         function drawCustomer(W, H) {
             ctx.save();
-            ctx.translate(W/2, H - 100);
+            /* 👇 稍微往上移，避免客人下巴被切 👇 */
+            ctx.translate(W/2, H - 80);
             
             let shake = customerMood === 'angry' ? (Math.random()-0.5)*4 : 0;
             ctx.translate(shake, 0);
@@ -781,10 +802,10 @@
             for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
             for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
-            drawCustomer(W, H);
-
+            /* 👇 修正 3：先畫鐵夾，後畫客人 👇 */
+            // 爐具與鐵夾
             ctx.save();
-            ctx.translate(W/2, H/2 - 40);
+            ctx.translate(W/2, H/2 - 50); // 鐵夾稍微上移，讓出空間
             
             let boxSize = W * 0.5;
             
@@ -925,6 +946,9 @@
                 }
             }
             ctx.restore();
+
+            // 👇 加入此行：客人畫喺前面 👇
+            drawCustomer(W, H);
 
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
