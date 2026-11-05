@@ -165,7 +165,7 @@
         .card-eggwaffle:hover { border-color: #ff9f43; box-shadow: 0 0 30px rgba(255, 159, 67, 0.7); transform: translateY(-10px); }
         .card-eggwaffle h2 { color: #ff9f43; text-shadow: 0 0 10px #ff9f43, 0 0 20px #ffd32a; }
 
-        /* ★ 新增：茶餐廳大亨專屬卡片樣式 ★ */
+        /* ★ 茶餐廳大亨專屬卡片樣式 ★ */
         .card-chachaan { border-color: rgba(230, 126, 34, 0.4); }
         .card-chachaan:hover { border-color: #e67e22; box-shadow: 0 0 30px rgba(230, 126, 34, 0.8), 0 0 50px rgba(255, 107, 107, 0.4); transform: translateY(-10px); }
         .card-chachaan h2 { color: #e67e22; text-shadow: 0 0 10px #e67e22, 0 0 20px #ff6b6b; }
@@ -369,16 +369,23 @@
         db = firebase.database();
     } catch (e) { console.warn("Firebase 初始化失敗", e); }
 
+    /* 👇 防止玩家來回進出，重複計算遊玩次數 👇 */
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', function(e) {
             if (!db) return;
             let gameId = this.getAttribute('href').replace('./', '').replace('/', '');
             if (!gameId) return;
 
-            let gameRef = db.ref('game_stats/' + gameId);
-            gameRef.transaction(function(currentCount) {
-                return (currentCount || 0) + 1;
-            });
+            // 檢查 Session Storage，確保同一次上網只計一次
+            let sessionKey = 'played_' + gameId;
+            if (!sessionStorage.getItem(sessionKey)) {
+                sessionStorage.setItem(sessionKey, 'true');
+                
+                let gameRef = db.ref('game_stats/' + gameId);
+                gameRef.transaction(function(currentCount) {
+                    return (currentCount || 0) + 1;
+                });
+            }
         });
     });
 
