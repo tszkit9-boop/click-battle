@@ -179,7 +179,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  // 👇 新增 set, onDisconnect, remove 用於在線統計 👇
+  import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast, set, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCWnZhZ0jDnabSTa8L1jkPXfJE6yGhxeqw",
@@ -195,6 +196,26 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const leaderboardRef = ref(db, 'leaderboard');
+
+  // 👇 綁定永久裝置 ID，防止刷新重複計算在線人數 👇
+  let userId = localStorage.getItem('global_device_id');
+  if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('global_device_id', userId);
+  }
+
+  let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+  let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+  const userStatusRef = ref(db, 'online_status/' + gameId + '/' + userId);
+
+  const connectedRef = ref(db, '.info/connected');
+  onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+          onDisconnect(userStatusRef).remove();
+          set(userStatusRef, true);
+      }
+  });
+  // 👆 在線統計結束 👆
 
   const TILE = 32;
   let VIEW_W = 960, VIEW_H = 640; 
