@@ -5,141 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>🥚 雞蛋仔大挑戰</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
         
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body {
-            background-color: #1a0b00; color: #fff; font-family: 'Noto Sans HK', sans-serif;
+            background-color: #0a0500; color: #fff; font-family: 'Noto Sans HK', sans-serif;
             height: 100dvh; height: 100vh; display: flex; flex-direction: column;
             overflow: hidden; touch-action: none;
-            background-image: radial-gradient(circle at center, #3d1a00 0%, #1a0b00 100%);
+            background: radial-gradient(circle at center, #2a1200 0%, #0a0500 100%);
         }
 
-        /* 頂部 HUD */
+        /* 頂部 HUD (玻璃質感) */
         #hud {
-            height: 60px; background: rgba(20, 10, 0, 0.95);
-            border-bottom: 3px solid #ff9f43; display: flex; align-items: center;
-            justify-content: space-between; padding: 0 10px; z-index: 10;
-            box-shadow: 0 0 20px rgba(255, 159, 67, 0.4); flex-shrink: 0;
+            height: 60px; background: rgba(20, 10, 0, 0.7);
+            border-bottom: 2px solid rgba(255, 159, 67, 0.5); display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px; z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); flex-shrink: 0;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
         
         .back-btn {
-            padding: 6px 10px; background: transparent; color: #ff9f43;
-            border: 2px solid #ff9f43; border-radius: 8px; text-decoration: none;
+            padding: 6px 12px; background: rgba(255, 159, 67, 0.1); color: #ff9f43;
+            border: 1px solid #ff9f43; border-radius: 8px; text-decoration: none;
             font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 12px;
-            transition: 0.2s;
+            transition: 0.2s; box-shadow: 0 0 10px rgba(255, 159, 67, 0.2);
         }
         .back-btn:active { transform: scale(0.95); background: #ff9f43; color: #000; }
 
-        .stats { display: flex; gap: 12px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
+        .stats { display: flex; gap: 15px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
         .stat-box { display: flex; flex-direction: column; }
         .stat-label { font-size: 9px; color: #a4b0be; letter-spacing: 1px; }
-        .stat-val { font-size: 16px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
+        .stat-val { font-size: 18px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
         .stat-val.combo { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
 
         .shop-btn {
-            background: rgba(255,255,255,0.1); border: 1px solid #00d2d3; color: #00d2d3;
-            padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold;
+            background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3; color: #00d2d3;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;
+            transition: 0.2s; box-shadow: 0 0 10px rgba(0,210,211,0.2);
         }
+        .shop-btn:active { background: #00d2d3; color: #000; }
 
         /* 訂單列 */
         #order-bar {
-            height: 35px; background: #222; display: flex; align-items: center;
-            justify-content: center; font-size: 12px; font-weight: bold; color: #fff;
-            border-bottom: 1px solid #444; z-index: 9; flex-shrink: 0;
-            padding: 0 10px; text-align: center;
+            height: 40px; background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(40,20,0,0.8), rgba(0,0,0,0.8)); 
+            display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold;
+            border-bottom: 1px solid #333; z-index: 9; flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        .order-highlight { color: #ffd32a; margin: 0 3px; }
+        .order-highlight { color: #ffd32a; margin: 0 3px; text-shadow: 0 0 8px rgba(255,211,42,0.5); }
 
         /* 畫布區 */
         #canvas-container {
             flex: 1; position: relative; display: flex; justify-content: center;
             align-items: center; overflow: hidden; padding: 10px;
         }
-        canvas { display: block; max-width: 100%; max-height: 100%; }
+        canvas { display: block; max-width: 100%; max-height: 100%; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); }
 
         /* 底部控制 */
         #controls {
-            height: 100px; background: rgba(20, 10, 0, 0.95);
-            border-top: 3px solid #ff9f43; display: flex; align-items: center;
+            height: 110px; background: rgba(15, 8, 0, 0.85);
+            border-top: 2px solid rgba(255, 159, 67, 0.5); display: flex; align-items: center;
             justify-content: center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             gap: 10px; z-index: 20; flex-shrink: 0; position: relative;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
 
         .action-btn {
-            padding: 12px 10px; border-radius: 10px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
-            font-size: 15px; font-weight: 900; cursor: pointer; border: none;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.5); transition: 0.1s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 12px 10px; border-radius: 12px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
+            font-size: 16px; font-weight: 900; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3); 
+            transition: 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 100%; height: 100%; max-height: 70px;
         }
-        .action-btn:active { transform: translateY(4px); box-shadow: none; }
-        .action-btn:disabled { opacity: 0.3; pointer-events: none; }
+        .action-btn:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3); }
+        .action-btn:disabled { opacity: 0.4; pointer-events: none; filter: grayscale(0.8); }
         
-        #btn-mix { background: linear-gradient(180deg, #00d2d3, #01a3a4); color: #fff; display: flex; }
+        #btn-mix { background: linear-gradient(180deg, #00d2d3, #01a3a4); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); display: flex; }
         #btn-pour { background: linear-gradient(180deg, #ffd32a, #ff9f43); color: #000; display: none; }
-        #btn-flip { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; display: none; }
-        #btn-serve { background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff; display: none; }
-        #btn-cool { background: linear-gradient(180deg, #3498db, #2980b9); color: #fff; display: none; animation: pulse 0.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        #btn-flip { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; display: none; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        #btn-serve { background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff; display: none; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        #btn-cool { background: linear-gradient(180deg, #3498db, #2980b9); color: #fff; display: none; animation: pulse 0.5s infinite; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 20px #3498db; } 100% { transform: scale(1); } }
 
         /* 配料掣 */
         #topping-controls {
             display: none; width: 100%; height: 100%; justify-content: center; gap: 8px; align-items: center;
         }
         .topping-btn {
-            padding: 10px; border-radius: 10px; font-size: 13px; font-weight: bold;
-            background: #333; color: #fff; border: 2px solid #555; cursor: pointer; flex: 1;
-            height: 60px;
+            padding: 10px; border-radius: 12px; font-size: 14px; font-weight: bold;
+            background: linear-gradient(180deg, #333, #111); color: #fff; border: 1px solid #555; 
+            cursor: pointer; flex: 1; height: 60px; box-shadow: 0 4px 0 #000;
+            transition: 0.1s;
         }
-        .topping-btn.selected { border-color: #2ed573; background: rgba(46, 204, 113, 0.2); }
+        .topping-btn:active { transform: translateY(4px); box-shadow: none; }
+        .topping-btn.selected { border-color: #2ed573; background: linear-gradient(180deg, #2ed573, #27ae60); color: #000; box-shadow: 0 0 15px rgba(46, 204, 113, 0.5); }
 
-        /* 彈出視窗 */
+        /* 彈出視窗 (玻璃質感) */
         .modal {
-            position: absolute; inset: 0; background: rgba(10,5,0,0.95);
+            position: absolute; inset: 0; background: rgba(5, 2, 0, 0.85);
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 30; backdrop-filter: blur(10px); padding: 20px; text-align: center;
+            z-index: 30; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 20px; text-align: center;
         }
         .modal.active { display: flex; }
-        .modal h2 { color: #ff9f43; font-size: 26px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff9f43; margin-bottom: 10px; }
-        .modal p { font-size: 14px; color: #ccc; line-height: 1.6; margin-bottom: 15px; }
+        .modal h2 { color: #ff9f43; font-size: 28px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff9f43; margin-bottom: 15px; }
+        .modal p { font-size: 14px; color: #ccc; line-height: 1.6; margin-bottom: 20px; }
         .modal button {
-            padding: 12px 35px; background: linear-gradient(135deg, #ff9f43, #ffd32a);
-            color: #000; border: none; border-radius: 10px; font-family: 'Orbitron', sans-serif;
-            font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 10px;
+            padding: 14px 40px; background: linear-gradient(135deg, #ff9f43, #ffd32a);
+            color: #000; border: none; border-radius: 12px; font-family: 'Orbitron', sans-serif;
+            font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b38f00;
+            transition: 0.1s;
         }
-        .modal button:active { transform: scale(0.95); }
+        .modal button:active { transform: translateY(5px); box-shadow: none; }
 
         /* 商店 */
         .shop-item {
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(255,255,255,0.05); border: 1px solid #444;
-            padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; width: 100%; max-width: 350px;
+            padding: 12px 15px; border-radius: 12px; margin-bottom: 12px; width: 100%; max-width: 350px;
         }
         .shop-info b { display: block; font-size: 14px; color: #fff; }
-        .shop-info small { font-size: 10px; color: #aaa; }
+        .shop-info small { font-size: 11px; color: #aaa; }
         .buy-btn {
-            padding: 6px 12px; background: #2ed573; color: #000; border: none; border-radius: 5px;
-            font-weight: bold; cursor: pointer; margin: 0; font-size: 13px;
+            padding: 8px 15px; background: linear-gradient(180deg, #2ed573, #27ae60); color: #000; 
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 0; font-size: 13px;
+            box-shadow: 0 3px 0 #145a32;
         }
-        .buy-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+        .buy-btn:active { transform: translateY(3px); box-shadow: none; }
+        .buy-btn:disabled { background: #333; color: #666; box-shadow: none; cursor: not-allowed; }
 
         /* 特效 */
         #status-text {
             position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 20px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
+            font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
             pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; text-align: center; width: 90%;
+            background: rgba(0,0,0,0.6); padding: 10px; border-radius: 10px; border: 1px solid #ff9f43;
         }
         #status-text.show { opacity: 1; }
 
         #rating-popup {
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-family: 'Orbitron', sans-serif; font-size: 90px; font-weight: 900;
-            pointer-events: none; opacity: 0; z-index: 25; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0 0 30px currentColor;
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-family: 'Orbitron', sans-serif; font-size: 100px; font-weight: 900;
+            pointer-events: none; opacity: 0; z-index: 25; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 40px currentColor, 0 10px 20px rgba(0,0,0,0.8);
+            -webkit-text-stroke: 2px rgba(255,255,255,0.5);
         }
         #rating-popup.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        .rank-SSS { color: #ffd700; animation: rainbow 1s infinite linear; }
+        .rank-SSS { color: #ffd700; animation: rainbow 1s infinite linear; font-size: 120px; }
         .rank-F { color: #ff4757; }
         @keyframes rainbow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
     </style>
@@ -190,7 +201,7 @@
                 <div class="shop-info"><b>🥄 精準量杯</b><small>倒漿誤差容忍度提升 (Lv.<span id="lvl-cup">0</span>)</small></div>
                 <button class="buy-btn" id="buy-cup" onclick="buyUpgrade('cup')">$150</button>
             </div>
-            <button onclick="closeShop()" style="background:#555; color:#fff;">關閉</button>
+            <button onclick="closeShop()" style="background:#444; color:#fff; box-shadow: 0 4px 0 #111;">關閉</button>
         </div>
 
         <div id="gameover" class="modal">
@@ -239,7 +250,7 @@
         // 自適應畫布大小
         function resizeCanvas() {
             let size = Math.min(window.innerWidth - 20, window.innerHeight - 250);
-            size = Math.max(size, 250); // 保證最少 250px
+            size = Math.max(size, 280); 
             canvas.width = size;
             canvas.height = size;
         }
@@ -251,9 +262,9 @@
         moneyVal.innerText = totalMoney;
 
         const FLAVORS = [
-            { name: '原味', color: '#ff9f43', rawColor: '#f5cd79', perfectColor: '#ffd32a' },
-            { name: '朱古力', color: '#6d4c41', rawColor: '#a1887f', perfectColor: '#3e2723' },
-            { name: '抹茶', color: '#558b2f', rawColor: '#aed581', perfectColor: '#33691e' },
+            { name: '原味', color: '#ffb347', rawColor: '#f5cd79', perfectColor: '#f39c12' },
+            { name: '朱古力', color: '#5d4037', rawColor: '#8d6e63', perfectColor: '#3e2723' },
+            { name: '抹茶', color: '#558b2f', rawColor: '#aed581', perfectColor: '#2e7d32' },
             { name: '鹹蛋黃', color: '#fbc02d', rawColor: '#fff59d', perfectColor: '#f57f17' }
         ];
         const TOPPINGS = ['煉奶', '朱古力醬', '花生醬'];
@@ -292,7 +303,9 @@
         let eventShaky = false;
 
         let particles = [];
+        let smokeParticles = [];
         let toppingTimeout = null;
+        let time = 0; // 用於背景動畫
 
         function startGame() {
             introModal.classList.remove('active');
@@ -323,6 +336,7 @@
             errorPour = 0; errorFlip1 = 0; errorFlip2 = 0;
             eventOverheat = false; eventWind = false; eventShaky = false;
             selectedTopping = null;
+            particles = []; smokeParticles = [];
             
             let zoneBonus = upgrades.oven * 5; 
             let zoneWidth = Math.max(10, 25 - combo * 2) + zoneBonus;
@@ -345,7 +359,6 @@
             
             btnMix.innerText = `🥣 較漿 (0%)`;
             ratingPopup.classList.remove('show');
-            particles = [];
         }
 
         function updateHUD() {
@@ -361,7 +374,6 @@
             setTimeout(() => statusText.classList.remove('show'), 1500);
         }
 
-        // 統一嘅結束處理器 (修復缺失)
         function endRound(isSuccess, reason = '') {
             if (state === 'result') return;
             state = 'result';
@@ -418,12 +430,16 @@
             updateHUD();
         }
 
-        // --- 階段 1 ---
         btnMix.addEventListener('click', () => {
             if (state !== 'mix') return;
             let mixPower = 10 + upgrades.mix * 5;
             mixProgress += mixPower;
             playSound('mix');
+            
+            // 攪拌粒子
+            for(let i=0; i<5; i++) {
+                particles.push({ x: canvas.width/2 + (Math.random()-0.5)*60, y: canvas.height/2 + (Math.random()-0.5)*30, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4, life: 1, color: currentFlavor.color, size: 4 });
+            }
             
             if (mixProgress >= 100) {
                 mixProgress = 100;
@@ -436,7 +452,6 @@
             }
         });
 
-        // --- 階段 2 ---
         let pourInterval = null;
         btnPour.addEventListener('mousedown', startPour);
         btnPour.addEventListener('touchstart', (e) => { e.preventDefault(); startPour(); }, {passive: false});
@@ -445,7 +460,7 @@
 
         function startPour() {
             if (state !== 'pour') return;
-            if (pourInterval) clearInterval(pourInterval); // 防重疊
+            if (pourInterval) clearInterval(pourInterval);
             playSound('pour');
             pourInterval = setInterval(() => {
                 let pSpeed = eventShaky ? (2 + Math.random()*4) : 2;
@@ -472,7 +487,6 @@
             }
         }
 
-        // --- 階段 3 ---
         btnCool.addEventListener('click', () => {
             if (!eventOverheat) return;
             eventOverheat = false;
@@ -508,14 +522,13 @@
             }
         });
 
-        // --- 階段 4 ---
         function selectTopping(t) {
             if (state !== 'topping') return;
             selectedTopping = t;
             document.querySelectorAll('.topping-btn').forEach(b => {
                 b.classList.toggle('selected', b.dataset.t === t);
             });
-            if(toppingTimeout) clearTimeout(toppingTimeout); // 防止超時衝突
+            if(toppingTimeout) clearTimeout(toppingTimeout);
             endRound(true);
         }
 
@@ -562,15 +575,42 @@
         }
 
         function update() {
+            time += 0.05;
+            
             if (state === 'mix') {
                 if (mixProgress > 0 && Math.random() < 0.05) mixProgress -= 0.5;
             }
+            
             if (state === 'bake') {
                 let currentSpeed = bakeSpeed;
                 if (eventOverheat) currentSpeed *= 1.8;
                 bakeProgress += currentSpeed;
+                
+                // 火焰粒子 (好靚)
+                if(Math.random() < 0.3) {
+                    let W = canvas.width, H = canvas.height;
+                    particles.push({ x: W/2 + (Math.random()-0.5)*W*0.3, y: H - 30, vx: (Math.random()-0.5)*1, vy: -Math.random()*3 - 1, life: 1, color: eventOverheat ? '#ff0000' : '#ff9f43', size: 6 });
+                }
+
+                if (eventOverheat) {
+                    // 黑煙
+                    let W = canvas.width, H = canvas.height;
+                    smokeParticles.push({ x: W/2 + (Math.random()-0.5)*W*0.3, y: H - 50, vx: (Math.random()-0.5)*2, vy: -Math.random()*2 - 1, life: 1, size: Math.random()*10 + 5 });
+                }
+                
                 if (bakeProgress >= 100) endRound(false, '完全燶晒！');
                 if (Math.random() < 0.05) playSound('sizzle');
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= 0.03;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+            for (let i = smokeParticles.length - 1; i >= 0; i--) {
+                let p = smokeParticles[i];
+                p.x += p.vx; p.y += p.vy; p.size += 0.5; p.life -= 0.02;
+                if (p.life <= 0) smokeParticles.splice(i, 1);
             }
         }
 
@@ -578,42 +618,101 @@
             let W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
             
-            // 背景
-            ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, 0, W, H);
-            ctx.strokeStyle = '#34495e'; ctx.lineWidth = 2;
-            for (let i = 0; i < W; i += 50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
+            // 🌟 靚背景：大排檔暗黑金屬 + 霓虹光暈
+            let bgGrd = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, W);
+            bgGrd.addColorStop(0, '#1e1610');
+            bgGrd.addColorStop(1, '#080502');
+            ctx.fillStyle = bgGrd; ctx.fillRect(0, 0, W, H);
             
-            // 爐具
-            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(W/2, H - 30, W*0.35, H*0.08, 0, 0, Math.PI * 2); ctx.fill();
+            // 背景微光
+            let glow = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.6);
+            glow.addColorStop(0, 'rgba(255, 159, 67, 0.05)');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
+            // 爐具底座 (立體)
+            ctx.fillStyle = '#111'; 
+            ctx.beginPath(); ctx.ellipse(W/2, H - 30, W*0.35, H*0.08, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#222'; 
+            ctx.beginPath(); ctx.ellipse(W/2, H - 28, W*0.32, H*0.06, 0, 0, Math.PI * 2); ctx.fill();
+
+            // 火焰特效 (用 lighter 模式疊加發光)
             if (state === 'bake') {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
                 let fireIntensity = 1 + (bakeProgress / 100);
-                let fireY = H - 50;
-                ctx.shadowBlur = 20; ctx.shadowColor = eventOverheat ? '#ff4757' : '#ff9f43';
-                for (let i = 0; i < 5; i++) {
-                    let fx = W/2 - W*0.2 + i * W*0.1;
-                    let fh = 15 + Math.random() * 20 * fireIntensity;
-                    ctx.fillStyle = eventOverheat ? '#ff0000' : (bakeProgress > perfectZoneEnd ? '#ff4757' : '#ff9f43');
-                    ctx.beginPath(); ctx.moveTo(fx - 10, fireY); ctx.quadraticCurveTo(fx, fireY - fh, fx + 10, fireY); ctx.fill();
+                let fireY = H - 40;
+                
+                for (let i = 0; i < 6; i++) {
+                    let fx = W/2 - W*0.2 + i * W*0.08;
+                    let fh = (15 + Math.random() * 25) * fireIntensity;
+                    
+                    let fGrd = ctx.createLinearGradient(fx, fireY, fx, fireY - fh);
+                    fGrd.addColorStop(0, eventOverheat ? 'rgba(255,0,0,0.8)' : 'rgba(255,159,67,0.8)');
+                    fGrd.addColorStop(1, 'rgba(0,0,0,0)');
+                    
+                    ctx.fillStyle = fGrd;
+                    ctx.beginPath(); 
+                    ctx.moveTo(fx - 12, fireY); 
+                    ctx.quadraticCurveTo(fx, fireY - fh, fx + 12, fireY); 
+                    ctx.fill();
                 }
-                ctx.shadowBlur = 0;
+                ctx.restore();
             }
 
             ctx.save();
             ctx.translate(W/2, H/2 - 20);
             
-            let boxSize = W * 0.5;
-            // 鐵夾
-            ctx.fillStyle = '#1e272e'; ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 20); ctx.fill();
-            ctx.strokeStyle = '#485460'; ctx.lineWidth = 5; ctx.stroke();
+            let boxSize = W * 0.55;
+            
+            // 🌟 鐵夾立體繪製
+            // 鉸位與手柄 (背景)
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(-boxSize*0.6, -boxSize/2, boxSize*1.2, 20); // 頂部手柄
+            ctx.fillRect(-boxSize*0.6, boxSize/2 - 20, boxSize*1.2, 20); // 底部手柄
 
+            // 鐵夾主體凹槽
+            let boxGrd = ctx.createLinearGradient(-boxSize/2, -boxSize/2, boxSize/2, boxSize/2);
+            boxGrd.addColorStop(0, '#2a2d32');
+            boxGrd.addColorStop(1, '#141517');
+            ctx.fillStyle = boxGrd; 
+            ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 15); ctx.fill();
+            
+            // 邊框反光
+            ctx.strokeStyle = '#3a3f45'; 
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 15); ctx.stroke();
+            
+            // 內陰影
+            ctx.strokeStyle = '#000'; 
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(-boxSize/2+4, -boxSize/2+4, boxSize-8, boxSize-8, 12); ctx.stroke();
+
+            // 階段渲染
             if (state === 'mix' || state === 'pour') {
-                ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(0, 0, boxSize*0.4, 0, Math.PI); ctx.fill();
+                // 不鏽鋼碗
+                let bowlGrd = ctx.createLinearGradient(0, -boxSize*0.3, 0, boxSize*0.4);
+                bowlGrd.addColorStop(0, '#ecf0f1'); bowlGrd.addColorStop(1, '#95a5a6');
+                ctx.fillStyle = bowlGrd; 
+                ctx.beginPath(); ctx.arc(0, 0, boxSize*0.42, 0, Math.PI); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
                 if (state === 'mix') {
-                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.arc(0, 10, boxSize*0.4 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
+                    // 漿液漩渦
+                    ctx.fillStyle = currentFlavor.color; 
+                    ctx.beginPath(); ctx.arc(0, 10, boxSize*0.4 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
+                    
+                    // 高光
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.beginPath(); ctx.ellipse(-boxSize*0.15, 10, boxSize*0.1, boxSize*0.05, Math.PI/4, 0, Math.PI*2); ctx.fill();
                 } else {
+                    // 倒漿垂滴感
                     let pourH = (pourAmount / 100) * boxSize*0.8;
-                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.roundRect(-boxSize*0.4, boxSize*0.4 - pourH, boxSize*0.8, pourH, 10); ctx.fill();
+                    ctx.fillStyle = currentFlavor.color; 
+                    ctx.beginPath(); ctx.roundRect(-boxSize*0.4, boxSize*0.4 - pourH, boxSize*0.8, pourH, 10); ctx.fill();
+                    if(pourAmount > 5 && pourAmount < 95) {
+                        ctx.beginPath(); ctx.arc(0, boxSize*0.4 - pourH + 10, 10, 0, Math.PI*2); ctx.fill();
+                    }
                 }
             }
 
@@ -621,39 +720,83 @@
                 let gridCount = 7, gap = boxSize*0.8 / gridCount;
                 for (let r = -3; r <= 3; r++) {
                     for (let c = -3; c <= 3; c++) {
-                        ctx.beginPath(); ctx.arc(c * gap, r * gap, gap*0.4, 0, Math.PI * 2);
-                        if (bakeProgress > perfectZoneEnd) ctx.fillStyle = '#111'; 
-                        else if (bakeProgress > perfectZoneStart) ctx.fillStyle = currentFlavor.perfectColor; 
-                        else ctx.fillStyle = currentFlavor.rawColor; 
+                        let x = c * gap, y = r * gap, rad = gap * 0.42;
+                        
+                        ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2);
+                        
+                        // 立體坑紋
+                        let ballGrd = ctx.createRadialGradient(x-rad*0.3, y-rad*0.3, 2, x, y, rad);
+                        if (bakeProgress > perfectZoneEnd) { // 燶
+                            ballGrd.addColorStop(0, '#333'); ballGrd.addColorStop(1, '#000'); 
+                        } else if (bakeProgress > perfectZoneStart) { // 完美
+                            ballGrd.addColorStop(0, '#fff'); ballGrd.addColorStop(0.3, currentFlavor.perfectColor); ballGrd.addColorStop(1, '#b37e1c'); 
+                        } else { // 未熟
+                            ballGrd.addColorStop(0, '#fff'); ballGrd.addColorStop(0.3, currentFlavor.rawColor); ballGrd.addColorStop(1, currentFlavor.color); 
+                        }
+                        ctx.fillStyle = ballGrd;
                         ctx.fill();
                     }
                 }
 
                 if (isFlipped) {
-                    ctx.fillStyle = 'rgba(30, 39, 46, 0.9)'; ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 20); ctx.fill();
-                    ctx.fillStyle = '#fff'; ctx.font = `bold ${boxSize*0.1}px "Noto Sans HK"`; ctx.textAlign = 'center'; ctx.fillText('焗緊另一面...', 0, 0);
+                    // 鐵夾蓋上
+                    ctx.fillStyle = '#1e272e'; 
+                    ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 15); ctx.fill();
+                    
+                    // 蓋上坑紋
+                    ctx.fillStyle = '#111';
+                    for (let r = -3; r <= 3; r++) {
+                        for (let c = -3; c <= 3; c++) {
+                            ctx.beginPath(); ctx.arc(c * gap, r * gap, gap*0.38, 0, Math.PI*2); ctx.fill();
+                        }
+                    }
+                    ctx.fillStyle = '#fff'; ctx.font = `bold ${boxSize*0.08}px "Noto Sans HK"`; 
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
+                    ctx.fillText('焗緊另一面...', 0, 0);
                 }
 
                 if (state === 'bake') {
                     ctx.translate(0, -boxSize*0.7);
-                    ctx.fillStyle = '#111'; ctx.fillRect(-boxSize*0.4, 0, boxSize*0.8, 16);
-                    ctx.fillStyle = 'rgba(46, 204, 113, 0.5)'; 
-                    ctx.fillRect(-boxSize*0.4 + (perfectZoneStart/100)*boxSize*0.8, 0, ((perfectZoneEnd-perfectZoneStart)/100)*boxSize*0.8, 16);
-                    ctx.fillStyle = eventOverheat ? '#ff0000' : '#ff9f43'; 
-                    ctx.fillRect(-boxSize*0.4, 0, (bakeProgress/100)*boxSize*0.8, 16);
-                    ctx.strokeStyle = '#fff'; ctx.strokeRect(-boxSize*0.4, 0, boxSize*0.8, 16);
+                    // 火候條背景
+                    ctx.fillStyle = '#000'; ctx.fillRect(-boxSize*0.4, 0, boxSize*0.8, 18);
+                    // 完美區
+                    ctx.fillStyle = 'rgba(46, 204, 113, 0.4)'; 
+                    ctx.fillRect(-boxSize*0.4 + (perfectZoneStart/100)*boxSize*0.8, 0, ((perfectZoneEnd-perfectZoneStart)/100)*boxSize*0.8, 18);
+                    // 當前進度
+                    let barGrd = ctx.createLinearGradient(-boxSize*0.4, 0, boxSize*0.4, 0);
+                    barGrd.addColorStop(0, '#ffd32a'); barGrd.addColorStop(1, '#ff4757');
+                    ctx.fillStyle = eventOverheat ? '#ff0000' : barGrd; 
+                    ctx.fillRect(-boxSize*0.4, 0, (bakeProgress/100)*boxSize*0.8, 18);
+                    // 邊框
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(-boxSize*0.4, 0, boxSize*0.8, 18);
                 }
 
                 if (selectedTopping && state !== 'result') {
                     ctx.fillStyle = selectedTopping === '煉奶' ? '#fff' : selectedTopping === '朱古力醬' ? '#5c3a21' : '#d35400';
-                    ctx.globalAlpha = 0.6;
-                    for (let i = 0; i < 10; i++) {
-                        ctx.beginPath(); ctx.arc(Math.random()*(boxSize*0.7)-(boxSize*0.35), Math.random()*(boxSize*0.7)-(boxSize*0.35), 4, 0, Math.PI*2); ctx.fill();
+                    ctx.globalAlpha = 0.8;
+                    for (let i = 0; i < 15; i++) {
+                        ctx.beginPath(); ctx.arc(Math.random()*(boxSize*0.7)-(boxSize*0.35), Math.random()*(boxSize*0.7)-(boxSize*0.35), 4 + Math.random()*3, 0, Math.PI*2); ctx.fill();
                     }
                     ctx.globalAlpha = 1;
                 }
             }
             ctx.restore();
+
+            // 粒子特效 (香氣與火花)
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            for (let p of particles) {
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+            
+            // 黑煙
+            for (let p of smokeParticles) {
+                ctx.globalAlpha = p.life * 0.5; ctx.fillStyle = '#333';
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
         }
 
         function loop() {
