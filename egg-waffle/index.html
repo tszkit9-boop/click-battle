@@ -9,18 +9,18 @@
         
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body {
-            background-color: #0a0500; color: #fff; font-family: 'Noto Sans HK', sans-serif;
+            background-color: #050302; color: #fff; font-family: 'Noto Sans HK', sans-serif;
             height: 100dvh; height: 100vh; display: flex; flex-direction: column;
             overflow: hidden; touch-action: none;
-            background: radial-gradient(circle at center, #2a1200 0%, #0a0500 100%);
+            background: radial-gradient(circle at top, #1a0f08 0%, #050302 100%);
         }
 
         /* 頂部 HUD */
         #hud {
-            height: 60px; background: rgba(20, 10, 0, 0.8);
+            height: 60px; background: rgba(15, 8, 0, 0.85);
             border-bottom: 2px solid rgba(255, 159, 67, 0.6); display: flex; align-items: center;
             justify-content: space-between; padding: 0 15px; z-index: 10;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8); flex-shrink: 0;
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
         
@@ -42,12 +42,13 @@
         .shop-btn {
             background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3; color: #00d2d3;
             padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;
+            box-shadow: 0 0 10px rgba(0,210,211,0.2);
         }
         .shop-btn:active { background: #00d2d3; color: #000; }
 
         /* 訂單列 */
         #order-bar {
-            height: 40px; background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(40,20,0,0.8), rgba(0,0,0,0.8)); 
+            height: 40px; background: linear-gradient(90deg, rgba(0,0,0,0.9), rgba(40,20,0,0.9), rgba(0,0,0,0.9)); 
             display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold;
             border-bottom: 1px solid #333; z-index: 9; flex-shrink: 0;
         }
@@ -56,31 +57,31 @@
         /* 畫布區 */
         #canvas-container {
             flex: 1; position: relative; display: flex; justify-content: center;
-            align-items: center; overflow: hidden; padding: 10px;
+            align-items: center; overflow: hidden;
         }
-        canvas { display: block; max-width: 100%; max-height: 100%; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); }
+        canvas { display: block; width: 100%; height: 100%; }
 
         /* 底部控制 */
         #controls {
-            height: 110px; background: rgba(15, 8, 0, 0.9);
-            border-top: 2px solid rgba(255, 159, 67, 0.5); display: flex; align-items: center;
+            height: 110px; background: rgba(10, 5, 0, 0.95);
+            border-top: 2px solid rgba(255, 159, 67, 0.6); display: flex; align-items: center;
             justify-content: center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             gap: 10px; z-index: 20; flex-shrink: 0; position: relative;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.8);
         }
 
         .action-btn {
             padding: 12px 10px; border-radius: 12px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
-            font-size: 16px; font-weight: 900; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 6px 0 rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3); 
+            font-size: 16px; font-weight: 900; cursor: pointer; border: none;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.4); 
             transition: 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 100%; height: 100%; max-height: 70px;
+            width: 100%; height: 100%; max-height: 70px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
-        .action-btn:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3); }
+        .action-btn:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.2); }
         .action-btn:disabled { opacity: 0.4; pointer-events: none; filter: grayscale(0.8); }
         
         #btn-mix { background: linear-gradient(180deg, #00d2d3, #01a3a4); color: #fff; display: flex; }
-        #btn-pour { background: linear-gradient(180deg, #ffd32a, #ff9f43); color: #000; display: none; }
+        #btn-pour { background: linear-gradient(180deg, #ffd32a, #ff9f43); color: #000; display: none; text-shadow: none; }
         #btn-flip { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; display: none; }
         #btn-serve { background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff; display: none; }
         #btn-cool { background: linear-gradient(180deg, #3498db, #2980b9); color: #fff; display: none; animation: pulse 0.5s infinite; }
@@ -102,7 +103,7 @@
 
         /* 彈出視窗 */
         .modal {
-            position: absolute; inset: 0; background: rgba(5, 2, 0, 0.85);
+            position: absolute; inset: 0; background: rgba(5, 2, 0, 0.9);
             display: none; flex-direction: column; align-items: center; justify-content: center;
             z-index: 30; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 20px; text-align: center;
         }
@@ -131,12 +132,12 @@
         }
         .buy-btn:disabled { background: #333; color: #666; box-shadow: none; cursor: not-allowed; }
 
-        /* 特效 */
+        /* 特效字 */
         #status-text {
-            position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%);
             font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
             pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; text-align: center; width: 90%;
-            background: rgba(0,0,0,0.7); padding: 12px; border-radius: 10px; border: 1px solid #ff9f43;
+            background: rgba(0,0,0,0.8); padding: 12px; border-radius: 10px; border: 1px solid #ff9f43;
         }
         #status-text.show { opacity: 1; }
 
@@ -185,7 +186,7 @@
         
         <div id="intro-modal" class="modal active">
             <h2>🥚 雞蛋仔大挑戰</h2>
-            <p>完成客人訂單，賺取金幣升級你嘅架生！<br>小心隨機突發事件同埋火候控制！</p>
+            <p>完成客人訂單，賺取金幣升級你嘅架生！<br>小心客人等到發脾氣！</p>
             <button onclick="startGame()">開檔</button>
         </div>
 
@@ -254,11 +255,12 @@
         const btnNext = document.getElementById('btn-next');
         const btnRetry = document.getElementById('btn-retry');
 
+        // 自適應畫布大小
         function resizeCanvas() {
-            let size = Math.min(window.innerWidth - 20, window.innerHeight - 250);
-            size = Math.max(size, 280); 
+            let size = Math.min(window.innerWidth, window.innerHeight - 220);
+            size = Math.max(size, 280);
             canvas.width = size;
-            canvas.height = size;
+            canvas.height = size; // 正方形畫布
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -274,6 +276,9 @@
             { name: '鹹蛋黃', color: '#fbc02d', rawColor: '#fff59d', perfectColor: '#f57f17' }
         ];
         const TOPPINGS = ['煉奶', '朱古力醬', '花生醬'];
+        
+        // 客人衫顏色
+        const SHIRT_COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
@@ -295,10 +300,15 @@
         let currentFlavor = FLAVORS[0];
         let currentOrder = null;
         let selectedTopping = null;
+        
+        // 客人系統
+        let customerPatience = 100;
+        let customerMood = 'happy'; 
+        let customerShirt = SHIRT_COLORS[0];
 
         let mixProgress = 0;
         let pourAmount = 0;
-        let isPouring = false; // 新倒漿模式
+        let isPouring = false;
         let bakeProgress = 0;
         let bakeSpeed = 1.0;
         let perfectZoneStart = 60;
@@ -337,6 +347,8 @@
             orderFlavorEl.innerText = currentOrder.flavor;
             orderRankEl.innerText = currentOrder.rank;
             orderToppingEl.innerText = currentOrder.topping;
+            
+            customerShirt = SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)];
         }
 
         function resetRound(isRetry = false) {
@@ -352,10 +364,12 @@
             selectedTopping = null;
             particles = []; smokeParticles = [];
             
-            // 首三關為教學關卡 (極易)
+            customerPatience = 100;
+            customerMood = 'happy';
+            
             let zoneBonus = upgrades.oven * 5; 
             let zoneWidth = Math.max(20, 35 - combo * 1.5) + zoneBonus;
-            if (round <= 3) zoneWidth += 20; // 前三關超闊
+            if (round <= 3) zoneWidth += 20;
 
             let center = 65 + (Math.random() * 10 - 5);
             perfectZoneStart = center - zoneWidth / 2;
@@ -363,7 +377,6 @@
             
             bakeSpeed = (0.8 + Math.min(combo, 10) * 0.08) * (eventWind ? 1.25 : 1);
 
-            // 首三關無突發事件
             if (round > 3) {
                 let r = Math.random();
                 if (r < 0.03) { eventOverheat = true; showStatus('🔥 爐具過熱！快降溫！', '#ff4757'); }
@@ -494,7 +507,7 @@
         }
         function stopMix() { if (mixInterval) { clearInterval(mixInterval); mixInterval = null; } }
 
-        // --- 倒漿 (點擊切換模式) ---
+        // --- 倒漿 ---
         btnPour.addEventListener('click', togglePour);
         btnPour.addEventListener('touchstart', (e) => { e.preventDefault(); togglePour(); }, {passive: false});
 
@@ -502,7 +515,6 @@
             if (state !== 'pour') return;
             
             if (!isPouring) {
-                // 開始倒
                 isPouring = true;
                 playSound('pour');
                 btnPour.innerText = '⏹️ 停止倒漿';
@@ -512,10 +524,8 @@
                     if (pourAmount > 100) pourAmount = 100;
                 }, 20);
             } else {
-                // 停止倒
                 isPouring = false;
-                clearInterval(pourInterval);
-                pourInterval = null;
+                clearInterval(pourInterval); pourInterval = null;
                 btnPour.style.display = 'none';
                 
                 errorPour = Math.abs(pourAmount - 67.5) / 32.5;
@@ -620,6 +630,25 @@
         function update() {
             time += 0.05;
             
+            // 客人發脾氣邏輯
+            if (state === 'mix' || state === 'pour' || state === 'bake' || state === 'topping') {
+                customerPatience -= 0.12 + (round * 0.02); // 關卡越高跌得越快
+                
+                if (customerPatience <= 0) {
+                    customerPatience = 0;
+                    customerMood = 'angry';
+                    if (state !== 'result') {
+                        endRound(false, '😡 客人等到發脾氣走咗！');
+                    }
+                } else if (customerPatience < 40) {
+                    customerMood = 'angry';
+                } else if (customerPatience < 70) {
+                    customerMood = 'neutral';
+                } else {
+                    customerMood = 'happy';
+                }
+            }
+
             if (state === 'bake') {
                 let currentSpeed = bakeSpeed;
                 if (eventOverheat) currentSpeed *= 1.8;
@@ -651,68 +680,142 @@
             }
         }
 
+        // --- 畫客人 ---
+        function drawCustomer(W, H) {
+            ctx.save();
+            ctx.translate(W/2, H - 100); // 企喺畫面下方
+            
+            let shake = customerMood === 'angry' ? (Math.random()-0.5)*4 : 0;
+            ctx.translate(shake, 0);
+
+            // 客人陰影
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath(); ctx.ellipse(0, 80, 60, 15, 0, 0, Math.PI*2); ctx.fill();
+
+            // 身體
+            ctx.fillStyle = customerShirt;
+            ctx.beginPath(); 
+            ctx.roundRect(-45, 10, 90, 70, 20); 
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+
+            // 頭
+            ctx.fillStyle = '#ffccaa';
+            ctx.beginPath(); ctx.arc(0, -20, 40, 0, Math.PI*2); ctx.fill();
+            
+            // 頭髮
+            ctx.fillStyle = '#222';
+            ctx.beginPath(); ctx.arc(0, -25, 40, Math.PI, Math.PI*2); ctx.fill();
+
+            // 畫表情
+            ctx.fillStyle = '#111';
+            if (customerMood === 'happy') {
+                // 眼睛 ( ^ ^ )
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#111';
+                ctx.beginPath(); ctx.arc(-15, -20, 6, Math.PI, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(15, -20, 6, Math.PI, Math.PI*2); ctx.stroke();
+                // 嘴巴 (微笑)
+                ctx.beginPath(); ctx.arc(0, -5, 10, 0, Math.PI); ctx.stroke();
+            } else if (customerMood === 'neutral') {
+                // 眼睛 ( o o )
+                ctx.beginPath(); ctx.arc(-15, -20, 5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(15, -20, 5, 0, Math.PI*2); ctx.fill();
+                // 嘴巴 (直線)
+                ctx.fillRect(-8, -5, 16, 3);
+            } else {
+                // 眼睛 ( > < )
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#111';
+                ctx.beginPath(); ctx.moveTo(-20, -25); ctx.lineTo(-10, -20); ctx.lineTo(-20, -15); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(20, -25); ctx.lineTo(10, -20); ctx.lineTo(20, -15); ctx.stroke();
+                // 嘴巴 (憤怒)
+                ctx.beginPath(); ctx.arc(0, 5, 10, Math.PI, Math.PI*2); ctx.stroke();
+
+                // 青筋符號 (💢)
+                ctx.fillStyle = '#ff4757';
+                ctx.shadowColor = '#ff4757'; ctx.shadowBlur = 10;
+                ctx.font = 'bold 30px sans-serif';
+                ctx.fillText('💢', 35, -45);
+                
+                // 汗滴
+                ctx.fillStyle = '#4cc9f0';
+                ctx.beginPath(); ctx.arc(-35, -20, 5, 0, Math.PI*2); ctx.fill();
+            }
+
+            // 耐心條
+            ctx.restore();
+            ctx.save();
+            ctx.translate(W/2, H - 180);
+            ctx.fillStyle = '#111';
+            ctx.beginPath(); ctx.roundRect(-40, 0, 80, 10, 5); ctx.fill();
+            
+            let barColor = customerMood === 'happy' ? '#2ed573' : customerMood === 'neutral' ? '#f39c12' : '#ff4757';
+            ctx.fillStyle = barColor;
+            ctx.shadowColor = barColor; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.roundRect(-40, 0, 80 * (customerPatience/100), 10, 5); ctx.fill();
+            ctx.restore();
+        }
+
         function draw() {
             let W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
             
-            // 背景：暗黑金屬 + 霓虹微光
+            // 背景：極致大排檔夜景
             let bgGrd = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, W);
-            bgGrd.addColorStop(0, '#1e1610');
-            bgGrd.addColorStop(1, '#080502');
+            bgGrd.addColorStop(0, '#1a1005');
+            bgGrd.addColorStop(1, '#050201');
             ctx.fillStyle = bgGrd; ctx.fillRect(0, 0, W, H);
             
-            let glow = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.6);
-            glow.addColorStop(0, 'rgba(255, 159, 67, 0.05)');
-            glow.addColorStop(1, 'transparent');
-            ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+            // 霓虹燈牌
+            ctx.save();
+            ctx.translate(W/2, 60);
+            ctx.fillStyle = '#ff4757';
+            ctx.shadowColor = '#ff4757'; ctx.shadowBlur = 20;
+            ctx.font = `bold ${W*0.08}px "Noto Sans HK"`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('呀樂大排檔', 0, 0);
+            ctx.restore();
 
-            // 爐具底座
-            ctx.fillStyle = '#111'; 
-            ctx.beginPath(); ctx.ellipse(W/2, H - 30, W*0.35, H*0.08, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#222'; 
-            ctx.beginPath(); ctx.ellipse(W/2, H - 28, W*0.32, H*0.06, 0, 0, Math.PI * 2); ctx.fill();
+            // 背景格仔地磚
+            ctx.strokeStyle = 'rgba(255, 159, 67, 0.05)'; ctx.lineWidth = 1;
+            for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
+            for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
-            // 火焰特效
-            if (state === 'bake') {
-                ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
-                let fireIntensity = 1 + (bakeProgress / 100);
-                let fireY = H - 40;
-                
-                for (let i = 0; i < 6; i++) {
-                    let fx = W/2 - W*0.2 + i * W*0.08;
-                    let fh = (15 + Math.random() * 25) * fireIntensity;
-                    
-                    let fGrd = ctx.createLinearGradient(fx, fireY, fx, fireY - fh);
-                    fGrd.addColorStop(0, eventOverheat ? 'rgba(255,0,0,0.8)' : 'rgba(255,159,67,0.8)');
-                    fGrd.addColorStop(1, 'rgba(0,0,0,0)');
-                    
-                    ctx.fillStyle = fGrd;
-                    ctx.beginPath(); 
-                    ctx.moveTo(fx - 12, fireY); 
-                    ctx.quadraticCurveTo(fx, fireY - fh, fx + 12, fireY); 
-                    ctx.fill();
-                }
-                ctx.restore();
+            // 畫客人
+            drawCustomer(W, H);
+
+            // 爐具與鐵夾
+            ctx.save();
+            ctx.translate(W/2, H/2 - 40); // 鐵夾放喺中間偏上
+            
+            let boxSize = W * 0.5;
+            
+            // 鐵夾底座光暈
+            ctx.fillStyle = 'rgba(255, 159, 67, 0.1)';
+            ctx.beginPath(); ctx.ellipse(0, boxSize/2 + 30, boxSize*0.6, 30, 0, 0, Math.PI*2); ctx.fill();
+
+            // 鐵夾手柄背景
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(-boxSize*0.65, -boxSize/2, boxSize*1.3, 20);
+            ctx.fillRect(-boxSize*0.65, boxSize/2 - 20, boxSize*1.3, 20);
+            
+            // 鐵夾鉚釘
+            ctx.fillStyle = '#555';
+            for(let i=-3; i<=3; i++) {
+                ctx.beginPath(); ctx.arc(i * (boxSize*0.18), -boxSize/2 + 10, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(i * (boxSize*0.18), boxSize/2 - 10, 3, 0, Math.PI*2); ctx.fill();
             }
 
-            ctx.save();
-            ctx.translate(W/2, H/2 - 20);
-            
-            let boxSize = W * 0.55;
-            
-            // 鐵夾立體背景
-            ctx.fillStyle = '#0a0a0a';
-            ctx.fillRect(-boxSize*0.6, -boxSize/2, boxSize*1.2, 20);
-            ctx.fillRect(-boxSize*0.6, boxSize/2 - 20, boxSize*1.2, 20);
-
+            // 鐵夾主體
             let boxGrd = ctx.createLinearGradient(-boxSize/2, -boxSize/2, boxSize/2, boxSize/2);
             boxGrd.addColorStop(0, '#2a2d32');
-            boxGrd.addColorStop(1, '#141517');
+            boxGrd.addColorStop(1, '#0f1112');
             ctx.fillStyle = boxGrd; 
             ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 15); ctx.fill();
             
-            ctx.strokeStyle = '#3a3f45'; 
+            // 鐵夾邊框 (金色)
+            ctx.strokeStyle = '#b38f00'; 
             ctx.lineWidth = 4;
             ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 15); ctx.stroke();
             
@@ -720,10 +823,28 @@
             ctx.lineWidth = 2;
             ctx.beginPath(); ctx.roundRect(-boxSize/2+4, -boxSize/2+4, boxSize-8, boxSize-8, 12); ctx.stroke();
 
-            // 階段渲染
+            // 火焰特效
+            if (state === 'bake') {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                let fireIntensity = 1 + (bakeProgress / 100);
+                let fireY = boxSize/2 + 20;
+                
+                for (let i = 0; i < 6; i++) {
+                    let fx = -boxSize*0.3 + i * (boxSize*0.12);
+                    let fh = (20 + Math.random() * 30) * fireIntensity;
+                    let fGrd = ctx.createLinearGradient(fx, fireY, fx, fireY - fh);
+                    fGrd.addColorStop(0, eventOverheat ? 'rgba(255,0,0,0.9)' : 'rgba(255,159,67,0.9)');
+                    fGrd.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = fGrd;
+                    ctx.beginPath(); ctx.moveTo(fx - 10, fireY); ctx.quadraticCurveTo(fx, fireY - fh, fx + 10, fireY); ctx.fill();
+                }
+                ctx.restore();
+            }
+
             if (state === 'mix' || state === 'pour') {
                 let bowlGrd = ctx.createLinearGradient(0, -boxSize*0.3, 0, boxSize*0.4);
-                bowlGrd.addColorStop(0, '#ecf0f1'); bowlGrd.addColorStop(1, '#95a5a6');
+                bowlGrd.addColorStop(0, '#ecf0f1'); bowlGrd.addColorStop(1, '#7f8c8d');
                 ctx.fillStyle = bowlGrd; 
                 ctx.beginPath(); ctx.arc(0, 0, boxSize*0.42, 0, Math.PI); ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
@@ -731,6 +852,9 @@
                 if (state === 'mix') {
                     ctx.fillStyle = currentFlavor.color; 
                     ctx.beginPath(); ctx.arc(0, 10, boxSize*0.4 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
+                    // 漩渦
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    ctx.beginPath(); ctx.arc(0, 10, boxSize*0.2, 0, Math.PI * (mixProgress/50)); ctx.stroke();
                 } else {
                     let pourH = (pourAmount / 100) * boxSize*0.8;
                     ctx.fillStyle = currentFlavor.color; 
@@ -739,10 +863,9 @@
                         ctx.beginPath(); ctx.arc(0, boxSize*0.4 - pourH + 10, 10, 0, Math.PI*2); ctx.fill();
                     }
                     
-                    // 完美區提示 (超巨大)
+                    // 完美區虛線
                     ctx.strokeStyle = 'rgba(46, 204, 113, 0.9)';
-                    ctx.setLineDash([5,5]);
-                    ctx.lineWidth = 3;
+                    ctx.setLineDash([6,6]); ctx.lineWidth = 3;
                     ctx.beginPath();
                     ctx.moveTo(-boxSize*0.45, boxSize*0.4 - (50/100)*boxSize*0.8);
                     ctx.lineTo(boxSize*0.45, boxSize*0.4 - (50/100)*boxSize*0.8);
@@ -751,7 +874,6 @@
                     ctx.stroke();
                     ctx.setLineDash([]);
 
-                    // 顯示當前百分比
                     ctx.fillStyle = '#fff'; ctx.font = `bold ${boxSize*0.1}px "Orbitron"`;
                     ctx.textAlign = 'center'; ctx.fillText(`${Math.floor(pourAmount)}%`, 0, -boxSize*0.2);
                 }
@@ -792,13 +914,11 @@
                 if (state === 'bake') {
                     ctx.translate(0, -boxSize*0.7);
                     ctx.fillStyle = '#000'; ctx.fillRect(-boxSize*0.4, 0, boxSize*0.8, 18);
-                    // 完美區加發光
                     ctx.save();
-                    ctx.shadowColor = '#2ed573'; ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#2ed573'; ctx.shadowBlur = 15;
                     ctx.fillStyle = 'rgba(46, 204, 113, 0.6)'; 
                     ctx.fillRect(-boxSize*0.4 + (perfectZoneStart/100)*boxSize*0.8, 0, ((perfectZoneEnd-perfectZoneStart)/100)*boxSize*0.8, 18);
                     ctx.restore();
-                    
                     let barGrd = ctx.createLinearGradient(-boxSize*0.4, 0, boxSize*0.4, 0);
                     barGrd.addColorStop(0, '#ffd32a'); barGrd.addColorStop(1, '#ff4757');
                     ctx.fillStyle = eventOverheat ? '#ff0000' : barGrd; 
@@ -817,7 +937,7 @@
             }
             ctx.restore();
 
-            // 特效
+            // 粒子特效
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             for (let p of particles) {
