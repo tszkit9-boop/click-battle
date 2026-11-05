@@ -511,7 +511,7 @@
             animation: breathe 2s infinite ease-in-out;
             z-index: 5;
             transform: scale(0.65);
-            display: none !important; /* 👈 加呢句，隱藏 2D 公仔 */
+            display: none !important;
         }
 
         @keyframes breathe {
@@ -573,9 +573,6 @@
         .stock-bar { flex: 1; background: #e74c3c; transition: height 0.3s; }
         .stock-bar.up { background: #2ecc71; }
 
-        /* ============================================= */
-        /* ===== 3D 場景層（新加） ===== */
-        /* ============================================= */
         #scene3d {
             position: absolute;
             inset: 0;
@@ -629,7 +626,6 @@
 <body>
 
     <div id="game-container">
-        <!-- 頂部導航 -->
         <div class="top-bar">
             <a href="../" class="back-btn">⬅ 返回大廳</a>
             <div class="top-right-btns">
@@ -638,7 +634,6 @@
             </div>
         </div>
 
-        <!-- 狀態列 (HUD) -->
         <div id="hud">
             <div class="stat-item"><span class="stat-label">💰錢</span><div class="stat-bar"><div class="stat-fill fill-money" id="bar-money" style="width: 0%;"></div><span class="stat-val" id="val-money">$0</span></div></div>
             <div class="stat-item"><span class="stat-label">🔋體</span><div class="stat-bar"><div class="stat-fill fill-energy" id="bar-energy" style="width: 100%;"></div><span class="stat-val" id="val-energy">100</span></div></div>
@@ -648,9 +643,7 @@
             <div id="status-display">🎂 22歲 | 第1天 ☀️ 早晨 | 💼 求職中</div>
         </div>
 
-        <!-- 遊戲場景與角色 -->
         <div id="scene" class="bg-morning">
-            <!-- ★ 3D 場景容器（新加）★ -->
             <div id="scene3d"></div>
 
             <div id="office-view">
@@ -676,11 +669,9 @@
             </div>
         </div>
 
-        <!-- 底部操作按鈕區 -->
         <div id="actions"></div>
     </div>
 
-    <!-- === 全螢幕過場畫面 === -->
     <div id="wedding-screen" class="event-screen">
         <div class="event-icon">👰‍♀️🤵‍♂️</div>
         <h1>💒 恭喜晒！</h1>
@@ -719,8 +710,6 @@
         <div id="family-interact-options" style="width:100%; max-width:300px;"></div>
     </div>
 
-    <!-- === 系統彈窗 === -->
-    <!-- 性別選擇 -->
     <div id="gender-modal" class="modal-overlay" style="display: flex;">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👤 選擇性別</h2>
@@ -730,7 +719,6 @@
         </div>
     </div>
 
-    <!-- 休閒減壓 -->
     <div id="relax-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #3498db;">
             <h2 style="color: #3498db;">🎮 休閒減壓</h2>
@@ -742,7 +730,6 @@
         </div>
     </div>
 
-    <!-- 副業 -->
     <div id="sidehustle-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">💼 副業 / 被動收入</h2>
@@ -752,7 +739,6 @@
         </div>
     </div>
 
-    <!-- 銀行 -->
     <div id="bank-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🏦 銀行系統</h2>
@@ -772,7 +758,6 @@
         </div>
     </div>
 
-    <!-- 慈善系統 -->
     <div id="charity-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e67e22;">
             <h2 style="color: #e67e22;">🏛️ 慈善與社會地位</h2>
@@ -788,7 +773,6 @@
         </div>
     </div>
 
-    <!-- 頂級奢侈品 -->
     <div id="luxury-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🛥️ 頂級奢侈品</h2>
@@ -803,7 +787,6 @@
         </div>
     </div>
 
-    <!-- K線股市 -->
     <div id="stock-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c;">
             <h2 style="color: #e74c3c;">📈 真實 K 線股市</h2>
@@ -822,7 +805,6 @@
         </div>
     </div>
 
-    <!-- 地下黑市 -->
     <div id="black-market-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #333;">
             <h2 style="color: #e74c3c;">🕶️ 地下黑市</h2>
@@ -838,7 +820,6 @@
         </div>
     </div>
 
-    <!-- 感情與家庭 -->
     <div id="family-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #ff9ff3;">
             <h2 style="color: #ff9ff3;">💍 感情與家庭</h2>
@@ -856,7 +837,6 @@
         </div>
     </div>
 
-    <!-- 寵物 -->
     <div id="pet-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">🐱 寵物領養中心</h2>
@@ -872,7 +852,6 @@
         </div>
     </div>
 
-    <!-- 警署 -->
     <div id="jail-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
@@ -882,7 +861,6 @@
         </div>
     </div>
 
-    <!-- 醫院 -->
     <div id="hospital-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">🏥 身體到達極限！</h2>
@@ -893,7 +871,6 @@
         </div>
     </div>
 
-    <!-- 車行 -->
     <div id="car-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #3498db;">
             <h2 style="color: #3498db;">🚗 汽車銷售中心</h2>
@@ -911,7 +888,6 @@
         </div>
     </div>
 
-    <!-- 求職中心 -->
     <div id="job-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">🏢 求職中心</h2>
@@ -936,7 +912,6 @@
         </div>
     </div>
 
-    <!-- 地產 -->
     <div id="property-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f39c12;">
             <h2 style="color: #f39c12;">🏠 地產霸權與財務</h2>
@@ -955,7 +930,6 @@
         </div>
     </div>
 
-    <!-- 兼職 -->
     <div id="parttime-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #2ecc71;">
             <h2 style="color: #2ecc71;">🛵 放工搵外快</h2>
@@ -967,7 +941,6 @@
         </div>
     </div>
 
-    <!-- 賭博 -->
     <div id="invest-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e84393;">
             <h2 style="color: #e84393;">💸 終極賭徒</h2>
@@ -1009,7 +982,6 @@
         </div>
     </div>
 
-    <!-- 員工管理 -->
     <div id="staff-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #00d2d3;">
             <h2 style="color: #00d2d3;">👥 員工管理</h2>
@@ -1024,7 +996,6 @@
         </div>
     </div>
 
-    <!-- 開公司 -->
     <div id="company-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">🚀 創業做老闆</h2>
@@ -1037,7 +1008,6 @@
         </div>
     </div>
 
-    <!-- 公司帳目 -->
     <div id="account-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #f1c40f;">
             <h2 style="color: #f1c40f;">💰 公司帳目</h2>
@@ -1047,7 +1017,6 @@
         </div>
     </div>
 
-    <!-- 競爭對手 -->
     <div id="competitor-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
             <h2 style="color: #e74c3c;">⚔️ 競爭對手來襲！</h2>
@@ -1056,7 +1025,6 @@
         </div>
     </div>
 
-    <!-- 抓摸魚 (老闆) -->
     <div id="slacking-modal" class="modal-overlay">
         <div class="modal-box" style="border-color: #e74c3c;">
             <h2 style="color: #e74c3c;">🚨 捉到摸魚！</h2>
@@ -1069,7 +1037,6 @@
         </div>
     </div>
 
-    <!-- 摸魚被捉：打字狡辯 (打工仔) -->
     <div id="slacking-caught-modal" class="modal-overlay">
         <div class="modal-box">
             <h2 style="color: #e74c3c;">😱 被老闆捉到摸魚！</h2>
@@ -1085,14 +1052,14 @@
         </div>
     </div>
 
-    <!-- 提示訊息 & 結算畫面 -->
     <div id="toast">提示訊息</div>
     <div id="end-screen">
         <h1 id="end-title">人生落幕</h1>
         <p id="end-stats"></p>
         <button onclick="resetGame()">重新投胎</button>
     </div>
-        <script>
+    
+    <script>
         window.onerror = function(msg, url, line) {
             alert("遊戲發生錯誤！\n請按 F5 重新整理。\n錯誤：" + msg);
             return false;
@@ -1301,7 +1268,8 @@
                 saveGame();
             } catch (e) {}
         }
-                const STAFF_STATUSES = [
+        
+        const STAFF_STATUSES = [
             { emoji: '⌨️', text: '打字中' },
             { emoji: '📞', text: '傾緊電話' },
             { emoji: '😴', text: '摸魚中' },
@@ -3087,9 +3055,8 @@
                 updateHUD();
             } catch (e) {}
         };
-    </script> <!-- 👈 閂返主遊戲邏輯嘅 script -->
+    </script> 
 
-<!-- ===== Three.js 3D 場景層（老闆巡視完整版） ===== -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
     <script>
     (function () {
@@ -3120,9 +3087,6 @@
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             host.appendChild(renderer.domElement);
 
-            // ==========================================
-            // ★ 旋轉與縮放控制 (全方位睇場景) ★
-            // ==========================================
             var camRadius = 26; 
             var camTheta = Math.PI / 4; 
             var camPhi = 0.92;          
@@ -3169,7 +3133,6 @@
                 cam.updateProjectionMatrix();
             }, { passive: false });
 
-            // 手機觸控 (單指旋轉 + 雙指縮放)
             var initialDistance = 0;
             var initialZoom = 1;
             var touchStartX = 0, touchStartY = 0;
@@ -3212,9 +3175,7 @@
                     }
                 }
             }, { passive: false });
-            // ==========================================
 
-            // 燈光
             var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
             var dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
@@ -3227,7 +3188,6 @@
             dirLight.shadow.bias = -0.001;
             scene.add(dirLight);
 
-            // 材質
             function createWoodTexture() {
                 var canvas = document.createElement('canvas');
                 canvas.width = 128; canvas.height = 128;
@@ -3257,12 +3217,10 @@
             var pantsMat = new THREE.MeshStandardMaterial({ color: 0x34495e, roughness: 0.8 });
             var suitMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
 
-            // 環境容器
             var envGroup = new THREE.Group();
             scene.add(envGroup);
             var currentEnv = "";
 
-            // 老闆巡視狀態變數
             var bossTimer = 0;
             var bossActive = false;
             var bossDir = 1; 
@@ -3272,7 +3230,6 @@
                 while(envGroup.children.length > 0){ envGroup.remove(envGroup.children[0]); }
             }
 
-            // --- 場景建立 ---
             function buildOffice() {
                 var floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshStandardMaterial({ color: 0x2d3436, roughness: 0.6 }));
                 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; envGroup.add(floor);
@@ -3392,7 +3349,6 @@
                 envGroup.add(spotLight.target);
             }
 
-            // --- 公仔本體 ---
             var solo = new THREE.Group();
             solo.scale.set(1.6, 1.6, 1.6); 
             solo.position.set(0, 0, 3); 
@@ -3445,34 +3401,26 @@
             var workDesk = new THREE.Group();
             solo.add(workDesk);
 
-            // ==========================================
-            // ★ 老闆巡視 3D 模型 ★
-            // ==========================================
             var bossGroup = new THREE.Group();
             bossGroup.visible = false; 
             bossGroup.scale.set(1.7, 1.7, 1.7); 
-            bossGroup.position.z = 1.5; // 企喺公仔後面
+            bossGroup.position.z = 1.5; 
             scene.add(bossGroup);
             
             var bossSuitMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 }); 
             
-            // 老闆身體
             var bBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 0.7), bossSuitMat);
             bBody.position.set(0, 1.1, 0); bBody.castShadow = true; bossGroup.add(bBody);
             
-            // 老闆頭
             var bHead = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), skinMat);
             bHead.position.set(0, 2.1, 0); bHead.castShadow = true; bossGroup.add(bHead);
             
-            // 老闆黑超
             var bGlasses = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 0.1), matDark);
             bGlasses.position.set(0, 2.15, 0.45); bossGroup.add(bGlasses);
             
-            // 老闆地中海禿頭
             var bHair = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.1, 8, 16), hairMat);
             bHair.rotation.x = Math.PI / 2; bHair.position.set(0, 2.35, 0); bossGroup.add(bHair);
             
-            // 老闆腳
             var bLegL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), bossSuitMat); bLegL.position.set(-0.3, 0.4, 0); bLegL.castShadow = true; bossGroup.add(bLegL);
             var bLegR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), bossSuitMat); bLegR.position.set(0.3, 0.4, 0); bLegR.castShadow = true; bossGroup.add(bLegR);
 
@@ -3631,31 +3579,23 @@
                     }
                 }
 
-                // ==========================================
-                // ★ 老闆巡視動畫 ★
-                // ==========================================
                 if (bossGroup.visible) {
                     if (bossStopTimer > 0) {
-                        // 停低盯住你
                         bossStopTimer -= 1/60;
-                        bossGroup.rotation.y = 0; // 面向正前方
-                        bLegL.rotation.x = 0; bLegR.rotation.x = 0; // 腳靜止
+                        bossGroup.rotation.y = 0; 
+                        bLegL.rotation.x = 0; bLegR.rotation.x = 0; 
                     } else {
-                        // 左右踱步
                         bossGroup.position.x += bossDir * 0.03;
                         bossGroup.rotation.y = bossDir === 1 ? Math.PI/2 : -Math.PI/2;
                         
-                        // 模擬行路
                         bLegL.rotation.x = Math.sin(time * 10) * 0.3;
                         bLegR.rotation.x = -Math.sin(time * 10) * 0.3;
                         
-                        // 行到邊緣就掉頭
                         if (bossGroup.position.x > 4) bossDir = -1;
                         if (bossGroup.position.x < -4) bossDir = 1;
                         
-                        // 隨機停低
                         if (Math.random() < 0.01) {
-                            bossStopTimer = 2 + Math.random() * 2; // 停低 2-4 秒
+                            bossStopTimer = 2 + Math.random() * 2; 
                         }
                     }
                 }
@@ -3668,9 +3608,6 @@
                 try {
                     if (typeof player === 'undefined') return;
 
-                    // ==========================================
-                    // ★ 早、午、晚光影與天空變化 ★
-                    // ==========================================
                     if (typeof timeOfDay !== 'undefined') {
                         if (timeOfDay === 0) { 
                             ambientLight.color.setHex(0xffe4b5); ambientLight.intensity = 0.6;
@@ -3719,7 +3656,6 @@
                             });
                         }
                     }
-                    // ==========================================
 
                     var isBoss = !!player.isBoss && !player.isListed;
                     solo.visible = !(player.isBoss && !player.isListed); 
@@ -3764,9 +3700,6 @@
                         sHairFemaleGroup.visible = isFemale;
                     }
 
-                    // ==========================================
-                    // ★ 老闆巡視系統 (出場/退場判斷) ★
-                    // ==========================================
                     var isWorker = (!player.isBoss && !player.isListed && player.stage === 'work');
                     
                     if (isWorker) {
@@ -3782,14 +3715,12 @@
                             bossGroup.visible = false;
                         }
                         
-                        // 將老闆狀態傳畀外部撳掣邏輯用
                         window.isBossWatching = (bossGroup.visible && bossStopTimer > 0);
                     } else {
                         bossActive = false;
                         bossGroup.visible = false;
                         window.isBossWatching = false;
                     }
-                    // ==========================================
 
                 } catch (e) {}
             }, 250);
@@ -3800,6 +3731,35 @@
             if (h) h.style.display = 'none';
         }
     })();
+    </script>
+
+    <!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        try {
+            const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            
+            // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+            let userId = localStorage.getItem('global_device_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('global_device_id', userId);
+            }
+            
+            let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+            let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+            const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+            
+            db.ref('.info/connected').on('value', (snap) => {
+                if (snap.val() === true) {
+                    userStatusRef.onDisconnect().remove();
+                    userStatusRef.set(true);
+                }
+            });
+        } catch(e) { console.error("Firebase Error:", e); }
     </script>
 </body>
 </html>
