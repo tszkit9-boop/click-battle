@@ -17,7 +17,7 @@
 
         /* 霓虹燈牌背景特效 */
         .neon-bg {
-            position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+            position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
             font-family: 'Noto Sans HK', sans-serif; font-size: 40px; font-weight: 900;
             color: #fff; text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055, 0 0 80px #ff0055;
             z-index: 0; pointer-events: none; opacity: 0.15; letter-spacing: 5px; white-space: nowrap;
@@ -44,22 +44,24 @@
         }
         .back-btn:active { transform: scale(0.95); background: #ff0055; color: #000; }
         
-        .stats { display: flex; gap: 15px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
-        .stat-box { display: flex; flex-direction: column; }
+        .stats { display: flex; gap: 10px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
+        .stat-box { display: flex; flex-direction: column; min-width: 50px; }
         .stat-label { font-size: 9px; color: #aaa; letter-spacing: 1px; }
-        .stat-val { font-size: 18px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
+        .stat-val { font-size: 16px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
         .stat-val.hp { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
+        .stat-val.score { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
+        
         .shop-btn {
             background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3; color: #00d2d3;
             padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;
-            box-shadow: 0 0 10px rgba(0,210,211,0.2);
+            box-shadow: 0 0 10px rgba(0,210,211,0.2); height: 35px; margin-left: 5px;
         }
         .shop-btn:active { background: #00d2d3; color: #000; }
 
         /* 客人區 */
         #customer-area {
             flex: 1; position: relative; display: flex; justify-content: center;
-            align-items: flex-end; padding-bottom: 20px; overflow: hidden;
+            align-items: flex-end; padding-bottom: 20px; gap: 15px; overflow: hidden;
             background: 
                 linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
                 repeating-linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), 
@@ -71,41 +73,41 @@
         /* 單個客人容器 */
         .customer-container {
             position: relative; display: flex; flex-direction: column; align-items: center;
-            transition: transform 0.3s; width: 110px;
+            transition: transform 0.3s; width: 100px;
         }
         .customer-container.angry { animation: shake 0.3s infinite; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
         /* 對話氣泡 (訂單) */
         .speech-bubble {
-            background: #fff; color: #000; border-radius: 15px; padding: 8px 12px;
-            font-weight: 900; font-size: 14px; position: relative; margin-bottom: 15px;
+            background: #fff; color: #000; border-radius: 15px; padding: 8px 10px;
+            font-weight: 900; font-size: 13px; position: relative; margin-bottom: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ddd;
-            text-align: center; min-width: 80px;
+            text-align: center; min-width: 80px; z-index: 2;
         }
         .speech-bubble::after {
             content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
             border-width: 10px 10px 0; border-style: solid; border-color: #fff transparent transparent transparent;
         }
-        .order-item { font-size: 16px; margin: 2px 0; display: block; }
+        .order-item { font-size: 14px; margin: 2px 0; display: block; color: #ff0055; }
 
         /* 客人外觀 */
         .customer-body {
-            width: 80px; height: 100px; background: #3498db; border-radius: 40px 40px 10px 10px;
+            width: 70px; height: 90px; background: #3498db; border-radius: 35px 35px 10px 10px;
             position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             border: 3px solid rgba(255,255,255,0.2);
         }
         .customer-face {
-            width: 60px; height: 60px; background: #ffccaa; border-radius: 50%;
-            position: absolute; top: -30px; left: 10px; border: 2px solid rgba(0,0,0,0.1);
+            width: 50px; height: 50px; background: #ffccaa; border-radius: 50%;
+            position: absolute; top: -25px; left: 7px; border: 2px solid rgba(0,0,0,0.1);
         }
-        .face-happy::before { content: '^ ^'; font-size: 20px; position: absolute; top: 15px; left: 10px; font-weight: bold; letter-spacing: 5px;}
-        .face-neutral::before { content: 'o o'; font-size: 20px; position: absolute; top: 15px; left: 10px; font-weight: bold; letter-spacing: 5px;}
-        .face-angry::before { content: '> <'; font-size: 20px; position: absolute; top: 15px; left: 10px; font-weight: bold; letter-spacing: 5px; color: #ff0055;}
+        .face-happy::before { content: '^ ^'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px;}
+        .face-neutral::before { content: 'o o'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px;}
+        .face-angry::before { content: '> <'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px; color: #ff0055;}
 
         /* 耐心條 */
         .patience-bar-container {
-            width: 80px; height: 8px; background: #333; border-radius: 4px; margin-top: 15px;
+            width: 70px; height: 8px; background: #333; border-radius: 4px; margin-top: 15px;
             overflow: hidden; border: 1px solid #000;
         }
         .patience-bar {
@@ -114,7 +116,7 @@
 
         /* 底部操作區 */
         #controls {
-            height: 180px; background: rgba(20, 20, 20, 0.95);
+            height: 170px; background: rgba(20, 20, 20, 0.95);
             border-top: 4px solid #ff0055; display: flex; flex-direction: column;
             padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             z-index: 20; flex-shrink: 0;
@@ -124,9 +126,10 @@
         .tray-area {
             height: 40px; display: flex; justify-content: center; align-items: center;
             background: #000; border-radius: 10px; margin-bottom: 10px; border: 1px dashed #555;
-            color: #aaa; font-size: 14px; font-weight: bold;
+            color: #aaa; font-size: 13px; font-weight: bold;
         }
-        .tray-item { font-size: 20px; margin: 0 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .tray-item { font-size: 22px; margin: 0 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         .menu-grid { display: flex; gap: 10px; flex: 1; }
         .menu-category { flex: 1; display: flex; flex-direction: column; gap: 8px; }
@@ -134,12 +137,11 @@
         
         .menu-btn {
             flex: 1; background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
-            border-radius: 12px; color: #fff; font-size: 18px; font-weight: bold;
+            border-radius: 12px; color: #fff; font-size: 16px; font-weight: bold;
             display: flex; align-items: center; justify-content: center; gap: 5px;
             box-shadow: 0 4px 0 #000; transition: 0.1s; cursor: pointer;
         }
         .menu-btn:active { transform: translateY(4px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
-        .menu-btn:disabled { opacity: 0.3; pointer-events: none; }
 
         .action-row { display: flex; gap: 10px; margin-top: 10px; height: 45px; }
         .btn-serve {
@@ -168,7 +170,7 @@
             padding: 14px 40px; background: linear-gradient(135deg, #ff0055, #ffd32a);
             color: #000; border: none; border-radius: 12px; font-family: 'Orbitron', sans-serif;
             font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b3003b;
-            margin-top: 10px;
+            margin-top: 10px; width: 100%; max-width: 300px;
         }
         .modal button:active { transform: translateY(5px); box-shadow: none; }
 
@@ -203,7 +205,7 @@
         }
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
         }
     </style>
 </head>
@@ -215,11 +217,15 @@
         <a href="../" class="back-btn">⬅ 大廳</a>
         <div class="stats">
             <div class="stat-box">
-                <span class="stat-label">營業額</span>
-                <span class="stat-val" id="money-val">0</span>
+                <span class="stat-label">錢包</span>
+                <span class="stat-val" id="wallet-val">0</span>
             </div>
             <div class="stat-box">
-                <span class="stat-label">聲譽 (HP)</span>
+                <span class="stat-label">營業額</span>
+                <span class="stat-val score" id="money-val">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">聲譽</span>
                 <span class="stat-val hp" id="hp-val">100</span>
             </div>
             <button class="shop-btn" onclick="openShop()">🏪 升級</button>
@@ -227,13 +233,11 @@
     </div>
 
     <div id="customer-area">
-        <!-- 客人動態生成於此 -->
         <div id="status-text"></div>
     </div>
 
     <div id="controls">
         <div class="tray-area" id="tray">
-            <!-- 托盤 -->
             點擊下方餐點加入托盤
         </div>
         
@@ -287,6 +291,7 @@
     </div>
 
     <script>
+        const walletVal = document.getElementById('wallet-val');
         const moneyVal = document.getElementById('money-val');
         const hpVal = document.getElementById('hp-val');
         const customerArea = document.getElementById('customer-area');
@@ -306,15 +311,14 @@
         let hp = 100;
         let gameTimer = null;
         let spawnTimer = null;
+        let statusTimer = null;
         let customers = [];
         let tray = [];
         let customerIdCounter = 0;
 
-        // 隨機名字
         const NAMES = ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'];
         const SHIRTS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
         
-        // 音效 (用 Web Audio API 生成)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             try {
@@ -329,40 +333,45 @@
 
         function startGame() {
             introModal.classList.remove('active');
+            gameoverScreen.classList.remove('active');
             state = 'playing';
             currentDayMoney = 0;
             hp = 100;
             customers = [];
             tray = [];
-            customerArea.innerHTML = '<div id="status-text"></div>';
+            customerIdCounter = 0;
+            
+            // 精準清空客人，保留 status-text
+            document.querySelectorAll('.customer-container').forEach(el => el.remove());
             updateHUD();
             updateTrayUI();
             
-            // 主循環
             if (gameTimer) clearInterval(gameTimer);
+            if (spawnTimer) clearTimeout(spawnTimer);
+
             gameTimer = setInterval(() => {
                 if (state !== 'playing') return;
                 
-                // 更新客人狀態
                 for (let i = customers.length - 1; i >= 0; i--) {
                     let c = customers[i];
-                    let decreaseRate = 0.5 + (upgrades.ac * -0.05); // 升級減慢
-                    if (decreaseRate < 0.2) decreaseRate = 0.2;
+                    let decreaseRate = 0.5 + (upgrades.ac * -0.05); 
+                    if (decreaseRate < 0.15) decreaseRate = 0.15;
                     
                     c.patience -= decreaseRate;
                     
                     if (c.patience <= 0) {
                         c.patience = 0;
-                        c.element.classList.add('angry');
-                        // 客人發脾氣走人
                         customers.splice(i, 1);
                         c.element.remove();
-                        hp -= 15;
+                        hp = Math.max(0, hp - 15);
                         playSound('fail');
                         showStatus('😡 客人等到發脾氣！扣減聲譽！', '#ff4757');
                         updateHUD();
                         
-                        if (hp <= 0) gameOver();
+                        if (hp <= 0) {
+                            gameOver();
+                            return;
+                        }
                     } else {
                         let bar = c.element.querySelector('.patience-bar');
                         if (bar) {
@@ -380,8 +389,6 @@
                 }
             }, 50);
 
-            // 生成客人定時器
-            if (spawnTimer) clearTimeout(spawnTimer);
             spawnCustomer();
         }
 
@@ -394,7 +401,6 @@
                 let name = NAMES[Math.floor(Math.random() * NAMES.length)];
                 let shirt = SHIRTS[Math.floor(Math.random() * SHIRTS.length)];
                 
-                // 隨機訂單：1杯飲品 + 1份食物 (或純飲品)
                 let orders = [];
                 let drinks = ['凍檸茶', '熱奶茶'];
                 let foods = ['西多士', '干炒牛河'];
@@ -435,7 +441,6 @@
                 });
             }
 
-            // 動態調整生成速度
             let nextSpawn = Math.max(2000, 5000 - currentDayMoney);
             spawnTimer = setTimeout(spawnCustomer, nextSpawn);
         }
@@ -469,9 +474,7 @@
                 return;
             }
 
-            // 檢查邊個客人可以匹配 (簡化邏輯：只要托盤有客人想要嘅所有野，就出餐俾佢)
             let matchedCustomerIndex = -1;
-            
             for (let i = 0; i < customers.length; i++) {
                 let c = customers[i];
                 let trayCopy = [...tray.map(t => t.name)];
@@ -481,7 +484,7 @@
                     let idx = trayCopy.indexOf(orderItem);
                     if (idx !== -1) {
                         matchCount++;
-                        trayCopy.splice(idx, 1); // 消耗
+                        trayCopy.splice(idx, 1);
                     }
                 }
                 
@@ -492,12 +495,13 @@
             }
 
             if (matchedCustomerIndex !== -1) {
-                // 完美匹配
                 let c = customers[matchedCustomerIndex];
+                // 獲取位置用於特效
+                let rect = c.element.getBoundingClientRect();
+                
                 customers.splice(matchedCustomerIndex, 1);
                 c.element.remove();
                 
-                // 計算獎金
                 let baseMoney = 50;
                 let bonus = upgrades.staff * 20;
                 let earned = baseMoney + bonus + Math.floor(c.patience);
@@ -507,16 +511,15 @@
                 
                 playSound('success');
                 showStatus(`✅ 出餐成功！賺取 $${earned}`, '#2ed573');
-                createCoinEffect(c.element.offsetLeft, c.element.offsetTop, earned);
+                createCoinEffect(rect.left + rect.width / 2, rect.top + 50, earned);
                 
-                tray = []; // 清空托盤
+                tray = [];
                 updateTrayUI();
                 updateHUD();
             } else {
-                // 匹配失敗
                 playSound('fail');
                 showStatus('❌ 錯單！客人唔係叫呢啲！', '#ff4757');
-                hp -= 5;
+                hp = Math.max(0, hp - 5);
                 updateHUD();
                 if (hp <= 0) gameOver();
             }
@@ -526,24 +529,28 @@
             let coin = document.createElement('div');
             coin.className = 'coin-anim';
             coin.innerText = '+$' + amount;
-            coin.style.left = (x + 20) + 'px';
-            coin.style.top = (y + 50) + 'px';
+            coin.style.left = x + 'px';
+            coin.style.top = y + 'px';
             document.body.appendChild(coin);
             setTimeout(() => coin.remove(), 1000);
         }
 
         function updateHUD() {
-            moneyVal.innerText = currentDayMoney;
+            walletVal.innerText = '$' + totalMoney;
+            moneyVal.innerText = '$' + currentDayMoney;
             hpVal.innerText = hp;
             hpVal.style.color = hp < 30 ? '#ff4757' : '#ffd32a';
         }
 
         function showStatus(text, color) {
+            if (statusTimer) clearTimeout(statusTimer);
             statusText.innerText = text;
             statusText.style.color = color;
             statusText.style.textShadow = `0 0 20px ${color}`;
             statusText.classList.add('show');
-            setTimeout(() => statusText.classList.remove('show'), 1500);
+            statusTimer = setTimeout(() => {
+                statusText.classList.remove('show');
+            }, 1500);
         }
 
         function gameOver() {
@@ -579,13 +586,16 @@
         }
 
         function openShop() {
-            if (state === 'playing') return;
+            if (state === 'gameover' || state === 'menu') return;
+            // 暫停遊戲
+            if (state === 'playing') state = 'paused';
             shopModal.classList.add('active');
             updateShopUI();
         }
 
         function closeShop() {
             shopModal.classList.remove('active');
+            if (state === 'paused') state = 'playing';
         }
 
         function updateShopUI() {
@@ -605,6 +615,7 @@
                 localStorage.setItem('chaChaanTeng_money', totalMoney);
                 localStorage.setItem('chaChaanTeng_upgrades', JSON.stringify(upgrades));
                 playSound('success');
+                updateHUD();
                 updateShopUI();
             }
         }
