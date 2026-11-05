@@ -883,5 +883,34 @@
         // 唔好一開始就彈商店，等玩家睇完簡介先
     }
 </script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
+</script>
 </body>
 </html>
