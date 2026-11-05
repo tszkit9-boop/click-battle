@@ -27,32 +27,33 @@
             20%, 24%, 55% { opacity: 0.05; text-shadow: none; }
         }
 
+        /* 👇 HUD 文字放大 👇 */
         #hud {
-            height: 60px; background: rgba(15, 15, 15, 0.9);
+            height: 65px; background: rgba(15, 15, 15, 0.9);
             border-bottom: 2px solid #ff0055; display: flex; align-items: center;
             justify-content: space-between; padding: 0 15px; z-index: 10;
             box-shadow: 0 4px 20px rgba(255, 0, 85, 0.3); flex-shrink: 0;
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
         .back-btn {
-            padding: 6px 12px; background: rgba(255, 0, 85, 0.1); color: #ff0055;
+            padding: 8px 14px; background: rgba(255, 0, 85, 0.1); color: #ff0055;
             border: 1px solid #ff0055; border-radius: 8px; text-decoration: none;
-            font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 12px;
+            font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 14px;
             transition: 0.2s; box-shadow: 0 0 10px rgba(255,0,85,0.2);
         }
         .back-btn:active { transform: scale(0.95); background: #ff0055; color: #000; }
         
-        .stats { display: flex; gap: 10px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
-        .stat-box { display: flex; flex-direction: column; min-width: 50px; }
-        .stat-label { font-size: 9px; color: #aaa; letter-spacing: 1px; }
-        .stat-val { font-size: 16px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
+        .stats { display: flex; gap: 12px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
+        .stat-box { display: flex; flex-direction: column; min-width: 55px; }
+        .stat-label { font-size: 11px; color: #aaa; letter-spacing: 1px; }
+        .stat-val { font-size: 20px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
         .stat-val.hp { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
         .stat-val.score { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
         
         .shop-btn {
             background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3; color: #00d2d3;
-            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;
-            box-shadow: 0 0 10px rgba(0,210,211,0.2); height: 35px; margin-left: 5px;
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;
+            box-shadow: 0 0 10px rgba(0,210,211,0.2); height: 38px; margin-left: 5px;
         }
         .shop-btn:active { background: #00d2d3; color: #000; }
 
@@ -69,48 +70,49 @@
 
         .customer-container {
             position: relative; display: flex; flex-direction: column; align-items: center;
-            transition: transform 0.3s; width: 100px;
+            transition: transform 0.3s; width: 110px;
         }
         .customer-container.angry { animation: shake 0.3s infinite; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
+        /* 👇 對話氣泡文字放大 👇 */
         .speech-bubble {
-            background: #fff; color: #000; border-radius: 15px; padding: 8px 10px;
-            font-weight: 900; font-size: 12px; position: relative; margin-bottom: 15px;
+            background: #fff; color: #000; border-radius: 15px; padding: 10px 12px;
+            font-weight: 900; font-size: 15px; position: relative; margin-bottom: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ddd;
-            text-align: center; min-width: 80px; max-width: 110px; z-index: 2;
+            text-align: center; min-width: 90px; max-width: 130px; z-index: 2;
             word-wrap: break-word;
         }
         .speech-bubble::after {
             content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
             border-width: 10px 10px 0; border-style: solid; border-color: #fff transparent transparent transparent;
         }
-        .order-item { font-size: 13px; margin: 2px 0; display: block; color: #ff0055; line-height: 1.2;}
+        .order-item { font-size: 15px; margin: 3px 0; display: block; color: #ff0055; line-height: 1.2;}
 
         .customer-body {
-            width: 70px; height: 90px; background: #3498db; border-radius: 35px 35px 10px 10px;
+            width: 75px; height: 95px; background: #3498db; border-radius: 35px 35px 10px 10px;
             position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             border: 3px solid rgba(255,255,255,0.2);
         }
         .customer-face {
-            width: 50px; height: 50px; background: #ffccaa; border-radius: 50%;
-            position: absolute; top: -25px; left: 7px; border: 2px solid rgba(0,0,0,0.1);
+            width: 55px; height: 55px; background: #ffccaa; border-radius: 50%;
+            position: absolute; top: -28px; left: 7px; border: 2px solid rgba(0,0,0,0.1);
         }
-        .face-happy::before { content: '^ ^'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px;}
-        .face-neutral::before { content: 'o o'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px;}
-        .face-angry::before { content: '> <'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px; color: #ff0055;}
+        .face-happy::before { content: '^ ^'; font-size: 20px; position: absolute; top: 14px; left: 7px; font-weight: bold; letter-spacing: 4px;}
+        .face-neutral::before { content: 'o o'; font-size: 20px; position: absolute; top: 14px; left: 7px; font-weight: bold; letter-spacing: 4px;}
+        .face-angry::before { content: '> <'; font-size: 20px; position: absolute; top: 14px; left: 7px; font-weight: bold; letter-spacing: 4px; color: #ff0055;}
 
         .patience-bar-container {
-            width: 70px; height: 8px; background: #333; border-radius: 4px; margin-top: 15px;
+            width: 75px; height: 10px; background: #333; border-radius: 5px; margin-top: 15px;
             overflow: hidden; border: 1px solid #000;
         }
         .patience-bar {
             height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear, background 0.3s;
         }
 
-        /* 👇 底部控制區優化 👇 */
+        /* 👇 底部控制區 👇 */
         #controls {
-            height: auto; max-height: 50vh; background: rgba(20, 20, 20, 0.95);
+            height: auto; max-height: 52vh; background: rgba(20, 20, 20, 0.95);
             border-top: 4px solid #ff0055; display: flex; flex-direction: column;
             padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             z-index: 20; flex-shrink: 0;
@@ -119,51 +121,52 @@
         }
         
         .tray-area {
-            min-height: 36px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+            min-height: 40px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
             background: #000; border-radius: 10px; margin-bottom: 10px; border: 1px dashed #555;
-            color: #aaa; font-size: 13px; font-weight: bold; padding: 5px; gap: 5px;
+            color: #aaa; font-size: 15px; font-weight: bold; padding: 6px; gap: 6px;
             flex-shrink: 0;
         }
-        .tray-item { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
+        .tray-item { font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
         @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         /* 👇 菜單滾動區 👇 */
         .menu-scroll-area {
-            flex: 1; overflow-y: auto; margin-bottom: 8px; padding-right: 2px;
+            flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;
             scrollbar-width: thin; scrollbar-color: #ff0055 #333;
         }
         .menu-scroll-area::-webkit-scrollbar { width: 4px; }
         .menu-scroll-area::-webkit-scrollbar-thumb { background: #ff0055; border-radius: 4px; }
 
-        .menu-section { margin-bottom: 10px; }
-        .category-title { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 5px; text-align: left; padding-left: 5px; }
+        .menu-section { margin-bottom: 12px; }
+        .category-title { font-size: 14px; color: #888; font-weight: bold; margin-bottom: 6px; text-align: left; padding-left: 5px; }
         
-        /* 自適應網格：每行自動塞 4-5 個 */
+        /* 網格稍微改大，容納大字 */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
-            gap: 6px;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 8px;
         }
         
+        /* 👇 按鈕文字放大 👇 */
         .menu-btn {
             background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
-            border-radius: 8px; color: #fff; font-size: 11px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; gap: 2px;
+            border-radius: 10px; color: #fff; font-size: 14px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 3px;
             box-shadow: 0 3px 0 #000; transition: 0.1s; cursor: pointer;
-            padding: 8px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding: 10px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .menu-btn:active { transform: translateY(3px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
 
-        .action-row { display: flex; gap: 10px; height: 45px; flex-shrink: 0; }
+        .action-row { display: flex; gap: 10px; height: 50px; flex-shrink: 0; }
         .btn-serve {
             flex: 2; background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff;
-            border: none; border-radius: 10px; font-size: 18px; font-weight: 900;
+            border: none; border-radius: 10px; font-size: 20px; font-weight: 900;
             box-shadow: 0 5px 0 #145a32; cursor: pointer; transition: 0.1s;
         }
         .btn-serve:active { transform: translateY(5px); box-shadow: none; }
         .btn-clear {
             flex: 1; background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff;
-            border: none; border-radius: 10px; font-size: 16px; font-weight: 900;
+            border: none; border-radius: 10px; font-size: 18px; font-weight: 900;
             box-shadow: 0 5px 0 #7b241c; cursor: pointer; transition: 0.1s;
         }
         .btn-clear:active { transform: translateY(5px); box-shadow: none; }
@@ -174,12 +177,12 @@
             z-index: 30; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 20px; text-align: center;
         }
         .modal.active { display: flex; }
-        .modal h2 { color: #ff0055; font-size: 28px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff0055; margin-bottom: 15px; }
-        .modal p { font-size: 14px; color: #ccc; line-height: 1.6; margin-bottom: 20px; }
+        .modal h2 { color: #ff0055; font-size: 32px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff0055; margin-bottom: 15px; }
+        .modal p { font-size: 16px; color: #ccc; line-height: 1.6; margin-bottom: 20px; }
         .modal button {
-            padding: 14px 40px; background: linear-gradient(135deg, #ff0055, #ffd32a);
+            padding: 16px 40px; background: linear-gradient(135deg, #ff0055, #ffd32a);
             color: #000; border: none; border-radius: 12px; font-family: 'Orbitron', sans-serif;
-            font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b3003b;
+            font-size: 20px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b3003b;
             margin-top: 10px; width: 100%; max-width: 300px;
         }
         .modal button:active { transform: translateY(5px); box-shadow: none; }
@@ -187,26 +190,26 @@
         .shop-item {
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(255,255,255,0.05); border: 1px solid #444;
-            padding: 12px 15px; border-radius: 12px; margin-bottom: 12px; width: 100%; max-width: 350px;
+            padding: 15px; border-radius: 12px; margin-bottom: 12px; width: 100%; max-width: 350px;
         }
-        .shop-info b { display: block; font-size: 14px; color: #fff; text-align: left; }
-        .shop-info small { font-size: 11px; color: #aaa; display: block; text-align: left;}
+        .shop-info b { display: block; font-size: 16px; color: #fff; text-align: left; }
+        .shop-info small { font-size: 13px; color: #aaa; display: block; text-align: left; margin-top: 4px;}
         .buy-btn {
-            padding: 8px 15px; background: linear-gradient(180deg, #2ed573, #27ae60); color: #000; 
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 0; font-size: 13px;
+            padding: 10px 18px; background: linear-gradient(180deg, #2ed573, #27ae60); color: #000; 
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 0; font-size: 16px;
             box-shadow: 0 3px 0 #145a32; white-space: nowrap;
         }
         .buy-btn:disabled { background: #333; color: #666; box-shadow: none; cursor: not-allowed; }
 
         #status-text {
             position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff0055;
+            font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff0055;
             pointer-events: none; opacity: 0; transition: 0.3s; z-index: 25; text-align: center; width: 90%;
         }
         #status-text.show { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
         
         .coin-anim {
-            position: absolute; font-size: 20px; font-weight: 900; color: #ffd32a;
+            position: absolute; font-size: 24px; font-weight: 900; color: #ffd32a;
             text-shadow: 0 0 10px #ffd32a; pointer-events: none; z-index: 25;
             animation: floatUp 1s forwards;
         }
@@ -313,8 +316,8 @@
 
     <div id="gameover" class="modal">
         <h2>執笠啦！</h2>
-        <p>單日最高營業額：<span id="final-score" style="color:#ffd32a; font-weight:bold; font-size:24px;">0</span></p>
-        <p style="font-size:12px; margin-top:5px;">歷史最高：<span id="best-score" style="color:#00d2d3;">0</span></p>
+        <p>單日最高營業額：<span id="final-score" style="color:#ffd32a; font-weight:bold; font-size:28px;">0</span></p>
+        <p style="font-size:14px; margin-top:5px;">歷史最高：<span id="best-score" style="color:#00d2d3;">0</span></p>
         <button onclick="retryCurrentLevel()">🔄 重試本日</button>
         <button onclick="backToLobby()" style="background:#444; color:#fff; box-shadow:0 4px 0 #111; margin-top:10px;">🏠 返回大廳</button>
     </div>
@@ -344,7 +347,6 @@
         let tray = [];
         let customerIdCounter = 0;
 
-        // 更新菜單陣列 (對應上方 HTML)
         const DRINKS = ['凍檸茶', '熱奶茶', '凍鴛鴦', '紅豆冰', '檸檬水', '凍咖啡', '阿華田', '好立克', '凍檸蜜', '利賓納'];
         const FOODS = ['西多士', '干炒牛河', '菠蘿油', '酥皮蛋撻', '沙嗲牛麵', '焗豬扒飯', '揚州炒飯', '餐蛋麵', '叉燒飯', '菠蘿包', '奶油豬', '蛋治'];
 
