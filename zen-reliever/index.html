@@ -537,21 +537,21 @@
             cracks = cracks.filter(c => c.life > 0);
         }
 
-        // 4. 切切樂 (已調高高空)
+        // 4. 切切樂
         if (mode === 'slice') {
             if (Date.now() - lastFruitTime > 800 && fruits.filter(f => !f.isSliced).length < 5) {
                 lastFruitTime = Date.now();
                 const type = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
                 fruits.push({
                     x: Math.random() * W * 0.6 + W * 0.2, y: H + 50,
-                    vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 8 - 22, // 加大向上速度
+                    vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 8 - 22,
                     radius: Math.random() * 15 + 30, color: type.color, inner: type.inner,
                     isSliced: false, rot: Math.random() * Math.PI
                 });
             }
             fruits.forEach(f => {
                 if (!f.isSliced) {
-                    f.x += f.vx; f.y += f.vy; f.vy += 0.25; f.rot += 0.05; // 減弱重力
+                    f.x += f.vx; f.y += f.vy; f.vy += 0.25; f.rot += 0.05;
                     ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.rot);
                     ctx.beginPath(); ctx.arc(0, 0, f.radius, 0, Math.PI*2);
                     ctx.fillStyle = f.color; ctx.fill();
@@ -747,6 +747,35 @@
     resize();
     initBubbles();
     draw();
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
 </script>
 </body>
 </html>
