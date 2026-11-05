@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🍳 茶記大亨：樓面生存戰</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
+    
+    :root {
+        --bg-dark: #0a0a14;
+        --neon-blue: #00d2d3;
+        --neon-pink: #ff0055;
+        --neon-gold: #ffd32a;
+        --text-light: #fff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    
+    body {
+        background: var(--bg-dark); color: var(--text-light); font-family: 'Noto Sans HK', sans-serif;
+        height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+        background: radial-gradient(circle at center, #1a1a2e 0%, #050510 100%);
+    }
+
+    /* 👇 返回大廳按鈕 👇 */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 99999;
+        padding: 8px 16px; background: rgba(10,10,20,0.85); color: var(--neon-blue);
+        border: 2px solid var(--neon-blue); border-radius: 8px; text-decoration: none;
+        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(0,210,211,0.5); transition: 0.2s;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .back-btn:active { transform: scale(0.95); background: var(--neon-blue); color: #000; }
+
+    /* 頂部 HUD */
+    #hud {
+        height: 60px; background: rgba(15,15,15,0.95); border-bottom: 2px solid var(--neon-gold);
+        display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
+        z-index: 10; flex-shrink: 0; box-shadow: 0 4px 20px rgba(255,211,42,0.2);
+    }
+    .stat-group { display: flex; gap: 15px; }
+    .stat-box { display: flex; flex-direction: column; text-align: center; }
+    .stat-label { font-size: 10px; color: #aaa; letter-spacing: 1px; }
+    .stat-val { font-size: 18px; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); font-family: 'Orbitron', sans-serif; }
+    
+    .upgrade-btn {
+        padding: 8px 15px; background: linear-gradient(180deg, #2ed573, #27ae60); border: none;
+        border-radius: 8px; color: #fff; font-weight: 900; cursor: pointer;
+        box-shadow: 0 4px 0 #145a32; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif;
+    }
+    .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
+
+    /* 遊戲主畫面區 */
+    #game-area {
+        flex: 1; position: relative; overflow: hidden;
+        display: flex; flex-direction: column; justify-content: flex-end;
+        background: 
+            linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+            repeating-linear-gradient(45deg, #111 25%, transparent 25%, transparent 75%, #111 75%, #111), 
+            repeating-linear-gradient(45deg, #111 25%, #1a1a1a 25%, #1a1a1a 75%, #111 75%, #111);
+        background-position: 0 0, 0 0, 10px 10px;
+        background-size: auto, 20px 20px, 20px 20px;
+    }
+
+    /* 廚房窗口 */
+    #kitchen {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 200px; height: 80px; background: linear-gradient(to bottom, #222, #0a0a0a);
+        border: 3px solid #555; border-top: none; border-radius: 0 0 15px 15px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.8);
+        z-index: 5; transition: 0.3s;
+    }
+    #kitchen.active { border-color: var(--neon-blue); box-shadow: 0 0 30px rgba(0,210,211,0.4); }
+    .kitchen-label { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 5px; }
+    #kitchen-orders { display: flex; gap: 5px; }
+    .k-order { font-size: 24px; animation: popIn 0.3s; filter: drop-shadow(0 0 5px #fff); }
+    
+    /* 客人區 */
+    #customers-row {
+        position: absolute; bottom: 100px; width: 100%; display: flex;
+        justify-content: space-around; align-items: flex-end; padding: 0 10px;
+    }
+
+    .customer {
+        display: flex; flex-direction: column; align-items: center;
+        transition: all 0.3s; width: 70px; position: relative;
+    }
+    .customer.angry { animation: shake 0.2s infinite; }
+
+    /* 對話氣泡 */
+    .bubble {
+        background: #fff; color: #000; border-radius: 12px; padding: 6px;
+        font-weight: 900; font-size: 20px; position: relative; margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ccc;
+        min-width: 40px; text-align: center; opacity: 0; transform: translateY(10px);
+        transition: 0.3s;
+    }
+    .bubble.show { opacity: 1; transform: translateY(0); }
+    .bubble::after {
+        content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+        border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent;
+    }
+
+    /* 客人本體 */
+    .char-body {
+        width: 50px; height: 70px; border-radius: 25px 25px 10px 10px;
+        box-shadow: inset -10px -10px 20px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.5);
+        position: relative; border: 2px solid rgba(255,255,255,0.2);
+        transition: 0.3s;
+    }
+    .char-face {
+        width: 40px; height: 40px; background: #f5cba7; border-radius: 50%;
+        position: absolute; top: -20px; left: 3px; border: 2px solid rgba(0,0,0,0.1);
+        display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;
+    }
+
+    /* 耐性條 */
+    .patience-bg {
+        width: 50px; height: 6px; background: #333; border-radius: 3px; margin-top: 10px;
+        overflow: hidden; border: 1px solid #000; box-shadow: inset 0 0 5px #000;
+    }
+    .patience-fill { height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear; }
+
+    /* 樓面公仔 */
+    #player {
+        position: absolute; bottom: 20px; z-index: 10; transition: transform 0.1s;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    #player-body {
+        width: 60px; height: 90px; background: linear-gradient(180deg, #f1c40f, #d4ac0d);
+        border-radius: 30px 30px 10px 10px; box-shadow: inset -15px -15px 20px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.8);
+        position: relative; border: 3px solid #000;
+    }
+    #player-face {
+        width: 50px; height: 50px; background: #ffccaa; border-radius: 50%;
+        position: absolute; top: -25px; left: 2px; border: 3px solid #000;
+        display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900;
+    }
+    #player-carry {
+        position: absolute; top: -60px; font-size: 30px; filter: drop-shadow(0 0 10px #fff);
+        opacity: 0; transition: 0.2s;
+    }
+    #player-carry.show { opacity: 1; transform: translateY(-5px); }
+
+    /* 底部控制區 */
+    #controls {
+        height: 80px; background: rgba(15,15,15,0.95); border-top: 2px solid #333;
+        display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+        z-index: 20; flex-shrink: 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+    }
+    .move-btn {
+        width: 65px; height: 65px; border-radius: 50%; background: rgba(255,255,255,0.05);
+        border: 2px solid #555; color: #fff; font-size: 28px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; box-shadow: 0 5px 0 #000, inset 0 0 15px rgba(255,255,255,0.1);
+        transition: 0.1s;
+    }
+    .move-btn:active { transform: translateY(5px); box-shadow: none; background: rgba(255,255,255,0.2); }
+
+    /* 互動彈框 (極致美觀) */
+    #interaction-panel {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+        background: rgba(15, 15, 25, 0.95); border: 3px solid var(--neon-gold);
+        border-radius: 15px; padding: 20px; z-index: 50; text-align: center;
+        box-shadow: 0 0 40px rgba(255,211,42,0.4); backdrop-filter: blur(10px);
+        opacity: 0; pointer-events: none; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        width: 80%; max-width: 300px;
+    }
+    #interaction-panel.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+    .panel-title { color: var(--neon-gold); font-size: 20px; font-weight: 900; margin-bottom: 10px; }
+    .panel-desc { font-size: 14px; color: #ddd; margin-bottom: 15px; line-height: 1.5; }
+    .action-btn {
+        width: 100%; padding: 12px; border: none; border-radius: 8px;
+        font-size: 16px; font-weight: 900; cursor: pointer; margin-bottom: 8px;
+        font-family: 'Noto Sans HK', sans-serif; transition: 0.1s;
+    }
+    .btn-green { background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff; box-shadow: 0 4px 0 #145a32; }
+    .btn-blue { background: linear-gradient(180deg, #00d2d3, #008b8b); color: #fff; box-shadow: 0 4px 0 #004d4d; }
+    .action-btn:active { transform: translateY(4px); box-shadow: none; }
+
+    /* 升級商店 (Modal) */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
+    .modal.active { display: flex; }
+    .modal-box {
+        background: linear-gradient(135deg, #1e1e2f, #0a0a10); border: 3px solid var(--neon-blue);
+        border-radius: 20px; padding: 25px; width: 100%; max-width: 350px; box-shadow: 0 0 50px rgba(0,210,211,0.3);
+        text-align: center;
+    }
+    .modal-box h2 { color: var(--neon-blue); font-size: 24px; margin-bottom: 20px; text-shadow: 0 0 10px var(--neon-blue); }
+    .shop-item { background: rgba(255,255,255,0.05); border: 1px solid #444; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .shop-info { text-align: left; }
+    .shop-info b { display: block; font-size: 15px; color: #fff; margin-bottom: 4px; }
+    .shop-info small { font-size: 12px; color: #aaa; }
+    .buy-btn { padding: 8px 15px; background: var(--neon-gold); color: #000; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.1s; }
+    .buy-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+    @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <!-- 頂部 HUD -->
+    <div id="hud">
+        <div class="stat-group">
+            <div class="stat-box"><span class="stat-label">營業額</span><span class="stat-val" id="ui-money">$0</span></div>
+            <div class="stat-box"><span class="stat-label">聲譽</span><span class="stat-val" id="ui-reputation">100</span></div>
+        </div>
+        <button class="upgrade-btn" onclick="openShop()">🏪 餐廳升級</button>
+    </div>
+
+    <!-- 遊戲區 -->
+    <div id="game-area">
+        <!-- 廚房 -->
+        <div id="kitchen" onclick="interactKitchen()">
+            <div class="kitchen-label">🍳 廚房出餐區</div>
+            <div id="kitchen-orders"></div>
+        </div>
+
+        <!-- 客人列 -->
+        <div id="customers-row"></div>
+
+        <!-- 樓面公仔 -->
+        <div id="player" style="left: 20px;">
+            <div id="player-carry"></div>
+            <div id="player-face">👨‍🍳</div>
+            <div id="player-body"></div>
+        </div>
+    </div>
+
+    <!-- 底部控制 -->
+    <div id="controls">
+        <button class="move-btn" onpointerdown="startMove(-1)" onpointerup="stopMove()" onpointerleave="stopMove()">◀</button>
+        <div style="color:#555; font-size:12px; font-weight:bold;">向左行 | 向右行</div>
+        <button class="move-btn" onpointerdown="startMove(1)" onpointerup="stopMove()" onpointerleave="stopMove()">▶</button>
+    </div>
+
+    <!-- 互動彈框 -->
+    <div id="interaction-panel">
+        <div class="panel-title" id="panel-title">客人落單</div>
+        <div class="panel-desc" id="panel-desc">佢想要：🍹凍檸茶</div>
+        <button class="action-btn btn-green" id="panel-btn">接單</button>
+        <button class="action-btn btn-blue" onclick="hidePanel()">取消</button>
+    </div>
+
+    <!-- 升級商店 -->
+    <div id="shop-modal" class="modal">
+        <div class="modal-box">
+            <h2>🏪 餐廳升級</h2>
+            <div class="shop-item">
+                <div class="shop-info"><b>🪑 增加座位</b><small>容量上限 +1 (目前 <span id="lvl-seat">2</span>)</small></div>
+                <button class="buy-btn" id="buy-seat" onclick="buyUpgrade('seat')">$500</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info"><b>❄️ 強力冷氣</b><small>客人耐性消耗減慢 (Lv.<span id="lvl-ac">1</span>)</small></div>
+                <button class="buy-btn" id="buy-ac" onclick="buyUpgrade('ac')">$800</button>
+            </div>
+            <button class="action-btn btn-blue" style="margin-top:15px;" onclick="closeShop()">關閉</button>
+        </div>
+    </div>
+
+    <!-- 開始/結束 彈窗 -->
+    <div id="gameover-modal" class="modal">
+        <div class="modal-box" style="border-color: var(--neon-pink);">
+            <h2 style="color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink);">💀 執笠啦！</h2>
+            <p style="color:#ccc; margin-bottom:20px;" id="gameover-desc">單日營業額：$0</p>
+            <button class="action-btn btn-green" onclick="startGame()">🔄 重新開檔</button>
+            <button class="action-btn btn-blue" onclick="location.href='../'">🏠 返回大廳</button>
+        </div>
+    </div>
+
+<script>
+    window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
+
+    // UI 綁定
+    const uiMoney = document.getElementById('ui-money');
+    const uiReputation = document.getElementById('ui-reputation');
+    const customersRow = document.getElementById('customers-row');
+    const playerEl = document.getElementById('player');
+    const playerCarry = document.getElementById('player-carry');
+    const kitchenEl = document.getElementById('kitchen');
+    const kitchenOrdersEl = document.getElementById('kitchen-orders');
+    const interactionPanel = document.getElementById('interaction-panel');
+    const panelTitle = document.getElementById('panel-title');
+    const panelDesc = document.getElementById('panel-desc');
+    const panelBtn = document.getElementById('panel-btn');
+    const gameArea = document.getElementById('game-area');
+
+    // 遊戲狀態
+    let state = 'menu';
+    let money = 0;
+    let reputation = 100;
+    let maxSeats = 2;
+    let acLevel = 1;
+    let customerId = 0;
+    
+    // 玩家
+    let player = { x: 20, speed: 6, isMoving: 0, carrying: null, width: 60 };
+    
+    // 實體列表
+    let customers = [];
+    let kitchenQueue = []; // 廚房正在煮的
+    let readyToServe = []; // 廚房煮好等待上菜的
+
+    // 食物定義
+    const FOOD_ITEMS = [
+        { name: '凍檸茶', emoji: '🍹', price: 50, cookTime: 3000 },
+        { name: '熱奶茶', emoji: '☕', price: 60, cookTime: 3500 },
+        { name: '西多士', emoji: '🍞', price: 80, cookTime: 5000 },
+        { name: '乾炒牛河', emoji: '🍜', price: 120, cookTime: 6000 }
+    ];
+
+    const NAMES = ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'];
+    const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
+
+    // 音效系統
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'click') { osc.type = 'square'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+            else if (type === 'fail') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'ding') { osc.type = 'triangle'; osc.frequency.setValueAtTime(1500, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); osc.start(); osc.stop(audioCtx.currentTime + 0.5); }
+        } catch(e) {}
+    }
+
+    // 移動控制
+    function startMove(dir) { player.isMoving = dir; }
+    function stopMove() { player.isMoving = 0; }
+
+    // 遊戲主循環 (移動與碰撞)
+    function updateLoop() {
+        if (state !== 'playing') return;
+
+        // 移動
+        if (player.isMoving !== 0) {
+            player.x += player.isMoving * player.speed;
+            // 邊界限制
+            let maxX = gameArea.clientWidth - player.width - 20;
+            if (player.x < 20) player.x = 20;
+            if (player.x > maxX) player.x = maxX;
+            
+            // 轉向
+            if (player.isMoving > 0) playerEl.style.transform = `translateX(${player.x}px) scaleX(1)`;
+            else playerEl.style.transform = `translateX(${player.x}px) scaleX(-1)`;
+        }
+
+        // 更新客人耐性
+        let allDead = true;
+        customers.forEach(c => {
+            if (c.state === 'waiting' || c.state === 'served' || c.state === 'angry') {
+                allDead = false;
+                if (c.state === 'waiting') {
+                    c.patience -= (0.2 / acLevel);
+                    if (c.patience <= 0) {
+                        c.patience = 0;
+                        c.state = 'angry';
+                        c.el.classList.add('angry');
+                        c.el.querySelector('.char-face').innerText = '> <';
+                        c.el.querySelector('.char-face').style.color = '#ff0055';
+                        reputation = Math.max(0, reputation - 10);
+                        uiReputation.innerText = reputation;
+                        playSound('fail');
+                        if (reputation <= 0) gameOver();
+                    }
+                    c.el.querySelector('.patience-fill').style.width = `${c.patience}%`;
+                }
+            }
+        });
+
+        // 檢查玩家位置與廚房
+        if (player.x > gameArea.clientWidth/2 - 100 && player.x < gameArea.clientWidth/2 + 100) {
+            kitchenEl.classList.add('active');
+        } else {
+            kitchenEl.classList.remove('active');
+        }
+
+        // 檢查靠近客人
+        let nearC = null;
+        customers.forEach(c => {
+            let cLeft = c.el.offsetLeft;
+            let cRight = cLeft + 70;
+            if (player.x + player.width > cLeft - 30 && player.x < cRight + 30) {
+                nearC = c;
+            }
+        });
+
+        if (nearC && !interactionPanel.classList.contains('show') && player.carrying === null) {
+            showInteraction(nearC);
+        } else if (!nearC && interactionPanel.classList.contains('show') && panelTitle.innerText !== '廚房出餐') {
+            // 如果走開了，隱藏面板 (廚房除外)
+            if (panelTitle.innerText === '客人落單') hidePanel();
+        }
+
+        requestAnimationFrame(updateLoop);
+    }
+
+    // 生成客人
+    function spawnCustomer() {
+        if (state !== 'playing' || customers.length >= maxSeats) return;
+
+        let food = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+        let name = NAMES[Math.floor(Math.random() * NAMES.length)];
+        let color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        let id = customerId++;
+
+        let el = document.createElement('div');
+        el.className = 'customer';
+        el.innerHTML = `
+            <div class="bubble">${food.emoji}</div>
+            <div class="char-face" style="color: #000;">^ ^</div>
+            <div class="char-body" style="background: ${color};"><div class="char-face" style="top:-20px; left:3px; background:#f5cba7; border:2px solid #000;"></div></div>
+            <div class="patience-bg"><div class="patience-fill"></div></div>
+        `;
+        
+        // 修正雙重 face 問題 (純 CSS 做法)
+        el.innerHTML = `
+            <div class="bubble">${food.emoji}</div>
+            <div class="char-body" style="background: ${color};">
+                <div class="char-face">^ ^</div>
+            </div>
+            <div class="patience-bg"><div class="patience-fill"></div></div>
+        `;
+
+        customersRow.appendChild(el);
+
+        let c = {
+            id: id,
+            name: name,
+            food: food,
+            patience: 100,
+            state: 'waiting', // waiting, ordered, served, eating, leaving, angry
+            el: el,
+            bubbleEl: el.querySelector('.bubble'),
+            faceEl: el.querySelector('.char-face'),
+            pFill: el.querySelector('.patience-fill')
+        };
+
+        customers.push(c);
+        
+        // 出現動畫
+        setTimeout(() => c.bubbleEl.classList.add('show'), 100);
+    }
+
+    // 顯示互動面板
+    let currentNearCustomer = null;
+    function showInteraction(c) {
+        currentNearCustomer = c;
+        interactionPanel.classList.add('show');
+
+        if (c.state === 'waiting') {
+            panelTitle.innerText = '客人落單';
+            panelDesc.innerHTML = `客人：${c.name}<br>想點：${c.food.emoji} ${c.food.name}`;
+            panelBtn.innerText = '接單 (送到廚房)';
+            panelBtn.onclick = () => takeOrder(c);
+        } else if (c.state === 'ordered' && player.carrying) {
+            panelTitle.innerText = '上菜';
+            panelDesc.innerHTML = `你手上拿著：${player.carrying.emoji} ${player.carrying.name}`;
+            panelBtn.innerText = '上菜';
+            panelBtn.onclick = () => serveFood(c);
+        } else if (c.state === 'served' || c.state === 'eating') {
+            panelTitle.innerText = '結賬';
+            panelDesc.innerText = '客人食緊嘢...';
+            panelBtn.innerText = '等佢食完先';
+            panelBtn.onclick = hidePanel;
+        } else if (c.state === 'angry') {
+            panelTitle.innerText = '客人生氣了';
+            panelDesc.innerText = '佢已經發脾氣走咗！';
+            panelBtn.innerText = '清理座位';
+            panelBtn.onclick = () => clearCustomer(c);
+        }
+    }
+
+    function hidePanel() {
+        interactionPanel.classList.remove('show');
+        currentNearCustomer = null;
+    }
+
+    // 接單
+    function takeOrder(c) {
+        playSound('click');
+        c.state = 'ordered';
+        c.bubbleEl.innerText = '⏳';
+        hidePanel();
+        
+        // 送到廚房
+        kitchenQueue.push({
+            customer: c,
+            food: c.food,
+            timer: setTimeout(() => {
+                // 煮好
+                let idx = kitchenQueue.findIndex(k => k.customer === c);
+                if (idx !== -1) {
+                    kitchenQueue.splice(idx, 1);
+                    readyToServe.push(c.food);
+                    renderKitchen();
+                    playSound('ding');
+                }
+            }, c.food.cookTime)
+        });
+        
+        // 客人氣泡更新
+        c.bubbleEl.classList.remove('show');
+        setTimeout(() => {
+            c.bubbleEl.innerText = '🍽️';
+            c.bubbleEl.classList.add('show');
+        }, 500);
+    }
+
+    // 渲染廚房
+    function renderKitchen() {
+        kitchenOrdersEl.innerHTML = '';
+        
+        // 煮緊嘅嘢
+        kitchenQueue.forEach(k => {
+            let span = document.createElement('span');
+            span.className = 'k-order';
+            span.innerText = '⏳';
+            span.style.opacity = '0.5';
+            kitchenOrdersEl.appendChild(span);
+        });
+
+        // 煮好嘅嘢
+        readyToServe.forEach((food, index) => {
+            let span = document.createElement('span');
+            span.className = 'k-order';
+            span.innerText = food.emoji;
+            span.style.cursor = 'pointer';
+            span.onclick = () => {
+                if (player.carrying) return alert('你已經拎住嘢食啦！');
+                player.carrying = food;
+                readyToServe.splice(index, 1);
+                playerCarry.innerText = food.emoji;
+                playerCarry.classList.add('show');
+                renderKitchen();
+                playSound('click');
+                hidePanel();
+            };
+            kitchenOrdersEl.appendChild(span);
+        });
+    }
+
+    // 與廚房互動 (點擊廚房)
+    function interactKitchen() {
+        if (player.x > gameArea.clientWidth/2 - 100 && player.x < gameArea.clientWidth/2 + 100) {
+            if (readyToServe.length > 0 && !player.carrying) {
+                interactionPanel.classList.add('show');
+                panelTitle.innerText = '廚房出餐';
+                panelDesc.innerText = '有餐點已經準備好，點擊拎走！';
+                panelBtn.innerText = '拎走餐點';
+                panelBtn.onclick = () => {
+                    let food = readyToServe.shift();
+                    player.carrying = food;
+                    playerCarry.innerText = food.emoji;
+                    playerCarry.classList.add('show');
+                    renderKitchen();
+                    hidePanel();
+                    playSound('click');
+                };
+            } else if (player.carrying) {
+                interactionPanel.classList.add('show');
+                panelTitle.innerText = '廚房出餐';
+                panelDesc.innerText = '你手上已經有嘢食，快啲送俾客人啦！';
+                panelBtn.innerText = '知道';
+                panelBtn.onclick = hidePanel;
+            } else {
+                interactionPanel.classList.add('show');
+                panelTitle.innerText = '廚房出餐';
+                panelDesc.innerText = '師傅努力煮緊嘢食...';
+                panelBtn.innerText = '等陣先';
+                panelBtn.onclick = hidePanel;
+            }
+        }
+    }
+
+    // 上菜
+    function serveFood(c) {
+        if (!player.carrying) return;
+        
+        if (player.carrying.name !== c.food.name) {
+            playSound('fail');
+            alert('客人唔係叫呢樣嘢！');
+            return;
+        }
+
+        playSound('success');
+        player.carrying = null;
+        playerCarry.classList.remove('show');
+        
+        c.state = 'eating';
+        c.bubbleEl.innerText = '😋';
+        hidePanel();
+        
+        // 食完收錢
+        setTimeout(() => {
+            if (c.state === 'eating') {
+                c.state = 'leaving';
+                c.bubbleEl.innerText = '💰';
+                money += c.food.price;
+                uiMoney.innerText = `$${money}`;
+                playSound('success');
+                
+                // 自動清理
+                setTimeout(() => {
+                    clearCustomer(c);
+                }, 1500);
+            }
+        }, 3000);
+    }
+
+    function clearCustomer(c) {
+        let idx = customers.indexOf(c);
+        if (idx !== -1) {
+            customers.splice(idx, 1);
+            c.el.remove();
+        }
+        hidePanel();
+    }
+
+    // 升級系統
+    function openShop() { document.getElementById('shop-modal').classList.add('active'); updateShopUI(); }
+    function closeShop() { document.getElementById('shop-modal').classList.remove('active'); }
+    
+    function updateShopUI() {
+        document.getElementById('lvl-seat').innerText = maxSeats;
+        document.getElementById('lvl-ac').innerText = acLevel;
+        
+        let seatCost = 500 * Math.pow(2, maxSeats - 2);
+        let acCost = 800 * Math.pow(2, acLevel - 1);
+        
+        let btnSeat = document.getElementById('buy-seat');
+        let btnAc = document.getElementById('buy-ac');
+        
+        btnSeat.innerText = `$${seatCost}`;
+        btnSeat.disabled = money < seatCost || maxSeats >= 5;
+        if (maxSeats >= 5) btnSeat.innerText = '滿級';
+        
+        btnAc.innerText = `$${acCost}`;
+        btnAc.disabled = money < acCost || acLevel >= 5;
+        if (acLevel >= 5) btnAc.innerText = '滿級';
+    }
+
+    function buyUpgrade(type) {
+        if (type === 'seat') {
+            let cost = 500 * Math.pow(2, maxSeats - 2);
+            if (money >= cost && maxSeats < 5) {
+                money -= cost;
+                maxSeats++;
+                playSound('success');
+            }
+        } else if (type === 'ac') {
+            let cost = 800 * Math.pow(2, acLevel - 1);
+            if (money >= cost && acLevel < 5) {
+                money -= cost;
+                acLevel++;
+                playSound('success');
+            }
+        }
+        uiMoney.innerText = `$${money}`;
+        updateShopUI();
+    }
+
+    // 遊戲結束
+    function gameOver() {
+        state = 'gameover';
+        document.getElementById('gameover-desc').innerText = `單日營業額：$${money}`;
+        document.getElementById('gameover-modal').classList.add('active');
+    }
+
+    // 開始遊戲
+    function startGame() {
+        document.getElementById('gameover-modal').classList.remove('active');
+        state = 'playing';
+        money = 0;
+        reputation = 100;
+        maxSeats = 2;
+        acLevel = 1;
+        customers = [];
+        kitchenQueue = [];
+        readyToServe = [];
+        player.carrying = null;
+        playerCarry.classList.remove('show');
+        customersRow.innerHTML = '';
+        uiMoney.innerText = '$0';
+        uiReputation.innerText = '100';
+        renderKitchen();
+        
+        // 生成客人的定時器
+        if (window.spawnInterval) clearInterval(window.spawnInterval);
+        window.spawnInterval = setInterval(() => {
+            if (state === 'playing') {
+                // 隨機生成，控制節奏
+                if (Math.random() < 0.8) spawnCustomer();
+            }
+        }, 4000);
+
+        // 確保有客
+        setTimeout(spawnCustomer, 1000);
+        setTimeout(spawnCustomer, 2500);
+    }
+
+    // 初始化
+    startGame();
+    updateLoop();
+
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
+</script>
+</body>
+</html>
