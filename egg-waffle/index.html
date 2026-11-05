@@ -17,67 +17,65 @@
 
         /* 頂部 HUD */
         #hud {
-            height: 70px; background: rgba(20, 10, 0, 0.95);
+            height: 60px; background: rgba(20, 10, 0, 0.95);
             border-bottom: 3px solid #ff9f43; display: flex; align-items: center;
-            justify-content: space-between; padding: 0 15px; z-index: 10;
-            box-shadow: 0 0 20px rgba(255, 159, 67, 0.4);
-            flex-shrink: 0;
+            justify-content: space-between; padding: 0 10px; z-index: 10;
+            box-shadow: 0 0 20px rgba(255, 159, 67, 0.4); flex-shrink: 0;
         }
         
         .back-btn {
-            padding: 8px 12px; background: transparent; color: #ff9f43;
+            padding: 6px 10px; background: transparent; color: #ff9f43;
             border: 2px solid #ff9f43; border-radius: 8px; text-decoration: none;
-            font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 13px;
+            font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 12px;
             transition: 0.2s;
         }
         .back-btn:active { transform: scale(0.95); background: #ff9f43; color: #000; }
 
-        .stats { display: flex; gap: 15px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
+        .stats { display: flex; gap: 12px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
         .stat-box { display: flex; flex-direction: column; }
-        .stat-label { font-size: 10px; color: #a4b0be; letter-spacing: 1px; }
-        .stat-val { font-size: 18px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
+        .stat-label { font-size: 9px; color: #a4b0be; letter-spacing: 1px; }
+        .stat-val { font-size: 16px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
         .stat-val.combo { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
 
         .shop-btn {
             background: rgba(255,255,255,0.1); border: 1px solid #00d2d3; color: #00d2d3;
-            padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;
+            padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold;
         }
 
-        /* 訂單顯示列 */
+        /* 訂單列 */
         #order-bar {
-            height: 40px; background: #222; display: flex; align-items: center;
-            justify-content: center; font-size: 13px; font-weight: bold; color: #fff;
+            height: 35px; background: #222; display: flex; align-items: center;
+            justify-content: center; font-size: 12px; font-weight: bold; color: #fff;
             border-bottom: 1px solid #444; z-index: 9; flex-shrink: 0;
             padding: 0 10px; text-align: center;
         }
         .order-highlight { color: #ffd32a; margin: 0 3px; }
 
-        /* 遊戲畫布區 */
+        /* 畫布區 */
         #canvas-container {
             flex: 1; position: relative; display: flex; justify-content: center;
-            align-items: center; overflow: hidden; padding-bottom: 10px;
+            align-items: center; overflow: hidden; padding: 10px;
         }
-        canvas { display: block; }
+        canvas { display: block; max-width: 100%; max-height: 100%; }
 
-        /* 底部控制區 (絕對定位，保證不被遮擋) */
+        /* 底部控制 */
         #controls {
-            height: 110px; background: rgba(20, 10, 0, 0.95);
+            height: 100px; background: rgba(20, 10, 0, 0.95);
             border-top: 3px solid #ff9f43; display: flex; align-items: center;
-            justify-content: center; padding: 0 10px; gap: 10px; z-index: 20;
-            flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom);
+            justify-content: center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+            gap: 10px; z-index: 20; flex-shrink: 0; position: relative;
         }
 
         .action-btn {
-            padding: 15px 10px; border-radius: 12px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
-            font-size: 16px; font-weight: 900; cursor: pointer; border: none;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.5); transition: 0.1s;
+            padding: 12px 10px; border-radius: 10px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
+            font-size: 15px; font-weight: 900; cursor: pointer; border: none;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.5); transition: 0.1s;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 100%; max-width: 100%;
+            width: 100%; height: 100%; max-height: 70px;
         }
-        .action-btn:active { transform: translateY(5px); box-shadow: none; }
+        .action-btn:active { transform: translateY(4px); box-shadow: none; }
         .action-btn:disabled { opacity: 0.3; pointer-events: none; }
         
-        /* 初始只顯示較漿 */
         #btn-mix { background: linear-gradient(180deg, #00d2d3, #01a3a4); color: #fff; display: flex; }
         #btn-pour { background: linear-gradient(180deg, #ffd32a, #ff9f43); color: #000; display: none; }
         #btn-flip { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; display: none; }
@@ -85,13 +83,14 @@
         #btn-cool { background: linear-gradient(180deg, #3498db, #2980b9); color: #fff; display: none; animation: pulse 0.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* 配料按鈕區 */
+        /* 配料掣 */
         #topping-controls {
-            display: none; width: 100%; justify-content: center; gap: 8px; align-items: center;
+            display: none; width: 100%; height: 100%; justify-content: center; gap: 8px; align-items: center;
         }
         .topping-btn {
-            padding: 12px 10px; border-radius: 10px; font-size: 13px; font-weight: bold;
+            padding: 10px; border-radius: 10px; font-size: 13px; font-weight: bold;
             background: #333; color: #fff; border: 2px solid #555; cursor: pointer; flex: 1;
+            height: 60px;
         }
         .topping-btn.selected { border-color: #2ed573; background: rgba(46, 204, 113, 0.2); }
 
@@ -102,40 +101,40 @@
             z-index: 30; backdrop-filter: blur(10px); padding: 20px; text-align: center;
         }
         .modal.active { display: flex; }
-        .modal h2 { color: #ff9f43; font-size: 28px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff9f43; margin-bottom: 15px; }
+        .modal h2 { color: #ff9f43; font-size: 26px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff9f43; margin-bottom: 10px; }
+        .modal p { font-size: 14px; color: #ccc; line-height: 1.6; margin-bottom: 15px; }
         .modal button {
-            padding: 12px 40px; background: linear-gradient(135deg, #ff9f43, #ffd32a);
+            padding: 12px 35px; background: linear-gradient(135deg, #ff9f43, #ffd32a);
             color: #000; border: none; border-radius: 10px; font-family: 'Orbitron', sans-serif;
-            font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 15px;
+            font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 10px;
         }
         .modal button:active { transform: scale(0.95); }
 
-        /* 商店升級列表 */
+        /* 商店 */
         .shop-item {
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(255,255,255,0.05); border: 1px solid #444;
-            padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; width: 100%; max-width: 350px;
+            padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; width: 100%; max-width: 350px;
         }
-        .shop-info b { display: block; font-size: 15px; color: #fff; }
-        .shop-info small { font-size: 11px; color: #aaa; }
+        .shop-info b { display: block; font-size: 14px; color: #fff; }
+        .shop-info small { font-size: 10px; color: #aaa; }
         .buy-btn {
-            padding: 8px 15px; background: #2ed573; color: #000; border: none; border-radius: 5px;
-            font-weight: bold; cursor: pointer; margin: 0; font-size: 14px;
+            padding: 6px 12px; background: #2ed573; color: #000; border: none; border-radius: 5px;
+            font-weight: bold; cursor: pointer; margin: 0; font-size: 13px;
         }
         .buy-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
 
-        /* 特效字 */
+        /* 特效 */
         #status-text {
             position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
-            pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; text-align: center;
-            width: 90%;
+            font-size: 20px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
+            pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; text-align: center; width: 90%;
         }
         #status-text.show { opacity: 1; }
 
         #rating-popup {
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-family: 'Orbitron', sans-serif; font-size: 100px; font-weight: 900;
+            font-family: 'Orbitron', sans-serif; font-size: 90px; font-weight: 900;
             pointer-events: none; opacity: 0; z-index: 25; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-shadow: 0 0 30px currentColor;
         }
@@ -171,17 +170,12 @@
         <div id="status-text">完美！外脆內軟！</div>
         <div id="rating-popup">S</div>
         
-        <!-- 開局說明 -->
         <div id="intro-modal" class="modal active">
             <h2>🥚 雞蛋仔大挑戰</h2>
-            <p style="color:#ccc; font-size:14px; line-height:1.6; margin-bottom: 10px;">
-                完成客人訂單，賺取金幣升級你嘅架生！<br>
-                小心隨機突發事件同埋火候控制！
-            </p>
+            <p>完成客人訂單，賺取金幣升級你嘅架生！<br>小心隨機突發事件同埋火候控制！</p>
             <button onclick="startGame()">開檔</button>
         </div>
 
-        <!-- 升級商店 -->
         <div id="shop-modal" class="modal">
             <h2>🏪 大排檔升級</h2>
             <div class="shop-item">
@@ -199,10 +193,9 @@
             <button onclick="closeShop()" style="background:#555; color:#fff;">關閉</button>
         </div>
 
-        <!-- 結束畫面 -->
         <div id="gameover" class="modal">
             <h2>執笠啦！</h2>
-            <p>總收入：<span id="final-score" style="color:#ffd32a; font-weight:bold; font-size:24px;">0</span></p>
+            <p>總收入：<span id="final-score" style="color:#ffd32a; font-weight:bold; font-size:20px;">0</span></p>
             <button onclick="location.reload()">重新開檔</button>
         </div>
     </div>
@@ -225,7 +218,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // UI 綁定
         const moneyVal = document.getElementById('money-val');
         const comboVal = document.getElementById('combo-val');
         const statusText = document.getElementById('status-text');
@@ -244,18 +236,20 @@
         const btnCool = document.getElementById('btn-cool');
         const btnServe = document.getElementById('btn-serve');
 
-        // 遊戲設定 (自適應畫面)
-        const CANVAS_W = 400;
-        const CANVAS_H = 400; // 改細少少，確保手機一定放得落
-        canvas.width = CANVAS_W;
-        canvas.height = CANVAS_H;
+        // 自適應畫布大小
+        function resizeCanvas() {
+            let size = Math.min(window.innerWidth - 20, window.innerHeight - 250);
+            size = Math.max(size, 250); // 保證最少 250px
+            canvas.width = size;
+            canvas.height = size;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-        // 本地存檔
         let totalMoney = parseInt(localStorage.getItem('eggWaffle_money') || '0');
         let upgrades = JSON.parse(localStorage.getItem('eggWaffle_upgrades') || '{"mix":0,"oven":0,"cup":0}');
         moneyVal.innerText = totalMoney;
 
-        // 口味與配料設定
         const FLAVORS = [
             { name: '原味', color: '#ff9f43', rawColor: '#f5cd79', perfectColor: '#ffd32a' },
             { name: '朱古力', color: '#6d4c41', rawColor: '#a1887f', perfectColor: '#3e2723' },
@@ -264,7 +258,6 @@
         ];
         const TOPPINGS = ['煉奶', '朱古力醬', '花生醬'];
 
-        // 音效
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -278,7 +271,6 @@
             else if (type === 'coin') { osc.type = 'square'; osc.frequency.setValueAtTime(1000, audioCtx.currentTime); osc.frequency.setValueAtTime(1500, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
         }
 
-        // 狀態機
         let state = 'menu'; 
         let score = 0;
         let combo = 0;
@@ -286,7 +278,6 @@
         let currentOrder = null;
         let selectedTopping = null;
 
-        // 數據
         let mixProgress = 0;
         let pourAmount = 0;
         let bakeProgress = 0;
@@ -301,6 +292,7 @@
         let eventShaky = false;
 
         let particles = [];
+        let toppingTimeout = null;
 
         function startGame() {
             introModal.classList.remove('active');
@@ -324,6 +316,7 @@
         }
 
         function resetRound() {
+            if(toppingTimeout) clearTimeout(toppingTimeout);
             generateOrder();
             state = 'mix';
             mixProgress = 0; pourAmount = 0; bakeProgress = 0; isFlipped = false;
@@ -343,7 +336,6 @@
             else if (r < 0.10) { eventWind = true; showStatus('🌬️ 突然大風！火候加速！', '#00d2d3'); }
             else if (r < 0.15) { eventShaky = true; showStatus('🤏 手殘發作！倒漿小心！', '#f1c40f'); }
 
-            // 重置所有按鈕狀態
             btnMix.style.display = 'flex';
             btnPour.style.display = 'none';
             btnFlip.style.display = 'none';
@@ -369,7 +361,64 @@
             setTimeout(() => statusText.classList.remove('show'), 1500);
         }
 
-        // --- 階段 1：較漿 ---
+        // 統一嘅結束處理器 (修復缺失)
+        function endRound(isSuccess, reason = '') {
+            if (state === 'result') return;
+            state = 'result';
+            
+            let rating = 'C';
+            if (isSuccess) {
+                let center = (perfectZoneStart + perfectZoneEnd) / 2;
+                errorFlip2 = Math.abs(bakeProgress - center) / 50;
+                
+                if (bakeProgress >= perfectZoneStart && bakeProgress <= perfectZoneEnd) {
+                    let totalError = errorPour * 0.3 + errorFlip1 * 0.35 + errorFlip2 * 0.35;
+                    if (totalError < 0.03) rating = 'SSS';
+                    else if (totalError < 0.08) rating = 'SS';
+                    else if (totalError < 0.15) rating = 'S';
+                    else if (totalError < 0.25) rating = 'A';
+                    else if (totalError < 0.4) rating = 'B';
+                }
+            }
+
+            ratingPopup.innerText = rating === 'C' ? 'F' : rating;
+            ratingPopup.className = `show rank-${rating === 'C' ? 'F' : rating}`;
+            
+            let rankTier = { 'C': 0, 'B': 1, 'A': 2, 'S': 3, 'SS': 4, 'SSS': 5 };
+            let isOrderMatch = (currentFlavor.name === currentOrder.flavor) && 
+                               (rankTier[rating] >= rankTier[currentOrder.rank]) && 
+                               (selectedTopping === currentOrder.topping);
+
+            if (rating === 'C') {
+                combo = 0;
+                playSound('fail');
+                showStatus(reason || 'C 級 - 唔合格！', '#ff4757');
+                addMoney(0);
+            } else {
+                combo++;
+                let baseMoney = { 'B': 20, 'A': 40, 'S': 80, 'SS': 150, 'SSS': 300 }[rating];
+                let finalMoney = baseMoney * combo;
+                
+                if (isOrderMatch) {
+                    finalMoney *= 2;
+                    showStatus(`完美訂單！雙倍小費 $${finalMoney}`, '#2ed573');
+                    playSound('coin');
+                } else {
+                    showStatus(`${rating} 級！賺取 $${finalMoney}`, '#ffd32a');
+                }
+                addMoney(finalMoney);
+                if (rating === 'SSS') showStatus('📦 終極包裝！', '#ffd700');
+            }
+            setTimeout(resetRound, 2000);
+        }
+
+        function addMoney(amt) {
+            totalMoney += amt;
+            localStorage.setItem('eggWaffle_money', totalMoney);
+            updateHUD();
+        }
+
+        // --- 階段 1 ---
         btnMix.addEventListener('click', () => {
             if (state !== 'mix') return;
             let mixPower = 10 + upgrades.mix * 5;
@@ -387,7 +436,7 @@
             }
         });
 
-        // --- 階段 2：倒漿 ---
+        // --- 階段 2 ---
         let pourInterval = null;
         btnPour.addEventListener('mousedown', startPour);
         btnPour.addEventListener('touchstart', (e) => { e.preventDefault(); startPour(); }, {passive: false});
@@ -396,6 +445,7 @@
 
         function startPour() {
             if (state !== 'pour') return;
+            if (pourInterval) clearInterval(pourInterval); // 防重疊
             playSound('pour');
             pourInterval = setInterval(() => {
                 let pSpeed = eventShaky ? (2 + Math.random()*4) : 2;
@@ -407,12 +457,13 @@
         function stopPour() {
             if (state !== 'pour') return;
             clearInterval(pourInterval);
+            pourInterval = null;
             btnPour.style.display = 'none';
             
             errorPour = Math.abs(pourAmount - 67.5) / 32.5;
             
             if (pourAmount > 85 + upgrades.cup*2 || pourAmount < 50 - upgrades.cup*2) {
-                endRound(false, '倒漿份量錯晒！', 'C');
+                endRound(false, '倒漿份量錯晒！');
             } else {
                 state = 'bake';
                 btnFlip.style.display = 'flex';
@@ -421,7 +472,7 @@
             }
         }
 
-        // --- 階段 3：烘焙 ---
+        // --- 階段 3 ---
         btnCool.addEventListener('click', () => {
             if (!eventOverheat) return;
             eventOverheat = false;
@@ -453,17 +504,19 @@
                     }
                 }, 1000);
             } else {
-                endRound(false, '第一面燶咗/未熟！', 'F');
+                endRound(false, '第一面燶咗/未熟！');
             }
         });
 
-        // --- 階段 4：加配料 ---
+        // --- 階段 4 ---
         function selectTopping(t) {
+            if (state !== 'topping') return;
             selectedTopping = t;
             document.querySelectorAll('.topping-btn').forEach(b => {
                 b.classList.toggle('selected', b.dataset.t === t);
             });
-            setTimeout(evaluateFinal, 500);
+            if(toppingTimeout) clearTimeout(toppingTimeout); // 防止超時衝突
+            endRound(true);
         }
 
         btnServe.addEventListener('click', () => {
@@ -473,67 +526,12 @@
             toppingControls.style.display = 'flex';
             showStatus('請加入客人要求嘅配料！', '#ffd32a');
             
-            setTimeout(() => { if (state === 'topping') evaluateFinal(); }, 5000);
+            toppingTimeout = setTimeout(() => { 
+                if (state === 'topping') endRound(true); 
+            }, 5000);
         });
 
-        // --- 結算 ---
-        function evaluateFinal() {
-            if (state === 'result') return;
-            state = 'result';
-            
-            let center = (perfectZoneStart + perfectZoneEnd) / 2;
-            errorFlip2 = Math.abs(bakeProgress - center) / 50;
-            
-            let rating = 'C';
-            if (bakeProgress >= perfectZoneStart && bakeProgress <= perfectZoneEnd) {
-                let totalError = errorPour * 0.3 + errorFlip1 * 0.35 + errorFlip2 * 0.35;
-                if (totalError < 0.03) rating = 'SSS';
-                else if (totalError < 0.08) rating = 'SS';
-                else if (totalError < 0.15) rating = 'S';
-                else if (totalError < 0.25) rating = 'A';
-                else if (totalError < 0.4) rating = 'B';
-            }
-
-            ratingPopup.innerText = rating;
-            ratingPopup.className = `show rank-${rating === 'C' ? 'F' : rating}`;
-            
-            let rankTier = { 'C': 0, 'B': 1, 'A': 2, 'S': 3, 'SS': 4, 'SSS': 5 };
-            let isOrderMatch = (currentFlavor.name === currentOrder.flavor) && 
-                               (rankTier[rating] >= rankTier[currentOrder.rank]) && 
-                               (selectedTopping === currentOrder.topping);
-
-            if (rating === 'C') {
-                combo = 0;
-                playSound('fail');
-                showStatus('C 級 - 唔合格！', '#ff4757');
-                addMoney(0);
-                setTimeout(resetRound, 2000);
-            } else {
-                combo++;
-                let baseMoney = { 'B': 20, 'A': 40, 'S': 80, 'SS': 150, 'SSS': 300 }[rating];
-                let finalMoney = baseMoney * combo;
-                
-                if (isOrderMatch) {
-                    finalMoney *= 2;
-                    showStatus(`完美訂單！雙倍小費 $${finalMoney}`, '#2ed573');
-                    playSound('coin');
-                } else {
-                    showStatus(`${rating} 級！賺取 $${finalMoney}`, '#ffd32a');
-                }
-
-                addMoney(finalMoney);
-                if (rating === 'SSS') showStatus('📦 終極包裝！', '#ffd700');
-                setTimeout(resetRound, 2000);
-            }
-        }
-
-        function addMoney(amt) {
-            totalMoney += amt;
-            localStorage.setItem('eggWaffle_money', totalMoney);
-            updateHUD();
-        }
-
-        // --- 商店 ---
+        // 商店
         function openShop() {
             if (state !== 'menu' && state !== 'result' && state !== 'mix') return;
             shopModal.classList.add('active');
@@ -544,33 +542,25 @@
             document.getElementById('lvl-mix').innerText = upgrades.mix;
             document.getElementById('lvl-oven').innerText = upgrades.oven;
             document.getElementById('lvl-cup').innerText = upgrades.cup;
-            
             document.getElementById('buy-mix').innerText = `$${100 * (upgrades.mix + 1)}`;
             document.getElementById('buy-oven').innerText = `$${200 * (upgrades.oven + 1)}`;
             document.getElementById('buy-cup').innerText = `$${150 * (upgrades.cup + 1)}`;
-            
             document.getElementById('buy-mix').disabled = totalMoney < 100 * (upgrades.mix + 1);
             document.getElementById('buy-oven').disabled = totalMoney < 200 * (upgrades.oven + 1);
             document.getElementById('buy-cup').disabled = totalMoney < 150 * (upgrades.cup + 1);
         }
         function buyUpgrade(type) {
-            let cost = 0;
-            if (type === 'mix') cost = 100 * (upgrades.mix + 1);
-            if (type === 'oven') cost = 200 * (upgrades.oven + 1);
-            if (type === 'cup') cost = 150 * (upgrades.cup + 1);
-            
+            let cost = type === 'mix' ? 100 * (upgrades.mix + 1) : type === 'oven' ? 200 * (upgrades.oven + 1) : 150 * (upgrades.cup + 1);
             if (totalMoney >= cost) {
                 totalMoney -= cost;
                 upgrades[type]++;
                 localStorage.setItem('eggWaffle_money', totalMoney);
                 localStorage.setItem('eggWaffle_upgrades', JSON.stringify(upgrades));
                 playSound('coin');
-                updateHUD();
-                updateShopUI();
+                updateHUD(); updateShopUI();
             }
         }
 
-        // --- 更新與繪製 ---
         function update() {
             if (state === 'mix') {
                 if (mixProgress > 0 && Math.random() < 0.05) mixProgress -= 0.5;
@@ -579,42 +569,30 @@
                 let currentSpeed = bakeSpeed;
                 if (eventOverheat) currentSpeed *= 1.8;
                 bakeProgress += currentSpeed;
-                
-                if (bakeProgress >= 100) {
-                    endRound(false, '完全燶晒！', 'F');
-                }
+                if (bakeProgress >= 100) endRound(false, '完全燶晒！');
                 if (Math.random() < 0.05) playSound('sizzle');
-            }
-            
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.vy -= 0.1; p.life -= 0.02;
-                if (p.life <= 0) particles.splice(i, 1);
             }
         }
 
         function draw() {
-            ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+            let W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
             
             // 背景
-            ctx.fillStyle = '#2c3e50';
-            ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-            ctx.strokeStyle = '#34495e';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < CANVAS_W; i += 50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, CANVAS_H); ctx.stroke(); }
+            ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = '#34495e'; ctx.lineWidth = 2;
+            for (let i = 0; i < W; i += 50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
             
             // 爐具
-            ctx.fillStyle = '#111';
-            ctx.beginPath(); ctx.ellipse(CANVAS_W/2, CANVAS_H - 40, 140, 25, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(W/2, H - 30, W*0.35, H*0.08, 0, 0, Math.PI * 2); ctx.fill();
 
-            // 火焰
             if (state === 'bake') {
                 let fireIntensity = 1 + (bakeProgress / 100);
-                let fireY = CANVAS_H - 60;
+                let fireY = H - 50;
                 ctx.shadowBlur = 20; ctx.shadowColor = eventOverheat ? '#ff4757' : '#ff9f43';
                 for (let i = 0; i < 5; i++) {
-                    let fx = CANVAS_W/2 - 80 + i * 40;
-                    let fh = 20 + Math.random() * 20 * fireIntensity;
+                    let fx = W/2 - W*0.2 + i * W*0.1;
+                    let fh = 15 + Math.random() * 20 * fireIntensity;
                     ctx.fillStyle = eventOverheat ? '#ff0000' : (bakeProgress > perfectZoneEnd ? '#ff4757' : '#ff9f43');
                     ctx.beginPath(); ctx.moveTo(fx - 10, fireY); ctx.quadraticCurveTo(fx, fireY - fh, fx + 10, fireY); ctx.fill();
                 }
@@ -622,28 +600,28 @@
             }
 
             ctx.save();
-            ctx.translate(CANVAS_W/2, CANVAS_H/2 - 20);
+            ctx.translate(W/2, H/2 - 20);
             
+            let boxSize = W * 0.5;
             // 鐵夾
-            ctx.fillStyle = '#1e272e';
-            ctx.beginPath(); ctx.roundRect(-100, -100, 200, 200, 20); ctx.fill();
+            ctx.fillStyle = '#1e272e'; ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 20); ctx.fill();
             ctx.strokeStyle = '#485460'; ctx.lineWidth = 5; ctx.stroke();
 
-            // 各階段畫面
             if (state === 'mix' || state === 'pour') {
-                ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(0, 0, 80, 0, Math.PI); ctx.fill();
+                ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(0, 0, boxSize*0.4, 0, Math.PI); ctx.fill();
                 if (state === 'mix') {
-                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.arc(0, 10, 70 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
+                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.arc(0, 10, boxSize*0.4 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
                 } else {
-                    let pourH = (pourAmount / 100) * 160;
-                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.roundRect(-80, 80 - pourH, 160, pourH, 10); ctx.fill();
+                    let pourH = (pourAmount / 100) * boxSize*0.8;
+                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.roundRect(-boxSize*0.4, boxSize*0.4 - pourH, boxSize*0.8, pourH, 10); ctx.fill();
                 }
             }
 
             if (state === 'bake' || state === 'topping' || state === 'result') {
+                let gridCount = 7, gap = boxSize*0.8 / gridCount;
                 for (let r = -3; r <= 3; r++) {
                     for (let c = -3; c <= 3; c++) {
-                        ctx.beginPath(); ctx.arc(c * 25, r * 25, 10, 0, Math.PI * 2);
+                        ctx.beginPath(); ctx.arc(c * gap, r * gap, gap*0.4, 0, Math.PI * 2);
                         if (bakeProgress > perfectZoneEnd) ctx.fillStyle = '#111'; 
                         else if (bakeProgress > perfectZoneStart) ctx.fillStyle = currentFlavor.perfectColor; 
                         else ctx.fillStyle = currentFlavor.rawColor; 
@@ -652,25 +630,25 @@
                 }
 
                 if (isFlipped) {
-                    ctx.fillStyle = 'rgba(30, 39, 46, 0.9)'; ctx.beginPath(); ctx.roundRect(-100, -100, 200, 200, 20); ctx.fill();
-                    ctx.fillStyle = '#fff'; ctx.font = 'bold 20px "Noto Sans HK"'; ctx.textAlign = 'center'; ctx.fillText('焗緊另一面...', 0, 0);
+                    ctx.fillStyle = 'rgba(30, 39, 46, 0.9)'; ctx.beginPath(); ctx.roundRect(-boxSize/2, -boxSize/2, boxSize, boxSize, 20); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.font = `bold ${boxSize*0.1}px "Noto Sans HK"`; ctx.textAlign = 'center'; ctx.fillText('焗緊另一面...', 0, 0);
                 }
 
                 if (state === 'bake') {
-                    ctx.translate(0, -130);
-                    ctx.fillStyle = '#111'; ctx.fillRect(-80, 0, 160, 16);
+                    ctx.translate(0, -boxSize*0.7);
+                    ctx.fillStyle = '#111'; ctx.fillRect(-boxSize*0.4, 0, boxSize*0.8, 16);
                     ctx.fillStyle = 'rgba(46, 204, 113, 0.5)'; 
-                    ctx.fillRect(-80 + (perfectZoneStart/100)*160, 0, ((perfectZoneEnd-perfectZoneStart)/100)*160, 16);
+                    ctx.fillRect(-boxSize*0.4 + (perfectZoneStart/100)*boxSize*0.8, 0, ((perfectZoneEnd-perfectZoneStart)/100)*boxSize*0.8, 16);
                     ctx.fillStyle = eventOverheat ? '#ff0000' : '#ff9f43'; 
-                    ctx.fillRect(-80, 0, (bakeProgress/100)*160, 16);
-                    ctx.strokeStyle = '#fff'; ctx.strokeRect(-80, 0, 160, 16);
+                    ctx.fillRect(-boxSize*0.4, 0, (bakeProgress/100)*boxSize*0.8, 16);
+                    ctx.strokeStyle = '#fff'; ctx.strokeRect(-boxSize*0.4, 0, boxSize*0.8, 16);
                 }
 
                 if (selectedTopping && state !== 'result') {
                     ctx.fillStyle = selectedTopping === '煉奶' ? '#fff' : selectedTopping === '朱古力醬' ? '#5c3a21' : '#d35400';
                     ctx.globalAlpha = 0.6;
                     for (let i = 0; i < 10; i++) {
-                        ctx.beginPath(); ctx.arc(Math.random()*140-70, Math.random()*140-70, 4, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(Math.random()*(boxSize*0.7)-(boxSize*0.35), Math.random()*(boxSize*0.7)-(boxSize*0.35), 4, 0, Math.PI*2); ctx.fill();
                     }
                     ctx.globalAlpha = 1;
                 }
