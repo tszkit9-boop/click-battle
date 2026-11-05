@@ -15,7 +15,6 @@
             background: #111;
         }
 
-        /* 霓虹燈牌背景特效 */
         .neon-bg {
             position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
             font-family: 'Noto Sans HK', sans-serif; font-size: 40px; font-weight: 900;
@@ -28,7 +27,6 @@
             20%, 24%, 55% { opacity: 0.05; text-shadow: none; }
         }
 
-        /* 頂部 HUD */
         #hud {
             height: 60px; background: rgba(15, 15, 15, 0.9);
             border-bottom: 2px solid #ff0055; display: flex; align-items: center;
@@ -58,7 +56,6 @@
         }
         .shop-btn:active { background: #00d2d3; color: #000; }
 
-        /* 客人區 */
         #customer-area {
             flex: 1; position: relative; display: flex; justify-content: center;
             align-items: flex-end; padding-bottom: 20px; gap: 15px; overflow: hidden;
@@ -70,7 +67,6 @@
             background-size: 20px 20px;
         }
 
-        /* 單個客人容器 */
         .customer-container {
             position: relative; display: flex; flex-direction: column; align-items: center;
             transition: transform 0.3s; width: 100px;
@@ -78,20 +74,20 @@
         .customer-container.angry { animation: shake 0.3s infinite; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-        /* 對話氣泡 (訂單) */
+        /* 對話氣泡 (已限制最大闊度防撐爆) */
         .speech-bubble {
             background: #fff; color: #000; border-radius: 15px; padding: 8px 10px;
-            font-weight: 900; font-size: 13px; position: relative; margin-bottom: 15px;
+            font-weight: 900; font-size: 12px; position: relative; margin-bottom: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ddd;
-            text-align: center; min-width: 80px; z-index: 2;
+            text-align: center; min-width: 80px; max-width: 110px; z-index: 2;
+            word-wrap: break-word;
         }
         .speech-bubble::after {
             content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
             border-width: 10px 10px 0; border-style: solid; border-color: #fff transparent transparent transparent;
         }
-        .order-item { font-size: 14px; margin: 2px 0; display: block; color: #ff0055; }
+        .order-item { font-size: 13px; margin: 2px 0; display: block; color: #ff0055; line-height: 1.2;}
 
-        /* 客人外觀 */
         .customer-body {
             width: 70px; height: 90px; background: #3498db; border-radius: 35px 35px 10px 10px;
             position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
@@ -105,7 +101,6 @@
         .face-neutral::before { content: 'o o'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px;}
         .face-angry::before { content: '> <'; font-size: 18px; position: absolute; top: 12px; left: 6px; font-weight: bold; letter-spacing: 4px; color: #ff0055;}
 
-        /* 耐心條 */
         .patience-bar-container {
             width: 70px; height: 8px; background: #333; border-radius: 4px; margin-top: 15px;
             overflow: hidden; border: 1px solid #000;
@@ -114,36 +109,44 @@
             height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear, background 0.3s;
         }
 
-        /* 底部操作區 */
+        /* 👇 手機完美自適應底部 👇 */
         #controls {
-            height: 170px; background: rgba(20, 20, 20, 0.95);
+            height: auto; max-height: 48vh; background: rgba(20, 20, 20, 0.95);
             border-top: 4px solid #ff0055; display: flex; flex-direction: column;
             padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             z-index: 20; flex-shrink: 0;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.8); border-radius: 20px 20px 0 0;
+            overflow-y: auto;
         }
         
         .tray-area {
-            height: 40px; display: flex; justify-content: center; align-items: center;
+            min-height: 36px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
             background: #000; border-radius: 10px; margin-bottom: 10px; border: 1px dashed #555;
-            color: #aaa; font-size: 13px; font-weight: bold;
+            color: #aaa; font-size: 13px; font-weight: bold; padding: 5px; gap: 5px;
         }
-        .tray-item { font-size: 22px; margin: 0 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
+        .tray-item { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
         @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
-        .menu-grid { display: flex; gap: 10px; flex: 1; }
-        .menu-category { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .category-title { font-size: 10px; color: #888; text-align: center; font-weight: bold; }
+        /* 👇 菜單網格化，一眼睇哂 👇 */
+        .menu-section { margin-bottom: 8px; }
+        .category-title { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 4px; text-align: left; padding-left: 5px; }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 每行 4 個 */
+            gap: 6px;
+        }
         
         .menu-btn {
-            flex: 1; background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
-            border-radius: 12px; color: #fff; font-size: 16px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-            box-shadow: 0 4px 0 #000; transition: 0.1s; cursor: pointer;
+            background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
+            border-radius: 8px; color: #fff; font-size: 12px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 2px;
+            box-shadow: 0 3px 0 #000; transition: 0.1s; cursor: pointer;
+            padding: 8px 2px; white-space: nowrap;
         }
-        .menu-btn:active { transform: translateY(4px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
+        .menu-btn:active { transform: translateY(3px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
 
-        .action-row { display: flex; gap: 10px; margin-top: 10px; height: 45px; }
+        .action-row { display: flex; gap: 10px; margin-top: 5px; height: 45px; flex-shrink: 0; }
         .btn-serve {
             flex: 2; background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff;
             border: none; border-radius: 10px; font-size: 18px; font-weight: 900;
@@ -157,7 +160,6 @@
         }
         .btn-clear:active { transform: translateY(5px); box-shadow: none; }
 
-        /* 彈出視窗 */
         .modal {
             position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85);
             display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -174,7 +176,6 @@
         }
         .modal button:active { transform: translateY(5px); box-shadow: none; }
 
-        /* 商店 */
         .shop-item {
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(255,255,255,0.05); border: 1px solid #444;
@@ -189,7 +190,6 @@
         }
         .buy-btn:disabled { background: #333; color: #666; box-shadow: none; cursor: not-allowed; }
 
-        /* 特效字 */
         #status-text {
             position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
             font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff0055;
@@ -197,7 +197,6 @@
         }
         #status-text.show { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
         
-        /* 金幣特效 */
         .coin-anim {
             position: absolute; font-size: 20px; font-weight: 900; color: #ffd32a;
             text-shadow: 0 0 10px #ffd32a; pointer-events: none; z-index: 25;
@@ -241,16 +240,30 @@
             點擊下方餐點加入托盤
         </div>
         
-        <div class="menu-grid">
-            <div class="menu-category">
-                <div class="category-title">🍹 飲品</div>
+        <!-- 飲品區塊 -->
+        <div class="menu-section">
+            <div class="category-title">🍹 飲品</div>
+            <div class="menu-grid">
                 <button class="menu-btn" onclick="addToTray('凍檸茶', '🍹')">🍹 凍檸茶</button>
                 <button class="menu-btn" onclick="addToTray('熱奶茶', '☕')">☕ 熱奶茶</button>
+                <button class="menu-btn" onclick="addToTray('凍鴛鴦', '🧋')">🧋 凍鴛鴦</button>
+                <button class="menu-btn" onclick="addToTray('紅豆冰', '🧊')">🧊 紅豆冰</button>
+                <button class="menu-btn" onclick="addToTray('檸檬水', '🍋')">🍋 檸檬水</button>
+                <button class="menu-btn" onclick="addToTray('凍咖啡', '🥤')">🥤 凍咖啡</button>
             </div>
-            <div class="menu-category">
-                <div class="category-title">🍞 食物</div>
+        </div>
+
+        <!-- 食物區塊 -->
+        <div class="menu-section">
+            <div class="category-title">🍞 食物</div>
+            <div class="menu-grid">
                 <button class="menu-btn" onclick="addToTray('西多士', '🍞')">🍞 西多士</button>
                 <button class="menu-btn" onclick="addToTray('干炒牛河', '🍜')">🍜 乾炒牛河</button>
+                <button class="menu-btn" onclick="addToTray('菠蘿油', '🍔')">🍔 菠蘿油</button>
+                <button class="menu-btn" onclick="addToTray('酥皮蛋撻', '🥧')">🥧 蛋撻</button>
+                <button class="menu-btn" onclick="addToTray('沙嗲牛麵', '🍲')">🍲 沙嗲牛麵</button>
+                <button class="menu-btn" onclick="addToTray('焗豬扒飯', '🍛')">🍛 焗豬扒飯</button>
+                <button class="menu-btn" onclick="addToTray('揚州炒飯', '🍚')">🍚 揚州炒飯</button>
             </div>
         </div>
 
@@ -260,14 +273,12 @@
         </div>
     </div>
 
-    <!-- 開始畫面 -->
     <div id="intro-modal" class="modal active">
         <h2>🍳 茶餐廳大亨</h2>
         <p>體驗澳牛極速節奏！<br>喺客人發脾氣前，準確無誤咁出餐！<br>營業額越高，升級越快！</p>
         <button onclick="startGame()">開舖</button>
     </div>
 
-    <!-- 商店畫面 -->
     <div id="shop-modal" class="modal">
         <h2>🏪 茶餐廳升級</h2>
         <div class="shop-item">
@@ -281,7 +292,6 @@
         <button onclick="closeShop()" style="background:#444; color:#fff; box-shadow: 0 4px 0 #111; margin-top:10px;">關閉</button>
     </div>
 
-    <!-- 遊戲結束 -->
     <div id="gameover" class="modal">
         <h2>執笠啦！</h2>
         <p>單日最高營業額：<span id="final-score" style="color:#ffd32a; font-weight:bold; font-size:24px;">0</span></p>
@@ -301,7 +311,6 @@
         const introModal = document.getElementById('intro-modal');
         const shopModal = document.getElementById('shop-modal');
 
-        // 遊戲參數與狀態
         let totalMoney = parseInt(localStorage.getItem('chaChaanTeng_money') || '0');
         let upgrades = JSON.parse(localStorage.getItem('chaChaanTeng_upgrades') || '{"ac":0,"staff":0}');
         let bestScore = parseInt(localStorage.getItem('chaChaanTeng_best') || '0');
@@ -315,6 +324,9 @@
         let customers = [];
         let tray = [];
         let customerIdCounter = 0;
+
+        const DRINKS = ['凍檸茶', '熱奶茶', '凍鴛鴦', '紅豆冰', '檸檬水', '凍咖啡'];
+        const FOODS = ['西多士', '干炒牛河', '菠蘿油', '酥皮蛋撻', '沙嗲牛麵', '焗豬扒飯', '揚州炒飯'];
 
         const NAMES = ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'];
         const SHIRTS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
@@ -341,7 +353,6 @@
             tray = [];
             customerIdCounter = 0;
             
-            // 精準清空客人，保留 status-text
             document.querySelectorAll('.customer-container').forEach(el => el.remove());
             updateHUD();
             updateTrayUI();
@@ -402,16 +413,13 @@
                 let shirt = SHIRTS[Math.floor(Math.random() * SHIRTS.length)];
                 
                 let orders = [];
-                let drinks = ['凍檸茶', '熱奶茶'];
-                let foods = ['西多士', '干炒牛河'];
-                
                 let numItems = Math.random() < 0.3 ? 1 : 2;
                 if (numItems === 1) {
-                    if (Math.random() < 0.5) orders.push(drinks[Math.floor(Math.random() * drinks.length)]);
-                    else orders.push(foods[Math.floor(Math.random() * foods.length)]);
+                    if (Math.random() < 0.5) orders.push(DRINKS[Math.floor(Math.random() * DRINKS.length)]);
+                    else orders.push(FOODS[Math.floor(Math.random() * FOODS.length)]);
                 } else {
-                    orders.push(drinks[Math.floor(Math.random() * drinks.length)]);
-                    orders.push(foods[Math.floor(Math.random() * foods.length)]);
+                    orders.push(DRINKS[Math.floor(Math.random() * DRINKS.length)]);
+                    orders.push(FOODS[Math.floor(Math.random() * FOODS.length)]);
                 }
 
                 let el = document.createElement('div');
@@ -496,7 +504,6 @@
 
             if (matchedCustomerIndex !== -1) {
                 let c = customers[matchedCustomerIndex];
-                // 獲取位置用於特效
                 let rect = c.element.getBoundingClientRect();
                 
                 customers.splice(matchedCustomerIndex, 1);
@@ -587,7 +594,6 @@
 
         function openShop() {
             if (state === 'gameover' || state === 'menu') return;
-            // 暫停遊戲
             if (state === 'playing') state = 'paused';
             shopModal.classList.add('active');
             updateShopUI();
