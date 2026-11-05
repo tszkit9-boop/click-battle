@@ -984,7 +984,6 @@ function showCellInfo(pos) {
 }
 function upgradeProperty(pos) { const cell = BOARD[pos], p = localData.players[myId]; const ownerData = localData.gameState.owners[pos]; if(!ownerData || ownerData.owner !== myId) return; if(p.cash < cell.price / 2) return alert('現金不足！'); roomRef.update({ [`gameState/owners/${pos}/level`]: (ownerData.level || 0) + 1, [`players/${myId}/cash`]: p.cash - (cell.price / 2) }).then(() => { closeModal(); }); }
 
-// 👇 重寫：玩家主動交易 (可選擇對象，AI 會判斷盈虧)
 function openTradeModal() {
   const others = Object.keys(localData.players).filter(id => id !== myId && !localData.players[id].bankrupt);
   if(others.length === 0) return alert('冇人可以交易！');
@@ -1040,7 +1039,6 @@ function submitTradeRequest() {
     let targetValue = (targetProp ? BOARD[targetProp].price : 0) + targetCash;
     let myValue = (myProp ? BOARD[myProp].price : 0) + myCash;
     
-    // 電腦判斷：如果換出去嘅價值 大於 收到嘅價值 1.5倍，就拒絕
     if (targetValue > myValue * 1.5) {
       alert(`🤖 ${targetP.name} 拒絕了交易！\n(電腦覺得自己太蝕底)`);
       closeModal();
@@ -1097,6 +1095,35 @@ function showGameOver() {
 function showModal(html) { closeModal(); const mask = document.createElement('div'); mask.className = 'modal-mask'; mask.id = 'modalMask'; mask.innerHTML = `<div class="modal">${html}</div>`; document.body.appendChild(mask); }
 function closeModal() { const m = document.getElementById('modalMask'); if(m) m.remove(); }
 function addLog(text, type='') { roomRef.child('logs').push({ text, type }); }
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
 </script>
 </body>
 </html>
