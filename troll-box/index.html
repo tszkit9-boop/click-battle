@@ -16,6 +16,17 @@
         button:active { transform: scale(0.95); }
         input[type="text"] { padding: 12px; border-radius: 5px; border: 2px solid #00d2d3; background: #1f2833; color: #fff; text-align: center; margin: 15px 0; outline: none; font-size: 16px; }
 
+        /* 👇 返回大廳按鈕 👇 */
+        .global-back-btn {
+            position: fixed; top: 15px; left: 15px; z-index: 99999;
+            padding: 8px 16px; background: rgba(10, 10, 26, 0.85);
+            color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px;
+            text-decoration: none; font-weight: bold; font-size: 14px;
+            box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); transition: all 0.2s;
+            font-family: 'Orbitron', 'PingFang HK', sans-serif;
+        }
+        .global-back-btn:hover { background: #00d2d3; color: #000; box-shadow: 0 0 20px #00d2d3; }
+
         /* 通用 UI */
         .title { font-size: 22px; color: #f1c40f; margin-bottom: 20px; line-height: 1.4; }
         .subtitle { font-size: 14px; color: #a4b0be; margin-bottom: 20px; }
@@ -96,6 +107,9 @@
     </style>
 </head>
 <body>
+
+    <!-- 👇 返回大廳按鈕 👇 -->
+    <a href="../" class="global-back-btn">⬅ 返回大廳</a>
 
     <!-- 設定 -->
     <div id="setup" class="screen active">
@@ -193,7 +207,6 @@
         }
 
         function startGame() {
-            // 30 個陷阱 ID
             const traps = [
                 'hold_evade', 'hold_invisible', 'hold_long',
                 'math_wrong', 'math_evade', 'math_timer',
@@ -207,9 +220,8 @@
                 'final_boss'
             ];
             
-            // 隨機洗牌，抽 4 個唔同嘅
             let pool = [...traps].sort(() => Math.random() - 0.5);
-            seq = [pool[0], pool[1], pool[2], pool[3], 'runaway_evade']; // 最後必定係逃跑
+            seq = [pool[0], pool[1], pool[2], pool[3], 'runaway_evade'];
             stage = 0;
             
             document.getElementById('trap-screen').classList.add('active');
@@ -222,7 +234,6 @@
             const c = document.getElementById('trap-content');
             c.innerHTML = '';
             
-            // 根據 ID 觸發對應陷阱
             if (trap === 'hold_evade') initHold(c, "追住個掣長按 5 秒！", 5, true, false);
             else if (trap === 'hold_invisible') initHold(c, "長按隱形掣 5 秒！", 5, false, true);
             else if (trap === 'hold_long') initHold(c, "長按 15 秒！", 15, false, false);
@@ -265,11 +276,6 @@
 
         function pass() { playSound('win'); nextTrap(); }
 
-        // ==========================================
-        // 30 個陷阱實作
-        // ==========================================
-
-        // 1-3 長按
         function initHold(c, txt, secs, evade, inv) {
             c.innerHTML = `<div class="title">${txt}</div><div class="hold-btn" id="h-btn"><div class="progress-ring" id="h-ring"></div>解鎖</div>`;
             const btn = document.getElementById('h-btn'), ring = document.getElementById('h-ring');
@@ -302,7 +308,6 @@
             btn.addEventListener('mouseup', stop); btn.addEventListener('mouseleave', stop); btn.addEventListener('touchend', stop);
         }
 
-        // 4-6 數學
         function initMath(c, evade, timed) {
             let a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1, ans = a+b;
             let html = `<div class="title" id="m-title">🧮 ${a} + ${b} = ?</div><div class="math-opts">`;
@@ -326,7 +331,7 @@
                 let tm = setInterval(() => {
                     left--;
                     if(document.getElementById('m-title')) document.getElementById('m-title').innerText = `🧮 ${a} + ${b} = ? (剩 ${left}s)`;
-                    if (left <= 0) { clearInterval(tm); pass(); } // 時間到當過關 (因為根本冇啱嘅選項)
+                    if (left <= 0) { clearInterval(tm); pass(); }
                 }, 1000);
             }
         }
@@ -336,7 +341,6 @@
             if(err) { err.classList.remove('hidden'); setTimeout(() => err.classList.add('hidden'), 1000); }
         };
 
-        // 7-9 驗證碼
         function initCaptcha(c, txt, target, shuffle) {
             c.innerHTML = `<div class="title" style="font-size:16px;">${txt}</div><div class="captcha-grid" id="cap-grid"></div><button onclick="checkCap('${target}', ${shuffle})">驗證</button><p id="cap-err" class="hidden" style="color:#ff4757; margin-top:10px;">錯！重試！</p>`;
             buildCap(target);
@@ -361,7 +365,6 @@
             }
         };
 
-        // 10-13 打字
         function initTyping(c, txt, vanish) {
             c.innerHTML = `<div class="title" style="font-size:16px;">請打出：</div><div style="color:#2ecc71; font-weight:bold; margin-bottom:10px;">${txt}</div><input type="text" id="t-in" class="typing-input" autocomplete="off"><p id="t-err" class="typing-err"></p><button onclick="checkType('${txt}', ${vanish})" style="width:100%; max-width:350px;">提交</button>`;
             if (vanish) {
@@ -376,7 +379,6 @@
             } else { document.getElementById('t-err').innerText = "打錯字！"; playSound('beep'); }
         };
 
-        // 14-17 病毒
         function initVirus(c, action, mode) {
             c.innerHTML = `<div class="terminal"><div class="term-line">> 掃描中...</div><div class="term-line term-warn hidden" id="v-warn">> ⚠️ 發現病毒！</div><div class="term-line hidden" id="v-act">> 正在${action}...</div><div class="prog-bg"><div class="prog-fill" id="v-prog"></div></div></div>`;
             let p = 0;
@@ -392,13 +394,11 @@
             }, 1500);
         }
 
-        // 18-19 錄音
         function initRecord(c, txt, time) {
             c.innerHTML = `<div class="mic">🎤</div><div class="title">${txt}</div><div class="wave">${'<div class="bar"></div>'.repeat(15)}</div>`;
             setTimeout(pass, time);
         }
 
-        // 20 亂碼鍵盤
         function initGibberish(c) {
             const chars = ['Ω', '✡', '✙', '☭', '☯', '♆', '♇', '✠', '☢'];
             const target = chars[Math.floor(Math.random()*chars.length)];
@@ -411,20 +411,17 @@
             });
         }
 
-        // 21 顏色陷阱
         function initColor(c) {
             let colors = ['紅色', '藍色', '綠色'];
             let realColor = colors[Math.floor(Math.random()*3)];
             let text = colors[Math.floor(Math.random()*3)];
             let hex = realColor === '紅色' ? '#ff4757' : (realColor === '藍色' ? '#3498db' : '#2ed573');
             c.innerHTML = `<div class="title">請選出文字嘅「意思」</div><div class="color-word" style="color:${hex};">${text}</div><div><div class="color-opt" onclick="mathFail()">紅色</div><div class="color-opt" onclick="mathFail()">藍色</div><div class="color-opt" onclick="mathFail()">綠色</div></div>`;
-            // 隨機一個掣係啱
             let opts = c.querySelectorAll('.color-opt');
             let correctIdx = colors.indexOf(text);
             opts[correctIdx].onclick = () => pass();
         }
 
-        // 22 找不同
         function initSpotDiff(c) {
             c.innerHTML = `<div class="title">請點擊唔同嘅地方</div><div class="diff-imgs"><div class="diff-img" id="d1">👁️</div><div class="diff-img" id="d2">👁️</div></div>`;
             const click = () => { if (Math.random() < 0.2) pass(); else mathFail(); };
@@ -432,7 +429,6 @@
             document.getElementById('d2').onclick = click;
         }
 
-        // 23 耐力測試
         function initDrag(c) {
             c.innerHTML = `<div class="title">將波波拖去終點</div><div class="drag-area" id="d-area"><div class="drag-ball" id="d-ball"></div><div class="drag-target"></div></div>`;
             const area = document.getElementById('d-area'), ball = document.getElementById('d-ball');
@@ -451,7 +447,6 @@
             };
         }
 
-        // 24-26 逃跑按鈕
         function initRunaway(c, txt, mode) {
             c.innerHTML = `<div class="runaway-container" id="r-cont"><div class="title">同意條款</div><div id="runaway-btn" style="position:relative; left:auto; top:auto;">${txt}</div></div>`;
             const btn = document.getElementById('runaway-btn'), cont = document.getElementById('r-cont');
@@ -484,7 +479,6 @@
             }
         }
 
-        // 27 垃圾訊息
         function initSpam(c) {
             c.innerHTML = `<div class="title">請關閉所有視窗</div>`;
             for(let i=0; i<10; i++) {
@@ -500,7 +494,6 @@
             }
         }
 
-        // 28 旋轉
         function initRotate(c) {
             c.innerHTML = `<div class="rotate-container" id="rot-c"><div class="title">保持平衡，點擊確認</div><button onclick="pass()">確認</button></div>`;
             const el = document.getElementById('rot-c');
@@ -508,7 +501,6 @@
             setTimeout(() => clearInterval(tm), 10000);
         }
 
-        // 29 音量
         function initVolume(c) {
             c.innerHTML = `<div class="title">請將音量拉到 100% 以作確認</div><input type="range" class="volume-slider" id="vol" min="0" max="100" value="0"><button onclick="checkVol()">確認</button>`;
         }
@@ -517,7 +509,6 @@
             else mathFail();
         };
 
-        // 30 大魔王
         function initBoss(c) {
             c.innerHTML = `<div class="final-boss">👹</div><div class="title">請按住畫面任何地方 10 秒懺悔</div><div class="prog-bg" style="max-width:300px;"><div class="prog-fill" id="b-prog" style="background:#ff4757;"></div></div>`;
             let hold = false, p = 0;
@@ -529,7 +520,6 @@
             }, 100);
         }
 
-        // --- 結算 ---
         function showRevenge() {
             document.getElementById('trap-screen').classList.remove('active');
             document.getElementById('revenge-screen').classList.add('active');
@@ -544,6 +534,35 @@
             navigator.clipboard.writeText(link).then(() => alert("已複製！快啲去報仇啦！"))
             .catch(() => prompt("請手動複製連結：", link));
         }
+    </script>
+
+    <!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        try {
+            const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            
+            // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+            let userId = localStorage.getItem('global_device_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('global_device_id', userId);
+            }
+            
+            let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+            let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+            const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+            
+            db.ref('.info/connected').on('value', (snap) => {
+                if (snap.val() === true) {
+                    userStatusRef.onDisconnect().remove();
+                    userStatusRef.set(true);
+                }
+            });
+        } catch(e) { console.error("Firebase Error:", e); }
     </script>
 </body>
 </html>
