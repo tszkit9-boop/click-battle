@@ -17,10 +17,11 @@
 
         /* 頂部 HUD */
         #hud {
-            height: 80px; background: rgba(20, 10, 0, 0.95);
+            height: 70px; background: rgba(20, 10, 0, 0.95);
             border-bottom: 3px solid #ff9f43; display: flex; align-items: center;
             justify-content: space-between; padding: 0 15px; z-index: 10;
-            box-shadow: 0 0 20px rgba(255, 159, 67, 0.4); position: relative;
+            box-shadow: 0 0 20px rgba(255, 159, 67, 0.4);
+            flex-shrink: 0;
         }
         
         .back-btn {
@@ -45,36 +46,39 @@
         /* 訂單顯示列 */
         #order-bar {
             height: 40px; background: #222; display: flex; align-items: center;
-            justify-content: center; font-size: 14px; font-weight: bold; color: #fff;
-            border-bottom: 1px solid #444; z-index: 9;
+            justify-content: center; font-size: 13px; font-weight: bold; color: #fff;
+            border-bottom: 1px solid #444; z-index: 9; flex-shrink: 0;
+            padding: 0 10px; text-align: center;
         }
-        .order-highlight { color: #ffd32a; margin: 0 5px; }
+        .order-highlight { color: #ffd32a; margin: 0 3px; }
 
-        /* 遊戲畫布 */
+        /* 遊戲畫布區 */
         #canvas-container {
             flex: 1; position: relative; display: flex; justify-content: center;
-            align-items: center; overflow: hidden;
+            align-items: center; overflow: hidden; padding-bottom: 10px;
         }
         canvas { display: block; }
 
-        /* 底部控制區 */
+        /* 底部控制區 (絕對定位，保證不被遮擋) */
         #controls {
-            height: 120px; background: rgba(20, 10, 0, 0.95);
+            height: 110px; background: rgba(20, 10, 0, 0.95);
             border-top: 3px solid #ff9f43; display: flex; align-items: center;
-            justify-content: center; padding: 0 20px; gap: 10px; z-index: 10;
+            justify-content: center; padding: 0 10px; gap: 10px; z-index: 20;
+            flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom);
         }
 
         .action-btn {
-            padding: 12px 20px; border-radius: 12px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
+            padding: 15px 10px; border-radius: 12px; font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
             font-size: 16px; font-weight: 900; cursor: pointer; border: none;
             box-shadow: 0 5px 0 rgba(0,0,0,0.5); transition: 0.1s;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            flex: 1; max-width: 200px;
+            width: 100%; max-width: 100%;
         }
         .action-btn:active { transform: translateY(5px); box-shadow: none; }
         .action-btn:disabled { opacity: 0.3; pointer-events: none; }
         
-        #btn-mix { background: linear-gradient(180deg, #00d2d3, #01a3a4); color: #fff; }
+        /* 初始只顯示較漿 */
+        #btn-mix { background: linear-gradient(180deg, #00d2d3, #01a3a4); color: #fff; display: flex; }
         #btn-pour { background: linear-gradient(180deg, #ffd32a, #ff9f43); color: #000; display: none; }
         #btn-flip { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; display: none; }
         #btn-serve { background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff; display: none; }
@@ -83,11 +87,11 @@
 
         /* 配料按鈕區 */
         #topping-controls {
-            display: none; width: 100%; height: 100%; justify-content: center; gap: 10px; align-items: center;
+            display: none; width: 100%; justify-content: center; gap: 8px; align-items: center;
         }
         .topping-btn {
-            padding: 10px; border-radius: 10px; font-size: 14px; font-weight: bold;
-            background: #333; color: #fff; border: 2px solid #555; cursor: pointer;
+            padding: 12px 10px; border-radius: 10px; font-size: 13px; font-weight: bold;
+            background: #333; color: #fff; border: 2px solid #555; cursor: pointer; flex: 1;
         }
         .topping-btn.selected { border-color: #2ed573; background: rgba(46, 204, 113, 0.2); }
 
@@ -98,7 +102,7 @@
             z-index: 30; backdrop-filter: blur(10px); padding: 20px; text-align: center;
         }
         .modal.active { display: flex; }
-        .modal h2 { color: #ff9f43; font-size: 30px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff9f43; margin-bottom: 15px; }
+        .modal h2 { color: #ff9f43; font-size: 28px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff9f43; margin-bottom: 15px; }
         .modal button {
             padding: 12px 40px; background: linear-gradient(135deg, #ff9f43, #ffd32a);
             color: #000; border: none; border-radius: 10px; font-family: 'Orbitron', sans-serif;
@@ -122,14 +126,15 @@
 
         /* 特效字 */
         #status-text {
-            position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
+            position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff9f43;
             pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; text-align: center;
+            width: 90%;
         }
         #status-text.show { opacity: 1; }
 
         #rating-popup {
-            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
             font-family: 'Orbitron', sans-serif; font-size: 100px; font-weight: 900;
             pointer-events: none; opacity: 0; z-index: 25; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-shadow: 0 0 30px currentColor;
@@ -158,7 +163,7 @@
     </div>
 
     <div id="order-bar">
-        📜 客人要求：<span class="order-highlight" id="ord-flavor">原味</span> 味，評級 <span class="order-highlight" id="ord-rank">A</span> 以上，加 <span class="order-highlight" id="ord-topping">煉奶</span>
+        📜 要求：<span class="order-highlight" id="ord-flavor">原味</span> 味，評級 <span class="order-highlight" id="ord-rank">A</span> 以上，加 <span class="order-highlight" id="ord-topping">煉奶</span>
     </div>
 
     <div id="canvas-container">
@@ -168,7 +173,7 @@
         
         <!-- 開局說明 -->
         <div id="intro-modal" class="modal active">
-            <h2>🥚 終極雞蛋仔大排檔</h2>
+            <h2>🥚 雞蛋仔大挑戰</h2>
             <p style="color:#ccc; font-size:14px; line-height:1.6; margin-bottom: 10px;">
                 完成客人訂單，賺取金幣升級你嘅架生！<br>
                 小心隨機突發事件同埋火候控制！
@@ -203,15 +208,15 @@
     </div>
 
     <div id="controls">
-        <button class="action-btn" id="btn-mix">🥣 瘋狂較漿</button>
-        <button class="action-btn" id="btn-pour">🥄 長按倒漿</button>
-        <button class="action-btn" id="btn-flip">🔄 完美翻轉</button>
-        <button class="action-btn" id="btn-cool">💧 緊急降溫</button>
-        <button class="action-btn" id="btn-serve">🍽️ 起爐出餐</button>
+        <button class="action-btn" id="btn-mix">🥣 較漿</button>
+        <button class="action-btn" id="btn-pour">🥄 倒漿</button>
+        <button class="action-btn" id="btn-flip">🔄 翻轉</button>
+        <button class="action-btn" id="btn-cool">💧 降溫</button>
+        <button class="action-btn" id="btn-serve">🍽️ 出餐</button>
         
         <div id="topping-controls">
             <button class="topping-btn" data-t="煉奶" onclick="selectTopping('煉奶')">🥛 煉奶</button>
-            <button class="topping-btn" data-t="朱古力醬" onclick="selectTopping('朱古力醬')">🍫 朱古力醬</button>
+            <button class="topping-btn" data-t="朱古力醬" onclick="selectTopping('朱古力醬')">🍫 朱古力</button>
             <button class="topping-btn" data-t="花生醬" onclick="selectTopping('花生醬')">🥜 花生醬</button>
         </div>
     </div>
@@ -239,13 +244,13 @@
         const btnCool = document.getElementById('btn-cool');
         const btnServe = document.getElementById('btn-serve');
 
-        // 遊戲設定
+        // 遊戲設定 (自適應畫面)
         const CANVAS_W = 400;
-        const CANVAS_H = 450;
+        const CANVAS_H = 400; // 改細少少，確保手機一定放得落
         canvas.width = CANVAS_W;
         canvas.height = CANVAS_H;
 
-        // 本地存檔 (金幣與升級)
+        // 本地存檔
         let totalMoney = parseInt(localStorage.getItem('eggWaffle_money') || '0');
         let upgrades = JSON.parse(localStorage.getItem('eggWaffle_upgrades') || '{"mix":0,"oven":0,"cup":0}');
         moneyVal.innerText = totalMoney;
@@ -259,14 +264,13 @@
         ];
         const TOPPINGS = ['煉奶', '朱古力醬', '花生醬'];
 
-        // 音效系統
+        // 音效
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            if (type === 'mix') { osc.type = 'triangle'; osc.frequency.setValueAtTime(300 + Math.random()*100, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            if (type === 'mix') { osc.type = 'triangle'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
             else if (type === 'pour') { osc.type = 'sine'; osc.frequency.setValueAtTime(200, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(300, audioCtx.currentTime + 0.5); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5); osc.start(); osc.stop(audioCtx.currentTime + 0.5); }
             else if (type === 'sizzle') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime); gain.gain.setValueAtTime(0.02, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
             else if (type === 'ding') { osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); osc.start(); osc.stop(audioCtx.currentTime + 0.5); }
@@ -282,7 +286,7 @@
         let currentOrder = null;
         let selectedTopping = null;
 
-        // 關卡數據
+        // 數據
         let mixProgress = 0;
         let pourAmount = 0;
         let bakeProgress = 0;
@@ -291,7 +295,6 @@
         let perfectZoneEnd = 80;
         let isFlipped = false;
         
-        // 誤差與突發事件
         let errorPour = 0, errorFlip1 = 0, errorFlip2 = 0;
         let eventOverheat = false;
         let eventWind = false;
@@ -299,7 +302,6 @@
 
         let particles = [];
 
-        // --- 初始化與流程控制 ---
         function startGame() {
             introModal.classList.remove('active');
             score = 0; combo = 0;
@@ -329,20 +331,19 @@
             eventOverheat = false; eventWind = false; eventShaky = false;
             selectedTopping = null;
             
-            // 升級加成
-            let zoneBonus = upgrades.oven * 5; // 恆溫爐加闊綠區
+            let zoneBonus = upgrades.oven * 5; 
             let zoneWidth = Math.max(10, 25 - combo * 2) + zoneBonus;
             let center = 65 + (Math.random() * 10 - 5);
             perfectZoneStart = center - zoneWidth / 2;
             perfectZoneEnd = center + zoneWidth / 2;
             bakeSpeed = (1.2 + combo * 0.15) * (eventWind ? 1.5 : 1);
 
-            // 隨機突發事件 (15% 機率)
             let r = Math.random();
             if (r < 0.05) { eventOverheat = true; showStatus('🔥 爐具過熱！快降溫！', '#ff4757'); }
             else if (r < 0.10) { eventWind = true; showStatus('🌬️ 突然大風！火候加速！', '#00d2d3'); }
             else if (r < 0.15) { eventShaky = true; showStatus('🤏 手殘發作！倒漿小心！', '#f1c40f'); }
 
+            // 重置所有按鈕狀態
             btnMix.style.display = 'flex';
             btnPour.style.display = 'none';
             btnFlip.style.display = 'none';
@@ -350,7 +351,7 @@
             btnCool.style.display = 'none';
             toppingControls.style.display = 'none';
             
-            btnMix.innerText = `🥣 較漿 (${Math.floor(mixProgress)}%)`;
+            btnMix.innerText = `🥣 較漿 (0%)`;
             ratingPopup.classList.remove('show');
             particles = [];
         }
@@ -371,9 +372,10 @@
         // --- 階段 1：較漿 ---
         btnMix.addEventListener('click', () => {
             if (state !== 'mix') return;
-            let mixPower = 8 + upgrades.mix * 4;
+            let mixPower = 10 + upgrades.mix * 5;
             mixProgress += mixPower;
             playSound('mix');
+            
             if (mixProgress >= 100) {
                 mixProgress = 100;
                 state = 'pour';
@@ -396,7 +398,7 @@
             if (state !== 'pour') return;
             playSound('pour');
             pourInterval = setInterval(() => {
-                let pSpeed = eventShaky ? (1.5 + Math.random()*3) : 1.5;
+                let pSpeed = eventShaky ? (2 + Math.random()*4) : 2;
                 pourAmount += pSpeed;
                 if (pourAmount > 100) pourAmount = 100;
             }, 20);
@@ -407,7 +409,6 @@
             clearInterval(pourInterval);
             btnPour.style.display = 'none';
             
-            let tolerance = 10 + upgrades.cup * 5; // 量杯增加容忍度
             errorPour = Math.abs(pourAmount - 67.5) / 32.5;
             
             if (pourAmount > 85 + upgrades.cup*2 || pourAmount < 50 - upgrades.cup*2) {
@@ -456,13 +457,12 @@
             }
         });
 
-        // --- 階段 4：加配料 (新系統) ---
+        // --- 階段 4：加配料 ---
         function selectTopping(t) {
             selectedTopping = t;
             document.querySelectorAll('.topping-btn').forEach(b => {
                 b.classList.toggle('selected', b.dataset.t === t);
             });
-            // 選完配料自動出餐
             setTimeout(evaluateFinal, 500);
         }
 
@@ -470,14 +470,13 @@
             if (state !== 'bake') return;
             state = 'topping';
             btnServe.style.display = 'none';
-            toppingControls.style.display = 'flex'; // 彈出配料掣
+            toppingControls.style.display = 'flex';
             showStatus('請加入客人要求嘅配料！', '#ffd32a');
             
-            // 5秒後如果冇揀，強制出餐
             setTimeout(() => { if (state === 'topping') evaluateFinal(); }, 5000);
         });
 
-        // --- 結算與評級 ---
+        // --- 結算 ---
         function evaluateFinal() {
             if (state === 'result') return;
             state = 'result';
@@ -495,11 +494,9 @@
                 else if (totalError < 0.4) rating = 'B';
             }
 
-            // 顯示評級
             ratingPopup.innerText = rating;
             ratingPopup.className = `show rank-${rating === 'C' ? 'F' : rating}`;
             
-            // 判斷是否符合客人要求 (口味、評級、配料)
             let rankTier = { 'C': 0, 'B': 1, 'A': 2, 'S': 3, 'SS': 4, 'SSS': 5 };
             let isOrderMatch = (currentFlavor.name === currentOrder.flavor) && 
                                (rankTier[rating] >= rankTier[currentOrder.rank]) && 
@@ -525,13 +522,8 @@
                 }
 
                 addMoney(finalMoney);
-                
-                // 如果係 SSS，播放包裝動畫
-                if (rating === 'SSS') {
-                    showStatus('📦 終極包裝！呀樂大排檔！', '#ffd700');
-                }
-
-                setTimeout(resetRound, 2500);
+                if (rating === 'SSS') showStatus('📦 終極包裝！', '#ffd700');
+                setTimeout(resetRound, 2000);
             }
         }
 
@@ -541,15 +533,13 @@
             updateHUD();
         }
 
-        // --- 商店系統 ---
+        // --- 商店 ---
         function openShop() {
             if (state !== 'menu' && state !== 'result' && state !== 'mix') return;
             shopModal.classList.add('active');
             updateShopUI();
         }
-        function closeShop() {
-            shopModal.classList.remove('active');
-        }
+        function closeShop() { shopModal.classList.remove('active'); }
         function updateShopUI() {
             document.getElementById('lvl-mix').innerText = upgrades.mix;
             document.getElementById('lvl-oven').innerText = upgrades.oven;
@@ -580,7 +570,7 @@
             }
         }
 
-        // --- 渲染與物理更新 ---
+        // --- 更新與繪製 ---
         function update() {
             if (state === 'mix') {
                 if (mixProgress > 0 && Math.random() < 0.05) mixProgress -= 0.5;
@@ -596,7 +586,6 @@
                 if (Math.random() < 0.05) playSound('sizzle');
             }
             
-            // 更新粒子
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx; p.y += p.vy; p.vy -= 0.1; p.life -= 0.02;
@@ -616,12 +605,12 @@
             
             // 爐具
             ctx.fillStyle = '#111';
-            ctx.beginPath(); ctx.ellipse(CANVAS_W/2, CANVAS_H - 50, 160, 30, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(CANVAS_W/2, CANVAS_H - 40, 140, 25, 0, 0, Math.PI * 2); ctx.fill();
 
-            // 畫火 (如果過熱變色)
+            // 火焰
             if (state === 'bake') {
                 let fireIntensity = 1 + (bakeProgress / 100);
-                let fireY = CANVAS_H - 80;
+                let fireY = CANVAS_H - 60;
                 ctx.shadowBlur = 20; ctx.shadowColor = eventOverheat ? '#ff4757' : '#ff9f43';
                 for (let i = 0; i < 5; i++) {
                     let fx = CANVAS_W/2 - 80 + i * 40;
@@ -635,27 +624,26 @@
             ctx.save();
             ctx.translate(CANVAS_W/2, CANVAS_H/2 - 20);
             
-            // 鐵夾底座
+            // 鐵夾
             ctx.fillStyle = '#1e272e';
-            ctx.beginPath(); ctx.roundRect(-110, -110, 220, 220, 20); ctx.fill();
+            ctx.beginPath(); ctx.roundRect(-100, -100, 200, 200, 20); ctx.fill();
             ctx.strokeStyle = '#485460'; ctx.lineWidth = 5; ctx.stroke();
 
-            // 繪製各階段
+            // 各階段畫面
             if (state === 'mix' || state === 'pour') {
-                ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(0, 0, 90, 0, Math.PI); ctx.fill();
+                ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.arc(0, 0, 80, 0, Math.PI); ctx.fill();
                 if (state === 'mix') {
-                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.arc(0, 10, 80 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
+                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.arc(0, 10, 70 * (mixProgress/100 + 0.1), 0, Math.PI); ctx.fill();
                 } else {
-                    let pourH = (pourAmount / 100) * 180;
-                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.roundRect(-90, 90 - pourH, 180, pourH, 10); ctx.fill();
+                    let pourH = (pourAmount / 100) * 160;
+                    ctx.fillStyle = currentFlavor.color; ctx.beginPath(); ctx.roundRect(-80, 80 - pourH, 160, pourH, 10); ctx.fill();
                 }
             }
 
             if (state === 'bake' || state === 'topping' || state === 'result') {
-                // 畫雞蛋仔本體
                 for (let r = -3; r <= 3; r++) {
                     for (let c = -3; c <= 3; c++) {
-                        ctx.beginPath(); ctx.arc(c * 28, r * 28, 11, 0, Math.PI * 2);
+                        ctx.beginPath(); ctx.arc(c * 25, r * 25, 10, 0, Math.PI * 2);
                         if (bakeProgress > perfectZoneEnd) ctx.fillStyle = '#111'; 
                         else if (bakeProgress > perfectZoneStart) ctx.fillStyle = currentFlavor.perfectColor; 
                         else ctx.fillStyle = currentFlavor.rawColor; 
@@ -664,40 +652,30 @@
                 }
 
                 if (isFlipped) {
-                    ctx.fillStyle = 'rgba(30, 39, 46, 0.9)'; ctx.beginPath(); ctx.roundRect(-110, -110, 220, 220, 20); ctx.fill();
-                    ctx.fillStyle = '#fff'; ctx.font = 'bold 24px "Noto Sans HK"'; ctx.textAlign = 'center'; ctx.fillText('焗緊另一面...', 0, 0);
+                    ctx.fillStyle = 'rgba(30, 39, 46, 0.9)'; ctx.beginPath(); ctx.roundRect(-100, -100, 200, 200, 20); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.font = 'bold 20px "Noto Sans HK"'; ctx.textAlign = 'center'; ctx.fillText('焗緊另一面...', 0, 0);
                 }
 
-                // 火候條
                 if (state === 'bake') {
-                    ctx.translate(0, -140);
-                    ctx.fillStyle = '#111'; ctx.fillRect(-90, 0, 180, 18);
+                    ctx.translate(0, -130);
+                    ctx.fillStyle = '#111'; ctx.fillRect(-80, 0, 160, 16);
                     ctx.fillStyle = 'rgba(46, 204, 113, 0.5)'; 
-                    ctx.fillRect(-90 + (perfectZoneStart/100)*180, 0, ((perfectZoneEnd-perfectZoneStart)/100)*180, 18);
+                    ctx.fillRect(-80 + (perfectZoneStart/100)*160, 0, ((perfectZoneEnd-perfectZoneStart)/100)*160, 16);
                     ctx.fillStyle = eventOverheat ? '#ff0000' : '#ff9f43'; 
-                    ctx.fillRect(-90, 0, (bakeProgress/100)*180, 18);
-                    ctx.strokeStyle = '#fff'; ctx.strokeRect(-90, 0, 180, 18);
+                    ctx.fillRect(-80, 0, (bakeProgress/100)*160, 16);
+                    ctx.strokeStyle = '#fff'; ctx.strokeRect(-80, 0, 160, 16);
                 }
 
-                // 配料特效 (如果已選)
                 if (selectedTopping && state !== 'result') {
                     ctx.fillStyle = selectedTopping === '煉奶' ? '#fff' : selectedTopping === '朱古力醬' ? '#5c3a21' : '#d35400';
                     ctx.globalAlpha = 0.6;
                     for (let i = 0; i < 10; i++) {
-                        ctx.beginPath(); ctx.arc(Math.random()*160-80, Math.random()*160-80, 4, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(Math.random()*140-70, Math.random()*140-70, 4, 0, Math.PI*2); ctx.fill();
                     }
                     ctx.globalAlpha = 1;
                 }
             }
-
             ctx.restore();
-
-            // 粒子
-            for (let p of particles) {
-                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
-            }
-            ctx.globalAlpha = 1;
         }
 
         function loop() {
