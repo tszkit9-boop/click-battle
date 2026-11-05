@@ -38,6 +38,7 @@
     .hud-box span { font-size: 10px; color: #888; }
     .hud-box .val { font-size: 18px; font-weight: 900; color: #c084fc; text-shadow: 0 0 10px #c084fc; }
     #combo-text { color: #ff4757; font-size: 12px; display: none; font-weight: bold; animation: pulseRed 0.3s infinite alternate; }
+    @keyframes pulseRed { 0% { opacity: 0.8; } 100% { opacity: 1; text-shadow: 0 0 10px #ff4757; } }
 
     #game-container {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -496,6 +497,12 @@
         clearInterval(window.bossTimerId);
         clearInterval(window.skillTimerId);
         
+        // 👇 記錄最高分到大廳排行榜 👇
+        let highScore = parseInt(localStorage.getItem('blackHole_highscore') || '0');
+        if (score > highScore) {
+            localStorage.setItem('blackHole_highscore', score);
+        }
+
         if (survived) {
             endTitle.innerText = "⏳ 時間到！";
             endTitle.style.color = "#ffd32a";
@@ -533,6 +540,35 @@
         if (e.code === 'Space') useSkill();
     });
 
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
 </script>
 </body>
 </html>
