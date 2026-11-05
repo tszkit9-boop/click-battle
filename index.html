@@ -376,7 +376,6 @@
             let gameId = this.getAttribute('href').replace('./', '').replace('/', '');
             if (!gameId) return;
 
-            // 檢查 Session Storage，確保同一次上網只計一次
             let sessionKey = 'played_' + gameId;
             if (!sessionStorage.getItem(sessionKey)) {
                 sessionStorage.setItem(sessionKey, 'true');
@@ -472,7 +471,7 @@
     }
 
     // ==========================================
-    // 全站成就排行榜邏輯 (LocalStorage)
+    // 全站成就排行榜邏輯 (LocalStorage) - 已補全 20 隻遊戲
     // ==========================================
     function openLeaderboard() {
         let list = document.getElementById('leaderboard-list');
@@ -482,18 +481,15 @@
 
         // 1. 茶餐廳大亨
         try {
-            let chaChaanTengBest = parseInt(localStorage.getItem('chaChaanTeng_best')) || 0;
-            if (chaChaanTengBest > 0) {
+            let val = parseInt(localStorage.getItem('chaChaanTeng_best')) || 0;
+            if (val > 0) {
                 list.innerHTML += `
                     <div class="rank-item" style="border-left-color: #e67e22;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">🍳</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">茶餐廳大亨</span>
-                                <span style="font-size:12px; color:#aaa;">單日最高營業額</span>
-                            </div>
+                            <div class="rank-info"><span class="rank-game-name">茶餐廳大亨</span><span style="font-size:12px; color:#aaa;">單日最高營業額</span></div>
                         </div>
-                        <div class="rank-score" style="color:#e67e22;">$${chaChaanTengBest}</div>
+                        <div class="rank-score" style="color:#e67e22;">$${val}</div>
                     </div>
                 `;
                 hasData = true;
@@ -502,18 +498,15 @@
 
         // 2. 雞蛋仔大挑戰
         try {
-            let eggWaffleMoney = parseInt(localStorage.getItem('eggWaffle_money')) || 0;
-            if (eggWaffleMoney > 0) {
+            let val = parseInt(localStorage.getItem('eggWaffle_money')) || 0;
+            if (val > 0) {
                 list.innerHTML += `
                     <div class="rank-item" style="border-left-color: #ff9f43;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">🥚</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">雞蛋仔大挑戰</span>
-                                <span style="font-size:12px; color:#aaa;">最高營業額</span>
-                            </div>
+                            <div class="rank-info"><span class="rank-game-name">雞蛋仔大挑戰</span><span style="font-size:12px; color:#aaa;">最高營業額</span></div>
                         </div>
-                        <div class="rank-score" style="color:#ff9f43;">$${eggWaffleMoney}</div>
+                        <div class="rank-score" style="color:#ff9f43;">$${val}</div>
                     </div>
                 `;
                 hasData = true;
@@ -522,47 +515,144 @@
 
         // 3. 末日避難所
         try {
-            let dsData = JSON.parse(localStorage.getItem('doomsday_record')) || null;
-            if (dsData) {
+            let data = JSON.parse(localStorage.getItem('doomsday_record')) || null;
+            if (data && data.days) {
                 list.innerHTML += `
                     <div class="rank-item" style="border-left-color: #2ecc71;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">☢️</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">末日避難所</span>
-                                <span style="font-size:12px; color:#aaa;">存活 ${dsData.days || 0} 天</span>
-                            </div>
+                            <div class="rank-info"><span class="rank-game-name">末日避難所</span><span style="font-size:12px; color:#aaa;">存活 ${data.days} 天</span></div>
                         </div>
-                        <div class="rank-score" style="color:#2ecc71;">${dsData.pop || 0} 人</div>
+                        <div class="rank-score" style="color:#2ecc71;">${data.pop || 0} 人</div>
                     </div>
                 `;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 4. 極致洗地毯
+        // 4. 九龍城寨 (讀取 Leaderboard)
         try {
-            let carpetData = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
-            if (carpetData.length > 0) {
-                carpetData.sort((a, b) => b.level - a.level || b.score - a.score);
-                let top = carpetData[0];
+            let lb = JSON.parse(localStorage.getItem('klt_leaderboard')) || [];
+            if (lb.length > 0) {
+                let top = lb[0];
                 list.innerHTML += `
-                    <div class="rank-item">
+                    <div class="rank-item" style="border-left-color: #c77dff;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🏯</span>
+                            <div class="rank-info"><span class="rank-game-name">九龍城寨保衛戰</span><span style="font-size:12px; color:#aaa;">最高波數</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#c77dff;">第 ${top.wave} 波</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 5. 黑洞吞噬
+        try {
+            let val = parseInt(localStorage.getItem('blackHole_highscore')) || 0;
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #9b59b6;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🌌</span>
+                            <div class="rank-info"><span class="rank-game-name">黑洞吞噬</span><span style="font-size:12px; color:#aaa;">最高質量</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#9b59b6;">${val}</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 6. 極致洗地毯
+        try {
+            let data = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
+            if (data.length > 0) {
+                data.sort((a, b) => b.level - a.level || b.score - a.score);
+                let top = data[0];
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #00cec9;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">🧹</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">極致洗地毯</span>
-                                <span style="font-size:12px; color:#aaa;">最高 Lv.${top.level}</span>
-                            </div>
+                            <div class="rank-info"><span class="rank-game-name">極致洗地毯</span><span style="font-size:12px; color:#aaa;">最高 Lv.${top.level}</span></div>
                         </div>
-                        <div class="rank-score">${top.score} 分</div>
+                        <div class="rank-score" style="color:#00cec9;">${top.score} 分</div>
                     </div>
                 `;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 5. 時間高利貸
+        // 7. 賽博股神
+        try {
+            let val = parseInt(localStorage.getItem('cyberTrader_best')) || 0;
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #ffd32a;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">📈</span>
+                            <div class="rank-info"><span class="rank-game-name">賽博股神</span><span style="font-size:12px; color:#aaa;">最高資產</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#ffd32a;">$${val}</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 8. 無盡迷宮
+        try {
+            let val = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #2ed573;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🌀</span>
+                            <div class="rank-info"><span class="rank-game-name">無盡迷宮</span><span style="font-size:12px; color:#aaa;">最高層數</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#2ed573;">第 ${val} 層</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 9. 賽博密室
+        try {
+            let val = parseInt(localStorage.getItem('escapeMaxLevel')) || 0;
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #00d2d3;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🚪</span>
+                            <div class="rank-info"><span class="rank-game-name">賽博密室</span><span style="font-size:12px; color:#aaa;">最高關卡</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#00d2d3;">第 ${val} 關</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 10. 薑餅人建屋
+        try {
+            let val = parseInt(localStorage.getItem('gingerbread_highscore')) || 0;
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #e74c3c;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">🍪</span>
+                            <div class="rank-info"><span class="rank-game-name">薑餅人建屋</span><span style="font-size:12px; color:#aaa;">最高得分</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#e74c3c;">${val} 分</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 11. 時間高利貸
         try {
             let rate = parseFloat(localStorage.getItem('loan_best_rate')) || 1.0;
             let combo = parseInt(localStorage.getItem('loan_best_combo')) || 0;
@@ -571,32 +661,60 @@
                     <div class="rank-item" style="border-left-color: #f1c40f;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">💸</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">時間高利貸</span>
-                                <span style="font-size:12px; color:#aaa;">最高連擊 ${combo}</span>
-                            </div>
+                            <div class="rank-info"><span class="rank-game-name">時間高利貸</span><span style="font-size:12px; color:#aaa;">最高連擊 ${combo}</span></div>
                         </div>
-                        <div class="rank-score" style="color:#f1c40f;">${rate.toFixed(2)}%</div>
+                        <div class="rank-score" style="color:#f1c40f;">${rate.toFixed(2)}x</div>
                     </div>
                 `;
                 hasData = true;
             }
         } catch(e) {}
 
-        // 6. 賽博判官
+        // 12. 賽博判官
         try {
-            let judgeScore = parseInt(localStorage.getItem('cyberJudge_highscore')) || 0;
-            if (judgeScore > 0) {
+            let val = parseInt(localStorage.getItem('cyberJudge_highscore')) || 0;
+            if (val > 0) {
                 list.innerHTML += `
                     <div class="rank-item" style="border-left-color: #9b59b6;">
                         <div style="display:flex; align-items:center;">
                             <span class="rank-icon">⚖️</span>
-                            <div class="rank-info">
-                                <span class="rank-game-name">賽博判官</span>
-                                <span style="font-size:12px; color:#aaa;">最高聲望</span>
-                            </div>
+                            <div class="rank-info"><span class="rank-game-name">賽博判官</span><span style="font-size:12px; color:#aaa;">最高連勝</span></div>
                         </div>
-                        <div class="rank-score" style="color:#9b59b6;">${judgeScore}</div>
+                        <div class="rank-score" style="color:#9b59b6;">${val} 場</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 13. 會記仇的遊戲
+        try {
+            let val = parseInt(localStorage.getItem('grudgeHighScore')) || 0;
+            if (val > 0) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #ff4757;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">👁️</span>
+                            <div class="rank-info"><span class="rank-game-name">會記仇的遊戲</span><span style="font-size:12px; color:#aaa;">最高分</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#ff4757;">${val}</div>
+                    </div>
+                `;
+                hasData = true;
+            }
+        } catch(e) {}
+
+        // 14. 深淵礦工
+        try {
+            let data = JSON.parse(localStorage.getItem('deepMinerSave')) || null;
+            if (data && data.maxDepthRecord) {
+                list.innerHTML += `
+                    <div class="rank-item" style="border-left-color: #b87333;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank-icon">⛏️</span>
+                            <div class="rank-info"><span class="rank-game-name">深淵礦工</span><span style="font-size:12px; color:#aaa;">最深紀錄</span></div>
+                        </div>
+                        <div class="rank-score" style="color:#b87333;">${data.maxDepthRecord}m</div>
                     </div>
                 `;
                 hasData = true;
