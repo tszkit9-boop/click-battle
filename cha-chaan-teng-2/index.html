@@ -96,9 +96,10 @@
     }
     .customer.angry { animation: shake 0.2s infinite; }
 
-    /* 對話氣泡 */
+    /* 對話氣泡（用 --bubble-bg 控制箭頭顏色） */
     .bubble {
-        background: #fff; color: #000; border-radius: 12px; padding: 8px 10px;
+        --bubble-bg: #fff;
+        background: var(--bubble-bg); color: #000; border-radius: 12px; padding: 8px 10px;
         font-weight: 900; font-size: 16px; position: relative; margin-bottom: 12px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ffd32a;
         min-width: 80px; max-width: 150px; text-align: center; opacity: 0; transform: translateY(10px);
@@ -108,9 +109,10 @@
     .bubble.hidden { opacity: 0; }
     .bubble::after {
         content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
-        border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent;
+        border-width: 8px 8px 0; border-style: solid;
+        border-color: var(--bubble-bg) transparent transparent transparent;
     }
-    .bubble.karen { background: #ff4757; color: #fff; border-color: #ff0055; box-shadow: 0 0 15px #ff0055; }
+    .bubble.karen { --bubble-bg: #ff4757; color: #fff; border-color: #ff0055; box-shadow: 0 0 15px #ff0055; }
 
     /* 客人本體 */
     .char-body {
@@ -269,7 +271,8 @@
 
         <div id="customers-row"></div>
 
-        <div id="player" style="left: 20px;">
+        <!-- 🐛 修復 #6：left 改 0，避免同 translateX 雙重偏移 -->
+        <div id="player" style="left: 0;">
             <div id="player-face">👨‍🍳</div>
             <div id="player-body"></div>
         </div>
@@ -393,6 +396,7 @@
     let customers = [];
     let currentTray = [];
     let activeOrderTimer = null;
+    let spawnTimeouts = [];   // 🐛 修復 #7
 
     const FOOD_ITEMS = [
         { name: '凍檸茶', price: 50, emoji: '🍹' },
@@ -418,6 +422,13 @@
     function startMove(dir) { player.isMoving = dir; }
     function stopMove() { player.isMoving = 0; }
 
+    // 🆕 取得客人相對 #game-area 嘅 x 座標（🐛 修復 #5 坐標系不一致）
+    function getCustomerX(c) {
+        const gameRect = document.getElementById('game-area').getBoundingClientRect();
+        const r = c.el.getBoundingClientRect();
+        return { left: r.left - gameRect.left, right: r.right - gameRect.left, width: r.width, center: r.left - gameRect.left + r.width / 2 };
+    }
+
     // 🚶 自動尋路：偵測最緊急有單客人，自動行過去
     function updateAutoMove() {
         if (interactionPanel.classList.contains('show')) return;
@@ -432,11 +443,10 @@
         });
         if (!target) return;
 
-        let cLeft = target.el.offsetLeft;
-        let cWidth = target.el.offsetWidth;
-        let targetX = cLeft + cWidth / 2 - player.width / 2 - 20;
-        let gameW = document.getElementById('game-area').clientWidth;
-        let maxX = gameW - player.width - 20;
+        const cx = getCustomerX(target);
+        const gameW = document.getElementById('game-area').clientWidth;
+        const maxX = gameW - player.width - 20;
+        let targetX = cx.center - player.width / 2;
         targetX = Math.max(20, Math.min(targetX, maxX));
 
         let dx = targetX - player.x;
@@ -448,11 +458,11 @@
         }
     }
 
-    // 🆕 重置氣泡內聯樣式（變西客 / 賠錢道歉時用）
+    // 🆕 重置氣泡內聯樣式（含 CSS 變量 --bubble-bg）
     function resetBubbleStyle(c) {
         c.bubbleEl.style.fontSize = '';
-        c.bubbleEl.style.background = '';
         c.bubbleEl.style.color = '';
+        c.bubbleEl.style.removeProperty('--bubble-bg');
     }
 
     function updateLoop() {
@@ -463,13 +473,13 @@
                 if (c.state === 'waiting' || c.state === 'karen') {
                     c.patience -= 0.2;
 
-                    // 🆕 等太久抱怨（只喺 waiting 狀態，未變西客）
+                    // 等太久抱怨（只喺 waiting 狀態）
                     if (c.state === 'waiting') {
                         if (c.patience <= 60 && c.waitStage === 0) {
                             c.waitStage = 1;
                             c.bubbleEl.innerText = t('longWait1');
                             c.bubbleEl.style.fontSize = '10px';
-                            c.bubbleEl.style.background = '#ffeaa7';
+                            c.bubbleEl.style.setProperty('--bubble-bg', '#ffeaa7');
                             c.bubbleEl.style.color = '#333';
                             c.bubbleEl.classList.add('show');
                             playSound('click');
@@ -477,7 +487,7 @@
                             c.waitStage = 2;
                             c.bubbleEl.innerText = t('longWait2');
                             c.bubbleEl.style.fontSize = '10px';
-                            c.bubbleEl.style.background = '#ffb8b8';
+                            c.bubbleEl.style.setProperty('--bubble-bg', '#ffb8b8');
                             c.bubbleEl.style.color = '#000';
                             playSound('fail');
                         }
@@ -493,33 +503,42 @@
                         resetBubbleStyle(c);
                         playSound('fail');
                     }
-                    if (c.patience <= 0) {
+
+                    // 🐛 修復 #3：耐性歸零後延遲清除，釋放座位
+                    if (c.patience <= 0 && c.state !== 'angry') {
                         c.patience = 0;
                         c.state = 'angry';
                         c.el.querySelector('.char-face').innerText = '💀';
+                        c.bubbleEl.innerText = '💀';
                         reputation = Math.max(0, reputation - 15);
                         uiReputation.innerText = reputation;
                         playSound('fail');
                         if (reputation <= 0) gameOver();
+                        setTimeout(() => clearCustomer(c), 1500);
                     }
+
                     c.el.querySelector('.patience-fill').style.width = `${c.patience}%`;
                     if (c.patience < 30) c.el.querySelector('.patience-fill').style.background = '#ff0055';
                 }
             });
 
+            // 🐛 修復 #4/#5：只選 waiting/karen，並選最近嘅客人
             let nearC = null;
+            let nearDist = Infinity;
+            const pCenter = player.x + player.width / 2;
             customers.forEach(c => {
-                let cLeft = c.el.offsetLeft;
-                let cRight = cLeft + c.el.offsetWidth;
-                if (player.x + player.width > cLeft - 20 && player.x < cRight + 20) {
-                    nearC = c;
+                if (c.state !== 'waiting' && c.state !== 'karen') return;
+                const cx = getCustomerX(c);
+                if (player.x + player.width > cx.left - 20 && player.x < cx.right + 20) {
+                    const d = Math.abs(pCenter - cx.center);
+                    if (d < nearDist) { nearDist = d; nearC = c; }
                 }
             });
 
             if (nearC && !interactionPanel.classList.contains('show')) {
                 showInteraction(nearC);
-            } else if (!nearC && interactionPanel.classList.contains('show') && panelTitle.innerText !== t('kitchenLabel')) {
-                if (panelTitle.innerText !== t('guestName') && panelTitle.innerText !== t('karenTitle')) hidePanel();
+            } else if (!nearC && interactionPanel.classList.contains('show')) {
+                hidePanel();
             }
         }
         requestAnimationFrame(updateLoop);
@@ -544,8 +563,9 @@
 
         let el = document.createElement('div');
         el.className = 'customer';
+        // 🐛 修復 #1：氣泡初始留空，唔好顯示食物 emoji（否則泄露答案）
         el.innerHTML = `
-            <div class="bubble">${food.emoji || ''}</div>
+            <div class="bubble"></div>
             <div class="char-body" style="background: ${color};">
                 <div class="char-face">^ ^</div>
             </div>
@@ -614,7 +634,8 @@
                     c.el.querySelector('.char-face').innerText = '^ ^';
                     c.el.querySelector('.char-face').style.color = '#000';
                     c.bubbleEl.className = 'bubble show';
-                    c.bubbleEl.innerText = c.food.emoji || '';
+                    // 🐛 修復 #2：唔好顯示食物 emoji，改為中性表情
+                    c.bubbleEl.innerText = '😊';
                     hidePanel(); playSound('click');
                 } else alert('你連 $100 都冇，等執笠啦！');
             };
@@ -750,8 +771,12 @@
         hidePanel();
         
         if (window.spawnInterval) clearInterval(window.spawnInterval);
+        // 🐛 修復 #7：清理舊 timeout，防止重開疊加生成
+        spawnTimeouts.forEach(t => clearTimeout(t));
+        spawnTimeouts = [];
         window.spawnInterval = setInterval(() => { if (state === 'playing' && Math.random() < 0.8) spawnCustomer(); }, 5000);
-        setTimeout(spawnCustomer, 1000); setTimeout(spawnCustomer, 3000);
+        spawnTimeouts.push(setTimeout(spawnCustomer, 1000));
+        spawnTimeouts.push(setTimeout(spawnCustomer, 3000));
     }
 
     startGame();
