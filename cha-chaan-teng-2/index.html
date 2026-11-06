@@ -19,20 +19,20 @@
     
     /* 標準三件套 - 返回按鈕 */
     .back-btn {
-        position: fixed; top: 15px; left: 15px; z-index: 99999;
-        padding: 8px 16px; background: rgba(10,10,20,0.85); color: var(--neon-blue);
+        position: fixed; top: 10px; left: 10px; z-index: 99999;
+        padding: 6px 12px; background: rgba(10,10,20,0.85); color: var(--neon-blue);
         border: 2px solid var(--neon-blue); border-radius: 8px; text-decoration: none;
-        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(0,210,211,0.5); transition: 0.2s;
+        font-weight: bold; font-size: 13px; box-shadow: 0 0 10px rgba(0,210,211,0.5); transition: 0.2s;
         font-family: 'Orbitron', sans-serif;
     }
     .back-btn:active { transform: scale(0.95); background: var(--neon-blue); color: #000; }
     
     /* 語言切換按鈕 */
     .lang-btn {
-        position: fixed; top: 15px; right: 15px; z-index: 99999;
-        padding: 8px 12px; background: rgba(10,10,20,0.85); color: var(--neon-gold);
+        position: fixed; top: 10px; right: 10px; z-index: 99999;
+        padding: 6px 12px; background: rgba(10,10,20,0.85); color: var(--neon-gold);
         border: 2px solid var(--neon-gold); border-radius: 8px; text-decoration: none;
-        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(255,211,42,0.5);
+        font-weight: bold; font-size: 13px; box-shadow: 0 0 10px rgba(255,211,42,0.5);
         transition: 0.2s; font-family: 'Noto Sans HK', sans-serif; cursor: pointer;
     }
     .lang-btn:active { transform: scale(0.95); background: var(--neon-gold); color: #000; }
@@ -41,10 +41,11 @@
     #hud {
         height: 52px; background: rgba(15,15,15,0.95); border-bottom: 2px solid var(--neon-gold);
         display: flex; align-items: center; justify-content: space-between; 
-        padding: 0 105px 0 115px; /* 左避返回(115px)、右避語言(105px) */
+        padding: 0 140px 0 150px; /* 左避返回(150px)、右避語言(140px) */
         z-index: 10; flex-shrink: 0; box-shadow: 0 4px 20px rgba(255,211,42,0.2);
+        overflow: hidden; /* 防止內容溢出 */
     }
-    .stat-group { display: flex; gap: 12px; flex-shrink: 0; }
+    .stat-group { display: flex; gap: 15px; flex-shrink: 0; }
     .stat-box { display: flex; flex-direction: column; text-align: center; }
     .stat-label { font-size: 9px; color: #aaa; letter-spacing: 1px; }
     .stat-val { font-size: 16px; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); font-family: 'Orbitron', sans-serif; }
@@ -235,9 +236,9 @@
     #panel-btn-cancel { display: none !important; }
     
     @media (max-width: 768px) {
-        .back-btn { padding: 5px 10px; font-size: 11px; top: 8px; left: 8px; }
-        .lang-btn { padding: 5px 8px; font-size: 11px; top: 8px; right: 8px; }
-        #hud { height: 44px; padding: 0 70px 0 85px; } /* 手機版留白縮小 */
+        .back-btn { padding: 4px 8px; font-size: 11px; top: 8px; left: 8px; }
+        .lang-btn { padding: 4px 8px; font-size: 11px; top: 8px; right: 8px; }
+        #hud { height: 44px; padding: 0 85px 0 90px; } /* 手機版留白相應縮小 */
         .stat-group { gap: 8px; }
         .stat-val { font-size: 13px; }
         .stat-label { font-size: 8px; }
