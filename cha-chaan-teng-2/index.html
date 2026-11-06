@@ -62,11 +62,10 @@
     }
     .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
 
-    /* 遊戲主畫面區 (半邊餐廳) */
+    /* 遊戲主畫面區 */
     #game-area {
         flex: 1; position: relative; overflow: hidden;
         display: flex; flex-direction: column; justify-content: flex-end;
-        /* 完美木紋地板背景 */
         background: 
             linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)),
             repeating-linear-gradient(90deg, #2c1e16 0px, #2c1e16 40px, #3b291f 40px, #3b291f 80px);
@@ -97,7 +96,7 @@
     }
     .customer.angry { animation: shake 0.2s infinite; }
 
-    /* 對話氣泡 (記憶限時消失) */
+    /* 對話氣泡 */
     .bubble {
         background: #fff; color: #000; border-radius: 12px; padding: 8px 10px;
         font-weight: 900; font-size: 16px; position: relative; margin-bottom: 12px;
@@ -133,11 +132,11 @@
     }
     .patience-fill { height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear; }
 
-    /* 樓面公仔 (已修復頭身分離) */
+    /* 樓面公仔 */
     #player {
         position: absolute; bottom: 20px; z-index: 10; transition: transform 0.1s;
         display: flex; flex-direction: column; align-items: center;
-        width: 70px; height: 100px; /* 固定大小 */
+        width: 70px; height: 100px;
     }
     #player-body {
         width: 70px; height: 100px; background: linear-gradient(180deg, #ffd32a, #d4ac0d);
@@ -151,7 +150,7 @@
         z-index: 2;
     }
 
-    /* 底部控制區 */
+    /* 底部控制區 (保留結構，手機隱藏) */
     #controls {
         height: 85px; background: rgba(10,10,10,0.95); border-top: 2px solid #333;
         display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
@@ -165,7 +164,7 @@
     }
     .move-btn:active { transform: translateY(5px); box-shadow: none; background: rgba(255,255,255,0.2); }
 
-    /* 互動彈框 (記憶大考驗核心) */
+    /* 互動彈框 */
     #interaction-panel {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
         background: rgba(15, 15, 25, 0.98); border: 3px solid var(--neon-gold);
@@ -214,6 +213,40 @@
     
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
     @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+    /* 📱 手機優化 + 隱藏手動控制 */
+    #hud { height: 48px; padding: 0 10px; }
+    .stat-val { font-size: 15px; }
+    .stat-label { font-size: 9px; }
+    .stat-group { gap: 10px; }
+    .upgrade-btn { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+    #controls { display: none !important; }
+    #panel-btn-cancel { display: none !important; }
+    #customers-row { bottom: 90px; gap: clamp(8px, 2.5vw, 18px); padding: 0 5px; }
+    #player { bottom: 10px; width: 60px; height: 88px; }
+    #player-body { width: 60px; height: 88px; border-radius: 30px 30px 8px 8px; }
+    #player-face { width: 50px; height: 50px; font-size: 20px; left: 5px; }
+    .customer { width: 62px; }
+    .char-body { width: 48px; height: 64px; border-radius: 24px 24px 8px 8px; }
+    .char-face { width: 36px; height: 36px; font-size: 14px; top: -20px; left: 6px; border-width: 2px; }
+    .patience-bg { width: 48px; height: 6px; margin-top: 10px; }
+    .bubble { font-size: 12px; padding: 5px 7px; min-width: 55px; max-width: 110px; margin-bottom: 8px; }
+    #kitchen { width: 160px; height: 55px; }
+    .kitchen-label { font-size: 11px; }
+    #interaction-panel { padding: 14px; width: 94%; }
+    .panel-title { font-size: 16px; margin-bottom: 6px; }
+    .panel-desc { font-size: 12px; margin-bottom: 10px; min-height: 30px; }
+    .menu-btn { padding: 8px 4px; font-size: 12px; }
+    .menu-grid { gap: 5px; margin-bottom: 8px; }
+    .action-btn { padding: 9px; font-size: 13px; margin-bottom: 6px; }
+    .back-btn { padding: 5px 10px; font-size: 11px; top: 8px; left: 8px; }
+    .lang-btn { padding: 5px 8px; font-size: 11px; top: 8px; right: 8px; }
+    @media (max-height: 600px) {
+        #hud { height: 42px; }
+        #customers-row { bottom: 70px; }
+        #player { bottom: 6px; }
+        #kitchen { height: 45px; }
+    }
 </style>
 </head>
 <body>
@@ -354,7 +387,7 @@
 
     let state = 'menu';
     let money = 0, reputation = 100, maxSeats = 2, customerId = 0;
-    let player = { x: 20, speed: 6, isMoving: 0, width: 70 };
+    let player = { x: 20, speed: 5, isMoving: 0, width: 60 };
     let customers = [];
     let currentTray = [];
     let activeOrderTimer = null;
@@ -383,18 +416,40 @@
     function startMove(dir) { player.isMoving = dir; }
     function stopMove() { player.isMoving = 0; }
 
+    // 🚶 自動尋路：偵測最緊急有單客人，自動行過去
+    function updateAutoMove() {
+        if (interactionPanel.classList.contains('show')) return;
+
+        let target = null;
+        let minPatience = Infinity;
+        customers.forEach(c => {
+            if ((c.state === 'waiting' || c.state === 'karen') && c.patience < minPatience) {
+                minPatience = c.patience;
+                target = c;
+            }
+        });
+        if (!target) return;
+
+        let cLeft = target.el.offsetLeft;
+        let cWidth = target.el.offsetWidth;
+        let targetX = cLeft + cWidth / 2 - player.width / 2 - 20;
+        let gameW = document.getElementById('game-area').clientWidth;
+        let maxX = gameW - player.width - 20;
+        targetX = Math.max(20, Math.min(targetX, maxX));
+
+        let dx = targetX - player.x;
+        if (Math.abs(dx) > 8) {
+            let dir = Math.sign(dx);
+            player.x += dir * player.speed;
+            player.x = Math.max(20, Math.min(player.x, maxX));
+            playerEl.style.transform = `translateX(${player.x}px) scaleX(${dir})`;
+        }
+    }
+
     function updateLoop() {
         if (state !== 'playing') return;
 
-        if (player.isMoving !== 0) {
-            player.x += player.isMoving * player.speed;
-            let maxX = document.getElementById('game-area').clientWidth - player.width - 20;
-            if (player.x < 20) player.x = 20;
-            if (player.x > maxX) player.x = maxX;
-            
-            if (player.isMoving > 0) playerEl.style.transform = `translateX(${player.x}px) scaleX(1)`;
-            else playerEl.style.transform = `translateX(${player.x}px) scaleX(-1)`;
-        }
+        updateAutoMove();
 
         customers.forEach(c => {
             if (c.state === 'waiting' || c.state === 'karen') {
@@ -460,7 +515,7 @@
         let el = document.createElement('div');
         el.className = 'customer';
         el.innerHTML = `
-            <div class="bubble">${food.emoji}</div>
+            <div class="bubble">${food.emoji || ''}</div>
             <div class="char-body" style="background: ${color};">
                 <div class="char-face">^ ^</div>
             </div>
@@ -471,7 +526,8 @@
 
         let c = {
             id: id, name: name, food: food, mods: requiredMods, patience: 100, state: 'waiting',
-            el: el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill')
+            el: el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill'),
+            orderRevealed: false
         };
 
         customers.push(c);
@@ -491,21 +547,27 @@
 
         if (c.state === 'waiting') {
             panelTitle.innerText = t('guestName') + c.name;
-            panelDesc.innerHTML = t('wantToOrder') + `<span style="color:#ff0055; font-size:20px;">${getFoodName(c.food.name)} ${c.mods.map(m=>getModName(m)).join(' ')}</span>`;
-            
-            // 👇 記憶大考驗核心：2秒後張單消失 👇
-            activeOrderTimer = setTimeout(() => {
-                if (interactionPanel.classList.contains('show') && c.state === 'waiting') {
-                    panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
-                    showMenuButtons(c); // 顯示餐牌讓玩家憑記憶撳
-                }
-            }, 2000);
 
-            panelBtn.innerText = t('takeOrder');
-            panelBtn.style.display = 'block';
-            panelBtn.onclick = () => {
-                hidePanel();
-            };
+            if (c.orderRevealed) {
+                // 已睇過訂單 → 直接顯示餐牌，憑記憶落單
+                panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
+                showMenuButtons(c);
+            } else {
+                // 第一次 → 顯示訂單 2 秒
+                c.orderRevealed = true;
+                panelDesc.innerHTML = t('wantToOrder') + `<span style="color:#ff0055; font-size:20px;">${getFoodName(c.food.name)} ${c.mods.map(m=>getModName(m)).join(' ')}</span>`;
+
+                activeOrderTimer = setTimeout(() => {
+                    if (interactionPanel.classList.contains('show') && c.state === 'waiting') {
+                        panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
+                        showMenuButtons(c);
+                    }
+                }, 2000);
+
+                panelBtn.innerText = t('takeOrder');
+                panelBtn.style.display = 'block';
+                panelBtn.onclick = () => hidePanel();
+            }
         } else if (c.state === 'karen') {
             panelTitle.innerText = t('karenTitle');
             panelTitle.style.color = '#ff0055';
@@ -517,11 +579,12 @@
             panelBtn.onclick = () => {
                 if (money >= 100) {
                     money -= 100; uiMoney.innerText = `$${money}`;
-                    c.state = 'waiting'; c.patience = 100; c.el.classList.remove('angry');
+                    c.state = 'waiting'; c.patience = 100; c.orderRevealed = false;
+                    c.el.classList.remove('angry');
                     c.el.querySelector('.char-face').innerText = '^ ^';
                     c.el.querySelector('.char-face').style.color = '#000';
                     c.bubbleEl.className = 'bubble show';
-                    c.bubbleEl.innerText = c.food.emoji;
+                    c.bubbleEl.innerText = c.food.emoji || '';
                     hidePanel(); playSound('click');
                 } else alert('你連 $100 都冇，等執笠啦！');
             };
