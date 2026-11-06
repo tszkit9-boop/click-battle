@@ -323,6 +323,7 @@
             guestName: "客人：", wantToOrder: "佢想點：", takeOrder: "接單 (送到廚房)", karenTitle: "西客投訴！",
             apologize: "💰 賠錢道歉 ($100)", fightBack: "📢 大聲反擊投訴", serveFood: "出餐",
             cancel: "取消/離開", wrongOrder: "❌ 撳錯嘢！", orderTimeUp: "⏰ 張單消失啦！快啲憑記憶撳！",
+            longWait1: "等好耐喇…", longWait2: "仲未到？",
             food: { "凍檸茶": "🍹凍檸茶", "熱奶茶": "☕熱奶茶", "西多士": "🍞西多士", "乾炒牛河": "🍜乾炒牛河" },
             mods: { "少甜": "少甜", "走冰": "走冰", "加底": "加底", "飛沙走奶": "飛沙走奶" },
             names: ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'],
@@ -336,6 +337,7 @@
             guestName: "客人：", wantToOrder: "他想点：", takeOrder: "接单 (送到厨房)", karenTitle: "奇葩顾客投诉！",
             apologize: "💰 赔钱道歉 ($100)", fightBack: "📢 大声反击投诉", serveFood: "出餐",
             cancel: "取消/离开", wrongOrder: "❌ 点错了！", orderTimeUp: "⏰ 订单消失啦！快凭记忆点！",
+            longWait1: "等好久了…", longWait2: "还没到？",
             food: { "凍檸茶": "🍹冰柠檬茶", "熱奶茶": "☕热奶茶", "西多士": "🍞吐司", "乾炒牛河": "🍜干炒牛河" },
             mods: { "少甜": "少甜", "走冰": "去冰", "加底": "加底", "飛沙走奶": "飞沙走奶" },
             names: ['陈先生', '李太太', '张小姐', '王叔', '小明', '阿珍', '刘经理', '黄师傅'],
@@ -393,10 +395,10 @@
     let activeOrderTimer = null;
 
     const FOOD_ITEMS = [
-        { name: '凍檸茶', price: 50 },
-        { name: '熱奶茶', price: 60 },
-        { name: '西多士', price: 80 },
-        { name: '乾炒牛河', price: 120 }
+        { name: '凍檸茶', price: 50, emoji: '🍹' },
+        { name: '熱奶茶', price: 60, emoji: '☕' },
+        { name: '西多士', price: 80, emoji: '🍞' },
+        { name: '乾炒牛河', price: 120, emoji: '🍜' }
     ];
     const MODS = ['少甜', '走冰', '加底', '飛沙走奶'];
     const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
@@ -446,52 +448,80 @@
         }
     }
 
+    // 🆕 重置氣泡內聯樣式（變西客 / 賠錢道歉時用）
+    function resetBubbleStyle(c) {
+        c.bubbleEl.style.fontSize = '';
+        c.bubbleEl.style.background = '';
+        c.bubbleEl.style.color = '';
+    }
+
     function updateLoop() {
-        if (state !== 'playing') return;
+        if (state === 'playing') {
+            updateAutoMove();
 
-        updateAutoMove();
+            customers.forEach(c => {
+                if (c.state === 'waiting' || c.state === 'karen') {
+                    c.patience -= 0.2;
 
-        customers.forEach(c => {
-            if (c.state === 'waiting' || c.state === 'karen') {
-                c.patience -= 0.2;
-                if (c.patience <= 20 && c.state === 'waiting') {
-                    c.state = 'karen';
-                    c.el.classList.add('angry');
-                    c.el.querySelector('.char-face').innerText = '> <';
-                    c.el.querySelector('.char-face').style.color = '#ff0055';
-                    c.bubbleEl.className = 'bubble show karen';
-                    c.bubbleEl.innerText = '📢';
-                    playSound('fail');
+                    // 🆕 等太久抱怨（只喺 waiting 狀態，未變西客）
+                    if (c.state === 'waiting') {
+                        if (c.patience <= 60 && c.waitStage === 0) {
+                            c.waitStage = 1;
+                            c.bubbleEl.innerText = t('longWait1');
+                            c.bubbleEl.style.fontSize = '10px';
+                            c.bubbleEl.style.background = '#ffeaa7';
+                            c.bubbleEl.style.color = '#333';
+                            c.bubbleEl.classList.add('show');
+                            playSound('click');
+                        } else if (c.patience <= 35 && c.waitStage === 1) {
+                            c.waitStage = 2;
+                            c.bubbleEl.innerText = t('longWait2');
+                            c.bubbleEl.style.fontSize = '10px';
+                            c.bubbleEl.style.background = '#ffb8b8';
+                            c.bubbleEl.style.color = '#000';
+                            playSound('fail');
+                        }
+                    }
+
+                    if (c.patience <= 20 && c.state === 'waiting') {
+                        c.state = 'karen';
+                        c.el.classList.add('angry');
+                        c.el.querySelector('.char-face').innerText = '> <';
+                        c.el.querySelector('.char-face').style.color = '#ff0055';
+                        c.bubbleEl.className = 'bubble show karen';
+                        c.bubbleEl.innerText = '📢';
+                        resetBubbleStyle(c);
+                        playSound('fail');
+                    }
+                    if (c.patience <= 0) {
+                        c.patience = 0;
+                        c.state = 'angry';
+                        c.el.querySelector('.char-face').innerText = '💀';
+                        reputation = Math.max(0, reputation - 15);
+                        uiReputation.innerText = reputation;
+                        playSound('fail');
+                        if (reputation <= 0) gameOver();
+                    }
+                    c.el.querySelector('.patience-fill').style.width = `${c.patience}%`;
+                    if (c.patience < 30) c.el.querySelector('.patience-fill').style.background = '#ff0055';
                 }
-                if (c.patience <= 0) {
-                    c.patience = 0;
-                    c.state = 'angry';
-                    c.el.querySelector('.char-face').innerText = '💀';
-                    reputation = Math.max(0, reputation - 15);
-                    uiReputation.innerText = reputation;
-                    playSound('fail');
-                    if (reputation <= 0) gameOver();
+            });
+
+            let nearC = null;
+            customers.forEach(c => {
+                let cLeft = c.el.offsetLeft;
+                let cRight = cLeft + c.el.offsetWidth;
+                if (player.x + player.width > cLeft - 20 && player.x < cRight + 20) {
+                    nearC = c;
                 }
-                c.el.querySelector('.patience-fill').style.width = `${c.patience}%`;
-                if (c.patience < 30) c.el.querySelector('.patience-fill').style.background = '#ff0055';
-            }
-        });
+            });
 
-        let nearC = null;
-        customers.forEach(c => {
-            let cLeft = c.el.offsetLeft;
-            let cRight = cLeft + c.el.offsetWidth;
-            if (player.x + player.width > cLeft - 20 && player.x < cRight + 20) {
-                nearC = c;
+            if (nearC && !interactionPanel.classList.contains('show')) {
+                showInteraction(nearC);
+            } else if (!nearC && interactionPanel.classList.contains('show') && panelTitle.innerText !== t('kitchenLabel')) {
+                if (panelTitle.innerText !== t('guestName') && panelTitle.innerText !== t('karenTitle')) hidePanel();
             }
-        });
-
-        if (nearC && !interactionPanel.classList.contains('show')) {
-            showInteraction(nearC);
-        } else if (!nearC && interactionPanel.classList.contains('show') && panelTitle.innerText !== t('kitchenLabel')) {
-            if (panelTitle.innerText !== t('guestName') && panelTitle.innerText !== t('karenTitle')) hidePanel();
         }
-
         requestAnimationFrame(updateLoop);
     }
 
@@ -527,7 +557,8 @@
         let c = {
             id: id, name: name, food: food, mods: requiredMods, patience: 100, state: 'waiting',
             el: el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill'),
-            orderRevealed: false
+            orderRevealed: false,
+            waitStage: 0
         };
 
         customers.push(c);
@@ -549,11 +580,9 @@
             panelTitle.innerText = t('guestName') + c.name;
 
             if (c.orderRevealed) {
-                // 已睇過訂單 → 直接顯示餐牌，憑記憶落單
                 panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
                 showMenuButtons(c);
             } else {
-                // 第一次 → 顯示訂單 2 秒
                 c.orderRevealed = true;
                 panelDesc.innerHTML = t('wantToOrder') + `<span style="color:#ff0055; font-size:20px;">${getFoodName(c.food.name)} ${c.mods.map(m=>getModName(m)).join(' ')}</span>`;
 
@@ -562,7 +591,7 @@
                         panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
                         showMenuButtons(c);
                     }
-                }, 2000);
+                }, 30000);
 
                 panelBtn.innerText = t('takeOrder');
                 panelBtn.style.display = 'block';
@@ -579,7 +608,8 @@
             panelBtn.onclick = () => {
                 if (money >= 100) {
                     money -= 100; uiMoney.innerText = `$${money}`;
-                    c.state = 'waiting'; c.patience = 100; c.orderRevealed = false;
+                    c.state = 'waiting'; c.patience = 100; c.orderRevealed = false; c.waitStage = 0;
+                    resetBubbleStyle(c);
                     c.el.classList.remove('angry');
                     c.el.querySelector('.char-face').innerText = '^ ^';
                     c.el.querySelector('.char-face').style.color = '#000';
@@ -640,6 +670,7 @@
         if (isCorrect) {
             playSound('success');
             c.state = 'eating'; c.bubbleEl.innerText = '😋';
+            resetBubbleStyle(c);
             hidePanel();
             setTimeout(() => {
                 if (c.state === 'eating') {
@@ -656,6 +687,10 @@
                 c.state = 'karen';
                 c.el.classList.add('angry');
                 c.el.querySelector('.char-face').innerText = '> <';
+                c.el.querySelector('.char-face').style.color = '#ff0055';
+                c.bubbleEl.className = 'bubble show karen';
+                c.bubbleEl.innerText = '📢';
+                resetBubbleStyle(c);
             }
             currentTray = [];
             trayDisplay.innerHTML = '';
@@ -720,7 +755,7 @@
     }
 
     startGame();
-    updateLoop();
+    requestAnimationFrame(updateLoop);
 </script>
 
 <!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
