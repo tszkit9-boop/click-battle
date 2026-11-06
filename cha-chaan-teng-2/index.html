@@ -6,24 +6,16 @@
 <title>🧠 茶記點餐：記憶大考驗</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
-    
     :root {
-        --bg-dark: #0a0a14;
-        --neon-blue: #00d2d3;
-        --neon-pink: #ff0055;
-        --neon-gold: #ffd32a;
-        --text-light: #fff;
+        --bg-dark: #0a0a14; --neon-blue: #00d2d3; --neon-pink: #ff0055;
+        --neon-gold: #ffd32a; --text-light: #fff;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-    
     body {
         background: var(--bg-dark); color: var(--text-light); font-family: 'Noto Sans HK', sans-serif;
         height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
         background: radial-gradient(circle at center, #1a1a2e 0%, #050510 100%);
     }
-
-    /* 👇 返回大廳按鈕 👇 */
     .back-btn {
         position: fixed; top: 15px; left: 15px; z-index: 99999;
         padding: 8px 16px; background: rgba(10,10,20,0.85); color: var(--neon-blue);
@@ -32,18 +24,14 @@
         font-family: 'Orbitron', sans-serif;
     }
     .back-btn:active { transform: scale(0.95); background: var(--neon-blue); color: #000; }
-
-    /* 🌐 語言切換按鈕 */
     .lang-btn {
         position: fixed; top: 15px; right: 15px; z-index: 99999;
         padding: 8px 12px; background: rgba(10,10,20,0.85); color: var(--neon-gold);
         border: 2px solid var(--neon-gold); border-radius: 8px; text-decoration: none;
-        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(255,211,42,0.5); transition: 0.2s;
-        font-family: 'Noto Sans HK', sans-serif; cursor: pointer;
+        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(255,211,42,0.5);
+        transition: 0.2s; font-family: 'Noto Sans HK', sans-serif; cursor: pointer;
     }
     .lang-btn:active { transform: scale(0.95); background: var(--neon-gold); color: #000; }
-
-    /* 頂部 HUD */
     #hud {
         height: 60px; background: rgba(15,15,15,0.95); border-bottom: 2px solid var(--neon-gold);
         display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
@@ -54,15 +42,22 @@
     .stat-label { font-size: 10px; color: #aaa; letter-spacing: 1px; }
     .stat-val { font-size: 18px; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); font-family: 'Orbitron', sans-serif; }
     .stat-val.hp { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
-    
+    .stat-val.best { color: #ff9f43; text-shadow: 0 0 10px #ff9f43; }
+    .stat-val.combo { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
+    .hud-right { display: flex; gap: 6px; align-items: center; }
+    .icon-btn {
+        width: 32px; height: 32px; background: rgba(255,255,255,0.08); border: 1px solid #555;
+        border-radius: 6px; color: #fff; font-size: 16px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; transition: 0.15s;
+    }
+    .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
     .upgrade-btn {
-        padding: 8px 15px; background: linear-gradient(180deg, #2ed573, #27ae60); border: none;
+        padding: 8px 12px; background: linear-gradient(180deg, #2ed573, #27ae60); border: none;
         border-radius: 8px; color: #fff; font-weight: 900; cursor: pointer;
         box-shadow: 0 4px 0 #145a32; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif;
+        font-size: 12px;
     }
     .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
-
-    /* 遊戲主畫面區 */
     #game-area {
         flex: 1; position: relative; overflow: hidden;
         display: flex; flex-direction: column; justify-content: flex-end;
@@ -71,8 +66,6 @@
             repeating-linear-gradient(90deg, #2c1e16 0px, #2c1e16 40px, #3b291f 40px, #3b291f 80px);
         box-shadow: inset 0 0 100px rgba(0,0,0,1);
     }
-
-    /* 廚房窗口 */
     #kitchen {
         position: absolute; top: 0; left: 50%; transform: translateX(-50%);
         width: 220px; height: 80px; background: linear-gradient(to bottom, #111, #050505);
@@ -82,21 +75,20 @@
         z-index: 5; transition: 0.3s;
     }
     .kitchen-label { font-size: 13px; color: #888; font-weight: bold; }
-
-    /* 客人區 */
     #customers-row {
         position: absolute; bottom: 120px; width: 100%;
         display: flex; justify-content: center; gap: 40px; align-items: flex-end;
         padding: 0 20px;
     }
-
     .customer {
         display: flex; flex-direction: column; align-items: center;
         transition: all 0.3s; width: 80px; position: relative;
     }
     .customer.angry { animation: shake 0.2s infinite; }
-
-    /* 對話氣泡（用 --bubble-bg 控制箭頭顏色） */
+    .customer.leaving { animation: floatAway 0.8s forwards; }
+    .customer.vip .char-body { border-color: gold; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.3), 0 0 25px gold; }
+    .customer.vip .char-face { border-color: gold; }
+    @keyframes floatAway { to { transform: translateY(-120px) scale(0.8); opacity: 0; } }
     .bubble {
         --bubble-bg: #fff;
         background: var(--bubble-bg); color: #000; border-radius: 12px; padding: 8px 10px;
@@ -113,8 +105,6 @@
         border-color: var(--bubble-bg) transparent transparent transparent;
     }
     .bubble.karen { --bubble-bg: #ff4757; color: #fff; border-color: #ff0055; box-shadow: 0 0 15px #ff0055; }
-
-    /* 客人本體 */
     .char-body {
         width: 60px; height: 80px; border-radius: 30px 30px 10px 10px;
         box-shadow: inset -10px -10px 20px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.5);
@@ -126,15 +116,11 @@
         position: absolute; top: -25px; left: 4px; border: 3px solid rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold;
     }
-
-    /* 耐性條 */
     .patience-bg {
         width: 60px; height: 8px; background: #222; border-radius: 4px; margin-top: 15px;
         overflow: hidden; border: 1px solid #000; box-shadow: inset 0 0 5px #000;
     }
     .patience-fill { height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear; }
-
-    /* 樓面公仔 */
     #player {
         position: absolute; bottom: 20px; z-index: 10; transition: transform 0.1s;
         display: flex; flex-direction: column; align-items: center;
@@ -151,8 +137,6 @@
         display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;
         z-index: 2;
     }
-
-    /* 底部控制區 (保留結構，手機隱藏) */
     #controls {
         height: 85px; background: rgba(10,10,10,0.95); border-top: 2px solid #333;
         display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
@@ -165,28 +149,22 @@
         transition: 0.1s;
     }
     .move-btn:active { transform: translateY(5px); box-shadow: none; background: rgba(255,255,255,0.2); }
-
-    /* 互動彈框 */
     #interaction-panel {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
         background: rgba(15, 15, 25, 0.98); border: 3px solid var(--neon-gold);
         border-radius: 20px; padding: 20px; z-index: 50; text-align: center;
         box-shadow: 0 0 50px rgba(255,211,42,0.5); backdrop-filter: blur(10px);
         opacity: 0; pointer-events: none; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        width: 90%; max-width: 340px;
+        width: 90%; max-width: 340px; max-height: 90vh; overflow-y: auto;
     }
     #interaction-panel.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
     .panel-title { color: var(--neon-gold); font-size: 20px; font-weight: 900; margin-bottom: 10px; }
     .panel-desc { font-size: 14px; color: #ddd; margin-bottom: 15px; line-height: 1.5; min-height: 40px; }
-    
-    /* 餐牌撳掣 */
     .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
     .menu-btn { background: #333; color: #fff; border: 1px solid #555; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 3px 0 #000; }
     .menu-btn:active { transform: translateY(3px); box-shadow: none; }
     .menu-btn.mod { background: #2c3e50; border-color: #00d2d3; color: #00d2d3; }
-    
     .tray-display { min-height: 30px; background: #000; border-radius: 8px; margin-bottom: 10px; padding: 5px; font-size: 12px; color: #ffd32a; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center; }
-
     .action-btn {
         width: 100%; padding: 12px; border: none; border-radius: 8px;
         font-size: 16px; font-weight: 900; cursor: pointer; margin-bottom: 8px;
@@ -196,58 +174,88 @@
     .btn-blue { background: linear-gradient(180deg, #00d2d3, #008b8b); color: #fff; box-shadow: 0 4px 0 #004d4d; }
     .btn-red { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; box-shadow: 0 4px 0 #7b241c; }
     .action-btn:active { transform: translateY(4px); box-shadow: none; }
-
-    /* 升級商店 & 彈窗 */
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
     .modal.active { display: flex; }
     .modal-box {
         background: linear-gradient(135deg, #1e1e2f, #0a0a10); border: 3px solid var(--neon-blue);
-        border-radius: 20px; padding: 30px 20px; width: 100%; max-width: 360px; box-shadow: 0 0 60px rgba(0,210,211,0.4);
-        text-align: center;
+        border-radius: 20px; padding: 30px 20px; width: 100%; max-width: 360px;
+        box-shadow: 0 0 60px rgba(0,210,211,0.4); text-align: center;
+        max-height: 90vh; overflow-y: auto;
     }
-    .modal-box h2 { color: var(--neon-blue); font-size: 26px; margin-bottom: 25px; text-shadow: 0 0 15px var(--neon-blue); }
+    .modal-box h2 { color: var(--neon-blue); font-size: 24px; margin-bottom: 20px; text-shadow: 0 0 15px var(--neon-blue); }
     .shop-item { background: rgba(255,255,255,0.05); border: 1px solid #444; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
     .shop-info { text-align: left; }
     .shop-info b { display: block; font-size: 16px; color: #fff; margin-bottom: 4px; }
     .shop-info small { font-size: 13px; color: #aaa; }
     .buy-btn { padding: 10px 18px; background: var(--neon-gold); color: #000; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; transition: 0.1s; }
     .buy-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-    
+    .ach-list { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+    .ach-item {
+        background: rgba(255,255,255,0.05); border: 1px solid #444; border-radius: 10px;
+        padding: 10px; display: flex; align-items: center; gap: 10px;
+    }
+    .ach-item.unlocked { border-color: var(--neon-gold); background: rgba(255,211,42,0.1); }
+    .ach-item.locked { opacity: 0.4; }
+    .ach-icon { font-size: 24px; }
+    .ach-info b { display: block; font-size: 14px; color: #fff; margin-bottom: 2px; }
+    .ach-info small { font-size: 12px; color: #aaa; }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-    @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-
-    /* 📱 手機優化 + 隱藏手動控制 */
-    #hud { height: 48px; padding: 0 10px; }
-    .stat-val { font-size: 15px; }
-    .stat-label { font-size: 9px; }
-    .stat-group { gap: 10px; }
-    .upgrade-btn { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+    #combo-toast {
+        position: fixed; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0);
+        font-family: 'Orbitron', sans-serif; font-size: 48px; font-weight: 900;
+        color: var(--neon-gold); text-shadow: 0 0 20px var(--neon-gold), 0 0 40px var(--neon-gold);
+        z-index: 150; pointer-events: none; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #combo-toast.show { transform: translate(-50%, -50%) scale(1); }
+    #achievement-toast {
+        position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-100px);
+        background: linear-gradient(135deg, #ffd32a, #ff9f43); color: #000;
+        padding: 12px 24px; border-radius: 30px; font-weight: 900; font-size: 16px;
+        z-index: 150; box-shadow: 0 0 30px rgba(255,211,42,0.8);
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap;
+    }
+    #achievement-toast.show { transform: translateX(-50%) translateY(0); }
+    #pause-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+        display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+    }
+    #pause-overlay.active { display: flex; }
+    #pause-overlay h2 { color: var(--neon-gold); font-size: 40px; text-shadow: 0 0 20px var(--neon-gold); }
+    /* 📱 手機優化 */
+    #hud { height: 48px; padding: 0 8px; }
+    .stat-val { font-size: 14px; }
+    .stat-label { font-size: 8px; }
+    .stat-group { gap: 8px; }
+    .upgrade-btn { padding: 5px 8px; font-size: 11px; border-radius: 6px; }
+    .icon-btn { width: 26px; height: 26px; font-size: 13px; }
     #controls { display: none !important; }
     #panel-btn-cancel { display: none !important; }
-    #customers-row { bottom: 90px; gap: clamp(8px, 2.5vw, 18px); padding: 0 5px; }
+    #customers-row { bottom: 90px; gap: clamp(6px, 2vw, 16px); padding: 0 5px; }
     #player { bottom: 10px; width: 60px; height: 88px; }
     #player-body { width: 60px; height: 88px; border-radius: 30px 30px 8px 8px; }
     #player-face { width: 50px; height: 50px; font-size: 20px; left: 5px; }
-    .customer { width: 62px; }
-    .char-body { width: 48px; height: 64px; border-radius: 24px 24px 8px 8px; }
-    .char-face { width: 36px; height: 36px; font-size: 14px; top: -20px; left: 6px; border-width: 2px; }
-    .patience-bg { width: 48px; height: 6px; margin-top: 10px; }
-    .bubble { font-size: 12px; padding: 5px 7px; min-width: 55px; max-width: 110px; margin-bottom: 8px; }
-    #kitchen { width: 160px; height: 55px; }
-    .kitchen-label { font-size: 11px; }
-    #interaction-panel { padding: 14px; width: 94%; }
-    .panel-title { font-size: 16px; margin-bottom: 6px; }
-    .panel-desc { font-size: 12px; margin-bottom: 10px; min-height: 30px; }
-    .menu-btn { padding: 8px 4px; font-size: 12px; }
-    .menu-grid { gap: 5px; margin-bottom: 8px; }
-    .action-btn { padding: 9px; font-size: 13px; margin-bottom: 6px; }
+    .customer { width: 60px; }
+    .char-body { width: 46px; height: 62px; border-radius: 23px 23px 8px 8px; }
+    .char-face { width: 34px; height: 34px; font-size: 13px; top: -18px; left: 6px; border-width: 2px; }
+    .patience-bg { width: 46px; height: 6px; margin-top: 10px; }
+    .bubble { font-size: 11px; padding: 5px 6px; min-width: 50px; max-width: 100px; margin-bottom: 8px; }
+    #kitchen { width: 140px; height: 50px; }
+    .kitchen-label { font-size: 10px; }
+    #interaction-panel { padding: 12px; width: 94%; }
+    .panel-title { font-size: 15px; margin-bottom: 6px; }
+    .panel-desc { font-size: 11px; margin-bottom: 8px; min-height: 28px; }
+    .menu-btn { padding: 7px 3px; font-size: 11px; }
+    .menu-grid { gap: 4px; margin-bottom: 6px; }
+    .action-btn { padding: 8px; font-size: 12px; margin-bottom: 5px; }
     .back-btn { padding: 5px 10px; font-size: 11px; top: 8px; left: 8px; }
     .lang-btn { padding: 5px 8px; font-size: 11px; top: 8px; right: 8px; }
+    #combo-toast { font-size: 34px; }
+    #achievement-toast { font-size: 13px; padding: 10px 18px; top: 60px; }
     @media (max-height: 600px) {
-        #hud { height: 42px; }
+        #hud { height: 40px; }
         #customers-row { bottom: 70px; }
         #player { bottom: 6px; }
-        #kitchen { height: 45px; }
+        #kitchen { height: 42px; }
     }
 </style>
 </head>
@@ -260,18 +268,20 @@
         <div class="stat-group">
             <div class="stat-box"><span class="stat-label" id="ui-money-label">營業額</span><span class="stat-val" id="ui-money">$0</span></div>
             <div class="stat-box"><span class="stat-label" id="ui-rep-label">聲譽</span><span class="stat-val hp" id="ui-reputation">100</span></div>
+            <div class="stat-box"><span class="stat-label">🏆 最佳</span><span class="stat-val best" id="ui-best">$0</span></div>
+            <div class="stat-box"><span class="stat-label">🔥 連擊</span><span class="stat-val combo" id="ui-combo">×0</span></div>
         </div>
-        <button class="upgrade-btn" onclick="openShop()" id="ui-upgrade-btn">🏪 餐廳升級</button>
+        <div class="hud-right">
+            <button class="icon-btn" id="btn-pause" onclick="togglePause()">⏸️</button>
+            <button class="icon-btn" id="btn-sound" onclick="toggleSound()">🔊</button>
+            <button class="icon-btn" onclick="openAchievements()">🏆</button>
+            <button class="upgrade-btn" onclick="openShop()" id="ui-upgrade-btn">🏪 升級</button>
+        </div>
     </div>
 
     <div id="game-area">
-        <div id="kitchen">
-            <div class="kitchen-label" id="ui-kitchen-label">🍳 廚房出餐區</div>
-        </div>
-
+        <div id="kitchen"><div class="kitchen-label" id="ui-kitchen-label">🍳 廚房出餐區</div></div>
         <div id="customers-row"></div>
-
-        <!-- 🐛 修復 #6：left 改 0，避免同 translateX 雙重偏移 -->
         <div id="player" style="left: 0;">
             <div id="player-face">👨‍🍳</div>
             <div id="player-body"></div>
@@ -305,6 +315,42 @@
         </div>
     </div>
 
+    <div id="delivery-modal" class="modal">
+        <div class="modal-box" style="border-color: var(--neon-gold);">
+            <h2 style="color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold);">📞 外賣電話！</h2>
+            <p style="color:#aaa; font-size:13px; margin-bottom:8px;">倒數 <span id="delivery-timer" style="color:#ff0055; font-weight:900;">15</span> 秒</p>
+            <div style="background:#000; border-radius:8px; padding:10px; margin-bottom:10px; font-size:14px; color:#ffd32a; line-height:1.5;">
+                電話訂單：<span id="delivery-order-text"></span>
+            </div>
+            <div class="tray-display" id="delivery-tray-display">（按下面餐牌落單）</div>
+            <div class="menu-grid" id="delivery-menu-grid"></div>
+            <button class="action-btn btn-green" onclick="confirmDeliveryOrder()">✅ 確認外賣</button>
+        </div>
+    </div>
+
+    <div id="achievements-modal" class="modal">
+        <div class="modal-box">
+            <h2 style="color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold);">🏆 成就</h2>
+            <div class="ach-list" id="ach-list"></div>
+            <button class="action-btn btn-blue" style="margin-top:15px;" onclick="closeAchievements()">關閉</button>
+        </div>
+    </div>
+
+    <div id="tutorial-modal" class="modal">
+        <div class="modal-box" style="border-color: var(--neon-gold);">
+            <h2 style="color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold);">🎓 新手教學</h2>
+            <div style="text-align:left; color:#ddd; line-height:1.9; margin-bottom:20px; font-size:14px;">
+                <p>1️⃣ 客人入座，訂單會喺面板顯示</p>
+                <p>2️⃣ 訂單限時消失，請記住！</p>
+                <p>3️⃣ 你嘅公仔會自動行去客人身邊</p>
+                <p>4️⃣ 憑記憶撳餐牌落單</p>
+                <p>5️⃣ 連續成功可獲得連擊加成 ×2/×3</p>
+                <p>6️⃣ 客人變西客可按「大聲反擊」加聲譽</p>
+            </div>
+            <button class="action-btn btn-green" onclick="closeTutorial()">明白！開始玩</button>
+        </div>
+    </div>
+
     <div id="gameover-modal" class="modal">
         <div class="modal-box" style="border-color: var(--neon-pink);">
             <h2 style="color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink);" id="ui-gameover-title">💀 執笠啦！</h2>
@@ -314,12 +360,19 @@
         </div>
     </div>
 
+    <div id="pause-overlay" onclick="togglePause()">
+        <h2>⏸️ 暫停中</h2>
+    </div>
+
+    <div id="combo-toast"></div>
+    <div id="achievement-toast"></div>
+
 <script>
     window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
     const i18n = {
         yue: {
-            langBtn: "🌐 普通話", back: "⬅ 返回大廳", moneyLabel: "營業額", repLabel: "聲譽", upgradeBtn: "🏪 餐廳升級",
+            langBtn: "🌐 普通話", back: "⬅ 返回大廳", moneyLabel: "營業額", repLabel: "聲譽", upgradeBtn: "🏪 升級",
             kitchenLabel: "🍳 廚房出餐區", controlHint: "向左行 | 向右行", shopTitle: "🏪 餐廳升級",
             shopSeat: "🪑 增加座位", shopSeatDesc: "容量上限 +1 (目前 ", shopClose: "關閉",
             gameoverTitle: "💀 執笠啦！", gameoverDesc: "單日營業額：", restart: "🔄 重新開檔", goLobby: "🏠 返回大廳",
@@ -327,13 +380,16 @@
             apologize: "💰 賠錢道歉 ($100)", fightBack: "📢 大聲反擊投訴", serveFood: "出餐",
             cancel: "取消/離開", wrongOrder: "❌ 撳錯嘢！", orderTimeUp: "⏰ 張單消失啦！快啲憑記憶撳！",
             longWait1: "等好耐喇…", longWait2: "仲未到？",
-            food: { "凍檸茶": "🍹凍檸茶", "熱奶茶": "☕熱奶茶", "西多士": "🍞西多士", "乾炒牛河": "🍜乾炒牛河" },
-            mods: { "少甜": "少甜", "走冰": "走冰", "加底": "加底", "飛沙走奶": "飛沙走奶" },
+            food: { 
+                "凍檸茶": "🍹凍檸茶", "熱奶茶": "☕熱奶茶", "凍咖啡": "🥤凍咖啡", "鴛鴦": "🍵鴛鴦",
+                "西多士": "🍞西多士", "奶油多": "🥐奶油多", "菠蘿油": "🍔菠蘿油", "乾炒牛河": "🍜乾炒牛河"
+            },
+            mods: { "少甜": "少甜", "走冰": "走冰", "加底": "加底", "飛沙走奶": "飛沙走奶", "少冰": "少冰", "多糖": "多糖", "走甜": "走甜", "烘底": "烘底", "飛邊": "飛邊" },
             names: ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'],
             karenComplaints: ["我要投訴！凍檸茶唔夠凍！", "叫咗走冰，點解仲有冰？", "你哋啲服務態度好差囉！", "等咗咁耐，我趕時間呀！"]
         },
         zh: {
-            langBtn: "🌐 粵語", back: "⬅ 返回大厅", moneyLabel: "营业额", repLabel: "声誉", upgradeBtn: "🏪 餐厅升级",
+            langBtn: "🌐 粵語", back: "⬅ 返回大厅", moneyLabel: "营业额", repLabel: "声誉", upgradeBtn: "🏪 升级",
             kitchenLabel: "🍳 厨房出餐区", controlHint: "向左行 | 向右行", shopTitle: "🏪 餐厅升级",
             shopSeat: "🪑 增加座位", shopSeatDesc: "容量上限 +1 (目前 ", shopClose: "关闭",
             gameoverTitle: "💀 倒闭啦！", gameoverDesc: "单日营业额：", restart: "🔄 重新开档", goLobby: "🏠 返回大厅",
@@ -341,8 +397,11 @@
             apologize: "💰 赔钱道歉 ($100)", fightBack: "📢 大声反击投诉", serveFood: "出餐",
             cancel: "取消/离开", wrongOrder: "❌ 点错了！", orderTimeUp: "⏰ 订单消失啦！快凭记忆点！",
             longWait1: "等好久了…", longWait2: "还没到？",
-            food: { "凍檸茶": "🍹冰柠檬茶", "熱奶茶": "☕热奶茶", "西多士": "🍞吐司", "乾炒牛河": "🍜干炒牛河" },
-            mods: { "少甜": "少甜", "走冰": "去冰", "加底": "加底", "飛沙走奶": "飞沙走奶" },
+            food: { 
+                "凍檸茶": "🍹冰柠檬茶", "熱奶茶": "☕热奶茶", "凍咖啡": "🥤冰咖啡", "鴛鴦": "🍵鸳鸯",
+                "西多士": "🍞吐司", "奶油多": "🥐奶油吐司", "菠蘿油": "🍔菠萝油", "乾炒牛河": "🍜干炒牛河"
+            },
+            mods: { "少甜": "少甜", "走冰": "去冰", "加底": "加底", "飛沙走奶": "飞沙走奶", "少冰": "少冰", "多糖": "多糖", "走甜": "去甜", "烘底": "烘底", "飛邊": "飞边" },
             names: ['陈先生', '李太太', '张小姐', '王叔', '小明', '阿珍', '刘经理', '黄师傅'],
             karenComplaints: ["我要投诉！冰柠檬茶不够冰！", "叫了去冰，为什么还有冰？", "你们服务态度好差！", "等了这么久，我赶时间啊！"]
         }
@@ -380,6 +439,8 @@
 
     const uiMoney = document.getElementById('ui-money');
     const uiReputation = document.getElementById('ui-reputation');
+    const uiBest = document.getElementById('ui-best');
+    const uiCombo = document.getElementById('ui-combo');
     const customersRow = document.getElementById('customers-row');
     const playerEl = document.getElementById('player');
     const interactionPanel = document.getElementById('interaction-panel');
@@ -390,25 +451,69 @@
     const trayDisplay = document.getElementById('tray-display');
     const menuGrid = document.getElementById('menu-grid');
 
+    // 狀態變數
     let state = 'menu';
     let money = 0, reputation = 100, maxSeats = 2, customerId = 0;
     let player = { x: 20, speed: 5, isMoving: 0, width: 60 };
     let customers = [];
     let currentTray = [];
     let activeOrderTimer = null;
-    let spawnTimeouts = [];   // 🐛 修復 #7
+    let spawnTimeouts = [];
+    let paused = false;
+    let soundOn = localStorage.getItem('chaChaanTeng_sound') !== 'off';
+    let bestMoney = parseInt(localStorage.getItem('chaChaanTeng_best') || '0') || 0;
+    let combo = 0, maxCombo = 0, totalServed = 0, correctStreak = 0, fightBackCount = 0;
+    let deliverySuccess = 0;
+    let deliveryOrder = null, deliveryTimer = null, lastDeliveryTime = 0;
+    let unlockedAchievements = [];
+    try {
+        const saved = localStorage.getItem('chaChaanTeng_achievements');
+        if (saved) unlockedAchievements = JSON.parse(saved);
+    } catch(e) {}
 
+    // 食物
     const FOOD_ITEMS = [
-        { name: '凍檸茶', price: 50, emoji: '🍹' },
-        { name: '熱奶茶', price: 60, emoji: '☕' },
-        { name: '西多士', price: 80, emoji: '🍞' },
-        { name: '乾炒牛河', price: 120, emoji: '🍜' }
+        { name: '凍檸茶', price: 50 }, { name: '熱奶茶', price: 60 },
+        { name: '凍咖啡', price: 70 }, { name: '鴛鴦', price: 80 },
+        { name: '奶油多', price: 60 }, { name: '西多士', price: 80 },
+        { name: '菠蘿油', price: 90 }, { name: '乾炒牛河', price: 120 }
     ];
-    const MODS = ['少甜', '走冰', '加底', '飛沙走奶'];
+    const MODS = ['少甜', '走冰', '加底', '飛沙走奶', '少冰', '多糖', '走甜', '烘底', '飛邊'];
     const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
+
+    // 難度階梯
+    const DIFFICULTY = [
+        { lv: 1, patienceRate: 0.2, spawnInterval: 5000, memoryTime: 30000, vipChance: 0 },
+        { lv: 2, patienceRate: 0.25, spawnInterval: 4500, memoryTime: 25000, vipChance: 0 },
+        { lv: 3, patienceRate: 0.3, spawnInterval: 4000, memoryTime: 20000, vipChance: 0.1 },
+        { lv: 4, patienceRate: 0.35, spawnInterval: 3500, memoryTime: 15000, vipChance: 0.15 },
+        { lv: 5, patienceRate: 0.4, spawnInterval: 3000, memoryTime: 12000, vipChance: 0.2 },
+        { lv: 6, patienceRate: 0.45, spawnInterval: 2500, memoryTime: 10000, vipChance: 0.25 }
+    ];
+
+    function getDifficulty() {
+        let lv = 1;
+        if (money >= 10000) lv = 6;
+        else if (money >= 6000) lv = 5;
+        else if (money >= 3000) lv = 4;
+        else if (money >= 1500) lv = 3;
+        else if (money >= 500) lv = 2;
+        return DIFFICULTY[lv - 1];
+    }
+
+    // 成就
+    const ACHIEVEMENTS = [
+        { id: 'first_serve', icon: '🥇', name: '第一單', desc: '成功出餐 1 次', check: () => totalServed >= 1 },
+        { id: 'combo_master', icon: '⚡', name: '連擊狂人', desc: '達成 ×5 連擊', check: () => maxCombo >= 5 },
+        { id: 'karen_slayer', icon: '🔥', name: '西客殺手', desc: '大聲反擊 10 次', check: () => fightBackCount >= 10 },
+        { id: 'memory_master', icon: '🧠', name: '記憶大師', desc: '連續 20 單正確', check: () => maxCombo >= 20 },
+        { id: 'delivery_pro', icon: '📞', name: '外賣達人', desc: '成功處理 5 張外賣單', check: () => deliverySuccess >= 5 },
+        { id: 'rich', icon: '💰', name: '茶記之王', desc: '最高營業額 $10000', check: () => bestMoney >= 10000 }
+    ];
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
+        if (!soundOn) return;
         try {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -416,39 +521,36 @@
             if (type === 'click') { osc.type = 'square'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
             else if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
             else if (type === 'fail') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'combo') { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(1600, audioCtx.currentTime + 0.15); gain.gain.setValueAtTime(0.08, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25); osc.start(); osc.stop(audioCtx.currentTime + 0.25); }
         } catch(e) {}
+    }
+
+    function vibrate(pattern) {
+        try { if (navigator.vibrate && soundOn) navigator.vibrate(pattern); } catch(e) {}
     }
 
     function startMove(dir) { player.isMoving = dir; }
     function stopMove() { player.isMoving = 0; }
 
-    // 🆕 取得客人相對 #game-area 嘅 x 座標（🐛 修復 #5 坐標系不一致）
     function getCustomerX(c) {
         const gameRect = document.getElementById('game-area').getBoundingClientRect();
         const r = c.el.getBoundingClientRect();
         return { left: r.left - gameRect.left, right: r.right - gameRect.left, width: r.width, center: r.left - gameRect.left + r.width / 2 };
     }
 
-    // 🚶 自動尋路：偵測最緊急有單客人，自動行過去
     function updateAutoMove() {
         if (interactionPanel.classList.contains('show')) return;
-
-        let target = null;
-        let minPatience = Infinity;
+        let target = null, minPatience = Infinity;
         customers.forEach(c => {
             if ((c.state === 'waiting' || c.state === 'karen') && c.patience < minPatience) {
-                minPatience = c.patience;
-                target = c;
+                minPatience = c.patience; target = c;
             }
         });
         if (!target) return;
-
         const cx = getCustomerX(target);
         const gameW = document.getElementById('game-area').clientWidth;
         const maxX = gameW - player.width - 20;
-        let targetX = cx.center - player.width / 2;
-        targetX = Math.max(20, Math.min(targetX, maxX));
-
+        let targetX = Math.max(20, Math.min(cx.center - player.width / 2, maxX));
         let dx = targetX - player.x;
         if (Math.abs(dx) > 8) {
             let dir = Math.sign(dx);
@@ -458,22 +560,92 @@
         }
     }
 
-    // 🆕 重置氣泡內聯樣式（含 CSS 變量 --bubble-bg）
     function resetBubbleStyle(c) {
         c.bubbleEl.style.fontSize = '';
         c.bubbleEl.style.color = '';
         c.bubbleEl.style.removeProperty('--bubble-bg');
     }
 
+    function showComboToast(text) {
+        const el = document.getElementById('combo-toast');
+        el.innerText = text;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 800);
+    }
+
+    function showAchievementToast(ach) {
+        const el = document.getElementById('achievement-toast');
+        el.innerText = `${ach.icon} 成就解鎖：${ach.name}`;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    function checkAchievements() {
+        ACHIEVEMENTS.forEach(ach => {
+            if (unlockedAchievements.includes(ach.id)) return;
+            if (ach.check()) {
+                unlockedAchievements.push(ach.id);
+                showAchievementToast(ach);
+                playSound('combo');
+            }
+        });
+        try { localStorage.setItem('chaChaanTeng_achievements', JSON.stringify(unlockedAchievements)); } catch(e) {}
+    }
+
+    function togglePause() {
+        paused = !paused;
+        document.getElementById('btn-pause').innerText = paused ? '▶️' : '⏸️';
+        document.getElementById('pause-overlay').classList.toggle('active', paused);
+        if (paused) hidePanel();
+    }
+
+    function toggleSound() {
+        soundOn = !soundOn;
+        localStorage.setItem('chaChaanTeng_sound', soundOn ? 'on' : 'off');
+        document.getElementById('btn-sound').innerText = soundOn ? '🔊' : '🔇';
+    }
+
+    function flyEmoji(emoji, fromEl, toEl) {
+        try {
+            const from = fromEl.getBoundingClientRect();
+            const to = toEl.getBoundingClientRect();
+            const el = document.createElement('div');
+            el.innerText = emoji;
+            el.style.cssText = `position:fixed; left:${from.left + from.width/2}px; top:${from.top + from.height/2}px; font-size:32px; z-index:99999; pointer-events:none; transition: all 0.6s ease-in; transform: translate(-50%, -50%);`;
+            document.body.appendChild(el);
+            requestAnimationFrame(() => {
+                el.style.left = (to.left + to.width/2) + 'px';
+                el.style.top = (to.top + to.height/2) + 'px';
+                el.style.opacity = '0';
+                el.style.transform = 'translate(-50%, -50%) scale(0.3)';
+            });
+            setTimeout(() => el.remove(), 700);
+        } catch(e) {}
+    }
+
+    function getFoodPool() {
+        const h = new Date().getHours();
+        const weights = {};
+        FOOD_ITEMS.forEach(f => weights[f.name] = 1);
+        if (h >= 6 && h < 11) { weights['熱奶茶'] = 3; weights['西多士'] = 3; weights['奶油多'] = 3; }
+        else if (h >= 11 && h < 14) { weights['乾炒牛河'] = 3; weights['菠蘿油'] = 3; }
+        else if (h >= 14 && h < 18) { weights['凍檸茶'] = 3; weights['西多士'] = 3; }
+        else if (h >= 18 && h < 22) { weights['乾炒牛河'] = 3; weights['鴛鴦'] = 3; }
+        const pool = [];
+        FOOD_ITEMS.forEach(f => { for (let i = 0; i < weights[f.name]; i++) pool.push(f); });
+        return pool;
+    }
+
     function updateLoop() {
-        if (state === 'playing') {
+        if (state === 'playing' && !paused) {
             updateAutoMove();
+            const diff = getDifficulty();
 
             customers.forEach(c => {
                 if (c.state === 'waiting' || c.state === 'karen') {
-                    c.patience -= 0.2;
+                    const rate = c.isVIP ? diff.patienceRate * 0.6 : diff.patienceRate;
+                    c.patience -= rate;
 
-                    // 等太久抱怨（只喺 waiting 狀態）
                     if (c.state === 'waiting') {
                         if (c.patience <= 60 && c.waitStage === 0) {
                             c.waitStage = 1;
@@ -504,7 +676,6 @@
                         playSound('fail');
                     }
 
-                    // 🐛 修復 #3：耐性歸零後延遲清除，釋放座位
                     if (c.patience <= 0 && c.state !== 'angry') {
                         c.patience = 0;
                         c.state = 'angry';
@@ -513,6 +684,7 @@
                         reputation = Math.max(0, reputation - 15);
                         uiReputation.innerText = reputation;
                         playSound('fail');
+                        combo = 0; correctStreak = 0;
                         if (reputation <= 0) gameOver();
                         setTimeout(() => clearCustomer(c), 1500);
                     }
@@ -522,9 +694,7 @@
                 }
             });
 
-            // 🐛 修復 #4/#5：只選 waiting/karen，並選最近嘅客人
-            let nearC = null;
-            let nearDist = Infinity;
+            let nearC = null, nearDist = Infinity;
             const pCenter = player.x + player.width / 2;
             customers.forEach(c => {
                 if (c.state !== 'waiting' && c.state !== 'karen') return;
@@ -540,47 +710,53 @@
             } else if (!nearC && interactionPanel.classList.contains('show')) {
                 hidePanel();
             }
+
+            // 外賣電話檢查
+            if (!deliveryOrder && !interactionPanel.classList.contains('show')) {
+                const hasWaiting = customers.some(c => c.state === 'waiting' || c.state === 'karen');
+                if (!hasWaiting && Date.now() - lastDeliveryTime > 120000) {
+                    startDeliveryOrder();
+                }
+            }
         }
         requestAnimationFrame(updateLoop);
     }
 
     function spawnCustomer() {
         if (state !== 'playing' || customers.length >= maxSeats) return;
-
-        let food = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+        const diff = getDifficulty();
+        const pool = getFoodPool();
+        let food = pool[Math.floor(Math.random() * pool.length)];
         let name = i18n[currentLang].names[Math.floor(Math.random() * i18n[currentLang].names.length)];
         let color = COLORS[Math.floor(Math.random() * COLORS.length)];
         let id = customerId++;
+        let isVIP = Math.random() < diff.vipChance;
         
         let requiredMods = [];
-        if (Math.random() < 0.6) {
+        if (Math.random() < (isVIP ? 0.9 : 0.6)) {
             requiredMods.push(MODS[Math.floor(Math.random() * MODS.length)]);
-            if (Math.random() < 0.3) {
+            if (Math.random() < (isVIP ? 0.7 : 0.3)) {
                 let m2 = MODS[Math.floor(Math.random() * MODS.length)];
-                if(!requiredMods.includes(m2)) requiredMods.push(m2);
+                if (!requiredMods.includes(m2)) requiredMods.push(m2);
             }
         }
 
         let el = document.createElement('div');
-        el.className = 'customer';
-        // 🐛 修復 #1：氣泡初始留空，唔好顯示食物 emoji（否則泄露答案）
+        el.className = 'customer' + (isVIP ? ' vip' : '');
         el.innerHTML = `
             <div class="bubble"></div>
             <div class="char-body" style="background: ${color};">
-                <div class="char-face">^ ^</div>
+                <div class="char-face">${isVIP ? '👑' : '^ ^'}</div>
             </div>
             <div class="patience-bg"><div class="patience-fill"></div></div>
         `;
-
         customersRow.appendChild(el);
 
         let c = {
-            id: id, name: name, food: food, mods: requiredMods, patience: 100, state: 'waiting',
-            el: el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill'),
-            orderRevealed: false,
-            waitStage: 0
+            id, name, food, mods: requiredMods, patience: 100, state: 'waiting',
+            el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill'),
+            orderRevealed: false, waitStage: 0, isVIP
         };
-
         customers.push(c);
         setTimeout(() => c.bubbleEl.classList.add('show'), 100);
     }
@@ -593,26 +769,24 @@
         menuGrid.style.display = 'none';
         trayDisplay.innerHTML = '';
         currentTray = [];
-
         if (activeOrderTimer) clearTimeout(activeOrderTimer);
 
         if (c.state === 'waiting') {
-            panelTitle.innerText = t('guestName') + c.name;
-
+            panelTitle.innerText = t('guestName') + c.name + (c.isVIP ? ' 👑' : '');
             if (c.orderRevealed) {
                 panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
                 showMenuButtons(c);
             } else {
                 c.orderRevealed = true;
                 panelDesc.innerHTML = t('wantToOrder') + `<span style="color:#ff0055; font-size:20px;">${getFoodName(c.food.name)} ${c.mods.map(m=>getModName(m)).join(' ')}</span>`;
-
+                const diff = getDifficulty();
+                let memTime = c.isVIP ? Math.floor(diff.memoryTime * 0.5) : diff.memoryTime;
                 activeOrderTimer = setTimeout(() => {
                     if (interactionPanel.classList.contains('show') && c.state === 'waiting') {
                         panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
                         showMenuButtons(c);
                     }
-                }, 30000);
-
+                }, memTime);
                 panelBtn.innerText = t('takeOrder');
                 panelBtn.style.display = 'block';
                 panelBtn.onclick = () => hidePanel();
@@ -622,7 +796,6 @@
             panelTitle.style.color = '#ff0055';
             let complaint = i18n[currentLang].karenComplaints[Math.floor(Math.random()*i18n[currentLang].karenComplaints.length)];
             panelDesc.innerHTML = `${c.name}<br>「${complaint}」`;
-            
             panelBtn.innerText = t('apologize');
             panelBtn.style.display = 'block';
             panelBtn.onclick = () => {
@@ -631,21 +804,24 @@
                     c.state = 'waiting'; c.patience = 100; c.orderRevealed = false; c.waitStage = 0;
                     resetBubbleStyle(c);
                     c.el.classList.remove('angry');
-                    c.el.querySelector('.char-face').innerText = '^ ^';
+                    c.el.querySelector('.char-face').innerText = c.isVIP ? '👑' : '^ ^';
                     c.el.querySelector('.char-face').style.color = '#000';
                     c.bubbleEl.className = 'bubble show';
-                    // 🐛 修復 #2：唔好顯示食物 emoji，改為中性表情
                     c.bubbleEl.innerText = '😊';
                     hidePanel(); playSound('click');
                 } else alert('你連 $100 都冇，等執笠啦！');
             };
-
             panelBtn2.innerText = t('fightBack');
             panelBtn2.style.display = 'block';
             panelBtn2.onclick = () => {
-                playSound('success'); c.state = 'leaving'; c.bubbleEl.innerText = '😱';
+                playSound('success');
+                c.state = 'leaving'; c.bubbleEl.innerText = '😱';
+                c.el.classList.add('leaving');
                 reputation = Math.min(100, reputation + 10); uiReputation.innerText = reputation;
-                hidePanel(); setTimeout(() => clearCustomer(c), 1000);
+                fightBackCount++;
+                checkAchievements();
+                hidePanel();
+                setTimeout(() => clearCustomer(c), 1000);
             };
         }
     }
@@ -653,7 +829,6 @@
     function showMenuButtons(c) {
         menuGrid.style.display = 'grid';
         menuGrid.innerHTML = '';
-        
         FOOD_ITEMS.forEach(f => {
             let btn = document.createElement('button');
             btn.className = 'menu-btn';
@@ -661,7 +836,6 @@
             btn.onclick = () => addToMemoryTray(f.name, getFoodName(f.name), c);
             menuGrid.appendChild(btn);
         });
-        
         MODS.forEach(m => {
             let btn = document.createElement('button');
             btn.className = 'menu-btn mod';
@@ -669,7 +843,6 @@
             btn.onclick = () => addToMemoryTray(m, getModName(m), c);
             menuGrid.appendChild(btn);
         });
-
         panelBtn.innerText = t('serveFood');
         panelBtn.style.display = 'block';
         panelBtn.onclick = () => checkMemoryServe(c);
@@ -685,25 +858,71 @@
     function checkMemoryServe(c) {
         let requiredOrder = [c.food.name, ...c.mods].sort();
         let playerOrder = [...currentTray].sort();
-        
         let isCorrect = requiredOrder.length === playerOrder.length && requiredOrder.every((val, idx) => val === playerOrder[idx]);
 
         if (isCorrect) {
             playSound('success');
+            vibrate(50);
             c.state = 'eating'; c.bubbleEl.innerText = '😋';
             resetBubbleStyle(c);
+            
+            // 計算收入
+            let base = c.food.price;
+            if (c.isVIP) base *= 2;
+            let tip = c.patience > 80 ? Math.round(base * 0.2) : 0;
+            let comboMult = 1;
+            if (combo >= 5) comboMult = 3;
+            else if (combo >= 3) comboMult = 2;
+            let earned = (base + tip) * comboMult;
+            
+            // 連擊
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            uiCombo.innerText = `×${combo}`;
+            if (comboMult > 1) { showComboToast(`×${comboMult} 連擊！`); playSound('combo'); }
+            
+            // 連續正確
+            correctStreak++;
+            if (correctStreak >= 5) {
+                reputation = Math.min(100, reputation + 5);
+                uiReputation.innerText = reputation;
+                correctStreak = 0;
+                showComboToast('聲譽 +5！');
+            }
+            
+            totalServed++;
+            
+            // 飛行動畫
+            try {
+                const panelBtnRect = panelBtn;
+                const kitchenEl = document.getElementById('kitchen');
+                flyEmoji('🍽️', panelBtnRect, kitchenEl);
+            } catch(e) {}
+            
             hidePanel();
             setTimeout(() => {
                 if (c.state === 'eating') {
                     c.state = 'leaving'; c.bubbleEl.innerText = '💰';
-                    money += c.food.price; uiMoney.innerText = `$${money}`; playSound('success');
-                    setTimeout(() => { clearCustomer(c); }, 1500);
+                    c.el.classList.add('leaving');
+                    money += earned; uiMoney.innerText = `$${money}`;
+                    if (money > bestMoney) {
+                        bestMoney = money;
+                        uiBest.innerText = `$${bestMoney}`;
+                        try { localStorage.setItem('chaChaanTeng_best', bestMoney.toString()); } catch(e) {}
+                    }
+                    playSound('success');
+                    vibrate([30, 30, 30]);
+                    checkAchievements();
+                    setTimeout(() => { clearCustomer(c); }, 1000);
                 }
-            }, 2000);
+            }, 1500);
         } else {
             playSound('fail');
+            vibrate([80, 40, 80]);
             panelDesc.innerHTML = `<span style="color:#ff4757;">${t('wrongOrder')}</span>`;
             c.patience -= 30;
+            combo = 0; correctStreak = 0;
+            uiCombo.innerText = '×0';
             if (c.patience <= 0) {
                 c.state = 'karen';
                 c.el.classList.add('angry');
@@ -716,6 +935,83 @@
             currentTray = [];
             trayDisplay.innerHTML = '';
         }
+    }
+
+    function startDeliveryOrder() {
+        if (state !== 'playing' || paused || deliveryOrder) return;
+        const hasWaiting = customers.some(c => c.state === 'waiting' || c.state === 'karen');
+        if (hasWaiting) return;
+        
+        const foods = [];
+        while (foods.length < 2) {
+            const f = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+            if (!foods.find(x => x.name === f.name)) foods.push(f);
+        }
+        deliveryOrder = { foods, tray: [] };
+        
+        document.getElementById('delivery-order-text').innerText = foods.map(f => getFoodName(f.name)).join(' + ');
+        document.getElementById('delivery-tray-display').innerText = '（按下面餐牌落單）';
+        
+        const grid = document.getElementById('delivery-menu-grid');
+        grid.innerHTML = '';
+        FOOD_ITEMS.forEach(f => {
+            const btn = document.createElement('button');
+            btn.className = 'menu-btn';
+            btn.innerText = getFoodName(f.name);
+            btn.onclick = () => {
+                if (deliveryOrder.tray.length >= 2) return;
+                deliveryOrder.tray.push(f.name);
+                document.getElementById('delivery-tray-display').innerText = deliveryOrder.tray.map(n => getFoodName(n)).join(' + ');
+                playSound('click');
+            };
+            grid.appendChild(btn);
+        });
+        
+        document.getElementById('delivery-modal').classList.add('active');
+        
+        let remain = 15;
+        document.getElementById('delivery-timer').innerText = remain;
+        deliveryTimer = setInterval(() => {
+            remain--;
+            document.getElementById('delivery-timer').innerText = Math.max(0, remain);
+            if (remain <= 0) endDeliveryOrder(false, true);
+        }, 1000);
+        
+        playSound('combo');
+    }
+
+    function confirmDeliveryOrder() {
+        if (!deliveryOrder) return;
+        const required = deliveryOrder.foods.map(f => f.name).sort();
+        const player = [...deliveryOrder.tray].sort();
+        const correct = required.length === player.length && required.every((v, i) => v === player[i]);
+        endDeliveryOrder(correct, false);
+    }
+
+    function endDeliveryOrder(correct, timeout) {
+        try { if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; } } catch(e) {}
+        document.getElementById('delivery-modal').classList.remove('active');
+        if (correct) {
+            money += 300;
+            deliverySuccess++;
+            uiMoney.innerText = `$${money}`;
+            if (money > bestMoney) {
+                bestMoney = money;
+                uiBest.innerText = `$${bestMoney}`;
+                try { localStorage.setItem('chaChaanTeng_best', bestMoney.toString()); } catch(e) {}
+            }
+            playSound('success');
+            vibrate([50, 50, 50]);
+            showComboToast('外賣 +$300！');
+            checkAchievements();
+        } else if (!timeout) {
+            reputation = Math.max(0, reputation - 10);
+            uiReputation.innerText = reputation;
+            playSound('fail');
+            if (reputation <= 0) gameOver();
+        }
+        deliveryOrder = null;
+        lastDeliveryTime = Date.now();
     }
 
     function hidePanel() {
@@ -737,7 +1033,6 @@
 
     function openShop() { document.getElementById('shop-modal').classList.add('active'); updateShopUI(); }
     function closeShop() { document.getElementById('shop-modal').classList.remove('active'); }
-    
     function updateShopUI() {
         document.getElementById('lvl-seat').innerText = maxSeats;
         let seatCost = 500 * Math.pow(2, maxSeats - 2);
@@ -745,13 +1040,30 @@
         btnSeat.innerText = `$${seatCost}`; btnSeat.disabled = money < seatCost || maxSeats >= 5;
         if (maxSeats >= 5) btnSeat.innerText = '滿級';
     }
-
     function buyUpgrade(type) {
         if (type === 'seat') {
             let cost = 500 * Math.pow(2, maxSeats - 2);
             if (money >= cost && maxSeats < 5) { money -= cost; maxSeats++; playSound('success'); }
         }
         uiMoney.innerText = `$${money}`; updateShopUI();
+    }
+
+    function openAchievements() {
+        const list = document.getElementById('ach-list');
+        list.innerHTML = '';
+        ACHIEVEMENTS.forEach(ach => {
+            const unlocked = unlockedAchievements.includes(ach.id);
+            const div = document.createElement('div');
+            div.className = 'ach-item ' + (unlocked ? 'unlocked' : 'locked');
+            div.innerHTML = `<span class="ach-icon">${ach.icon}</span><div class="ach-info"><b>${ach.name}</b><small>${ach.desc}</small></div>`;
+            list.appendChild(div);
+        });
+        document.getElementById('achievements-modal').classList.add('active');
+    }
+    function closeAchievements() { document.getElementById('achievements-modal').classList.remove('active'); }
+    function closeTutorial() {
+        document.getElementById('tutorial-modal').classList.remove('active');
+        try { localStorage.setItem('chaChaanTeng_tutorial', 'done'); } catch(e) {}
     }
 
     function gameOver() {
@@ -764,20 +1076,36 @@
         document.getElementById('gameover-modal').classList.remove('active');
         state = 'playing'; money = 0; reputation = 100; maxSeats = 2;
         customers = [];
+        combo = 0; correctStreak = 0; totalServed = 0;
+        deliveryOrder = null;
+        try { if (deliveryTimer) { clearInterval(deliveryTimer); deliveryTimer = null; } } catch(e) {}
+        document.getElementById('delivery-modal').classList.remove('active');
         player.x = 20;
         playerEl.style.transform = `translateX(20px) scaleX(1)`;
-        customersRow.innerHTML = ''; uiMoney.innerText = '$0'; uiReputation.innerText = '100';
+        customersRow.innerHTML = '';
+        uiMoney.innerText = '$0'; uiReputation.innerText = '100';
+        uiCombo.innerText = '×0'; uiBest.innerText = `$${bestMoney}`;
         updateLanguageUI();
         hidePanel();
         
-        if (window.spawnInterval) clearInterval(window.spawnInterval);
-        // 🐛 修復 #7：清理舊 timeout，防止重開疊加生成
-        spawnTimeouts.forEach(t => clearTimeout(t));
-        spawnTimeouts = [];
-        window.spawnInterval = setInterval(() => { if (state === 'playing' && Math.random() < 0.8) spawnCustomer(); }, 5000);
-        spawnTimeouts.push(setTimeout(spawnCustomer, 1000));
-        spawnTimeouts.push(setTimeout(spawnCustomer, 3000));
+        try {
+            if (window.spawnInterval) clearInterval(window.spawnInterval);
+            spawnTimeouts.forEach(t => clearTimeout(t));
+            spawnTimeouts = [];
+            window.spawnInterval = setInterval(() => {
+                if (state === 'playing' && !paused && Math.random() < 0.8) spawnCustomer();
+            }, 5000);
+            spawnTimeouts.push(setTimeout(spawnCustomer, 1000));
+            spawnTimeouts.push(setTimeout(spawnCustomer, 3000));
+        } catch(e) { console.error("Spawn Timer Error:", e); }
     }
+
+    // 初始化
+    try {
+        const tut = localStorage.getItem('chaChaanTeng_tutorial');
+        if (!tut) document.getElementById('tutorial-modal').classList.add('active');
+    } catch(e) {}
+    document.getElementById('btn-sound').innerText = soundOn ? '🔊' : '🔇';
 
     startGame();
     requestAnimationFrame(updateLoop);
@@ -791,17 +1119,14 @@
         const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
         let userId = localStorage.getItem('global_device_id');
         if (!userId) {
             userId = 'user_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('global_device_id', userId);
         }
-        
         let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
-        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        let gameId = pathParts[pathParts.length - 1] || 'unknown';
         const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
-        
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
                 userStatusRef.onDisconnect().remove();
