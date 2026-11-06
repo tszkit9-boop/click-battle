@@ -223,9 +223,9 @@
     #pause-overlay h2 { color: var(--neon-gold); font-size: 40px; text-shadow: 0 0 20px var(--neon-gold); }
     /* 📱 手機優化 */
     #hud { height: 48px; padding: 0 8px; }
-    .stat-val { font-size: 14px; }
+    .stat-val { font-size: 13px; }
     .stat-label { font-size: 8px; }
-    .stat-group { gap: 8px; }
+    .stat-group { gap: 6px; }
     .upgrade-btn { padding: 5px 8px; font-size: 11px; border-radius: 6px; }
     .icon-btn { width: 26px; height: 26px; font-size: 13px; }
     #controls { display: none !important; }
@@ -318,7 +318,7 @@
     <div id="delivery-modal" class="modal">
         <div class="modal-box" style="border-color: var(--neon-gold);">
             <h2 style="color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold);">📞 外賣電話！</h2>
-            <p style="color:#aaa; font-size:13px; margin-bottom:8px;">倒數 <span id="delivery-timer" style="color:#ff0055; font-weight:900;">15</span> 秒</p>
+            <p style="color:#aaa; font-size:13px; margin-bottom:8px;">倒數 <span id="delivery-timer" style="color:#ff0055; font-weight:900;">20</span> 秒</p>
             <div style="background:#000; border-radius:8px; padding:10px; margin-bottom:10px; font-size:14px; color:#ffd32a; line-height:1.5;">
                 電話訂單：<span id="delivery-order-text"></span>
             </div>
@@ -458,6 +458,7 @@
     let customers = [];
     let currentTray = [];
     let activeOrderTimer = null;
+    let currentPanelCustomer = null;
     let spawnTimeouts = [];
     let paused = false;
     let soundOn = localStorage.getItem('chaChaanTeng_sound') !== 'off';
@@ -481,23 +482,23 @@
     const MODS = ['少甜', '走冰', '加底', '飛沙走奶', '少冰', '多糖', '走甜', '烘底', '飛邊'];
     const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
 
-    // 難度階梯
+    // 🎯 難度階梯（1 分鐘變西客版）
     const DIFFICULTY = [
-        { lv: 1, patienceRate: 0.2, spawnInterval: 5000, memoryTime: 30000, vipChance: 0 },
-        { lv: 2, patienceRate: 0.25, spawnInterval: 4500, memoryTime: 25000, vipChance: 0 },
-        { lv: 3, patienceRate: 0.3, spawnInterval: 4000, memoryTime: 20000, vipChance: 0.1 },
-        { lv: 4, patienceRate: 0.35, spawnInterval: 3500, memoryTime: 15000, vipChance: 0.15 },
-        { lv: 5, patienceRate: 0.4, spawnInterval: 3000, memoryTime: 12000, vipChance: 0.2 },
-        { lv: 6, patienceRate: 0.45, spawnInterval: 2500, memoryTime: 10000, vipChance: 0.25 }
+        { lv: 1, patienceRate: 0.022, spawnInterval: 15000, memoryTime: 60000, vipChance: 0 },
+        { lv: 2, patienceRate: 0.024, spawnInterval: 14000, memoryTime: 58000, vipChance: 0 },
+        { lv: 3, patienceRate: 0.026, spawnInterval: 13000, memoryTime: 56000, vipChance: 0.05 },
+        { lv: 4, patienceRate: 0.028, spawnInterval: 12000, memoryTime: 54000, vipChance: 0.10 },
+        { lv: 5, patienceRate: 0.031, spawnInterval: 11000, memoryTime: 52000, vipChance: 0.15 },
+        { lv: 6, patienceRate: 0.034, spawnInterval: 10000, memoryTime: 50000, vipChance: 0.20 }
     ];
 
     function getDifficulty() {
         let lv = 1;
-        if (money >= 10000) lv = 6;
-        else if (money >= 6000) lv = 5;
-        else if (money >= 3000) lv = 4;
-        else if (money >= 1500) lv = 3;
-        else if (money >= 500) lv = 2;
+        if (money >= 50000) lv = 6;
+        else if (money >= 25000) lv = 5;
+        else if (money >= 12000) lv = 4;
+        else if (money >= 5000) lv = 3;
+        else if (money >= 2000) lv = 2;
         return DIFFICULTY[lv - 1];
     }
 
@@ -643,11 +644,22 @@
 
             customers.forEach(c => {
                 if (c.state === 'waiting' || c.state === 'karen') {
-                    const rate = c.isVIP ? diff.patienceRate * 0.6 : diff.patienceRate;
+                    let rate = c.isVIP ? diff.patienceRate * 0.6 : diff.patienceRate;
+
+                    // 🆕 寬限期：生成後 15 秒內耐心跌速 ×0.15（幾乎唔跌）
+                    const age = Date.now() - (c.spawnTime || 0);
+                    if (age < 15000) rate *= 0.15;
+
+                    // 🆕 面板打開且顯示此客人且訂單未消失 → 耐心完全暫停
+                    if (currentPanelCustomer === c && c.state === 'waiting' && !c.orderTimeUp) {
+                        rate = 0;
+                    }
+
                     c.patience -= rate;
 
+                    // 抱怨氣泡
                     if (c.state === 'waiting') {
-                        if (c.patience <= 60 && c.waitStage === 0) {
+                        if (c.patience <= 75 && c.waitStage === 0) {
                             c.waitStage = 1;
                             c.bubbleEl.innerText = t('longWait1');
                             c.bubbleEl.style.fontSize = '10px';
@@ -655,7 +667,7 @@
                             c.bubbleEl.style.color = '#333';
                             c.bubbleEl.classList.add('show');
                             playSound('click');
-                        } else if (c.patience <= 35 && c.waitStage === 1) {
+                        } else if (c.patience <= 50 && c.waitStage === 1) {
                             c.waitStage = 2;
                             c.bubbleEl.innerText = t('longWait2');
                             c.bubbleEl.style.fontSize = '10px';
@@ -665,7 +677,8 @@
                         }
                     }
 
-                    if (c.patience <= 20 && c.state === 'waiting') {
+                    // 變西客
+                    if (c.patience <= 30 && c.state === 'waiting') {
                         c.state = 'karen';
                         c.el.classList.add('angry');
                         c.el.querySelector('.char-face').innerText = '> <';
@@ -676,6 +689,7 @@
                         playSound('fail');
                     }
 
+                    // 走人
                     if (c.patience <= 0 && c.state !== 'angry') {
                         c.patience = 0;
                         c.state = 'angry';
@@ -685,6 +699,7 @@
                         uiReputation.innerText = reputation;
                         playSound('fail');
                         combo = 0; correctStreak = 0;
+                        uiCombo.innerText = '×0';
                         if (reputation <= 0) gameOver();
                         setTimeout(() => clearCustomer(c), 1500);
                     }
@@ -694,6 +709,7 @@
                 }
             });
 
+            // 自動偵測最近客人
             let nearC = null, nearDist = Infinity;
             const pCenter = player.x + player.width / 2;
             customers.forEach(c => {
@@ -711,10 +727,10 @@
                 hidePanel();
             }
 
-            // 外賣電話檢查
+            // 外賣電話（5 分鐘先觸發一次）
             if (!deliveryOrder && !interactionPanel.classList.contains('show')) {
                 const hasWaiting = customers.some(c => c.state === 'waiting' || c.state === 'karen');
-                if (!hasWaiting && Date.now() - lastDeliveryTime > 120000) {
+                if (!hasWaiting && Date.now() - lastDeliveryTime > 300000) {
                     startDeliveryOrder();
                 }
             }
@@ -755,7 +771,8 @@
         let c = {
             id, name, food, mods: requiredMods, patience: 100, state: 'waiting',
             el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill'),
-            orderRevealed: false, waitStage: 0, isVIP
+            orderRevealed: false, waitStage: 0, isVIP,
+            spawnTime: Date.now(), orderTimeUp: false
         };
         customers.push(c);
         setTimeout(() => c.bubbleEl.classList.add('show'), 100);
@@ -772,6 +789,7 @@
         if (activeOrderTimer) clearTimeout(activeOrderTimer);
 
         if (c.state === 'waiting') {
+            currentPanelCustomer = c;
             panelTitle.innerText = t('guestName') + c.name + (c.isVIP ? ' 👑' : '');
             if (c.orderRevealed) {
                 panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
@@ -783,6 +801,7 @@
                 let memTime = c.isVIP ? Math.floor(diff.memoryTime * 0.5) : diff.memoryTime;
                 activeOrderTimer = setTimeout(() => {
                     if (interactionPanel.classList.contains('show') && c.state === 'waiting') {
+                        c.orderTimeUp = true;
                         panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
                         showMenuButtons(c);
                     }
@@ -792,6 +811,7 @@
                 panelBtn.onclick = () => hidePanel();
             }
         } else if (c.state === 'karen') {
+            currentPanelCustomer = c;
             panelTitle.innerText = t('karenTitle');
             panelTitle.style.color = '#ff0055';
             let complaint = i18n[currentLang].karenComplaints[Math.floor(Math.random()*i18n[currentLang].karenComplaints.length)];
@@ -802,6 +822,7 @@
                 if (money >= 100) {
                     money -= 100; uiMoney.innerText = `$${money}`;
                     c.state = 'waiting'; c.patience = 100; c.orderRevealed = false; c.waitStage = 0;
+                    c.orderTimeUp = false;
                     resetBubbleStyle(c);
                     c.el.classList.remove('angry');
                     c.el.querySelector('.char-face').innerText = c.isVIP ? '👑' : '^ ^';
@@ -969,7 +990,7 @@
         
         document.getElementById('delivery-modal').classList.add('active');
         
-        let remain = 15;
+        let remain = 20;
         document.getElementById('delivery-timer').innerText = remain;
         deliveryTimer = setInterval(() => {
             remain--;
@@ -1022,6 +1043,7 @@
         menuGrid.style.display = 'none';
         trayDisplay.innerHTML = '';
         currentTray = [];
+        currentPanelCustomer = null;
         if (activeOrderTimer) clearTimeout(activeOrderTimer);
     }
 
@@ -1087,16 +1109,21 @@
         uiCombo.innerText = '×0'; uiBest.innerText = `$${bestMoney}`;
         updateLanguageUI();
         hidePanel();
+        lastDeliveryTime = Date.now();
         
         try {
             if (window.spawnInterval) clearInterval(window.spawnInterval);
             spawnTimeouts.forEach(t => clearTimeout(t));
             spawnTimeouts = [];
+            // 每秒檢查一次，按難度機率生成（真正跟 spawnInterval 走）
             window.spawnInterval = setInterval(() => {
-                if (state === 'playing' && !paused && Math.random() < 0.8) spawnCustomer();
-            }, 5000);
-            spawnTimeouts.push(setTimeout(spawnCustomer, 1000));
-            spawnTimeouts.push(setTimeout(spawnCustomer, 3000));
+                if (state !== 'playing' || paused) return;
+                const diff = getDifficulty();
+                const chancePerSecond = 1000 / diff.spawnInterval;
+                if (Math.random() < chancePerSecond) spawnCustomer();
+            }, 1000);
+            spawnTimeouts.push(setTimeout(spawnCustomer, 2000));
+            spawnTimeouts.push(setTimeout(spawnCustomer, 5000));
         } catch(e) { console.error("Spawn Timer Error:", e); }
     }
 
