@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>🍳 茶記點餐：記憶大考驗</title>
+<title>🧠 茶記點餐：記憶大考驗</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
     
@@ -62,10 +62,11 @@
     }
     .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
 
-    /* 遊戲主畫面區 (半邊餐廳視角) */
+    /* 遊戲主畫面區 (半邊餐廳) */
     #game-area {
         flex: 1; position: relative; overflow: hidden;
         display: flex; flex-direction: column; justify-content: flex-end;
+        /* 完美木紋地板背景 */
         background: 
             linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)),
             repeating-linear-gradient(90deg, #2c1e16 0px, #2c1e16 40px, #3b291f 40px, #3b291f 80px);
@@ -81,11 +82,8 @@
         box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.9);
         z-index: 5; transition: 0.3s;
     }
-    #kitchen.active { border-color: var(--neon-blue); box-shadow: 0 0 40px rgba(0,210,211,0.5); }
-    .kitchen-label { font-size: 13px; color: #888; font-weight: bold; margin-bottom: 5px; }
-    #kitchen-orders { display: flex; gap: 8px; }
-    .k-order { font-size: 26px; animation: popIn 0.3s; filter: drop-shadow(0 0 8px #fff); }
-    
+    .kitchen-label { font-size: 13px; color: #888; font-weight: bold; }
+
     /* 客人區 */
     #customers-row {
         position: absolute; bottom: 120px; width: 100%;
@@ -99,7 +97,7 @@
     }
     .customer.angry { animation: shake 0.2s infinite; }
 
-    /* 對話氣泡 (限時消失) */
+    /* 對話氣泡 (記憶限時消失) */
     .bubble {
         background: #fff; color: #000; border-radius: 12px; padding: 8px 10px;
         font-weight: 900; font-size: 16px; position: relative; margin-bottom: 12px;
@@ -135,26 +133,23 @@
     }
     .patience-fill { height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear; }
 
-    /* 樓面公仔 */
+    /* 樓面公仔 (已修復頭身分離) */
     #player {
         position: absolute; bottom: 20px; z-index: 10; transition: transform 0.1s;
         display: flex; flex-direction: column; align-items: center;
+        width: 70px; height: 100px; /* 固定大小 */
     }
     #player-body {
         width: 70px; height: 100px; background: linear-gradient(180deg, #ffd32a, #d4ac0d);
         border-radius: 35px 35px 10px 10px; box-shadow: inset -15px -15px 20px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.9);
-        position: relative; border: 4px solid #000;
+        position: absolute; bottom: 0; border: 4px solid #000;
     }
     #player-face {
         width: 60px; height: 60px; background: #ffccaa; border-radius: 50%;
-        position: absolute; top: -30px; left: 1px; border: 4px solid #000;
+        position: absolute; top: 0; left: 5px; border: 4px solid #000;
         display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;
+        z-index: 2;
     }
-    #player-carry {
-        position: absolute; top: -70px; font-size: 36px; filter: drop-shadow(0 0 15px #fff);
-        opacity: 0; transition: 0.2s;
-    }
-    #player-carry.show { opacity: 1; transform: translateY(-10px); }
 
     /* 底部控制區 */
     #controls {
@@ -170,7 +165,7 @@
     }
     .move-btn:active { transform: translateY(5px); box-shadow: none; background: rgba(255,255,255,0.2); }
 
-    /* 互動彈框 (考記憶力) */
+    /* 互動彈框 (記憶大考驗核心) */
     #interaction-panel {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
         background: rgba(15, 15, 25, 0.98); border: 3px solid var(--neon-gold);
@@ -235,15 +230,13 @@
     </div>
 
     <div id="game-area">
-        <div id="kitchen" onclick="interactKitchen()">
+        <div id="kitchen">
             <div class="kitchen-label" id="ui-kitchen-label">🍳 廚房出餐區</div>
-            <div id="kitchen-orders"></div>
         </div>
 
         <div id="customers-row"></div>
 
         <div id="player" style="left: 20px;">
-            <div id="player-carry"></div>
             <div id="player-face">👨‍🍳</div>
             <div id="player-body"></div>
         </div>
@@ -351,7 +344,6 @@
     const uiReputation = document.getElementById('ui-reputation');
     const customersRow = document.getElementById('customers-row');
     const playerEl = document.getElementById('player');
-    const playerCarry = document.getElementById('player-carry');
     const interactionPanel = document.getElementById('interaction-panel');
     const panelTitle = document.getElementById('panel-title');
     const panelDesc = document.getElementById('panel-desc');
@@ -362,15 +354,16 @@
 
     let state = 'menu';
     let money = 0, reputation = 100, maxSeats = 2, customerId = 0;
-    let player = { x: 20, speed: 6, isMoving: 0, carrying: null, width: 70 };
-    let customers = [], readyToServe = [];
+    let player = { x: 20, speed: 6, isMoving: 0, width: 70 };
+    let customers = [];
     let currentTray = [];
+    let activeOrderTimer = null;
 
     const FOOD_ITEMS = [
-        { name: '凍檸茶', price: 50, emoji: '🍹' },
-        { name: '熱奶茶', price: 60, emoji: '☕' },
-        { name: '西多士', price: 80, emoji: '🍞' },
-        { name: '乾炒牛河', price: 120, emoji: '🍜' }
+        { name: '凍檸茶', price: 50 },
+        { name: '熱奶茶', price: 60 },
+        { name: '西多士', price: 80 },
+        { name: '乾炒牛河', price: 120 }
     ];
     const MODS = ['少甜', '走冰', '加底', '飛沙走奶'];
     const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
@@ -438,7 +431,7 @@
             }
         });
 
-        if (nearC && !interactionPanel.classList.contains('show') && player.carrying === null) {
+        if (nearC && !interactionPanel.classList.contains('show')) {
             showInteraction(nearC);
         } else if (!nearC && interactionPanel.classList.contains('show') && panelTitle.innerText !== t('kitchenLabel')) {
             if (panelTitle.innerText !== t('guestName') && panelTitle.innerText !== t('karenTitle')) hidePanel();
@@ -494,28 +487,24 @@
         trayDisplay.innerHTML = '';
         currentTray = [];
 
+        if (activeOrderTimer) clearTimeout(activeOrderTimer);
+
         if (c.state === 'waiting') {
             panelTitle.innerText = t('guestName') + c.name;
             panelDesc.innerHTML = t('wantToOrder') + `<span style="color:#ff0055; font-size:20px;">${getFoodName(c.food.name)} ${c.mods.map(m=>getModName(m)).join(' ')}</span>`;
             
-            setTimeout(() => {
+            // 👇 記憶大考驗核心：2秒後張單消失 👇
+            activeOrderTimer = setTimeout(() => {
                 if (interactionPanel.classList.contains('show') && c.state === 'waiting') {
                     panelDesc.innerHTML = `<span style="color:#ffd32a;">${t('orderTimeUp')}</span>`;
-                    showMenuButtons(c);
+                    showMenuButtons(c); // 顯示餐牌讓玩家憑記憶撳
                 }
-            }, 2000); // 2秒後消失
+            }, 2000);
 
             panelBtn.innerText = t('takeOrder');
             panelBtn.style.display = 'block';
             panelBtn.onclick = () => {
-                c.state = 'ordered';
                 hidePanel();
-                setTimeout(() => {
-                    readyToServe.push({food: c.food, mods: c.mods, customer: c});
-                    renderKitchen(); playSound('success');
-                }, c.food.price * 20); // 模擬煮食時間
-                c.bubbleEl.classList.remove('show');
-                setTimeout(() => { c.bubbleEl.innerText = '⏳'; c.bubbleEl.classList.add('show'); }, 500);
             };
         } else if (c.state === 'karen') {
             panelTitle.innerText = t('karenTitle');
@@ -544,11 +533,6 @@
                 reputation = Math.min(100, reputation + 10); uiReputation.innerText = reputation;
                 hidePanel(); setTimeout(() => clearCustomer(c), 1000);
             };
-        } else if (c.state === 'ordered' && player.carrying) {
-            panelTitle.innerText = t('serveFood'); 
-            panelDesc.innerHTML = t('wantToOrder') + getFoodName(player.carrying.food.name);
-            panelBtn.innerText = t('serveFood'); panelBtn.style.display = 'block';
-            panelBtn.onclick = () => serveFood(c);
         }
     }
 
@@ -623,48 +607,7 @@
         menuGrid.style.display = 'none';
         trayDisplay.innerHTML = '';
         currentTray = [];
-    }
-
-    function renderKitchen() {
-        document.getElementById('kitchen-orders').innerHTML = '';
-        readyToServe.forEach((item, index) => {
-            let span = document.createElement('span'); span.className = 'k-order';
-            span.innerText = item.food.emoji; span.style.cursor = 'pointer';
-            span.onclick = () => {
-                if (player.carrying) return alert('你已經拎住嘢食啦！');
-                player.carrying = item; readyToServe.splice(index, 1);
-                playerCarry.innerText = item.food.emoji; playerCarry.classList.add('show');
-                renderKitchen(); playSound('click'); hidePanel();
-            };
-            document.getElementById('kitchen-orders').appendChild(span);
-        });
-    }
-
-    function interactKitchen() {
-        if (player.x > document.getElementById('game-area').clientWidth/2 - 100 && player.x < document.getElementById('game-area').clientWidth/2 + 100) {
-            if (readyToServe.length > 0 && !player.carrying) {
-                let item = readyToServe.shift();
-                player.carrying = item; 
-                playerCarry.innerText = item.food.emoji; playerCarry.classList.add('show');
-                renderKitchen(); playSound('click'); hidePanel();
-            }
-        }
-    }
-
-    function serveFood(c) {
-        if (!player.carrying) return;
-        if (player.carrying.food.name !== c.food.name) { playSound('fail'); alert(t('wrongOrder')); return; }
-
-        playSound('success'); player.carrying = null; playerCarry.classList.remove('show');
-        c.state = 'eating'; c.bubbleEl.innerText = '😋'; hidePanel();
-        
-        setTimeout(() => {
-            if (c.state === 'eating') {
-                c.state = 'leaving'; c.bubbleEl.innerText = '💰';
-                money += c.food.price; uiMoney.innerText = `$${money}`; playSound('success');
-                setTimeout(() => { clearCustomer(c); }, 1500);
-            }
-        }, 3000);
+        if (activeOrderTimer) clearTimeout(activeOrderTimer);
     }
 
     function clearCustomer(c) {
@@ -701,10 +644,12 @@
     function startGame() {
         document.getElementById('gameover-modal').classList.remove('active');
         state = 'playing'; money = 0; reputation = 100; maxSeats = 2;
-        customers = []; readyToServe = [];
-        player.carrying = null; playerCarry.classList.remove('show');
+        customers = [];
+        player.x = 20;
+        playerEl.style.transform = `translateX(20px) scaleX(1)`;
         customersRow.innerHTML = ''; uiMoney.innerText = '$0'; uiReputation.innerText = '100';
-        renderKitchen(); updateLanguageUI();
+        updateLanguageUI();
+        hidePanel();
         
         if (window.spawnInterval) clearInterval(window.spawnInterval);
         window.spawnInterval = setInterval(() => { if (state === 'playing' && Math.random() < 0.8) spawnCustomer(); }, 5000);
