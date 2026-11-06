@@ -16,6 +16,8 @@
         height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
         background: radial-gradient(circle at center, #1a1a2e 0%, #050510 100%);
     }
+    
+    /* 標準三件套 - 返回按鈕 */
     .back-btn {
         position: fixed; top: 15px; left: 15px; z-index: 99999;
         padding: 8px 16px; background: rgba(10,10,20,0.85); color: var(--neon-blue);
@@ -24,6 +26,8 @@
         font-family: 'Orbitron', sans-serif;
     }
     .back-btn:active { transform: scale(0.95); background: var(--neon-blue); color: #000; }
+    
+    /* 語言切換按鈕 */
     .lang-btn {
         position: fixed; top: 15px; right: 15px; z-index: 99999;
         padding: 8px 12px; background: rgba(10,10,20,0.85); color: var(--neon-gold);
@@ -32,32 +36,36 @@
         transition: 0.2s; font-family: 'Noto Sans HK', sans-serif; cursor: pointer;
     }
     .lang-btn:active { transform: scale(0.95); background: var(--neon-gold); color: #000; }
+    
+    /* 🐛 修復：頂部 HUD 預留左右空間，避開 Fixed 按鈕 */
     #hud {
-        height: 60px; background: rgba(15,15,15,0.95); border-bottom: 2px solid var(--neon-gold);
-        display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
+        height: 52px; background: rgba(15,15,15,0.95); border-bottom: 2px solid var(--neon-gold);
+        display: flex; align-items: center; justify-content: space-between; 
+        padding: 0 105px 0 115px; /* 左避返回(115px)、右避語言(105px) */
         z-index: 10; flex-shrink: 0; box-shadow: 0 4px 20px rgba(255,211,42,0.2);
     }
-    .stat-group { display: flex; gap: 15px; }
+    .stat-group { display: flex; gap: 12px; flex-shrink: 0; }
     .stat-box { display: flex; flex-direction: column; text-align: center; }
-    .stat-label { font-size: 10px; color: #aaa; letter-spacing: 1px; }
-    .stat-val { font-size: 18px; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); font-family: 'Orbitron', sans-serif; }
+    .stat-label { font-size: 9px; color: #aaa; letter-spacing: 1px; }
+    .stat-val { font-size: 16px; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); font-family: 'Orbitron', sans-serif; }
     .stat-val.hp { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
     .stat-val.best { color: #ff9f43; text-shadow: 0 0 10px #ff9f43; }
     .stat-val.combo { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
-    .hud-right { display: flex; gap: 6px; align-items: center; }
+    .hud-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
     .icon-btn {
-        width: 32px; height: 32px; background: rgba(255,255,255,0.08); border: 1px solid #555;
-        border-radius: 6px; color: #fff; font-size: 16px; cursor: pointer;
+        width: 30px; height: 30px; background: rgba(255,255,255,0.08); border: 1px solid #555;
+        border-radius: 6px; color: #fff; font-size: 15px; cursor: pointer;
         display: flex; align-items: center; justify-content: center; transition: 0.15s;
     }
     .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
     .upgrade-btn {
-        padding: 8px 12px; background: linear-gradient(180deg, #2ed573, #27ae60); border: none;
+        padding: 6px 10px; background: linear-gradient(180deg, #2ed573, #27ae60); border: none;
         border-radius: 8px; color: #fff; font-weight: 900; cursor: pointer;
         box-shadow: 0 4px 0 #145a32; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif;
         font-size: 12px;
     }
     .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
+    
     #game-area {
         flex: 1; position: relative; overflow: hidden;
         display: flex; flex-direction: column; justify-content: flex-end;
@@ -221,38 +229,54 @@
     }
     #pause-overlay.active { display: flex; }
     #pause-overlay h2 { color: var(--neon-gold); font-size: 40px; text-shadow: 0 0 20px var(--neon-gold); }
+    
     /* 📱 手機優化 */
-    #hud { height: 48px; padding: 0 8px; }
-    .stat-val { font-size: 13px; }
-    .stat-label { font-size: 8px; }
-    .stat-group { gap: 6px; }
-    .upgrade-btn { padding: 5px 8px; font-size: 11px; border-radius: 6px; }
-    .icon-btn { width: 26px; height: 26px; font-size: 13px; }
     #controls { display: none !important; }
     #panel-btn-cancel { display: none !important; }
-    #customers-row { bottom: 90px; gap: clamp(6px, 2vw, 16px); padding: 0 5px; }
-    #player { bottom: 10px; width: 60px; height: 88px; }
-    #player-body { width: 60px; height: 88px; border-radius: 30px 30px 8px 8px; }
-    #player-face { width: 50px; height: 50px; font-size: 20px; left: 5px; }
-    .customer { width: 60px; }
-    .char-body { width: 46px; height: 62px; border-radius: 23px 23px 8px 8px; }
-    .char-face { width: 34px; height: 34px; font-size: 13px; top: -18px; left: 6px; border-width: 2px; }
-    .patience-bg { width: 46px; height: 6px; margin-top: 10px; }
-    .bubble { font-size: 11px; padding: 5px 6px; min-width: 50px; max-width: 100px; margin-bottom: 8px; }
-    #kitchen { width: 140px; height: 50px; }
-    .kitchen-label { font-size: 10px; }
-    #interaction-panel { padding: 12px; width: 94%; }
-    .panel-title { font-size: 15px; margin-bottom: 6px; }
-    .panel-desc { font-size: 11px; margin-bottom: 8px; min-height: 28px; }
-    .menu-btn { padding: 7px 3px; font-size: 11px; }
-    .menu-grid { gap: 4px; margin-bottom: 6px; }
-    .action-btn { padding: 8px; font-size: 12px; margin-bottom: 5px; }
-    .back-btn { padding: 5px 10px; font-size: 11px; top: 8px; left: 8px; }
-    .lang-btn { padding: 5px 8px; font-size: 11px; top: 8px; right: 8px; }
-    #combo-toast { font-size: 34px; }
-    #achievement-toast { font-size: 13px; padding: 10px 18px; top: 60px; }
+    
+    @media (max-width: 768px) {
+        .back-btn { padding: 5px 10px; font-size: 11px; top: 8px; left: 8px; }
+        .lang-btn { padding: 5px 8px; font-size: 11px; top: 8px; right: 8px; }
+        #hud { height: 44px; padding: 0 70px 0 85px; } /* 手機版留白縮小 */
+        .stat-group { gap: 8px; }
+        .stat-val { font-size: 13px; }
+        .stat-label { font-size: 8px; }
+        .icon-btn { width: 26px; height: 26px; font-size: 13px; }
+        .upgrade-btn { padding: 4px 8px; font-size: 11px; }
+        
+        /* 手機版隱藏「最佳」和「連擊」以節省空間 */
+        .stat-group > .stat-box:nth-child(3),
+        .stat-group > .stat-box:nth-child(4) {
+            display: none;
+        }
+        /* 手機版隱藏「成就」按鈕 */
+        .hud-right .icon-btn:nth-child(3) {
+            display: none;
+        }
+        
+        #customers-row { bottom: 90px; gap: clamp(6px, 2vw, 16px); padding: 0 5px; }
+        #player { bottom: 10px; width: 60px; height: 88px; }
+        #player-body { width: 60px; height: 88px; border-radius: 30px 30px 8px 8px; }
+        #player-face { width: 50px; height: 50px; font-size: 20px; left: 5px; }
+        .customer { width: 60px; }
+        .char-body { width: 46px; height: 62px; border-radius: 23px 23px 8px 8px; }
+        .char-face { width: 34px; height: 34px; font-size: 13px; top: -18px; left: 6px; border-width: 2px; }
+        .patience-bg { width: 46px; height: 6px; margin-top: 10px; }
+        .bubble { font-size: 11px; padding: 5px 6px; min-width: 50px; max-width: 100px; margin-bottom: 8px; }
+        #kitchen { width: 140px; height: 50px; }
+        .kitchen-label { font-size: 10px; }
+        #interaction-panel { padding: 12px; width: 94%; }
+        .panel-title { font-size: 15px; margin-bottom: 6px; }
+        .panel-desc { font-size: 11px; margin-bottom: 8px; min-height: 28px; }
+        .menu-btn { padding: 7px 3px; font-size: 11px; }
+        .menu-grid { gap: 4px; margin-bottom: 6px; }
+        .action-btn { padding: 8px; font-size: 12px; margin-bottom: 5px; }
+        #combo-toast { font-size: 34px; }
+        #achievement-toast { font-size: 13px; padding: 10px 18px; top: 60px; }
+    }
+    
     @media (max-height: 600px) {
-        #hud { height: 40px; }
+        #hud { height: 38px; }
         #customers-row { bottom: 70px; }
         #player { bottom: 6px; }
         #kitchen { height: 42px; }
@@ -482,7 +506,7 @@
     const MODS = ['少甜', '走冰', '加底', '飛沙走奶', '少冰', '多糖', '走甜', '烘底', '飛邊'];
     const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
 
-    // 🎯 難度階梯（1 分鐘變西客版）
+    // 難度階梯
     const DIFFICULTY = [
         { lv: 1, patienceRate: 0.022, spawnInterval: 15000, memoryTime: 60000, vipChance: 0 },
         { lv: 2, patienceRate: 0.024, spawnInterval: 14000, memoryTime: 58000, vipChance: 0 },
@@ -646,11 +670,11 @@
                 if (c.state === 'waiting' || c.state === 'karen') {
                     let rate = c.isVIP ? diff.patienceRate * 0.6 : diff.patienceRate;
 
-                    // 🆕 寬限期：生成後 15 秒內耐心跌速 ×0.15（幾乎唔跌）
+                    // 寬限期：生成後 15 秒內耐心跌速 ×0.15（幾乎唔跌）
                     const age = Date.now() - (c.spawnTime || 0);
                     if (age < 15000) rate *= 0.15;
 
-                    // 🆕 面板打開且顯示此客人且訂單未消失 → 耐心完全暫停
+                    // 面板打開且顯示此客人且訂單未消失 → 耐心完全暫停
                     if (currentPanelCustomer === c && c.state === 'waiting' && !c.orderTimeUp) {
                         rate = 0;
                     }
@@ -1115,7 +1139,7 @@
             if (window.spawnInterval) clearInterval(window.spawnInterval);
             spawnTimeouts.forEach(t => clearTimeout(t));
             spawnTimeouts = [];
-            // 每秒檢查一次，按難度機率生成（真正跟 spawnInterval 走）
+            // 每秒檢查一次，按難度機率生成
             window.spawnInterval = setInterval(() => {
                 if (state !== 'playing' || paused) return;
                 const diff = getDifficulty();
