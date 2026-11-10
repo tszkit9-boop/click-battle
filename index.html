@@ -1,766 +1,332 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>呀樂遊戲工作室</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
-        
-        * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎮 呀樂遊戲工作室</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
+    
+    :root {
+        --bg-dark: #0a0a14;
+        --neon-blue: #00d2d3;
+        --neon-pink: #ff0055;
+        --neon-gold: #ffd32a;
+        --glass-bg: rgba(15, 15, 25, 0.85);
+        --text-light: #fff;
+    }
 
-        body {
-            margin: 0; padding: 0; background-color: #050510; color: #fff;
-            font-family: 'Orbitron', 'PingFang HK', sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; overflow-x: hidden; padding-bottom: 50px;
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    
+    body {
+        background: var(--bg-dark); color: var(--text-light); font-family: 'Noto Sans HK', sans-serif;
+        min-height: 100dvh; display: flex; flex-direction: column;
+        background: radial-gradient(circle at center, #1a1a2e 0%, #050510 100%);
+        overflow-y: auto; overflow-x: hidden;
+    }
 
-        .bg-grid {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 210, 211, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 210, 211, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px; z-index: -1;
-            animation: gridMove 10s linear infinite;
-        }
-        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
+    /* 頂部導航列 */
+    header {
+        position: sticky; top: 0; z-index: 100;
+        background: var(--glass-bg); backdrop-filter: blur(10px);
+        border-bottom: 2px solid var(--neon-blue);
+        padding: 15px 20px; display: flex; flex-direction: column; gap: 15px;
+        box-shadow: 0 4px 20px rgba(0,210,211,0.2);
+    }
 
-        .header-section {
-            display: flex; flex-direction: column; align-items: center;
-            margin-top: 40px; margin-bottom: 20px; text-align: center;
-        }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+    .online-status { font-size: 13px; color: #fff; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; border: 1px solid #444;}
+    .online-dot { width: 8px; height: 8px; background: #2ed573; border-radius: 50%; box-shadow: 0 0 10px #2ed573; animation: pulse 2s infinite; }
 
-        h1 {
-            color: #00d2d3; text-shadow: 0 0 10px #00d2d3, 0 0 20px #00d2d3;
-            font-size: clamp(32px, 8vw, 48px); 
-            letter-spacing: 6px; margin: 0; white-space: nowrap;
-        }
+    /* 搜尋與分類 */
+    .search-row { display: flex; gap: 10px; }
+    .search-input {
+        flex: 1; padding: 10px 15px; background: rgba(255,255,255,0.1); border: 1px solid #555;
+        border-radius: 8px; color: #fff; font-size: 14px; font-family: 'Noto Sans HK', sans-serif;
+        outline: none; transition: 0.2s;
+    }
+    .search-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0,210,211,0.3); }
 
-        .divider {
-            width: 150px; height: 3px;
-            background: linear-gradient(90deg, transparent, #00d2d3, transparent);
-            margin: 15px 0 10px 0;
-        }
+    .categories {
+        display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;
+        scrollbar-width: none; /* Firefox */
+    }
+    .categories::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
+    .cat-btn {
+        padding: 6px 15px; background: transparent; border: 1px solid #555; border-radius: 20px;
+        color: #aaa; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; transition: 0.2s;
+    }
+    .cat-btn.active { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
 
-        p.subtitle {
-            color: #a4b0be; font-size: 14px; letter-spacing: 2px; margin: 0;
-        }
+    /* 遊戲列表 Grid */
+    main { padding: 20px; flex: 1; }
+    .game-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
+        max-width: 1200px; margin: 0 auto;
+    }
+    
+    @media (max-width: 600px) {
+        .game-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
 
-        .controls-section {
-            width: 100%; max-width: 1000px; padding: 0 20px; margin-bottom: 30px;
-            display: flex; flex-direction: column; gap: 15px; align-items: center;
-        }
+    /* 遊戲卡片 */
+    .game-card {
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 15px; overflow: hidden; cursor: pointer; transition: 0.2s;
+        display: flex; flex-direction: column; position: relative;
+    }
+    .game-card:active { transform: scale(0.95); }
+    .game-card:hover { border-color: var(--neon-blue); box-shadow: 0 0 20px rgba(0,210,211,0.3); }
 
-        .search-bar {
-            position: relative; width: 100%; max-width: 400px;
-        }
-        .search-bar input {
-            width: 100%; padding: 12px 20px 12px 45px;
-            background: rgba(17, 17, 17, 0.8); border: 2px solid #333;
-            border-radius: 30px; color: #fff; font-family: inherit; font-size: 14px;
-            outline: none; transition: 0.3s;
-        }
-        .search-bar input:focus { border-color: #00d2d3; box-shadow: 0 0 15px rgba(0,210,211,0.3); }
-        .search-icon {
-            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-            color: #a4b0be; font-size: 18px; pointer-events: none;
-        }
+    .card-header {
+        height: 100px; display: flex; align-items: center; justify-content: center; font-size: 50px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.5));
+        position: relative;
+    }
+    
+    .card-category {
+        position: absolute; top: 8px; right: 8px; font-size: 10px; background: rgba(0,0,0,0.6);
+        padding: 2px 8px; border-radius: 10px; color: #ccc; border: 1px solid rgba(255,255,255,0.2);
+    }
 
-        .tag-container {
-            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
-        }
-        .tag-btn {
-            padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid #444;
-            color: #a4b0be; border-radius: 20px; font-family: inherit; font-size: 12px;
-            cursor: pointer; transition: 0.2s;
-        }
-        .tag-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .tag-btn.active { background: #00d2d3; color: #000; border-color: #00d2d3; font-weight: bold; box-shadow: 0 0 15px rgba(0,210,211,0.4); }
+    .card-body { padding: 10px; flex: 1; display: flex; flex-direction: column; }
+    .card-title { font-size: 14px; font-weight: 900; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-desc { font-size: 11px; color: #aaa; margin-bottom: 10px; flex: 1; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+    
+    .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 8px; }
+    .best-score { font-size: 11px; color: var(--neon-gold); font-family: 'Orbitron', sans-serif; font-weight: bold; }
+    .play-count { font-size: 10px; color: #777; }
 
-        .rank-btn-main {
-            padding: 10px 25px; background: linear-gradient(135deg, #f1c40f, #e67e22);
-            color: #000; border: none; border-radius: 30px; font-family: inherit;
-            font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 5px 0 #b38f00;
-            transition: 0.1s; display: flex; align-items: center; gap: 8px;
-        }
-        .rank-btn-main:active { transform: translateY(5px); box-shadow: none; }
+    /* 底部 */
+    footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
 
-        .games-container {
-            display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;
-            max-width: 1000px; padding: 0 20px;
-        }
-
-        .game-card {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 280px; height: 180px; border-radius: 15px;
-            background: rgba(17, 17, 17, 0.8); border: 2px solid rgba(0, 210, 211, 0.3);
-            text-decoration: none; color: #fff; position: relative; overflow: hidden;
-            transition: all 0.3s ease; box-shadow: 0 0 15px rgba(0,0,0,0.5); cursor: pointer;
-        }
-        .game-card h2 { margin: 0; font-size: 22px; z-index: 2; transition: all 0.3s; }
-        .game-card p { color: #a4b0be; font-size: 12px; z-index: 2; margin-top: 10px; transition: all 0.3s; text-align: center; padding: 0 10px; }
-        
-        /* 🔥 總遊玩人數標籤 (右上角) */
-        .hot-badge {
-            position: absolute; top: 10px; right: 10px;
-            background: rgba(255, 71, 87, 0.9); color: #fff;
-            padding: 4px 8px; border-radius: 12px; font-size: 11px;
-            font-weight: bold; font-family: 'Orbitron', sans-serif;
-            box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
-            z-index: 10; display: none; pointer-events: none;
-        }
-
-        /* 🟢 即時在線人數標籤 (左上角) */
-        .online-badge {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(46, 204, 113, 0.9); color: #fff;
-            padding: 4px 8px; border-radius: 12px; font-size: 11px;
-            font-weight: bold; font-family: 'Orbitron', sans-serif;
-            box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
-            z-index: 10; display: none; pointer-events: none;
-        }
-
-        .card-grudge:hover { border-color: #ff4757; box-shadow: 0 0 30px rgba(255, 71, 87, 0.6); transform: translateY(-10px); }
-        .card-grudge h2 { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
-        .card-line:hover { border-color: #66fcf1; box-shadow: 0 0 30px rgba(102, 252, 241, 0.6); transform: translateY(-10px); }
-        .card-line h2 { color: #66fcf1; text-shadow: 0 0 10px #66fcf1; }
-        .card-music:hover { border-color: #e056fd; box-shadow: 0 0 30px rgba(224, 86, 253, 0.6); transform: translateY(-10px); }
-        .card-music h2 { color: #e056fd; text-shadow: 0 0 10px #e056fd; }
-        .card-maze:hover { border-color: #2ed573; box-shadow: 0 0 30px rgba(46, 213, 115, 0.6); transform: translateY(-10px); }
-        .card-maze h2 { color: #2ed573; text-shadow: 0 0 10px #2ed573; }
-        .card-monopoly:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
-        .card-monopoly h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
-        .card-miner:hover { border-color: #b87333; box-shadow: 0 0 30px rgba(184, 115, 51, 0.6); transform: translateY(-10px); }
-        .card-miner h2 { color: #b87333; text-shadow: 0 0 10px #b87333; }
-        .card-survivor:hover { border-color: #c084fc; box-shadow: 0 0 30px rgba(192, 132, 252, 0.6); transform: translateY(-10px); }
-        .card-survivor h2 { color: #c084fc; text-shadow: 0 0 10px #c084fc; }
-        .card-escape:hover { border-color: #00d2d3; box-shadow: 0 0 30px rgba(0, 210, 211, 0.6); transform: translateY(-10px); }
-        .card-escape h2 { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
-        .card-trader:hover { border-color: #ffd32a; box-shadow: 0 0 30px rgba(255, 211, 42, 0.6); transform: translateY(-10px); }
-        .card-trader h2 { color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
-        .card-hole:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.6); transform: translateY(-10px); }
-        .card-hole h2 { color: #9b59b6; text-shadow: 0 0 10px #9b59b6; }
-        .card-slave:hover { border-color: #e67e22; box-shadow: 0 0 30px rgba(230, 126, 34, 0.6); transform: translateY(-10px); }
-        .card-slave h2 { color: #e67e22; text-shadow: 0 0 10px #e67e22; }
-        .card-gingerbread:hover { border-color: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.6); transform: translateY(-10px); }
-        .card-gingerbread h2 { color: #e74c3c; text-shadow: 0 0 10px #e74c3c; }
-        .card-zen:hover { border-color: #a29bfe; box-shadow: 0 0 30px rgba(162, 155, 254, 0.6); transform: translateY(-10px); }
-        .card-zen h2 { color: #a29bfe; text-shadow: 0 0 10px #a29bfe; }
-        .card-carpet:hover { border-color: #00cec9; box-shadow: 0 0 30px rgba(0, 206, 201, 0.6); transform: translateY(-10px); }
-        .card-carpet h2 { color: #00cec9; text-shadow: 0 0 10px #00cec9; }
-        .card-loan { border-color: rgba(241, 196, 15, 0.3); }
-        .card-loan:hover { border-color: #f1c40f; box-shadow: 0 0 30px rgba(241, 196, 15, 0.6); transform: translateY(-10px); }
-        .card-loan h2 { color: #f1c40f; text-shadow: 0 0 10px #f1c40f; }
-        .card-judge { border-color: rgba(142, 68, 173, 0.3); }
-        .card-judge:hover { border-color: #9b59b6; box-shadow: 0 0 30px rgba(155, 89, 182, 0.8); transform: translateY(-10px); }
-        .card-judge h2 { color: #d2b4de; text-shadow: 0 0 10px #9b59b6, 0 0 20px #9b59b6; }
-        .card-klt { border-color: rgba(199, 125, 255, 0.4); }
-        .card-klt:hover { border-color: #c77dff; box-shadow: 0 0 30px rgba(199, 125, 255, 0.7), 0 0 60px rgba(255, 209, 102, 0.25); transform: translateY(-10px); }
-        .card-klt h2 { color: #c77dff; text-shadow: 0 0 10px #c77dff, 0 0 20px #ffd166; }
-        .card-doomsday { border-color: rgba(46, 204, 113, 0.3); }
-        .card-doomsday:hover { border-color: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.6), inset 0 0 20px rgba(46, 204, 113, 0.2); transform: translateY(-10px); }
-        .card-doomsday h2 { color: #2ecc71; text-shadow: 0 0 10px #2ecc71, 0 0 20px #f1c40f; }
-        .card-eggwaffle { border-color: rgba(255, 159, 67, 0.4); }
-        .card-eggwaffle:hover { border-color: #ff9f43; box-shadow: 0 0 30px rgba(255, 159, 67, 0.7); transform: translateY(-10px); }
-        .card-eggwaffle h2 { color: #ff9f43; text-shadow: 0 0 10px #ff9f43, 0 0 20px #ffd32a; }
-
-        /* ★ 茶餐廳大亨專屬卡片樣式 ★ */
-        .card-chachaan { border-color: rgba(230, 126, 34, 0.4); }
-        .card-chachaan:hover { border-color: #e67e22; box-shadow: 0 0 30px rgba(230, 126, 34, 0.8), 0 0 50px rgba(255, 107, 107, 0.4); transform: translateY(-10px); }
-        .card-chachaan h2 { color: #e67e22; text-shadow: 0 0 10px #e67e22, 0 0 20px #ff6b6b; }
-
-        .game-card::before {
-            content: ''; position: absolute; top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: linear-gradient(transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg); transition: all 0.5s;
-        }
-        .game-card:hover::before { top: 100%; left: 100%; }
-
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
-            display: flex; align-items: center; justify-content: center; padding: 20px;
-            backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: 0.3s;
-        }
-        .modal.active { opacity: 1; pointer-events: auto; }
-        .modal-box {
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
-            border: 3px solid #f1c40f; padding: 25px; border-radius: 20px;
-            width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 0 50px rgba(241, 196, 15, 0.3);
-        }
-        .modal-box h2 { color: #f1c40f; text-align: center; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 15px #f1c40f; }
-        
-        .rank-item {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.05); padding: 12px 15px; margin-bottom: 10px;
-            border-radius: 10px; border-left: 4px solid #00d2d3;
-        }
-        .rank-info { display: flex; flex-direction: column; gap: 4px; }
-        .rank-game-name { font-size: 14px; color: #fff; font-weight: bold; }
-        .rank-score { font-size: 18px; color: #f1c40f; font-weight: 900; font-family: 'Orbitron', sans-serif; }
-        .rank-icon { font-size: 24px; margin-right: 10px; }
-
-        .close-modal {
-            width: 100%; padding: 12px; background: #333; color: #fff; border: none;
-            border-radius: 10px; font-family: inherit; font-weight: bold; cursor: pointer;
-            margin-top: 10px; transition: 0.2s;
-        }
-        .close-modal:active { background: #555; }
-
-        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-    </style>
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+</style>
 </head>
 <body>
 
-    <div class="bg-grid"></div>
-
-    <div class="header-section">
-        <h1>呀樂</h1>
-        <div class="divider"></div>
-        <p class="subtitle">原創網頁遊戲工作室</p>
-    </div>
-
-    <div class="controls-section">
-        <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="search-input" placeholder="搜尋遊戲..." oninput="filterGames()">
-        </div>
-        
-        <div class="tag-container" id="tag-container">
-            <button class="tag-btn active" onclick="setCategory('all', this)">全部</button>
-            <button class="tag-btn" onclick="setCategory('action', this)">動作</button>
-            <button class="tag-btn" onclick="setCategory('casual', this)">休閒</button>
-            <button class="tag-btn" onclick="setCategory('strategy', this)">策略</button>
-            <button class="tag-btn" onclick="setCategory('sim', this)">模擬</button>
-            <button class="tag-btn" onclick="setCategory('hardcore', this)">硬核</button>
-        </div>
-
-        <button class="rank-btn-main" onclick="openLeaderboard()">🏆 全站成就排行榜</button>
-    </div>
-
-    <div class="games-container" id="games-container">
-        <!-- ★ 第一隻：茶記大亨：樓面生存戰 ★ -->
-        <a href="./cha-chaan-teng/" class="game-card card-chachaan" data-category="sim">
-            <h2>茶記大亨：樓面生存戰</h2>
-            <p>半邊餐廳視角！控制公仔行來行去，招呼客人兼擴建升級！</p>
-        </a>
-
-        <!-- ★ 第二隻：茶記點餐：記憶大考驗 ★ -->
-        <a href="./cha-chaan-teng-2/" class="game-card card-chachaan" data-category="sim">
-            <h2>茶記點餐：記憶大考驗</h2>
-            <p>澳牛極速節奏！張單限時消失，考驗你嘅記憶力同反應！</p>
-        </a>
-
-        <!-- 雞蛋仔大挑戰 -->
-        <a href="./egg-waffle/" class="game-card card-eggwaffle" data-category="casual">
-            <h2>雞蛋仔大挑戰</h2>
-            <p>由較漿到出爐！挑戰 C 到 SSS 級完美雞蛋仔，成為大排檔之王！</p>
-        </a>
-
-        <!-- 末日避難所 -->
-        <a href="./doomsday-shelter/" class="game-card card-doomsday" data-category="sim">
-            <h2>末日避難所</h2>
-            <p>3D 輻射生存！分配人手、抵抗酸雨、覺醒異能！</p>
-        </a>
-
-        <!-- 九龍城寨保衛戰 -->
-        <a href="./klt-defense/" class="game-card card-klt" data-category="strategy">
-            <h2>九龍城寨保衛戰</h2>
-            <p>霓虹塔防！30 級塔、15 英雄、科研樹、城堡養成！擋住收數佬同地產霸權！</p>
-        </a>
-
-        <!-- 動作 -->
-        <a href="./black-hole/" class="game-card card-hole" data-category="action">
-            <h2>黑洞吞噬</h2>
-            <p>引力爆發、Boss 追擊！由微塵進化成宇宙巨獸！</p>
-        </a>
-        <a href="./magic-survivor/" class="game-card card-survivor" data-category="action">
-            <h2>魔法狂潮</h2>
-            <p>自動射擊，無限進化，享受滿屏割草的爽快！</p>
-        </a>
-        <a href="./one-line-life/" class="game-card card-line" data-category="action">
-            <h2>一筆定生死</h2>
-            <p>畫一條完美光線，避開致命陷阱</p>
-        </a>
-        
-        <!-- 休閒 -->
-        <a href="./zen-reliever/" class="game-card card-zen" data-category="casual">
-            <h2>無限減壓艙</h2>
-            <p>氣泡紙、星塵引力、療癒琴鍵！一撳即時放鬆！</p>
-        </a>
-        <a href="./neon-music-box/" class="game-card card-music" data-category="casual">
-            <h2>霓虹音樂盒</h2>
-            <p>自由砌出專屬軌道，彈奏你的音樂</p>
-        </a>
-        <a href="./carpet-cleaning/" class="game-card card-carpet" data-category="casual">
-            <h2>極致洗地毯</h2>
-            <p>吸塵、噴泡、刷洗！挑戰無限關卡，成為洗地王！</p>
-        </a>
-
-        <!-- 策略 -->
-        <a href="./cyber-trader/" class="game-card card-trader" data-category="strategy">
-            <h2>賽博股神</h2>
-            <p>做多、做空、100倍槓桿！一撳定生死！</p>
-        </a>
-        <a href="./snowball-game/" class="game-card card-monopoly" data-category="strategy">
-            <h2>香港大富翁</h2>
-            <p>擲骰買地，體驗香港版大富翁</p>
-        </a>
-        <a href="./endless-maze/" class="game-card card-maze" data-category="strategy">
-            <h2>無盡迷宮</h2>
-            <p>喺變幻莫測嘅迷宮中尋找出口</p>
-        </a>
-        <a href="./escape-room/" class="game-card card-escape" data-category="strategy">
-            <h2>賽博密室</h2>
-            <p>20 關極限挑戰！解謎、逃生，對抗恐怖幻覺</p>
-        </a>
-
-        <!-- 模擬 -->
-        <a href="./office-slave/" class="game-card card-slave" data-category="sim">
-            <h2>社畜人生</h2>
-            <p>由見工到退休，體驗打工仔嘅血淚辛酸史</p>
-        </a>
-        <a href="./gingerbread-house/" class="game-card card-gingerbread" data-category="sim">
-            <h2>薑餅人建屋</h2>
-            <p>親手畫出薑餅人，疊出最高嘅聖誕大廈！</p>
-        </a>
-
-        <!-- 硬核 -->
-        <a href="./time-loan-shark/" class="game-card card-loan" data-category="hardcore">
-            <h2>時間高利貸</h2>
-            <p>借時間打怪，但利息會令你加速死亡！</p>
-        </a>
-        <a href="./cyber-judge/" class="game-card card-judge" data-category="hardcore">
-            <h2>賽博判官</h2>
-            <p>荒謬案件、生死判決！你能穩住社會穩定度嗎？</p>
-        </a>
-        <a href="./grudge-game/" class="game-card card-grudge" data-category="hardcore">
-            <h2>會記仇的遊戲</h2>
-            <p>AI 學習你嘅習慣，生成陷阱針對你</p>
-        </a>
-        <a href="./deep-miner/" class="game-card card-miner" data-category="hardcore">
-            <h2>深淵礦工</h2>
-            <p>貪婪與恐懼的極限考驗，掘得越深越危險！</p>
-        </a>
-    </div>
-
-    <!-- 排行榜彈窗 -->
-    <div id="leaderboard-modal" class="modal">
-        <div class="modal-box">
-            <h2>🏆 全站成就排行榜</h2>
-            <div id="leaderboard-list">
-                <!-- 動態生成 -->
+    <header>
+        <div class="top-bar">
+            <div class="logo">🎮 呀樂遊戲工作室</div>
+            <div class="online-status">
+                <div class="online-dot"></div>
+                <span id="total-online">0</span> 人正在玩
             </div>
-            <button class="close-modal" onclick="closeLeaderboard()">關閉</button>
         </div>
-    </div>
+        <div class="search-row">
+            <input type="text" class="search-input" id="search-input" placeholder="🔍 搜尋遊戲名稱...">
+        </div>
+        <div class="categories" id="categories">
+            <button class="cat-btn active" onclick="filterCategory('全部', this)">全部</button>
+            <button class="cat-btn" onclick="filterCategory('動作', this)">動作</button>
+            <button class="cat-btn" onclick="filterCategory('休閒', this)">休閒</button>
+            <button class="cat-btn" onclick="filterCategory('策略', this)">策略</button>
+            <button class="cat-btn" onclick="filterCategory('模擬', this)">模擬</button>
+            <button class="cat-btn" onclick="filterCategory('硬核', this)">硬核</button>
+        </div>
+    </header>
 
-    <!-- 🔥 引入 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <main>
+        <div class="game-grid" id="game-grid">
+            <!-- 遊戲卡片會由 JS 動態生成 -->
+        </div>
+    </main>
+
+    <footer>
+        © 2026 呀樂遊戲工作室 | 專注為你帶來歡樂
+    </footer>
 
 <script>
+    window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
+
     // ==========================================
-    // 🔥 Firebase 初始化與熱門統計
+    // 📋 遊戲清單 (只需喺度加新遊戲)
     // ==========================================
-    const firebaseConfig = {
-        databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    };
-    
+    const games = [
+        { id: 'neon-rain', name: '霓虹雨夜：考牌大師', category: '休閒', desc: '考牌遇上暴雨，單手擔遮避開路人！', icon: '☔', bestKey: 'neon_rain_best', unit: 'm' },
+        { id: 'cha-chaan-teng', name: '茶記大亨：樓面生存戰', category: '模擬', desc: '做茶記樓面，瘋狂接單出餐！', icon: '🍳', bestKey: 'chaChaanTeng_best', unit: '$' },
+        { id: 'cha-chaan-teng-2', name: '茶記點餐：記憶大考驗', category: '休閒', desc: '考驗記憶力，憑記憶點餐！', icon: '🧠', bestKey: 'chaChaanTeng_best', unit: '$' },
+        { id: 'egg-waffle', name: '雞蛋仔大挑戰', category: '休閒', desc: '整出完美嘅雞蛋仔！', icon: '🧇', bestKey: 'eggWaffle_best', unit: '' },
+        { id: 'doomsday-shelter', name: '末日避難所', category: '策略', desc: '分配資源，生存到最後一刻。', icon: '☢️', bestKey: 'doomsday_best', unit: '' },
+        { id: 'klt-defense', name: '九龍城寨保衛戰', category: '策略', desc: '抵禦外敵，保衛城寨！', icon: '🏯', bestKey: 'kltDefense_best', unit: '' },
+        { id: 'black-hole', name: '黑洞吞噬', category: '動作', desc: '操控黑洞，吞噬一切！', icon: '🕳️', bestKey: 'blackHole_best', unit: '' },
+        { id: 'magic-survivor', name: '魔法狂潮', category: '動作', desc: '無盡怪物，法術狂轟！', icon: '🔮', bestKey: 'magicSurvivor_best', unit: '' },
+        { id: 'one-line-life', name: '一筆定生死', category: '硬核', desc: '一筆畫完，避開所有障礙！', icon: '✏️', bestKey: 'oneLine_best', unit: '' },
+        { id: 'zen-reliever', name: '無限減壓艙', category: '休閒', desc: '撳爆一切，釋放壓力。', icon: '🫧', bestKey: 'zen_best', unit: '' },
+        { id: 'neon-music-box', name: '霓虹音樂盒', category: '休閒', desc: '跟隨節奏，點擊霓虹音符。', icon: '🎵', bestKey: 'musicBox_best', unit: '' },
+        { id: 'carpet-cleaning', name: '極致洗地毯', category: '休閒', desc: '洗走所有污垢，極度解壓！', icon: '🧽', bestKey: 'carpet_best', unit: '' },
+        { id: 'cyber-trader', name: '賽博股神', category: '策略', desc: '低買高賣，成為賽博首富。', icon: '📈', bestKey: 'trader_best', unit: '$' },
+        { id: 'snowball-game', name: '香港大富翁', category: '策略', desc: '擲骰買地，成為地產霸權！', icon: '🎲', bestKey: 'monopoly_best', unit: '$' },
+        { id: 'endless-maze', name: '無盡迷宮', category: '硬核', desc: '走出無盡迷宮，考驗方向感。', icon: '🌀', bestKey: 'maze_best', unit: '' },
+        { id: 'escape-room', name: '賽博密室', category: '硬核', desc: '解開謎題，逃出賽博密室。', icon: '🔐', bestKey: 'escape_best', unit: '' },
+        { id: 'office-slave', name: '社畜人生', category: '模擬', desc: '體驗社畜嘅悲慘加班生活。', icon: '💼', bestKey: 'office_best', unit: '' },
+        { id: 'gingerbread-house', name: '薑餅人建屋', category: '休閒', desc: '起一間最靚嘅薑餅屋。', icon: '🍪', bestKey: 'gingerbread_best', unit: '' },
+        { id: 'time-loan-shark', name: '時間高利貸', category: '策略', desc: '借時間定還時間？自己揀！', icon: '⏳', bestKey: 'loan_best', unit: '' },
+        { id: 'cyber-judge', name: '賽博判官', category: '策略', desc: '審判賽博罪犯，決定生死。', icon: '⚖️', bestKey: 'judge_best', unit: '' },
+        { id: 'grudge-game', name: '會記仇的遊戲', category: '動作', desc: '你打敵人一鎚，佢會記住你。', icon: '😡', bestKey: 'grudge_best', unit: '' },
+        { id: 'deep-miner', name: '深淵礦工', category: '休閒', desc: '向下挖掘，尋找稀有礦石。', icon: '⛏️', bestKey: 'miner_best', unit: 'm' }
+    ];
+
+    let currentCategory = '全部';
+    let searchQuery = '';
+    let gameStats = {};
+
+    // ==========================================
+    // Firebase 初始化與連線
+    // ==========================================
+    const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
     let db = null;
     try {
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-    } catch (e) { console.warn("Firebase 初始化失敗", e); }
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        }
+    } catch(e) { console.error("Firebase Init Error:", e); }
 
-    /* 👇 防止玩家來回進出，重複計算遊玩次數 👇 */
-    document.querySelectorAll('.game-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (!db) return;
-            let gameId = this.getAttribute('href').replace('./', '').replace('/', '');
-            if (!gameId) return;
-
-            let sessionKey = 'played_' + gameId;
-            if (!sessionStorage.getItem(sessionKey)) {
-                sessionStorage.setItem(sessionKey, 'true');
-                
-                let gameRef = db.ref('game_stats/' + gameId);
-                gameRef.transaction(function(currentCount) {
-                    return (currentCount || 0) + 1;
-                });
-            }
-        });
-    });
-
-    if (db) {
-        db.ref('game_stats').on('value', (snapshot) => {
-            const stats = snapshot.val();
-            if (!stats) return;
-
-            document.querySelectorAll('.game-card').forEach(card => {
-                let gameId = card.getAttribute('href').replace('./', '').replace('/', '');
-                let count = stats[gameId] || 0;
-                
-                let badge = card.querySelector('.hot-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'hot-badge';
-                    card.appendChild(badge);
+    // 全局在線人數
+    try {
+        if (db) {
+            db.ref('online_status').on('value', (snap) => {
+                let total = 0;
+                const data = snap.val();
+                if (data) {
+                    for (let game in data) {
+                        total += Object.keys(data[game]).length;
+                    }
                 }
-
-                if (count > 0) {
-                    badge.innerText = `🔥 ${count} 人玩過`;
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
+                document.getElementById('total-online').innerText = total;
             });
-        });
+        }
+    } catch(e) { console.error("Firebase Online Error:", e); }
 
-        db.ref('online_status').on('value', (snapshot) => {
-            const onlineData = snapshot.val() || {};
-            
-            document.querySelectorAll('.game-card').forEach(card => {
-                let gameId = card.getAttribute('href').replace('./', '').replace('/', '');
-                let onlineCount = onlineData[gameId] ? Object.keys(onlineData[gameId]).length : 0;
-                
-                let badge = card.querySelector('.online-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'online-badge';
-                    card.appendChild(badge);
-                }
-
-                if (onlineCount > 0) {
-                    badge.innerText = `🟢 ${onlineCount} 人正在玩`;
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
+    // 遊戲遊玩次數
+    try {
+        if (db) {
+            db.ref('game_stats').on('value', (snap) => {
+                gameStats = snap.val() || {};
+                renderGames(); // 重新渲染以更新次數
             });
+        }
+    } catch(e) { console.error("Firebase Stats Error:", e); }
+
+    // ==========================================
+    // 渲染邏輯
+    // ==========================================
+    function renderGames() {
+        const grid = document.getElementById('game-grid');
+        grid.innerHTML = '';
+
+        const filtered = games.filter(g => {
+            const matchCat = currentCategory === '全部' || g.category === currentCategory;
+            const matchSearch = g.name.toLowerCase().includes(searchQuery.toLowerCase()) || g.desc.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchCat && matchSearch;
         });
-    }
 
-    // ==========================================
-    // 搜尋與分類邏輯
-    // ==========================================
-    let currentCategory = 'all';
-
-    function setCategory(cat, btn) {
-        currentCategory = cat;
-        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        filterGames();
-    }
-
-    function filterGames() {
-        let keyword = document.getElementById('search-input').value.toLowerCase();
-        let cards = document.querySelectorAll('.game-card');
-
-        cards.forEach(card => {
-            let title = card.querySelector('h2').innerText.toLowerCase();
-            let desc = card.querySelector('p').innerText.toLowerCase();
-            let cat = card.getAttribute('data-category');
-            
-            let matchSearch = title.includes(keyword) || desc.includes(keyword);
-            let matchCat = (currentCategory === 'all') || (cat === currentCategory);
-
-            if (matchSearch && matchCat) {
-                card.style.display = 'flex';
-                card.style.animation = 'popIn 0.3s ease';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
-    // ==========================================
-    // 全站成就排行榜邏輯 (LocalStorage) - 已補全 20 隻遊戲
-    // ==========================================
-    function openLeaderboard() {
-        let list = document.getElementById('leaderboard-list');
-        list.innerHTML = '';
-        
-        let hasData = false;
-
-        // 1. 茶記大亨：樓面生存戰 (共用或分開皆可，依家假設讀取同一個 Key)
-        try {
-            let val = parseInt(localStorage.getItem('chaChaanTeng_best')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #e67e22;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🍳</span>
-                            <div class="rank-info"><span class="rank-game-name">茶記大亨 (生存戰)</span><span style="font-size:12px; color:#aaa;">單日最高營業額</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#e67e22;">$${val}</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 2. 茶記點餐：記憶大考驗
-        try {
-            let val = parseInt(localStorage.getItem('chaChaanTeng_best')) || 0; 
-            // 如果記憶大考驗有自己獨立嘅 Key，例如 'chaChaanMemory_best'，可以改呢度。
-            // 為咗唔好令玩家混亂，暫時兩隻遊戲共享同一個茶餐廳最高營業額紀錄。
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #ffd32a;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🧠</span>
-                            <div class="rank-info"><span class="rank-game-name">茶記點餐 (記憶考驗)</span><span style="font-size:12px; color:#aaa;">單日最高營業額</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#ffd32a;">$${val}</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 3. 雞蛋仔大挑戰
-        try {
-            let val = parseInt(localStorage.getItem('eggWaffle_money')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #ff9f43;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🥚</span>
-                            <div class="rank-info"><span class="rank-game-name">雞蛋仔大挑戰</span><span style="font-size:12px; color:#aaa;">最高營業額</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#ff9f43;">$${val}</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 4. 末日避難所
-        try {
-            let data = JSON.parse(localStorage.getItem('doomsday_record')) || null;
-            if (data && data.days) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #2ecc71;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">☢️</span>
-                            <div class="rank-info"><span class="rank-game-name">末日避難所</span><span style="font-size:12px; color:#aaa;">存活 ${data.days} 天</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#2ecc71;">${data.pop || 0} 人</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 5. 九龍城寨
-        try {
-            let lb = JSON.parse(localStorage.getItem('klt_leaderboard')) || [];
-            if (lb.length > 0) {
-                let top = lb[0];
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #c77dff;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🏯</span>
-                            <div class="rank-info"><span class="rank-game-name">九龍城寨保衛戰</span><span style="font-size:12px; color:#aaa;">最高波數</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#c77dff;">第 ${top.wave} 波</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 6. 黑洞吞噬
-        try {
-            let val = parseInt(localStorage.getItem('blackHole_highscore')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #9b59b6;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🌌</span>
-                            <div class="rank-info"><span class="rank-game-name">黑洞吞噬</span><span style="font-size:12px; color:#aaa;">最高質量</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#9b59b6;">${val}</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 7. 極致洗地毯
-        try {
-            let data = JSON.parse(localStorage.getItem('carpet_leaderboard')) || [];
-            if (data.length > 0) {
-                data.sort((a, b) => b.level - a.level || b.score - a.score);
-                let top = data[0];
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #00cec9;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🧹</span>
-                            <div class="rank-info"><span class="rank-game-name">極致洗地毯</span><span style="font-size:12px; color:#aaa;">最高 Lv.${top.level}</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#00cec9;">${top.score} 分</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 8. 賽博股神
-        try {
-            let val = parseInt(localStorage.getItem('cyberTrader_best')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #ffd32a;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">📈</span>
-                            <div class="rank-info"><span class="rank-game-name">賽博股神</span><span style="font-size:12px; color:#aaa;">最高資產</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#ffd32a;">$${val}</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 9. 無盡迷宮
-        try {
-            let val = parseInt(localStorage.getItem('mazeMaxLevel')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #2ed573;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🌀</span>
-                            <div class="rank-info"><span class="rank-game-name">無盡迷宮</span><span style="font-size:12px; color:#aaa;">最高層數</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#2ed573;">第 ${val} 層</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 10. 賽博密室
-        try {
-            let val = parseInt(localStorage.getItem('escapeMaxLevel')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #00d2d3;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🚪</span>
-                            <div class="rank-info"><span class="rank-game-name">賽博密室</span><span style="font-size:12px; color:#aaa;">最高關卡</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#00d2d3;">第 ${val} 關</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 11. 薑餅人建屋
-        try {
-            let val = parseInt(localStorage.getItem('gingerbread_highscore')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #e74c3c;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">🍪</span>
-                            <div class="rank-info"><span class="rank-game-name">薑餅人建屋</span><span style="font-size:12px; color:#aaa;">最高得分</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#e74c3c;">${val} 分</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 12. 時間高利貸
-        try {
-            let rate = parseFloat(localStorage.getItem('loan_best_rate')) || 1.0;
-            let combo = parseInt(localStorage.getItem('loan_best_combo')) || 0;
-            if (rate > 1.0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #f1c40f;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">💸</span>
-                            <div class="rank-info"><span class="rank-game-name">時間高利貸</span><span style="font-size:12px; color:#aaa;">最高連擊 ${combo}</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#f1c40f;">${rate.toFixed(2)}x</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 13. 賽博判官
-        try {
-            let val = parseInt(localStorage.getItem('cyberJudge_highscore')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #9b59b6;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">⚖️</span>
-                            <div class="rank-info"><span class="rank-game-name">賽博判官</span><span style="font-size:12px; color:#aaa;">最高連勝</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#9b59b6;">${val} 場</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 14. 會記仇的遊戲
-        try {
-            let val = parseInt(localStorage.getItem('grudgeHighScore')) || 0;
-            if (val > 0) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #ff4757;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">👁️</span>
-                            <div class="rank-info"><span class="rank-game-name">會記仇的遊戲</span><span style="font-size:12px; color:#aaa;">最高分</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#ff4757;">${val}</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        // 15. 深淵礦工
-        try {
-            let data = JSON.parse(localStorage.getItem('deepMinerSave')) || null;
-            if (data && data.maxDepthRecord) {
-                list.innerHTML += `
-                    <div class="rank-item" style="border-left-color: #b87333;">
-                        <div style="display:flex; align-items:center;">
-                            <span class="rank-icon">⛏️</span>
-                            <div class="rank-info"><span class="rank-game-name">深淵礦工</span><span style="font-size:12px; color:#aaa;">最深紀錄</span></div>
-                        </div>
-                        <div class="rank-score" style="color:#b87333;">${data.maxDepthRecord}m</div>
-                    </div>
-                `;
-                hasData = true;
-            }
-        } catch(e) {}
-
-        if (!hasData) {
-            list.innerHTML = `<p style="text-align:center; color:#aaa; font-size:14px;">暫時未有遊玩記錄，快啲去玩下啦！</p>`;
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #777; padding: 50px;">搵唔到相關遊戲...</div>';
+            return;
         }
 
-        document.getElementById('leaderboard-modal').classList.add('active');
+        filtered.forEach(g => {
+            // 讀取最高紀錄
+            let best = localStorage.getItem(g.bestKey);
+            let bestText = '未有紀錄';
+            if (best !== null) {
+                // 處理如果有單位的情況
+                if (g.unit === '$') bestText = '$' + best;
+                else if (g.unit === 'm') bestText = best + 'm';
+                else bestText = best;
+            }
+
+            // 讀取遊玩次數
+            let plays = gameStats[g.id] || 0;
+
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.onclick = () => playGame(g.id);
+            card.innerHTML = `
+                <div class="card-header">
+                    ${g.icon}
+                    <div class="card-category">${g.category}</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">${g.name}</div>
+                    <div class="card-desc">${g.desc}</div>
+                    <div class="card-footer">
+                        <span class="best-score">🏆 ${bestText}</span>
+                        <span class="play-count">▶ ${plays}</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
     }
 
-    function closeLeaderboard() {
-        document.getElementById('leaderboard-modal').classList.remove('active');
-    }
-
-    // 點擊背景關閉排行榜
-    document.getElementById('leaderboard-modal').addEventListener('click', function(e) {
-        if (e.target === this) closeLeaderboard();
+    // ==========================================
+    // 互動事件
+    // ==========================================
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderGames();
     });
+
+    function filterCategory(cat, btn) {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGames();
+    }
+
+    function playGame(gameId) {
+        try {
+            // 記錄遊玩次數 (防重複計算機制)
+            const sessionKey = `played_${gameId}`;
+            if (!sessionStorage.getItem(sessionKey)) {
+                sessionStorage.setItem(sessionKey, 'true');
+                if (db) {
+                    db.ref(`game_stats/${gameId}`).transaction((current) => {
+                        return (current || 0) + 1;
+                    }).catch(err => console.warn("Stats err:", err));
+                }
+            }
+        } catch(e) {}
+
+        // 跳轉
+        window.location.href = `./${gameId}/`;
+    }
+
+    // 初始化渲染
+    renderGames();
+
 </script>
+
+<!-- Firebase 引入 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    // 因為 Firebase 係最後載入，所以要喺度重新觸發一次連線
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp({ databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" });
+        }
+        const db = firebase.database();
+        
+        // 在線人數
+        db.ref('online_status').on('value', (snap) => {
+            let total = 0;
+            const data = snap.val();
+            if (data) for (let game in data) total += Object.keys(data[game]).length;
+            document.getElementById('total-online').innerText = total;
+        });
+
+        // 遊玩次數
+        db.ref('game_stats').on('value', (snap) => {
+            gameStats = snap.val() || {};
+            renderGames();
+        });
+    } catch(e) {}
+</script>
+
 </body>
 </html>
