@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>☔ 霓虹雨夜：考牌大師</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
+    
+    :root {
+        --neon-blue: #00d2d3;
+        --neon-pink: #ff0055;
+        --neon-gold: #ffd32a;
+        --bg-dark: #0a0a14;
+        --glass-bg: rgba(15, 15, 25, 0.8);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    
+    body {
+        background: var(--bg-dark); color: #fff; font-family: 'Noto Sans HK', sans-serif;
+        height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+    }
+
+    /* 返回大廳 */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 99999;
+        padding: 8px 16px; background: rgba(10,10,20,0.85); color: var(--neon-blue);
+        border: 2px solid var(--neon-blue); border-radius: 8px; text-decoration: none;
+        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(0,210,211,0.5); transition: 0.2s;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .back-btn:active { transform: scale(0.95); background: var(--neon-blue); color: #000; }
+
+    /* HUD */
+    #hud {
+        height: 60px; background: var(--glass-bg); backdrop-filter: blur(10px);
+        border-bottom: 2px solid var(--neon-gold);
+        display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
+        z-index: 10; flex-shrink: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .stat-group { display: flex; gap: 15px; padding-left: 110px; }
+    .stat-box { display: flex; flex-direction: column; text-align: left; }
+    .stat-label { font-size: 10px; color: #aaa; letter-spacing: 1px; }
+    .stat-val { font-size: 18px; font-weight: 900; color: var(--neon-gold); font-family: 'Orbitron', sans-serif; text-shadow: 0 0 10px var(--neon-gold); }
+    .stat-val.hp { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
+    
+    .hud-right { display: flex; gap: 8px; align-items: center; }
+    .icon-btn {
+        width: 34px; height: 34px; background: rgba(255,255,255,0.1); border: 1px solid #555;
+        border-radius: 8px; color: #fff; font-size: 16px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; transition: 0.15s;
+    }
+    .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.3); }
+
+    /* 畫布 */
+    #game-container { flex: 1; position: relative; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* 天氣狀態 */
+    #weather-status {
+        position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+        font-size: 13px; font-weight: bold; padding: 4px 12px; border-radius: 20px;
+        background: rgba(0,210,211,0.2); color: var(--neon-blue); border: 1px solid var(--neon-blue);
+        transition: 0.3s; z-index: 5; pointer-events: none; backdrop-filter: blur(4px);
+        white-space: nowrap;
+    }
+    #weather-status.rain { background: rgba(255,0,85,0.2); color: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255,0,85,0.5); }
+
+    /* 考牌官彈幕 */
+    #examiner-bubble {
+        position: absolute; top: 60px; left: 50%; transform: translate(-50%, 0) scale(0.8);
+        background: #fff; color: #000; padding: 8px 16px; border-radius: 15px;
+        font-weight: 900; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        opacity: 0; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 50; white-space: nowrap;
+    }
+    #examiner-bubble.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    #examiner-bubble::after {
+        content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+        border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent;
+    }
+
+    /* 撐傘按鈕 */
+    #umbrella-btn {
+        position: absolute; bottom: 30px; right: 20px; z-index: 20;
+        width: 80px; height: 80px; border-radius: 50%; background: rgba(10,10,20,0.8);
+        border: 3px solid #555; color: #fff; font-size: 35px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.15s; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        backdrop-filter: blur(5px); opacity: 0.6;
+    }
+    #umbrella-btn.active {
+        background: rgba(255, 211, 42, 0.9); border-color: var(--neon-gold);
+        box-shadow: 0 0 40px var(--neon-gold); color: #000; transform: scale(0.95); opacity: 1;
+    }
+    #umbrella-btn.ready { opacity: 1; border-color: var(--neon-gold); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 211, 42, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 211, 42, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 211, 42, 0); } }
+
+    /* 連擊提示 */
+    #combo-toast {
+        position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
+        font-family: 'Orbitron', sans-serif; font-size: 40px; font-weight: 900;
+        color: var(--neon-gold); text-shadow: 0 0 20px var(--neon-gold), 0 0 40px var(--neon-gold);
+        z-index: 50; pointer-events: none; transition: 0.2s; opacity: 0;
+    }
+    #combo-toast.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+
+    /* 彈窗 */
+    .modal {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        backdrop-filter: blur(8px);
+    }
+    .modal.active { display: flex; }
+    .modal-box {
+        background: linear-gradient(135deg, #1e1e2f, #0a0a10); border: 3px solid var(--neon-pink); border-radius: 20px;
+        padding: 25px 20px; text-align: center; max-width: 320px; width: 90%;
+        box-shadow: 0 0 60px rgba(255,0,85,0.4);
+    }
+    .modal-box h2 { color: var(--neon-pink); font-size: 24px; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 10px var(--neon-pink); }
+    .modal-box p { color: #ccc; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+    
+    .action-btn {
+        width: 100%; padding: 12px; border: none; border-radius: 10px;
+        background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; font-weight: 900; font-size: 16px;
+        cursor: pointer; font-family: 'Noto Sans HK', sans-serif; box-shadow: 0 4px 0 #7b241c; transition: 0.1s;
+    }
+    .action-btn:active { transform: translateY(4px); box-shadow: none; }
+
+    /* 📱 手機版面完美適配 */
+    @media (max-width: 600px) {
+        .back-btn { top: 8px; left: 8px; padding: 5px 10px; font-size: 11px; }
+        #hud { height: 50px; padding: 0 8px 0 85px; } /* 完美避開返回按鈕 */
+        .stat-group { gap: 10px; padding-left: 0; }
+        .stat-label { font-size: 9px; }
+        .stat-val { font-size: 14px; }
+        .stat-box:nth-child(3) { display: none; } /* 隱藏最高紀錄節省空間 */
+        .hud-right { gap: 5px; }
+        .icon-btn { width: 28px; height: 28px; font-size: 14px; }
+        
+        #weather-status { font-size: 11px; padding: 3px 10px; top: 8px; }
+        #examiner-bubble { top: 45px; font-size: 12px; padding: 6px 12px; }
+        #umbrella-btn { width: 70px; height: 70px; font-size: 30px; bottom: 20px; right: 15px; }
+    }
+    
+    @media (max-height: 500px) {
+        #hud { height: 40px; padding: 0 8px 0 80px; }
+        .stat-val { font-size: 13px; }
+        #weather-status { top: 5px; }
+        #examiner-bubble { top: 35px; }
+        #umbrella-btn { width: 60px; height: 60px; font-size: 25px; bottom: 10px; }
+    }
+</style>
+</head>
+<body>
+
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
+
+    <div id="hud">
+        <div class="stat-group">
+            <div class="stat-box"><span class="stat-label">考牌分數</span><span class="stat-val hp" id="ui-score">100</span></div>
+            <div class="stat-box"><span class="stat-label">行車距離</span><span class="stat-val" id="ui-distance">0m</span></div>
+            <div class="stat-box"><span class="stat-label">最高紀錄</span><span class="stat-val" id="ui-best" style="color:#ff9f43;">0m</span></div>
+        </div>
+        <div class="hud-right">
+            <button class="icon-btn" id="btn-sound">🔊</button>
+            <button class="icon-btn" id="btn-pause">⏸️</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="weather-status">☀️ 天晴</div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="examiner-bubble">行快啲啦！</div>
+        <div id="combo-toast"></div>
+        <button id="umbrella-btn">☔</button>
+        
+        <div id="game-over-modal" class="modal">
+            <div class="modal-box">
+                <h2 id="go-title">❌ 考牌肥佬！</h2>
+                <p id="go-desc">你撞到人，考官即刻踩停你！</p>
+                <button class="action-btn" onclick="startGame()">🔄 重新補考</button>
+            </div>
+        </div>
+
+        <div id="pause-modal" class="modal">
+            <div class="modal-box" style="border-color: var(--neon-blue);">
+                <h2 style="color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue);">⏸️ 暫停中</h2>
+                <p>考牌官去咗洗手間...</p>
+                <button class="action-btn" style="background: linear-gradient(180deg, #00d2d3, #008b8b); box-shadow: 0 4px 0 #004d4d;" onclick="togglePause()">繼續考試</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const uiScore = document.getElementById('ui-score');
+    const uiDistance = document.getElementById('ui-distance');
+    const uiBest = document.getElementById('ui-best');
+    const weatherStatus = document.getElementById('weather-status');
+    const umbrellaBtn = document.getElementById('umbrella-btn');
+    const examinerBubble = document.getElementById('examiner-bubble');
+    const comboToast = document.getElementById('combo-toast');
+    const btnSound = document.getElementById('btn-sound');
+    
+    // 音效系統 (Web Audio API)
+    let audioCtx = null;
+    let soundOn = localStorage.getItem('neon_rain_sound') !== 'off';
+    btnSound.innerText = soundOn ? '🔊' : '🔇';
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    document.body.addEventListener('pointerdown', initAudio, { once: true });
+
+    function playSound(type) {
+        if (!soundOn || !audioCtx) return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if (type === 'coin') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'hit') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'combo') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1000, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            }
+        } catch(e) {}
+    }
+
+    btnSound.addEventListener('click', () => {
+        soundOn = !soundOn;
+        localStorage.setItem('neon_rain_sound', soundOn ? 'on' : 'off');
+        btnSound.innerText = soundOn ? '🔊' : '🔇';
+    });
+
+    // 遊戲狀態
+    let state = 'playing';
+    let isPaused = false;
+    let score = 100;
+    let distance = 0;
+    let bestDistance = parseInt(localStorage.getItem('neon_rain_best') || '0');
+    uiBest.innerText = bestDistance + 'm';
+
+    let isRaining = false;
+    let isUmbrellaOpen = false;
+    let gameTime = 0;
+    let baseWalkSpeed = 4;
+
+    let combo = 0;
+    let comboTimer = 0;
+
+    // 考牌官台詞
+    const quotes = {
+        normal: ["行快啲啦！", "睇路呀！", "唔好撞到人啊！", "保持直線行啦！"],
+        rain: ["落雨啦！還唔擔遮？", "擔遮啦！淋病你啊！", "你冇遮㗎？", "落雨擔遮好正常喎！"],
+        umbrella_sunny: ["好天擔遮？你覺得好型？", "收遮啦！阻住地球轉！", "大晴人擔遮，你有事嗎？"],
+        hit: ["撞到人啦！扣分！", "你盲㗎？", "睇住阿婆呀！", "行開啦！"],
+        combo: ["好嘢！Keep going！", "連擊！勁揪！", "神級走位！"]
+    };
+
+    function showQuote(type) {
+        let arr = quotes[type];
+        let quote = arr[Math.floor(Math.random() * arr.length)];
+        examinerBubble.innerText = quote;
+        examinerBubble.classList.add('show');
+        setTimeout(() => examinerBubble.classList.remove('show'), 1500);
+    }
+
+    // 尺寸調整
+    function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        // 邊界保護
+        if (player.x < 20) player.x = 20;
+        if (player.x > canvas.width - 20) player.x = canvas.width - 20;
+        if (player.y < 20) player.y = 20;
+        if (player.y > canvas.height - 20) player.y = canvas.height - 20;
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 100));
+    
+    // 玩家
+    let player = { x: window.innerWidth / 2, y: window.innerHeight - 150, radius: 12, targetX: window.innerWidth / 2, targetY: window.innerHeight - 150 };
+    let isDragging = false;
+
+    // 觸控事件 (解決滑出螢幕卡死)
+    canvas.addEventListener('pointerdown', (e) => { isDragging = true; updatePointer(e); });
+    canvas.addEventListener('pointermove', (e) => { if (isDragging) updatePointer(e); });
+    canvas.addEventListener('pointerup', () => isDragging = false);
+    canvas.addEventListener('pointercancel', () => isDragging = false);
+    canvas.addEventListener('pointerleave', () => isDragging = false);
+
+    function updatePointer(e) {
+        if (isPaused || state !== 'playing') return;
+        const rect = canvas.getBoundingClientRect();
+        player.targetX = e.clientX - rect.left;
+        player.targetY = e.clientY - rect.top;
+    }
+
+    // 擔遮控制
+    umbrellaBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (isPaused || state !== 'playing' || !isRaining) return;
+        isUmbrellaOpen = true;
+        umbrellaBtn.classList.add('active');
+        playSound('combo');
+    });
+    const closeUmbrella = (e) => {
+        if (e) e.preventDefault();
+        isUmbrellaOpen = false;
+        umbrellaBtn.classList.remove('active');
+    };
+    umbrellaBtn.addEventListener('pointerup', closeUmbrella);
+    umbrellaBtn.addEventListener('pointercancel', closeUmbrella);
+    umbrellaBtn.addEventListener('pointerleave', closeUmbrella);
+
+    // 實體
+    let pedestrians = [];
+    let coins = [];
+    let puddles = [];
+    let particles = [];
+    let spawnTimer = 0;
+
+    function startGame() {
+        document.getElementById('game-over-modal').classList.remove('active');
+        document.getElementById('pause-modal').classList.remove('active');
+        state = 'playing'; isPaused = false;
+        score = 100; distance = 0;
+        isRaining = false; isUmbrellaOpen = false;
+        umbrellaBtn.classList.remove('active');
+        umbrellaBtn.classList.add('ready');
+        weatherStatus.className = '';
+        weatherStatus.innerText = '☀️ 天晴';
+        pedestrians = []; coins = []; puddles = []; particles = [];
+        gameTime = 0; combo = 0; comboTimer = 0;
+        
+        resize();
+        player.x = canvas.width / 2; player.y = canvas.height - 100;
+        player.targetX = player.x; player.targetY = player.y;
+        
+        updateUI();
+        showQuote('normal');
+        
+        // 確保遊戲循環在重開時繼續 (如果之前已停止)
+        if (!window.isLooping) {
+            window.isLooping = true;
+            requestAnimationFrame(update);
+        }
+    }
+
+    function gameOver(reason) {
+        if (state !== 'playing') return;
+        state = 'gameover';
+        if (Math.floor(distance) > bestDistance) {
+            bestDistance = Math.floor(distance);
+            localStorage.setItem('neon_rain_best', bestDistance);
+            uiBest.innerText = bestDistance + 'm';
+        }
+        document.getElementById('go-desc').innerText = reason + `\n你行咗 ${Math.floor(distance)} 米。`;
+        document.getElementById('game-over-modal').classList.add('active');
+        playSound('hit');
+    }
+
+    function updateUI() {
+        uiScore.innerText = Math.max(0, Math.floor(score));
+        uiDistance.innerText = Math.floor(distance) + 'm';
+    }
+
+    function togglePause() {
+        if (state !== 'playing') return;
+        isPaused = !isPaused;
+        document.getElementById('pause-modal').classList.toggle('active', isPaused);
+        document.getElementById('btn-pause').innerText = isPaused ? '▶️' : '⏸️';
+    }
+    document.getElementById('btn-pause').addEventListener('click', togglePause);
+
+    // 粒子特效
+    function createParticle(x, y, color, isSplash) {
+        for (let i = 0; i < 5; i++) {
+            particles.push({
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4 - (isSplash ? 2 : 0),
+                life: 1, color: color
+            });
+        }
+    }
+
+    // 主循環
+    function update() {
+        requestAnimationFrame(update);
+        if (state !== 'playing' || isPaused) return;
+        
+        gameTime++;
+        distance += 0.1;
+
+        // 1. 天氣系統
+        if (!isRaining && gameTime > 300 && Math.random() < 0.01) {
+            isRaining = true;
+            weatherStatus.className = 'rain';
+            weatherStatus.innerText = '🌧️ 暴雨';
+            showQuote('rain');
+        } else if (isRaining && Math.random() < 0.005 && gameTime > 600) {
+            isRaining = false;
+            closeUmbrella();
+            weatherStatus.className = '';
+            weatherStatus.innerText = '☀️ 天晴';
+        }
+
+        // 2. 懲罰 (改為按時間扣分，避免過快死)
+        if (isRaining && !isUmbrellaOpen) {
+            if (gameTime % 30 === 0) score -= 4; // 每0.5秒扣4分
+            if (gameTime % 5 === 0) createParticle(player.x, player.y, '#00d2d3', true);
+        } else if (!isRaining && isUmbrellaOpen) {
+            if (gameTime % 30 === 0) score -= 2; // 晴天撐傘扣得慢啲
+        }
+
+        if (score <= 0) gameOver("你淋雨淋到病咗，考官幫你叫白車。");
+
+        // 3. 玩家移動 (加入水窪減速)
+        let currentSpeed = baseWalkSpeed;
+        if (isUmbrellaOpen) currentSpeed = 2.5;
+        if (isRaining && !isUmbrellaOpen) currentSpeed = 3;
+        
+        // 檢查是否踩在水窪上
+        let onPuddle = false;
+        puddles.forEach(p => {
+            if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + p.radius) {
+                onPuddle = true;
+            }
+        });
+        
+        // 踩水窪時強制減速 (取代卡死邏輯)
+        if (onPuddle) {
+            currentSpeed *= 0.3;
+            if (gameTime % 10 === 0) score -= 1;
+        }
+
+        let dx = player.targetX - player.x;
+        let dy = player.targetY - player.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist > currentSpeed) {
+            player.x += (dx / dist) * currentSpeed;
+            player.y += (dy / dist) * currentSpeed;
+            if (gameTime % 10 === 0 && !onPuddle) createParticle(player.x, player.y + 10, '#fff', false);
+        }
+
+        if (player.x < 20) player.x = 20;
+        if (player.x > canvas.width - 20) player.x = canvas.width - 20;
+        if (player.y < 20) player.y = 20;
+        if (player.y > canvas.height - 20) player.y = canvas.height - 20;
+
+        // 4. Combo 冷卻
+        if (combo > 0) {
+            comboTimer--;
+            if (comboTimer <= 0) { combo = 0; }
+        }
+
+        // 5. 生成物件
+        spawnTimer++;
+        let spawnRate = Math.max(20, 50 - Math.floor(distance / 50));
+        if (spawnTimer > spawnRate) {
+            spawnTimer = 0;
+            let r = Math.random();
+            if (r < 0.6) spawnPedestrian();
+            else if (r < 0.85) spawnCoin();
+            else spawnPuddle();
+        }
+
+        // 6. 更新實體
+        // 路人
+        for (let i = pedestrians.length - 1; i >= 0; i--) {
+            let p = pedestrians[i];
+            p.y += baseWalkSpeed + (distance / 1000);
+            p.x += p.vx;
+            if (p.y > canvas.height + 50) { pedestrians.splice(i, 1); continue; }
+
+            // 碰撞
+            if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + p.radius) {
+                score -= 15;
+                combo = 0;
+                createParticle(p.x, p.y, '#ff4757', true);
+                pedestrians.splice(i, 1);
+                playSound('hit');
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                showQuote('hit');
+                if (score <= 0) gameOver("你連環撞到人，考官即刻踩停你！");
+            }
+        }
+
+        // 金幣
+        for (let i = coins.length - 1; i >= 0; i--) {
+            let c = coins[i];
+            c.y += baseWalkSpeed;
+            if (c.y > canvas.height + 50) { coins.splice(i, 1); continue; }
+            if (Math.hypot(player.x - c.x, player.y - c.y) < player.radius + 10) {
+                score += 10;
+                combo++;
+                comboTimer = 120;
+                createParticle(c.x, c.y, '#ffd32a', false);
+                coins.splice(i, 1);
+                playSound('coin');
+                if (combo >= 3) {
+                    comboToast.innerText = `COMBO x${combo}!`;
+                    comboToast.classList.add('show');
+                    setTimeout(() => comboToast.classList.remove('show'), 500);
+                    playSound('combo');
+                    showQuote('combo');
+                }
+            }
+        }
+
+        // 水窪
+        for (let i = puddles.length - 1; i >= 0; i--) {
+            let p = puddles[i];
+            p.y += baseWalkSpeed;
+            if (p.y > canvas.height + 50) { puddles.splice(i, 1); continue; }
+        }
+
+        // 粒子更新
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy;
+            p.life -= 0.05;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        updateUI();
+        draw();
+    }
+
+    function spawnPedestrian() {
+        let colors = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
+        pedestrians.push({
+            x: Math.random() * (canvas.width - 40) + 20,
+            y: -30,
+            vx: (Math.random() - 0.5) * 1.5,
+            radius: 10,
+            color: colors[Math.floor(Math.random() * colors.length)]
+        });
+    }
+
+    function spawnCoin() {
+        coins.push({
+            x: Math.random() * (canvas.width - 40) + 20,
+            y: -30, radius: 8
+        });
+    }
+
+    function spawnPuddle() {
+        puddles.push({
+            x: Math.random() * (canvas.width - 80) + 40,
+            y: -40, radius: 25
+        });
+    }
+
+    function draw() {
+        // 背景
+        let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, '#0a0a14'); grad.addColorStop(1, '#1a1a2e');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 地板網格
+        ctx.strokeStyle = 'rgba(0, 210, 211, 0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += 40) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+        }
+        for (let j = 0; j < canvas.height; j += 40) {
+            ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+        }
+
+        // 畫水窪
+        puddles.forEach(p => {
+            ctx.fillStyle = 'rgba(0, 210, 211, 0.2)';
+            ctx.beginPath(); ctx.ellipse(p.x, p.y, p.radius, p.radius * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.5)';
+            ctx.lineWidth = 2; ctx.stroke();
+        });
+
+        // 畫金幣
+        coins.forEach(c => {
+            ctx.fillStyle = '#ffd32a';
+            ctx.shadowBlur = 15; ctx.shadowColor = '#ffd32a';
+            ctx.beginPath(); ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(c.x - 3, c.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+        });
+
+        // 畫路人
+        pedestrians.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 10; ctx.shadowColor = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.radius - 3, 0, Math.PI * 2); ctx.fill();
+        });
+
+        // 畫玩家
+        if (isUmbrellaOpen) {
+            ctx.fillStyle = 'rgba(255, 211, 42, 0.9)';
+            ctx.shadowBlur = 20; ctx.shadowColor = '#ffd32a';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y - 10, 45, Math.PI, 0);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(player.x, player.y - 10); ctx.lineTo(player.x, player.y + 20); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(player.x, player.y - 10); ctx.lineTo(player.x - 30, player.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(player.x, player.y - 10); ctx.lineTo(player.x + 30, player.y); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#00d2d3';
+        ctx.shadowBlur = 15; ctx.shadowColor = '#00d2d3';
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(player.x - 3, player.y - 3, 4, 0, Math.PI * 2); ctx.fill();
+
+        // 粒子
+        particles.forEach(p => {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1;
+        });
+
+        // 落雨特效
+        if (isRaining) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < 60; i++) {
+                let rx = Math.random() * canvas.width;
+                let ry = Math.random() * canvas.height;
+                ctx.moveTo(rx, ry);
+                ctx.lineTo(rx - 5, ry + 25);
+            }
+            ctx.stroke();
+            
+            ctx.fillStyle = 'rgba(0, 210, 211, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    // 初始化啟動
+    resize();
+    startGame();
+    requestAnimationFrame(update);
+
+</script>
+
+<!-- 🟢 Firebase 在線統計 (標準三件套) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
+            }
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
+</script>
+</body>
+</html>
