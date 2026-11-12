@@ -81,10 +81,10 @@
         border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent;
     }
 
-    /* 🐛 底部三粒控制掣：改為居中緊密排列 */
+    /* 底部三粒控制掣：居中緊密排列 */
     #controls {
         height: 90px; background: rgba(10,10,20,0.95); border-top: 2px solid #333;
-        display: flex; justify-content: center; align-items: center; gap: 40px; /* 加入 gap 控制間距 */
+        display: flex; justify-content: center; align-items: center; gap: 40px;
         z-index: 20; flex-shrink: 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
     }
     
@@ -152,7 +152,6 @@
         #weather-status { font-size: 11px; padding: 3px 10px; top: 8px; }
         #examiner-bubble { top: 45px; font-size: 12px; padding: 6px 12px; }
         
-        /* 手機版間距縮細 */
         #controls { height: 80px; gap: 20px; }
         .control-btn { width: 60px; height: 60px; font-size: 26px; }
         #umbrella-btn { width: 70px; height: 70px; font-size: 32px; }
@@ -551,13 +550,13 @@
     }
 
     function spawnPedestrian() {
-        let colors = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
+        let colors = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#e67e22', '#2ecc71'];
         pedestrians.push({
             x: Math.random() * (canvas.width - 40) + 20,
             y: -30,
             vx: (Math.random() - 0.5) * 1.0,
             speed: 1,
-            radius: 10,
+            radius: 12, // 稍微加大碰撞半徑以符合真人大小
             color: colors[Math.floor(Math.random() * colors.length)]
         });
     }
@@ -567,6 +566,70 @@
             x: Math.random() * (canvas.width - 40) + 20,
             y: -30, radius: 8
         });
+    }
+
+    // 🐛 新增：繪製真人角色
+    function drawHuman(x, y, isPlayer, color) {
+        // 1. 畫影子
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 15, 12, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. 行路動畫 (手腳交替)
+        let walkOffset = Math.sin(gameTime * 0.2) * 4;
+        
+        // 3. 腿 (深色)
+        ctx.fillStyle = isPlayer ? '#333' : '#2c3e50';
+        ctx.fillRect(x - 6, y + 5, 5, 10 + walkOffset);
+        ctx.fillRect(x + 1, y + 5, 5, 10 - walkOffset);
+
+        // 4. 身體 (衣服)
+        ctx.fillStyle = isPlayer ? '#00d2d3' : color;
+        ctx.beginPath();
+        // 畫個簡單嘅圓角矩形做身體
+        ctx.moveTo(x - 10, y - 10);
+        ctx.lineTo(x + 10, y - 10);
+        ctx.lineTo(x + 10, y + 8);
+        ctx.lineTo(x - 10, y + 8);
+        ctx.fill();
+
+        // 5. 手 (膚色)
+        ctx.fillStyle = '#f5cba7';
+        ctx.beginPath();
+        ctx.arc(x - 14, y + Math.cos(gameTime * 0.2) * 3, 4, 0, Math.PI * 2);
+        ctx.arc(x + 14, y - Math.cos(gameTime * 0.2) * 3, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 6. 頭 (膚色)
+        ctx.fillStyle = '#f5cba7';
+        ctx.beginPath();
+        ctx.arc(x, y - 18, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 7. 頭髮 (黑色半圓)
+        ctx.fillStyle = isPlayer ? '#222' : '#1a1a1a';
+        ctx.beginPath();
+        ctx.arc(x, y - 20, 10, Math.PI, 0);
+        ctx.fill();
+
+        // 8. 眼睛 (兩粒黑點)
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x - 4, y - 18, 1.5, 0, Math.PI * 2);
+        ctx.arc(x + 4, y - 18, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 9. 如果係玩家，加頂廚師帽
+        if (isPlayer) {
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.ellipse(x, y - 30, 10, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 帽腳
+            ctx.fillStyle = '#ddd';
+            ctx.fillRect(x - 8, y - 26, 16, 3);
+        }
     }
 
     function draw() {
@@ -595,33 +658,22 @@
             ctx.beginPath(); ctx.arc(c.x - 3, c.y - 3, 3, 0, Math.PI * 2); ctx.fill();
         });
 
-        // 畫路人
+        // 畫路人 (使用真人繪製函數)
         pedestrians.forEach(p => {
-            ctx.fillStyle = p.color;
-            ctx.shadowBlur = 10; ctx.shadowColor = p.color;
-            ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.beginPath(); ctx.arc(p.x, p.y, p.radius - 3, 0, Math.PI * 2); ctx.fill();
+            drawHuman(p.x, p.y, false, p.color);
         });
 
-        // 畫玩家同把遮
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath();
-        ctx.ellipse(player.x, player.y + 12, 10, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
+        // 畫玩家 (使用真人繪製函數)
+        drawHuman(player.x, player.y, true);
 
-        ctx.font = "28px Arial";
-        ctx.fillText("🚶", player.x, player.y);
-
+        // 畫雨傘 (蓋在玩家頭頂)
         if (isUmbrellaOpen) {
             ctx.save();
-            ctx.translate(player.x, player.y - 15);
+            // 將傘的中心點放喺玩家頭頂稍上的位置
+            ctx.translate(player.x, player.y - 25);
             ctx.rotate(player.tilt);
 
+            // 傘面
             ctx.fillStyle = 'rgba(255, 211, 42, 0.95)';
             ctx.shadowBlur = 20; ctx.shadowColor = '#ffd32a';
             ctx.beginPath();
@@ -629,6 +681,7 @@
             ctx.fill();
             ctx.shadowBlur = 0;
 
+            // 傘骨
             ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-24, 10); ctx.stroke();
