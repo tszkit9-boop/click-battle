@@ -37,7 +37,7 @@
         height: 60px; background: var(--glass-bg); backdrop-filter: blur(10px);
         border-bottom: 2px solid var(--neon-gold);
         display: flex; align-items: center; justify-content: space-between; 
-        padding: 0 15px 0 140px; /* 完美避開左側按鈕 */
+        padding: 0 15px 0 140px; 
         z-index: 10; flex-shrink: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .stat-group { display: flex; gap: 15px; }
@@ -55,7 +55,7 @@
     .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.3); }
 
     /* 畫布 */
-    #game-container { flex: 1; position: relative; overflow: hidden; }
+    #game-container { flex: 1; position: relative; overflow: hidden; background: #2a3b4c; }
     canvas { display: block; width: 100%; height: 100%; }
 
     /* 天氣狀態 */
@@ -81,21 +81,31 @@
         border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent;
     }
 
-    /* 撐傘按鈕 */
-    #umbrella-btn {
-        position: absolute; bottom: 30px; right: 20px; z-index: 20;
-        width: 80px; height: 80px; border-radius: 50%; background: rgba(10,10,20,0.8);
-        border: 3px solid #555; color: #fff; font-size: 35px;
+    /* 底部三粒控制掣 */
+    #controls {
+        height: 90px; background: rgba(10,10,20,0.95); border-top: 2px solid #333;
+        display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+        z-index: 20; flex-shrink: 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    }
+    
+    .control-btn {
+        width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.1);
+        border: 2px solid #555; color: #fff; font-size: 30px; 
         display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: all 0.2s; box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        backdrop-filter: blur(5px); opacity: 0.6;
+        cursor: pointer; box-shadow: 0 4px 0 #111; transition: 0.1s;
+    }
+    .control-btn:active { transform: translateY(4px); box-shadow: none; background: rgba(255,255,255,0.3); }
+    
+    /* 中間開遮掣 */
+    #umbrella-btn {
+        width: 80px; height: 80px; font-size: 38px;
+        background: rgba(255, 211, 42, 0.2); border: 3px solid var(--neon-gold); color: var(--neon-gold);
+        box-shadow: 0 0 20px rgba(255,211,42,0.3);
     }
     #umbrella-btn.active {
-        background: rgba(255, 211, 42, 0.9); border-color: var(--neon-gold);
-        box-shadow: 0 0 40px var(--neon-gold); color: #000; transform: scale(0.95); opacity: 1;
+        background: var(--neon-gold); color: #000; border-color: var(--neon-gold);
+        box-shadow: 0 0 30px var(--neon-gold); transform: scale(0.95);
     }
-    #umbrella-btn.ready { opacity: 1; border-color: var(--neon-gold); animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 211, 42, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 211, 42, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 211, 42, 0); } }
 
     /* 連擊提示 */
     #combo-toast {
@@ -141,7 +151,10 @@
         
         #weather-status { font-size: 11px; padding: 3px 10px; top: 8px; }
         #examiner-bubble { top: 45px; font-size: 12px; padding: 6px 12px; }
-        #umbrella-btn { width: 70px; height: 70px; font-size: 30px; bottom: 20px; right: 15px; }
+        
+        #controls { height: 80px; padding: 0 15px; }
+        .control-btn { width: 60px; height: 60px; font-size: 26px; }
+        #umbrella-btn { width: 70px; height: 70px; font-size: 32px; }
     }
     
     @media (max-height: 500px) {
@@ -149,7 +162,9 @@
         .stat-val { font-size: 13px; }
         #weather-status { top: 5px; }
         #examiner-bubble { top: 35px; }
-        #umbrella-btn { width: 60px; height: 60px; font-size: 25px; bottom: 10px; }
+        #controls { height: 70px; }
+        .control-btn { width: 55px; height: 55px; font-size: 24px; }
+        #umbrella-btn { width: 65px; height: 65px; font-size: 30px; }
     }
 </style>
 </head>
@@ -174,8 +189,6 @@
         <canvas id="gameCanvas"></canvas>
         <div id="examiner-bubble">行快啲啦！</div>
         <div id="combo-toast"></div>
-        <!-- 初始係收遮狀態 🌂 -->
-        <button id="umbrella-btn">🌂</button>
         
         <div id="game-over-modal" class="modal">
             <div class="modal-box">
@@ -194,6 +207,13 @@
         </div>
     </div>
 
+    <!-- 底部三粒掣 -->
+    <div id="controls">
+        <button class="control-btn" id="btn-left">◀</button>
+        <button class="control-btn" id="umbrella-btn">🌂</button>
+        <button class="control-btn" id="btn-right">▶</button>
+    </div>
+
 <script>
     window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
@@ -204,6 +224,8 @@
     const uiBest = document.getElementById('ui-best');
     const weatherStatus = document.getElementById('weather-status');
     const umbrellaBtn = document.getElementById('umbrella-btn');
+    const btnLeft = document.getElementById('btn-left');
+    const btnRight = document.getElementById('btn-right');
     const examinerBubble = document.getElementById('examiner-bubble');
     const comboToast = document.getElementById('combo-toast');
     const btnSound = document.getElementById('btn-sound');
@@ -270,9 +292,12 @@
     let combo = 0;
     let comboTimer = 0;
 
-    // 玩家 (tilt 控制遮的左右傾斜)
-    let player = { x: window.innerWidth / 2, y: window.innerHeight - 150, radius: 12, targetX: window.innerWidth / 2, targetY: window.innerHeight - 150, tilt: 0 };
-    let isDragging = false;
+    // 玩家
+    let player = { x: window.innerWidth / 2, y: 0, radius: 12, tilt: 0 };
+    
+    // 移動狀態 (配合按鈕)
+    let isMovingLeft = false;
+    let isMovingRight = false;
 
     const quotes = {
         normal: ["行快啲啦！", "睇路呀！", "唔好撞到人啊！", "保持直線行啦！"],
@@ -294,6 +319,10 @@
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
+        
+        // 玩家初始高度
+        if (player.y === 0) player.y = canvas.height - 60;
+        
         if (player.x < 20) player.x = 20;
         if (player.x > canvas.width - 20) player.x = canvas.width - 20;
         if (player.y < 20) player.y = 20;
@@ -302,23 +331,21 @@
     window.addEventListener('resize', resize);
     window.addEventListener('orientationchange', () => setTimeout(resize, 100));
 
-    canvas.addEventListener('pointerdown', (e) => { isDragging = true; updatePointer(e); });
-    canvas.addEventListener('pointermove', (e) => { if (isDragging) updatePointer(e); });
-    canvas.addEventListener('pointerup', () => isDragging = false);
-    canvas.addEventListener('pointercancel', () => isDragging = false);
-    canvas.addEventListener('pointerleave', () => isDragging = false);
+    // 左移按鈕控制
+    btnLeft.addEventListener('pointerdown', (e) => { e.preventDefault(); isMovingLeft = true; });
+    btnLeft.addEventListener('pointerup', (e) => { e.preventDefault(); isMovingLeft = false; });
+    btnLeft.addEventListener('pointercancel', () => { isMovingLeft = false; });
+    btnLeft.addEventListener('pointerleave', () => { isMovingLeft = false; });
 
-    function updatePointer(e) {
-        if (isPaused || state !== 'playing') return;
-        const rect = canvas.getBoundingClientRect();
-        player.targetX = e.clientX - rect.left;
-        player.targetY = e.clientY - rect.top;
-    }
+    // 右移按鈕控制
+    btnRight.addEventListener('pointerdown', (e) => { e.preventDefault(); isMovingRight = true; });
+    btnRight.addEventListener('pointerup', (e) => { e.preventDefault(); isMovingRight = false; });
+    btnRight.addEventListener('pointercancel', () => { isMovingRight = false; });
+    btnRight.addEventListener('pointerleave', () => { isMovingRight = false; });
 
-    // 🐛 手動切換開遮 / 收遮
+    // 開遮 / 收遮切換
     umbrellaBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
         if (isPaused || state !== 'playing') return;
         
         isUmbrellaOpen = !isUmbrellaOpen;
@@ -347,16 +374,15 @@
         score = 100; distance = 0;
         isRaining = false; isUmbrellaOpen = false;
         umbrellaBtn.classList.remove('active');
-        umbrellaBtn.classList.add('ready');
         umbrellaBtn.innerText = '🌂';
         weatherStatus.className = '';
         weatherStatus.innerText = '☀️ 天晴';
         pedestrians = []; coins = []; particles = [];
         gameTime = 0; combo = 0; comboTimer = 0;
+        isMovingLeft = false; isMovingRight = false;
         
         resize();
-        player.x = canvas.width / 2; player.y = canvas.height - 100;
-        player.targetX = player.x; player.targetY = player.y;
+        player.x = canvas.width / 2; player.y = canvas.height - 60;
         player.tilt = 0;
         
         updateUI();
@@ -420,7 +446,6 @@
             showQuote('rain');
         } else if (isRaining && Math.random() < 0.003 && gameTime > 700) {
             isRaining = false;
-            // 🐛 移除自動收遮：天氣好轉都唔會幫你收，要你自己撳！
             weatherStatus.className = '';
             weatherStatus.innerText = '☀️ 天晴';
         }
@@ -435,41 +460,38 @@
 
         if (score <= 0) gameOver("你淋雨淋到病咗，考官幫你叫白車。");
 
-        // 玩家移動與傾斜
+        // 玩家左右移動 (配合按鈕)
         let currentSpeed = baseWalkSpeed;
         if (isUmbrellaOpen) currentSpeed = 1.5; 
-        if (isRaining && !isUmbrellaOpen) currentSpeed = 2.0;
-        
-        let dx = player.targetX - player.x;
-        let dy = player.targetY - player.y;
-        let dist = Math.hypot(dx, dy);
+        if (isRaining && !isUmbrellaOpen) currentSpeed = 2.5; // 唔擔遮行得快啲
 
-        if (dist > 2) {
-            let targetTilt = (dx / dist) * 0.4;
+        let dx = 0;
+        if (isMovingLeft) dx -= currentSpeed;
+        if (isMovingRight) dx += currentSpeed;
+
+        // 傾斜效果 (左遮右遮)
+        if (dx !== 0) {
+            player.x += dx;
+            let targetTilt = dx > 0 ? 0.5 : -0.5; // 根據移動方向傾斜
             player.tilt += (targetTilt - player.tilt) * 0.15;
+            if (gameTime % 15 === 0) createParticle(player.x, player.y + 10, '#fff', false);
         } else {
+            // 放開手回正
             player.tilt += (0 - player.tilt) * 0.15;
         }
 
-        if (dist > currentSpeed) {
-            player.x += (dx / dist) * currentSpeed;
-            player.y += (dy / dist) * currentSpeed;
-            if (gameTime % 15 === 0) createParticle(player.x, player.y + 10, '#fff', false);
-        }
-
+        // 邊界限制
         if (player.x < 20) player.x = 20;
         if (player.x > canvas.width - 20) player.x = canvas.width - 20;
-        if (player.y < 20) player.y = 20;
-        if (player.y > canvas.height - 20) player.y = canvas.height - 20;
 
         if (combo > 0) {
             comboTimer--;
             if (comboTimer <= 0) { combo = 0; }
         }
 
-        // 生成路人 (頻率放慢)
+        // 生成路人 (改為由上方落嚟)
         spawnTimer++;
-        let spawnRate = Math.max(60, 120 - Math.floor(distance / 20)); 
+        let spawnRate = Math.max(50, 100 - Math.floor(distance / 20)); 
         if (spawnTimer > spawnRate) {
             spawnTimer = 0;
             let r = Math.random();
@@ -477,26 +499,13 @@
             else if (r < 0.9) spawnCoin();
         }
 
-        // 🐛 路人更新：佢哋會「行埋你到」！
+        // 路人更新
         for (let i = pedestrians.length - 1; i >= 0; i--) {
             let p = pedestrians[i];
-            
-            // 計算路人與玩家嘅方向，向玩家移動 (追蹤)
-            let pdx = player.x - p.x;
-            let pdy = player.y - p.y;
-            let pDist = Math.hypot(pdx, pdy);
+            p.y += baseWalkSpeed + (distance / 2000); // 向下移動
+            p.x += p.vx; // 輕微左右飄移
 
-            if (pDist > 0) {
-                // 路人向玩家行過去 (速度比玩家慢少少，但會追住你)
-                p.x += (pdx / pDist) * p.speed;
-                p.y += (pdy / pDist) * p.speed;
-            }
-
-            // 出界移除 (防止路人卡死)
-            if (p.x < -50 || p.x > canvas.width + 50 || p.y < -50 || p.y > canvas.height + 50) {
-                pedestrians.splice(i, 1); 
-                continue;
-            }
+            if (p.y > canvas.height + 50) { pedestrians.splice(i, 1); continue; }
 
             // 碰撞檢測
             if (Math.hypot(player.x - p.x, player.y - p.y) < player.radius + p.radius) {
@@ -547,17 +556,11 @@
 
     function spawnPedestrian() {
         let colors = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
-        // 路人從螢幕四周邊界外圍生成
-        let x, y;
-        let side = Math.floor(Math.random() * 4);
-        if (side === 0) { x = Math.random() * canvas.width; y = -30; }
-        else if (side === 1) { x = Math.random() * canvas.width; y = canvas.height + 30; }
-        else if (side === 2) { x = -30; y = Math.random() * canvas.height; }
-        else { x = canvas.width + 30; y = Math.random() * canvas.height; }
-
         pedestrians.push({
-            x: x, y: y,
-            speed: Math.random() * 1.0 + 0.5, // 路人追蹤速度 (0.5 ~ 1.5)
+            x: Math.random() * (canvas.width - 40) + 20,
+            y: -30,
+            vx: (Math.random() - 0.5) * 1.0, // 隨機左右飄移
+            speed: 1, // 速度在 update 中計算
             radius: 10,
             color: colors[Math.floor(Math.random() * colors.length)]
         });
@@ -571,12 +574,15 @@
     }
 
     function draw() {
+        // 陰天背景
         let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        grad.addColorStop(0, '#0a0a14'); grad.addColorStop(1, '#1a1a2e');
+        grad.addColorStop(0, '#2a3b4c'); 
+        grad.addColorStop(1, '#111a24'); 
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = 'rgba(0, 210, 211, 0.1)';
+        // 地磚網格
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; 
         ctx.lineWidth = 1;
         for (let i = 0; i < canvas.width; i += 40) {
             ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
@@ -609,7 +615,12 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // 畫人
+        // 玩家影子
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(player.x, player.y + 12, 10, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.font = "28px Arial";
         ctx.fillText("🚶", player.x, player.y);
 
@@ -622,15 +633,15 @@
             ctx.fillStyle = 'rgba(255, 211, 42, 0.95)';
             ctx.shadowBlur = 20; ctx.shadowColor = '#ffd32a';
             ctx.beginPath();
-            ctx.arc(0, 0, 32, Math.PI, 0); 
+            ctx.arc(0, 0, 35, Math.PI, 0);
             ctx.fill();
             ctx.shadowBlur = 0;
 
             // 畫傘骨
-            ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-22, 10); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(22, 10); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-24, 10); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(24, 10); ctx.stroke();
 
             ctx.restore();
         }
@@ -645,7 +656,7 @@
 
         // 落雨
         if (isRaining) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
             ctx.lineWidth = 2;
             ctx.beginPath();
             for (let i = 0; i < 60; i++) {
@@ -656,7 +667,7 @@
             }
             ctx.stroke();
             
-            ctx.fillStyle = 'rgba(0, 210, 211, 0.05)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
     }
