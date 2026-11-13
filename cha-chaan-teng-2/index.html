@@ -37,13 +37,13 @@
     }
     .lang-btn:active { transform: scale(0.95); background: var(--neon-gold); color: #000; }
     
-    /* 🐛 修復：頂部 HUD 預留左右空間，避開 Fixed 按鈕 */
+    /* 頂部 HUD */
     #hud {
         height: 52px; background: rgba(15,15,15,0.95); border-bottom: 2px solid var(--neon-gold);
         display: flex; align-items: center; justify-content: space-between; 
-        padding: 0 140px 0 150px; /* 左避返回(150px)、右避語言(140px) */
+        padding: 0 140px 0 150px; 
         z-index: 10; flex-shrink: 0; box-shadow: 0 4px 20px rgba(255,211,42,0.2);
-        overflow: hidden; /* 防止內容溢出 */
+        overflow: hidden; 
     }
     .stat-group { display: flex; gap: 15px; flex-shrink: 0; }
     .stat-box { display: flex; flex-direction: column; text-align: center; }
@@ -70,9 +70,7 @@
     #game-area {
         flex: 1; position: relative; overflow: hidden;
         display: flex; flex-direction: column; justify-content: flex-end;
-        background: 
-            linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)),
-            repeating-linear-gradient(90deg, #2c1e16 0px, #2c1e16 40px, #3b291f 40px, #3b291f 80px);
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), repeating-linear-gradient(90deg, #2c1e16 0px, #2c1e16 40px, #3b291f 40px, #3b291f 80px);
         box-shadow: inset 0 0 100px rgba(0,0,0,1);
     }
     #kitchen {
@@ -89,21 +87,23 @@
         display: flex; justify-content: center; gap: 40px; align-items: flex-end;
         padding: 0 20px;
     }
+    
+    /* 👇 全新動畫客人 👇 */
     .customer {
         display: flex; flex-direction: column; align-items: center;
         transition: all 0.3s; width: 80px; position: relative;
     }
     .customer.angry { animation: shake 0.2s infinite; }
     .customer.leaving { animation: floatAway 0.8s forwards; }
-    .customer.vip .char-body { border-color: gold; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.3), 0 0 25px gold; }
-    .customer.vip .char-face { border-color: gold; }
+    .customer.vip .char-body { filter: drop-shadow(0 0 15px gold); }
     @keyframes floatAway { to { transform: translateY(-120px) scale(0.8); opacity: 0; } }
+    
     .bubble {
         --bubble-bg: #fff;
         background: var(--bubble-bg); color: #000; border-radius: 12px; padding: 8px 10px;
-        font-weight: 900; font-size: 16px; position: relative; margin-bottom: 12px;
+        font-weight: 900; font-size: 14px; position: relative; margin-bottom: 15px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ffd32a;
-        min-width: 80px; max-width: 150px; text-align: center; opacity: 0; transform: translateY(10px);
+        min-width: 80px; max-width: 160px; text-align: center; opacity: 0; transform: translateY(10px);
         transition: 0.3s; line-height: 1.4; z-index: 10;
     }
     .bubble.show { opacity: 1; transform: translateY(0); }
@@ -114,41 +114,135 @@
         border-color: var(--bubble-bg) transparent transparent transparent;
     }
     .bubble.karen { --bubble-bg: #ff4757; color: #fff; border-color: #ff0055; box-shadow: 0 0 15px #ff0055; }
+    
     .char-body {
-        width: 60px; height: 80px; border-radius: 30px 30px 10px 10px;
-        box-shadow: inset -10px -10px 20px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.5);
-        position: relative; border: 3px solid rgba(255,255,255,0.2);
-        transition: 0.3s;
+        width: 60px; height: 80px; position: relative;
+        display: flex; justify-content: center; align-items: flex-end;
     }
+    
+    /* 客人身體 */
+    .c-torso {
+        position: absolute; bottom: 15px;
+        width: 40px; height: 40px;
+        background: var(--c-color);
+        border-radius: 15px 15px 5px 5px;
+        box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3);
+        z-index: 2;
+    }
+    /* 客人雙腳 */
+    .c-leg {
+        position: absolute; bottom: 0;
+        width: 10px; height: 20px; background: #2c3e50; border-radius: 5px;
+        transform-origin: top center;
+    }
+    .c-leg.left { left: 15px; transform: rotate(10deg); }
+    .c-leg.right { right: 15px; transform: rotate(-10deg); }
+    /* 客人雙手 */
+    .c-arm {
+        position: absolute; bottom: 25px;
+        width: 8px; height: 22px; background: #f5cba7; border-radius: 4px;
+        transform-origin: top center; z-index: 1;
+    }
+    .c-arm.left { left: 5px; transform: rotate(-10deg); }
+    .c-arm.right { right: 5px; transform: rotate(10deg); }
+    
+    /* 客人頭部 */
     .char-face {
-        width: 46px; height: 46px; background: #f5cba7; border-radius: 50%;
-        position: absolute; top: -25px; left: 4px; border: 3px solid rgba(0,0,0,0.5);
-        display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold;
+        position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+        width: 36px; height: 36px; background: #f5cba7; border-radius: 50%;
+        border: 2px solid rgba(0,0,0,0.3);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: bold; color: #333; z-index: 3;
     }
-    .patience-bg {
-        width: 60px; height: 8px; background: #222; border-radius: 4px; margin-top: 15px;
-        overflow: hidden; border: 1px solid #000; box-shadow: inset 0 0 5px #000;
+    .char-face::before {
+        content: ''; position: absolute; top: -4px; left: -2px;
+        width: 36px; height: 18px; background: #222; border-radius: 18px 18px 0 0; z-index: -1;
     }
-    .patience-fill { height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear; }
+
+    /* 👇 全新動畫玩家 👇 */
     #player {
         position: absolute; bottom: 20px; z-index: 10; transition: transform 0.1s;
         display: flex; flex-direction: column; align-items: center;
         width: 70px; height: 100px;
     }
     #player-body {
-        width: 70px; height: 100px; background: linear-gradient(180deg, #ffd32a, #d4ac0d);
-        border-radius: 35px 35px 10px 10px; box-shadow: inset -15px -15px 20px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.9);
-        position: absolute; bottom: 0; border: 4px solid #000;
+        width: 70px; height: 100px; position: relative;
+        display: flex; justify-content: center;
     }
+    /* 玩家身體 */
+    .p-torso {
+        position: absolute; bottom: 15px;
+        width: 50px; height: 50px; background: #fff;
+        border-radius: 15px 15px 8px 8px; z-index: 2;
+        box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.5);
+    }
+    .p-torso::after {
+        content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+        width: 35px; height: 35px; background: #2c3e50; border-radius: 5px 5px 0 0;
+    }
+    /* 玩家雙腳 */
+    .p-leg {
+        position: absolute; bottom: 0;
+        width: 12px; height: 25px; background: #1a1a1a; border-radius: 6px;
+        transform-origin: top center;
+    }
+    .p-leg.left { left: 20px; }
+    .p-leg.right { right: 20px; }
+    /* 玩家雙手 */
+    .p-arm {
+        position: absolute; bottom: 30px;
+        width: 10px; height: 25px; background: #f5cba7; border-radius: 5px;
+        transform-origin: top center; z-index: 1;
+    }
+    .p-arm.left { left: 5px; }
+    .p-arm.right { right: 5px; }
+    
     #player-face {
-        width: 60px; height: 60px; background: #ffccaa; border-radius: 50%;
-        position: absolute; top: 0; left: 5px; border: 4px solid #000;
-        display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900;
-        z-index: 2;
+        position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+        width: 44px; height: 44px; background: #ffccaa; border-radius: 50%;
+        border: 3px solid rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; z-index: 3;
     }
+    #player-face::before {
+        content: ''; position: absolute; top: -3px; left: -2px;
+        width: 44px; height: 20px; background: #1a1a1a; border-radius: 22px 22px 0 0; z-index: -1;
+    }
+
+    /* 拿著的餐點 */
+    #player-carry {
+        position: absolute; top: -50px; font-size: 36px; filter: drop-shadow(0 0 15px #fff);
+        opacity: 0; transition: 0.2s; z-index: 4;
+    }
+    #player-carry.show { opacity: 1; transform: translateY(-10px); }
+
+    /* 👇 行路動畫 Keyframes 👇 */
+    @keyframes walk-left { 0% { transform: rotate(20deg); } 100% { transform: rotate(-20deg); } }
+    @keyframes walk-right { 0% { transform: rotate(-20deg); } 100% { transform: rotate(20deg); } }
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    
+    /* 加上 walking class 時觸發 */
+    #player.walking .p-leg.left { animation: walk-left 0.3s infinite alternate ease-in-out; }
+    #player.walking .p-leg.right { animation: walk-right 0.3s infinite alternate ease-in-out; }
+    #player.walking .p-arm.left { animation: walk-right 0.3s infinite alternate ease-in-out; }
+    #player.walking .p-arm.right { animation: walk-left 0.3s infinite alternate ease-in-out; }
+    #player.walking #player-body { animation: bob 0.3s infinite alternate ease-in-out; }
+
+    /* 客人等待時的微動作 */
+    .customer .c-leg.left { animation: walk-left 0.4s infinite alternate ease-in-out; }
+    .customer .c-leg.right { animation: walk-right 0.4s infinite alternate ease-in-out; }
+    .customer .c-arm.left { animation: walk-right 0.4s infinite alternate ease-in-out; }
+    .customer .c-arm.right { animation: walk-left 0.4s infinite alternate ease-in-out; }
+
+    .patience-bg {
+        width: 60px; height: 8px; background: #222; border-radius: 4px; margin-top: 25px;
+        overflow: hidden; border: 1px solid #000; box-shadow: inset 0 0 5px #000;
+    }
+    .patience-fill { height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear; }
+    
     #controls {
         height: 85px; background: rgba(10,10,10,0.95); border-top: 2px solid #333;
-        display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+        display: flex; justify-content: center; align-items: center; gap: 40px; padding: 0 20px;
         z-index: 20; flex-shrink: 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.9);
     }
     .move-btn {
@@ -158,6 +252,9 @@
         transition: 0.1s;
     }
     .move-btn:active { transform: translateY(5px); box-shadow: none; background: rgba(255,255,255,0.2); }
+    #ui-control-hint { display: none; }
+
+    /* 互動彈框 */
     #interaction-panel {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
         background: rgba(15, 15, 25, 0.98); border: 3px solid var(--neon-gold);
@@ -173,7 +270,9 @@
     .menu-btn { background: #333; color: #fff; border: 1px solid #555; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 3px 0 #000; }
     .menu-btn:active { transform: translateY(3px); box-shadow: none; }
     .menu-btn.mod { background: #2c3e50; border-color: #00d2d3; color: #00d2d3; }
-    .tray-display { min-height: 30px; background: #000; border-radius: 8px; margin-bottom: 10px; padding: 5px; font-size: 12px; color: #ffd32a; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center; }
+    .menu-btn.food { border-color: #ff9f43; color: #ff9f43; }
+    .menu-btn.drink { border-color: #00d2d3; color: #00d2d3; }
+    .tray-display { min-height: 40px; background: #000; border-radius: 8px; margin-bottom: 10px; padding: 5px; font-size: 12px; color: #ffd32a; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center; }
     .action-btn {
         width: 100%; padding: 12px; border: none; border-radius: 8px;
         font-size: 16px; font-weight: 900; cursor: pointer; margin-bottom: 8px;
@@ -232,37 +331,25 @@
     #pause-overlay h2 { color: var(--neon-gold); font-size: 40px; text-shadow: 0 0 20px var(--neon-gold); }
     
     /* 📱 手機優化 */
-    #controls { display: none !important; }
-    #panel-btn-cancel { display: none !important; }
-    
     @media (max-width: 768px) {
         .back-btn { padding: 4px 8px; font-size: 11px; top: 8px; left: 8px; }
         .lang-btn { padding: 4px 8px; font-size: 11px; top: 8px; right: 8px; }
-        #hud { height: 44px; padding: 0 85px 0 90px; } /* 手機版留白相應縮小 */
+        #hud { height: 44px; padding: 0 85px 0 90px; }
         .stat-group { gap: 8px; }
         .stat-val { font-size: 13px; }
         .stat-label { font-size: 8px; }
         .icon-btn { width: 26px; height: 26px; font-size: 13px; }
         .upgrade-btn { padding: 4px 8px; font-size: 11px; }
-        
-        /* 手機版隱藏「最佳」和「連擊」以節省空間 */
         .stat-group > .stat-box:nth-child(3),
-        .stat-group > .stat-box:nth-child(4) {
-            display: none;
-        }
-        /* 手機版隱藏「成就」按鈕 */
-        .hud-right .icon-btn:nth-child(3) {
-            display: none;
-        }
+        .stat-group > .stat-box:nth-child(4) { display: none; }
+        .hud-right .icon-btn:nth-child(3) { display: none; }
         
         #customers-row { bottom: 90px; gap: clamp(6px, 2vw, 16px); padding: 0 5px; }
         #player { bottom: 10px; width: 60px; height: 88px; }
-        #player-body { width: 60px; height: 88px; border-radius: 30px 30px 8px 8px; }
-        #player-face { width: 50px; height: 50px; font-size: 20px; left: 5px; }
+        #player-body { transform: scale(0.85); transform-origin: bottom center; }
         .customer { width: 60px; }
-        .char-body { width: 46px; height: 62px; border-radius: 23px 23px 8px 8px; }
-        .char-face { width: 34px; height: 34px; font-size: 13px; top: -18px; left: 6px; border-width: 2px; }
-        .patience-bg { width: 46px; height: 6px; margin-top: 10px; }
+        .char-body { transform: scale(0.85); transform-origin: bottom center; }
+        .patience-bg { width: 46px; height: 6px; margin-top: 15px; }
         .bubble { font-size: 11px; padding: 5px 6px; min-width: 50px; max-width: 100px; margin-bottom: 8px; }
         #kitchen { width: 140px; height: 50px; }
         .kitchen-label { font-size: 10px; }
@@ -274,6 +361,9 @@
         .action-btn { padding: 8px; font-size: 12px; margin-bottom: 5px; }
         #combo-toast { font-size: 34px; }
         #achievement-toast { font-size: 13px; padding: 10px 18px; top: 60px; }
+        
+        #controls { height: 70px; gap: 20px; }
+        .move-btn { width: 55px; height: 55px; font-size: 24px; }
     }
     
     @media (max-height: 600px) {
@@ -307,15 +397,23 @@
     <div id="game-area">
         <div id="kitchen"><div class="kitchen-label" id="ui-kitchen-label">🍳 廚房出餐區</div></div>
         <div id="customers-row"></div>
+        
+        <!-- 👇 全新動畫玩家 👇 -->
         <div id="player" style="left: 0;">
-            <div id="player-face">👨‍🍳</div>
-            <div id="player-body"></div>
+            <div id="player-carry"></div>
+            <div id="player-body">
+                <div class="p-arm left"></div>
+                <div class="p-arm right"></div>
+                <div class="p-torso"></div>
+                <div class="p-leg left"></div>
+                <div class="p-leg right"></div>
+                <div id="player-face">👨‍🍳</div>
+            </div>
         </div>
     </div>
 
     <div id="controls">
         <button class="move-btn" onpointerdown="startMove(-1)" onpointerup="stopMove()" onpointerleave="stopMove()">◀</button>
-        <div style="color:#777; font-size:14px; font-weight:bold;" id="ui-control-hint">向左行 | 向右行</div>
         <button class="move-btn" onpointerdown="startMove(1)" onpointerup="stopMove()" onpointerleave="stopMove()">▶</button>
     </div>
 
@@ -368,7 +466,7 @@
                 <p>1️⃣ 客人入座，訂單會喺面板顯示</p>
                 <p>2️⃣ 訂單限時消失，請記住！</p>
                 <p>3️⃣ 你嘅公仔會自動行去客人身邊</p>
-                <p>4️⃣ 憑記憶撳餐牌落單</p>
+                <p>4️⃣ 憑記憶撳餐牌落單 (套餐：食+飲)</p>
                 <p>5️⃣ 連續成功可獲得連擊加成 ×2/×3</p>
                 <p>6️⃣ 客人變西客可按「大聲反擊」加聲譽</p>
             </div>
@@ -406,10 +504,10 @@
             cancel: "取消/離開", wrongOrder: "❌ 撳錯嘢！", orderTimeUp: "⏰ 張單消失啦！快啲憑記憶撳！",
             longWait1: "等好耐喇…", longWait2: "仲未到？",
             food: { 
-                "凍檸茶": "🍹凍檸茶", "熱奶茶": "☕熱奶茶", "凍咖啡": "🥤凍咖啡", "鴛鴦": "🍵鴛鴦",
-                "西多士": "🍞西多士", "奶油多": "🥐奶油多", "菠蘿油": "🍔菠蘿油", "乾炒牛河": "🍜乾炒牛河"
+                "西多士": "🍞西多士", "奶油多": "🥐奶油多", "菠蘿油": "🍔菠蘿油", "乾炒牛河": "🍜乾炒牛河",
+                "凍檸茶": "🍹凍檸茶", "熱奶茶": "☕熱奶茶", "凍咖啡": "🥤凍咖啡", "鴛鴦": "🍵鴛鴦"
             },
-            mods: { "少甜": "少甜", "走冰": "走冰", "加底": "加底", "飛沙走奶": "飛沙走奶", "少冰": "少冰", "多糖": "多糖", "走甜": "走甜", "烘底": "烘底", "飛邊": "飛邊" },
+            mods: { "烘底": "烘底", "加底": "加底", "飛邊": "飛邊", "少甜": "少甜", "走冰": "走冰", "飛沙走奶": "飛沙走奶", "少冰": "少冰", "多糖": "多糖", "走甜": "走甜" },
             names: ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'],
             karenComplaints: ["我要投訴！凍檸茶唔夠凍！", "叫咗走冰，點解仲有冰？", "你哋啲服務態度好差囉！", "等咗咁耐，我趕時間呀！"]
         },
@@ -423,10 +521,10 @@
             cancel: "取消/离开", wrongOrder: "❌ 点错了！", orderTimeUp: "⏰ 订单消失啦！快凭记忆点！",
             longWait1: "等好久了…", longWait2: "还没到？",
             food: { 
-                "凍檸茶": "🍹冰柠檬茶", "熱奶茶": "☕热奶茶", "凍咖啡": "🥤冰咖啡", "鴛鴦": "🍵鸳鸯",
-                "西多士": "🍞吐司", "奶油多": "🥐奶油吐司", "菠蘿油": "🍔菠萝油", "乾炒牛河": "🍜干炒牛河"
+                "西多士": "🍞吐司", "奶油多": "🥐奶油吐司", "菠蘿油": "🍔菠萝油", "乾炒牛河": "🍜干炒牛河",
+                "凍檸茶": "🍹冰柠檬茶", "熱奶茶": "☕热奶茶", "凍咖啡": "🥤冰咖啡", "鴛鴦": "🍵鸳鸯"
             },
-            mods: { "少甜": "少甜", "走冰": "去冰", "加底": "加底", "飛沙走奶": "飞沙走奶", "少冰": "少冰", "多糖": "多糖", "走甜": "去甜", "烘底": "烘底", "飛邊": "飞边" },
+            mods: { "烘底": "烘底", "加底": "加底", "飛邊": "飞边", "少甜": "少甜", "走冰": "去冰", "飛沙走奶": "飞沙走奶", "少冰": "少冰", "多糖": "多糖", "走甜": "去甜" },
             names: ['陈先生', '李太太', '张小姐', '王叔', '小明', '阿珍', '刘经理', '黄师傅'],
             karenComplaints: ["我要投诉！冰柠檬茶不够冰！", "叫了去冰，为什么还有冰？", "你们服务态度好差！", "等了这么久，我赶时间啊！"]
         }
@@ -442,6 +540,13 @@
         localStorage.setItem('lang', currentLang);
         updateLanguageUI();
         hidePanel();
+        // 刷新所有客人的氣泡
+        customers.forEach(c => {
+            if (c.state === 'waiting') {
+                let orderStr = `${getFoodName(c.food.name)}${c.foodMods.length ? '+' + c.foodMods.map(m=>getModName(m)).join('+') : ''}<br>${getFoodName(c.drink.name)}${c.drinkMods.length ? '+' + c.drinkMods.map(m=>getModName(m)).join('+') : ''}`;
+                c.bubbleEl.innerHTML = orderStr;
+            }
+        });
     }
 
     function updateLanguageUI() {
@@ -476,7 +581,6 @@
     const trayDisplay = document.getElementById('tray-display');
     const menuGrid = document.getElementById('menu-grid');
 
-    // 狀態變數
     let state = 'menu';
     let money = 0, reputation = 100, maxSeats = 2, customerId = 0;
     let player = { x: 20, speed: 5, isMoving: 0, width: 60 };
@@ -497,17 +601,19 @@
         if (saved) unlockedAchievements = JSON.parse(saved);
     } catch(e) {}
 
-    // 食物
-    const FOOD_ITEMS = [
-        { name: '凍檸茶', price: 50 }, { name: '熱奶茶', price: 60 },
-        { name: '凍咖啡', price: 70 }, { name: '鴛鴦', price: 80 },
-        { name: '奶油多', price: 60 }, { name: '西多士', price: 80 },
-        { name: '菠蘿油', price: 90 }, { name: '乾炒牛河', price: 120 }
+    // 🍔 新的餐點定義：食物 + 飲品 + 專屬要求
+    const FOODS = [
+        { name: '西多士', price: 40 }, { name: '奶油多', price: 30 },
+        { name: '菠蘿油', price: 50 }, { name: '乾炒牛河', price: 80 }
     ];
-    const MODS = ['少甜', '走冰', '加底', '飛沙走奶', '少冰', '多糖', '走甜', '烘底', '飛邊'];
+    const DRINKS = [
+        { name: '凍檸茶', price: 30 }, { name: '熱奶茶', price: 30 },
+        { name: '凍咖啡', price: 35 }, { name: '鴛鴦', price: 35 }
+    ];
+    const FOOD_MODS = ['烘底', '加底', '飛邊'];
+    const DRINK_MODS = ['少甜', '走冰', '飛沙走奶', '少冰', '多糖', '走甜'];
     const COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
 
-    // 難度階梯
     const DIFFICULTY = [
         { lv: 1, patienceRate: 0.022, spawnInterval: 15000, memoryTime: 60000, vipChance: 0 },
         { lv: 2, patienceRate: 0.024, spawnInterval: 14000, memoryTime: 58000, vipChance: 0 },
@@ -527,7 +633,6 @@
         return DIFFICULTY[lv - 1];
     }
 
-    // 成就
     const ACHIEVEMENTS = [
         { id: 'first_serve', icon: '🥇', name: '第一單', desc: '成功出餐 1 次', check: () => totalServed >= 1 },
         { id: 'combo_master', icon: '⚡', name: '連擊狂人', desc: '達成 ×5 連擊', check: () => maxCombo >= 5 },
@@ -555,8 +660,14 @@
         try { if (navigator.vibrate && soundOn) navigator.vibrate(pattern); } catch(e) {}
     }
 
-    function startMove(dir) { player.isMoving = dir; }
-    function stopMove() { player.isMoving = 0; }
+    function startMove(dir) { 
+        player.isMoving = dir; 
+        if (dir !== 0) playerEl.classList.add('walking');
+    }
+    function stopMove() { 
+        player.isMoving = 0; 
+        playerEl.classList.remove('walking');
+    }
 
     function getCustomerX(c) {
         const gameRect = document.getElementById('game-area').getBoundingClientRect();
@@ -565,14 +676,20 @@
     }
 
     function updateAutoMove() {
-        if (interactionPanel.classList.contains('show')) return;
+        if (interactionPanel.classList.contains('show')) {
+            playerEl.classList.remove('walking');
+            return;
+        }
         let target = null, minPatience = Infinity;
         customers.forEach(c => {
             if ((c.state === 'waiting' || c.state === 'karen') && c.patience < minPatience) {
                 minPatience = c.patience; target = c;
             }
         });
-        if (!target) return;
+        if (!target) {
+            playerEl.classList.remove('walking');
+            return;
+        }
         const cx = getCustomerX(target);
         const gameW = document.getElementById('game-area').clientWidth;
         const maxX = gameW - player.width - 20;
@@ -583,6 +700,9 @@
             player.x += dir * player.speed;
             player.x = Math.max(20, Math.min(player.x, maxX));
             playerEl.style.transform = `translateX(${player.x}px) scaleX(${dir})`;
+            playerEl.classList.add('walking');
+        } else {
+            playerEl.classList.remove('walking');
         }
     }
 
@@ -649,19 +769,6 @@
         } catch(e) {}
     }
 
-    function getFoodPool() {
-        const h = new Date().getHours();
-        const weights = {};
-        FOOD_ITEMS.forEach(f => weights[f.name] = 1);
-        if (h >= 6 && h < 11) { weights['熱奶茶'] = 3; weights['西多士'] = 3; weights['奶油多'] = 3; }
-        else if (h >= 11 && h < 14) { weights['乾炒牛河'] = 3; weights['菠蘿油'] = 3; }
-        else if (h >= 14 && h < 18) { weights['凍檸茶'] = 3; weights['西多士'] = 3; }
-        else if (h >= 18 && h < 22) { weights['乾炒牛河'] = 3; weights['鴛鴦'] = 3; }
-        const pool = [];
-        FOOD_ITEMS.forEach(f => { for (let i = 0; i < weights[f.name]; i++) pool.push(f); });
-        return pool;
-    }
-
     function updateLoop() {
         if (state === 'playing' && !paused) {
             updateAutoMove();
@@ -670,19 +777,15 @@
             customers.forEach(c => {
                 if (c.state === 'waiting' || c.state === 'karen') {
                     let rate = c.isVIP ? diff.patienceRate * 0.6 : diff.patienceRate;
-
-                    // 寬限期：生成後 15 秒內耐心跌速 ×0.15（幾乎唔跌）
                     const age = Date.now() - (c.spawnTime || 0);
                     if (age < 15000) rate *= 0.15;
 
-                    // 面板打開且顯示此客人且訂單未消失 → 耐心完全暫停
                     if (currentPanelCustomer === c && c.state === 'waiting' && !c.orderTimeUp) {
                         rate = 0;
                     }
 
                     c.patience -= rate;
 
-                    // 抱怨氣泡
                     if (c.state === 'waiting') {
                         if (c.patience <= 75 && c.waitStage === 0) {
                             c.waitStage = 1;
@@ -702,7 +805,6 @@
                         }
                     }
 
-                    // 變西客
                     if (c.patience <= 30 && c.state === 'waiting') {
                         c.state = 'karen';
                         c.el.classList.add('angry');
@@ -714,7 +816,6 @@
                         playSound('fail');
                     }
 
-                    // 走人
                     if (c.patience <= 0 && c.state !== 'angry') {
                         c.patience = 0;
                         c.state = 'angry';
@@ -734,7 +835,6 @@
                 }
             });
 
-            // 自動偵測最近客人
             let nearC = null, nearDist = Infinity;
             const pCenter = player.x + player.width / 2;
             customers.forEach(c => {
@@ -752,7 +852,6 @@
                 hidePanel();
             }
 
-            // 外賣電話（5 分鐘先觸發一次）
             if (!deliveryOrder && !interactionPanel.classList.contains('show')) {
                 const hasWaiting = customers.some(c => c.state === 'waiting' || c.state === 'karen');
                 if (!hasWaiting && Date.now() - lastDeliveryTime > 300000) {
@@ -766,41 +865,53 @@
     function spawnCustomer() {
         if (state !== 'playing' || customers.length >= maxSeats) return;
         const diff = getDifficulty();
-        const pool = getFoodPool();
-        let food = pool[Math.floor(Math.random() * pool.length)];
+        
+        // 🐛 新邏輯：食物 + 飲品 + 分開的要求
+        let food = FOODS[Math.floor(Math.random() * FOODS.length)];
+        let drink = DRINKS[Math.floor(Math.random() * DRINKS.length)];
+        
+        let foodMods = [];
+        if (Math.random() < 0.4) foodMods.push(FOOD_MODS[Math.floor(Math.random() * FOOD_MODS.length)]);
+        
+        let drinkMods = [];
+        if (Math.random() < 0.6) drinkMods.push(DRINK_MODS[Math.floor(Math.random() * DRINK_MODS.length)]);
+        if (Math.random() < 0.3) {
+            let m2 = DRINK_MODS[Math.floor(Math.random() * DRINK_MODS.length)];
+            if (!drinkMods.includes(m2)) drinkMods.push(m2);
+        }
+        
         let name = i18n[currentLang].names[Math.floor(Math.random() * i18n[currentLang].names.length)];
         let color = COLORS[Math.floor(Math.random() * COLORS.length)];
         let id = customerId++;
         let isVIP = Math.random() < diff.vipChance;
-        
-        let requiredMods = [];
-        if (Math.random() < (isVIP ? 0.9 : 0.6)) {
-            requiredMods.push(MODS[Math.floor(Math.random() * MODS.length)]);
-            if (Math.random() < (isVIP ? 0.7 : 0.3)) {
-                let m2 = MODS[Math.floor(Math.random() * MODS.length)];
-                if (!requiredMods.includes(m2)) requiredMods.push(m2);
-            }
-        }
 
         let el = document.createElement('div');
         el.className = 'customer' + (isVIP ? ' vip' : '');
+        // 加上雙手雙腳的 DOM 結構
         el.innerHTML = `
             <div class="bubble"></div>
-            <div class="char-body" style="background: ${color};">
+            <div class="char-body" style="--c-color: ${color};">
+                <div class="c-arm left"></div>
+                <div class="c-arm right"></div>
+                <div class="c-torso"></div>
+                <div class="c-leg left"></div>
+                <div class="c-leg right"></div>
                 <div class="char-face">${isVIP ? '👑' : '^ ^'}</div>
             </div>
             <div class="patience-bg"><div class="patience-fill"></div></div>
         `;
         customersRow.appendChild(el);
 
+        let orderStr = `${getFoodName(food.name)}${foodMods.length ? '+' + foodMods.map(m=>getModName(m)).join('+') : ''}<br>${getFoodName(drink.name)}${drinkMods.length ? '+' + drinkMods.map(m=>getModName(m)).join('+') : ''}`;
+
         let c = {
-            id, name, food, mods: requiredMods, patience: 100, state: 'waiting',
+            id, name, food, drink, foodMods, drinkMods, orderStr, patience: 100, state: 'waiting',
             el, bubbleEl: el.querySelector('.bubble'), pFill: el.querySelector('.patience-fill'),
             orderRevealed: false, waitStage: 0, isVIP,
             spawnTime: Date.now(), orderTimeUp: false
         };
         customers.push(c);
-        setTimeout(() => c.bubbleEl.classList.add('show'), 100);
+        setTimeout(() => { c.bubbleEl.innerHTML = orderStr; c.bubbleEl.classList.add('show'); }, 100);
     }
 
     function showInteraction(c) {
@@ -821,7 +932,7 @@
                 showMenuButtons(c);
             } else {
                 c.orderRevealed = true;
-                panelDesc.innerHTML = t('wantToOrder') + `<span style="color:#ff0055; font-size:20px;">${getFoodName(c.food.name)} ${c.mods.map(m=>getModName(m)).join(' ')}</span>`;
+                panelDesc.innerHTML = t('wantToOrder') + `<br><span style="color:#ff0055; font-size:16px;">${c.orderStr}</span>`;
                 const diff = getDifficulty();
                 let memTime = c.isVIP ? Math.floor(diff.memoryTime * 0.5) : diff.memoryTime;
                 activeOrderTimer = setTimeout(() => {
@@ -851,9 +962,9 @@
                     resetBubbleStyle(c);
                     c.el.classList.remove('angry');
                     c.el.querySelector('.char-face').innerText = c.isVIP ? '👑' : '^ ^';
-                    c.el.querySelector('.char-face').style.color = '#000';
+                    c.el.querySelector('.char-face').style.color = '#333';
                     c.bubbleEl.className = 'bubble show';
-                    c.bubbleEl.innerText = '😊';
+                    c.bubbleEl.innerHTML = c.orderStr;
                     hidePanel(); playSound('click');
                 } else alert('你連 $100 都冇，等執笠啦！');
             };
@@ -875,34 +986,55 @@
     function showMenuButtons(c) {
         menuGrid.style.display = 'grid';
         menuGrid.innerHTML = '';
-        FOOD_ITEMS.forEach(f => {
+        
+        // 1. 食物
+        FOODS.forEach(f => {
             let btn = document.createElement('button');
-            btn.className = 'menu-btn';
+            btn.className = 'menu-btn food';
             btn.innerText = getFoodName(f.name);
-            btn.onclick = () => addToMemoryTray(f.name, getFoodName(f.name), c);
+            btn.onclick = () => addToMemoryTray(f.name);
             menuGrid.appendChild(btn);
         });
-        MODS.forEach(m => {
+        // 2. 飲品
+        DRINKS.forEach(d => {
+            let btn = document.createElement('button');
+            btn.className = 'menu-btn drink';
+            btn.innerText = getFoodName(d.name);
+            btn.onclick = () => addToMemoryTray(d.name);
+            menuGrid.appendChild(btn);
+        });
+        // 3. 食物要求
+        FOOD_MODS.forEach(m => {
             let btn = document.createElement('button');
             btn.className = 'menu-btn mod';
             btn.innerText = getModName(m);
-            btn.onclick = () => addToMemoryTray(m, getModName(m), c);
+            btn.onclick = () => addToMemoryTray(m);
             menuGrid.appendChild(btn);
         });
+        // 4. 飲品要求
+        DRINK_MODS.forEach(m => {
+            let btn = document.createElement('button');
+            btn.className = 'menu-btn mod';
+            btn.innerText = getModName(m);
+            btn.onclick = () => addToMemoryTray(m);
+            menuGrid.appendChild(btn);
+        });
+
         panelBtn.innerText = t('serveFood');
         panelBtn.style.display = 'block';
         panelBtn.onclick = () => checkMemoryServe(c);
     }
 
-    function addToMemoryTray(originalName, displayName, c) {
-        if (currentTray.length >= 4) return;
+    function addToMemoryTray(originalName) {
+        if (currentTray.length >= 5) return; // 允許最多選5樣
         playSound('click');
         currentTray.push(originalName);
         trayDisplay.innerHTML = currentTray.map(item => `<span style="background:#333; padding:2px 8px; border-radius:4px;">${getFoodName(item) !== item ? item : getFoodName(item)}</span>`).join('');
     }
 
     function checkMemoryServe(c) {
-        let requiredOrder = [c.food.name, ...c.mods].sort();
+        // 套餐比對邏輯
+        let requiredOrder = [c.food.name, ...c.foodMods, c.drink.name, ...c.drinkMods].sort();
         let playerOrder = [...currentTray].sort();
         let isCorrect = requiredOrder.length === playerOrder.length && requiredOrder.every((val, idx) => val === playerOrder[idx]);
 
@@ -912,8 +1044,7 @@
             c.state = 'eating'; c.bubbleEl.innerText = '😋';
             resetBubbleStyle(c);
             
-            // 計算收入
-            let base = c.food.price;
+            let base = c.food.price + c.drink.price;
             if (c.isVIP) base *= 2;
             let tip = c.patience > 80 ? Math.round(base * 0.2) : 0;
             let comboMult = 1;
@@ -921,13 +1052,11 @@
             else if (combo >= 3) comboMult = 2;
             let earned = (base + tip) * comboMult;
             
-            // 連擊
             combo++;
             if (combo > maxCombo) maxCombo = combo;
             uiCombo.innerText = `×${combo}`;
             if (comboMult > 1) { showComboToast(`×${comboMult} 連擊！`); playSound('combo'); }
             
-            // 連續正確
             correctStreak++;
             if (correctStreak >= 5) {
                 reputation = Math.min(100, reputation + 5);
@@ -938,7 +1067,6 @@
             
             totalServed++;
             
-            // 飛行動畫
             try {
                 const panelBtnRect = panelBtn;
                 const kitchenEl = document.getElementById('kitchen');
@@ -988,19 +1116,21 @@
         const hasWaiting = customers.some(c => c.state === 'waiting' || c.state === 'karen');
         if (hasWaiting) return;
         
-        const foods = [];
-        while (foods.length < 2) {
-            const f = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
-            if (!foods.find(x => x.name === f.name)) foods.push(f);
+        const items = [];
+        while (items.length < 2) {
+            const isFood = Math.random() < 0.5;
+            const pool = isFood ? FOODS : DRINKS;
+            const item = pool[Math.floor(Math.random() * pool.length)];
+            if (!items.find(x => x.name === item.name)) items.push(item);
         }
-        deliveryOrder = { foods, tray: [] };
+        deliveryOrder = { items, tray: [] };
         
-        document.getElementById('delivery-order-text').innerText = foods.map(f => getFoodName(f.name)).join(' + ');
+        document.getElementById('delivery-order-text').innerText = items.map(f => getFoodName(f.name)).join(' + ');
         document.getElementById('delivery-tray-display').innerText = '（按下面餐牌落單）';
         
         const grid = document.getElementById('delivery-menu-grid');
         grid.innerHTML = '';
-        FOOD_ITEMS.forEach(f => {
+        FOODS.concat(DRINKS).forEach(f => {
             const btn = document.createElement('button');
             btn.className = 'menu-btn';
             btn.innerText = getFoodName(f.name);
@@ -1028,7 +1158,7 @@
 
     function confirmDeliveryOrder() {
         if (!deliveryOrder) return;
-        const required = deliveryOrder.foods.map(f => f.name).sort();
+        const required = deliveryOrder.items.map(f => f.name).sort();
         const player = [...deliveryOrder.tray].sort();
         const correct = required.length === player.length && required.every((v, i) => v === player[i]);
         endDeliveryOrder(correct, false);
@@ -1129,6 +1259,7 @@
         document.getElementById('delivery-modal').classList.remove('active');
         player.x = 20;
         playerEl.style.transform = `translateX(20px) scaleX(1)`;
+        playerEl.classList.remove('walking');
         customersRow.innerHTML = '';
         uiMoney.innerText = '$0'; uiReputation.innerText = '100';
         uiCombo.innerText = '×0'; uiBest.innerText = `$${bestMoney}`;
@@ -1140,7 +1271,6 @@
             if (window.spawnInterval) clearInterval(window.spawnInterval);
             spawnTimeouts.forEach(t => clearTimeout(t));
             spawnTimeouts = [];
-            // 每秒檢查一次，按難度機率生成
             window.spawnInterval = setInterval(() => {
                 if (state !== 'playing' || paused) return;
                 const diff = getDifficulty();
@@ -1152,7 +1282,6 @@
         } catch(e) { console.error("Spawn Timer Error:", e); }
     }
 
-    // 初始化
     try {
         const tut = localStorage.getItem('chaChaanTeng_tutorial');
         if (!tut) document.getElementById('tutorial-modal').classList.add('active');
