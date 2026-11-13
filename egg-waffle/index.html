@@ -1,306 +1,295 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🍳 茶餐廳大亨</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-        body {
-            background-color: #0d0d0d; color: #fff; font-family: 'Noto Sans HK', sans-serif;
-            height: 100dvh; height: 100vh; display: flex; flex-direction: column;
-            overflow: hidden; touch-action: none;
-            background: #111;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🧇 雞蛋仔 & 格仔餅大挑戰</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    
+    body {
+        background-color: #0d0d0d; color: #fff; font-family: 'Noto Sans HK', sans-serif;
+        height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+        background: radial-gradient(circle at center, #1a1a2e 0%, #050510 100%);
+    }
 
-        .neon-bg {
-            position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
-            font-family: 'Noto Sans HK', sans-serif; font-size: 40px; font-weight: 900;
-            color: #fff; text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055, 0 0 80px #ff0055;
-            z-index: 0; pointer-events: none; opacity: 0.15; letter-spacing: 5px; white-space: nowrap;
-            animation: neonFlicker 3s infinite alternate;
-        }
-        @keyframes neonFlicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 0.15; text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055, 0 0 80px #ff0055; }
-            20%, 24%, 55% { opacity: 0.05; text-shadow: none; }
-        }
+    /* 👇 返回大廳 (標準三件套) 👇 */
+    .back-btn {
+        position: fixed; top: 15px; left: 15px; z-index: 99999;
+        padding: 8px 16px; background: rgba(10,10,20,0.85); color: #ffd32a;
+        border: 2px solid #ffd32a; border-radius: 8px; text-decoration: none;
+        font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(255,211,42,0.5); transition: 0.2s;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .back-btn:active { transform: scale(0.95); background: #ffd32a; color: #000; }
 
-        #hud {
-            height: 65px; background: rgba(15, 15, 15, 0.9);
-            border-bottom: 2px solid #ff0055; display: flex; align-items: center;
-            justify-content: space-between; padding: 0 15px; z-index: 10;
-            box-shadow: 0 4px 20px rgba(255, 0, 85, 0.3); flex-shrink: 0;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
-        .back-btn {
-            padding: 8px 14px; background: rgba(255, 0, 85, 0.1); color: #ff0055;
-            border: 1px solid #ff0055; border-radius: 8px; text-decoration: none;
-            font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 14px;
-            transition: 0.2s; box-shadow: 0 0 10px rgba(255,0,85,0.2);
-        }
-        .back-btn:active { transform: scale(0.95); background: #ff0055; color: #000; }
-        
-        .stats { display: flex; gap: 12px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
-        .stat-box { display: flex; flex-direction: column; min-width: 55px; }
-        .stat-label { font-size: 11px; color: #aaa; letter-spacing: 1px; }
-        .stat-val { font-size: 20px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
-        .stat-val.hp { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
-        .stat-val.score { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
-        
-        .shop-btn {
-            background: rgba(0, 210, 211, 0.1); border: 1px solid #00d2d3; color: #00d2d3;
-            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;
-            box-shadow: 0 0 10px rgba(0,210,211,0.2); height: 38px; margin-left: 5px;
-        }
-        .shop-btn:active { background: #00d2d3; color: #000; }
+    /* 頂部 HUD */
+    #hud {
+        height: 60px; background: rgba(15, 15, 15, 0.95);
+        border-bottom: 2px solid #ffd32a; display: flex; align-items: center;
+        justify-content: space-between; padding: 0 15px 0 140px; z-index: 10;
+        flex-shrink: 0; box-shadow: 0 4px 20px rgba(255, 211, 42, 0.2);
+    }
+    .stats { display: flex; gap: 15px; font-family: 'Orbitron', sans-serif; text-align: center; align-items: center; }
+    .stat-box { display: flex; flex-direction: column; min-width: 60px; }
+    .stat-label { font-size: 10px; color: #aaa; letter-spacing: 1px; }
+    .stat-val { font-size: 18px; font-weight: 900; color: #ffd32a; text-shadow: 0 0 10px #ffd32a; }
+    .stat-val.hp { color: #ff4757; text-shadow: 0 0 10px #ff4757; }
+    .stat-val.score { color: #00d2d3; text-shadow: 0 0 10px #00d2d3; }
+    
+    .upgrade-btn {
+        padding: 8px 12px; background: linear-gradient(180deg, #2ed573, #27ae60); border: none;
+        border-radius: 8px; color: #fff; font-weight: 900; cursor: pointer;
+        box-shadow: 0 4px 0 #145a32; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif; font-size: 13px;
+    }
+    .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
 
-        #customer-area {
-            flex: 1; position: relative; display: flex; justify-content: center;
-            align-items: flex-end; padding-bottom: 20px; gap: 15px; overflow: hidden;
-            background: 
-                linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
-                repeating-linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), 
-                repeating-linear-gradient(45deg, #1a1a1a 25%, #111 25%, #111 75%, #1a1a1a 75%, #1a1a1a);
-            background-position: 0 0, 0 0, 10px 10px;
-            background-size: 20px 20px;
-        }
+    /* 遊戲主畫面 */
+    #game-area {
+        flex: 1; position: relative; display: flex; justify-content: center;
+        align-items: flex-end; padding-bottom: 20px; gap: 15px; overflow: hidden;
+        background: 
+            linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)),
+            repeating-linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), 
+            repeating-linear-gradient(45deg, #1a1a1a 25%, #111 25%, #111 75%, #1a1a1a 75%, #1a1a1a);
+        background-position: 0 0, 0 0, 10px 10px;
+        background-size: 20px 20px;
+    }
 
-        .customer-container {
-            position: relative; display: flex; flex-direction: column; align-items: center;
-            transition: transform 0.3s; width: 110px;
-        }
-        .customer-container.angry { animation: shake 0.3s infinite; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    /* 👇 動畫人仔 (客人) 👇 */
+    .customer-container {
+        position: relative; display: flex; flex-direction: column; align-items: center;
+        transition: transform 0.3s; width: 110px;
+    }
+    .customer-container.angry { animation: shake 0.3s infinite; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-        .speech-bubble {
-            background: #fff; color: #000; border-radius: 15px; padding: 10px 12px;
-            font-weight: 900; font-size: 15px; position: relative; margin-bottom: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ddd;
-            text-align: center; min-width: 90px; max-width: 130px; z-index: 2;
-            word-wrap: break-word;
-        }
-        .speech-bubble::after {
-            content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-            border-width: 10px 10px 0; border-style: solid; border-color: #fff transparent transparent transparent;
-        }
-        .order-item { font-size: 15px; margin: 3px 0; display: block; color: #ff0055; line-height: 1.2;}
+    .speech-bubble {
+        background: #fff; color: #000; border-radius: 15px; padding: 8px 10px;
+        font-weight: 900; font-size: 14px; position: relative; margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid #ddd;
+        text-align: center; min-width: 90px; max-width: 130px; z-index: 2;
+        word-wrap: break-word;
+    }
+    .speech-bubble::after {
+        content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+        border-width: 10px 10px 0; border-style: solid; border-color: #fff transparent transparent transparent;
+    }
+    .order-item { font-size: 14px; margin: 2px 0; display: block; color: #ff0055; line-height: 1.2;}
 
-        .customer-body {
-            width: 75px; height: 95px; background: #3498db; border-radius: 35px 35px 10px 10px;
-            position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            border: 3px solid rgba(255,255,255,0.2);
-        }
-        .customer-face {
-            width: 55px; height: 55px; background: #ffccaa; border-radius: 50%;
-            position: absolute; top: -28px; left: 7px; border: 2px solid rgba(0,0,0,0.1);
-        }
-        .face-happy::before { content: '^ ^'; font-size: 20px; position: absolute; top: 14px; left: 7px; font-weight: bold; letter-spacing: 4px;}
-        .face-neutral::before { content: 'o o'; font-size: 20px; position: absolute; top: 14px; left: 7px; font-weight: bold; letter-spacing: 4px;}
-        .face-angry::before { content: '> <'; font-size: 20px; position: absolute; top: 14px; left: 7px; font-weight: bold; letter-spacing: 4px; color: #ff0055;}
+    .customer-body-wrap {
+        width: 75px; height: 95px; position: relative;
+        display: flex; justify-content: center; align-items: flex-end;
+    }
+    .torso {
+        position: absolute; bottom: 15px;
+        width: 45px; height: 45px; background: var(--c-color, #3498db);
+        border-radius: 15px 15px 5px 5px; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); z-index: 2;
+    }
+    .arm {
+        position: absolute; bottom: 30px;
+        width: 10px; height: 25px; background: #f5cba7; border-radius: 5px;
+        transform-origin: top center; z-index: 1;
+    }
+    .arm.left { left: 5px; animation: walk-arm 0.4s infinite alternate ease-in-out; }
+    .arm.right { right: 5px; animation: walk-arm 0.4s infinite alternate-reverse ease-in-out; }
+    .leg {
+        position: absolute; bottom: 0;
+        width: 10px; height: 20px; background: #2c3e50; border-radius: 5px;
+        transform-origin: top center;
+    }
+    .leg.left { left: 18px; animation: walk-leg 0.4s infinite alternate ease-in-out; }
+    .leg.right { right: 18px; animation: walk-leg 0.4s infinite alternate-reverse ease-in-out; }
 
-        .patience-bar-container {
-            width: 75px; height: 10px; background: #333; border-radius: 5px; margin-top: 15px;
-            overflow: hidden; border: 1px solid #000;
-        }
-        .patience-bar {
-            height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear, background 0.3s;
-        }
+    @keyframes walk-arm { 0% { transform: rotate(-15deg); } 100% { transform: rotate(15deg); } }
+    @keyframes walk-leg { 0% { transform: rotate(10deg); } 100% { transform: rotate(-10deg); } }
 
-        #controls {
-            height: auto; max-height: 52vh; background: rgba(20, 20, 20, 0.95);
-            border-top: 4px solid #ff0055; display: flex; flex-direction: column;
-            padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-            z-index: 20; flex-shrink: 0;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.8); border-radius: 20px 20px 0 0;
-            overflow: hidden;
-        }
-        
-        .tray-area {
-            min-height: 40px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
-            background: #000; border-radius: 10px; margin-bottom: 10px; border: 1px dashed #555;
-            color: #aaa; font-size: 15px; font-weight: bold; padding: 6px; gap: 6px;
-            flex-shrink: 0;
-        }
-        .tray-item { font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: popIn 0.2s; }
-        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    .customer-face {
+        width: 40px; height: 40px; background: #ffccaa; border-radius: 50%;
+        position: absolute; top: -15px; left: 50%; transform: translateX(-50%); border: 2px solid rgba(0,0,0,0.2); z-index: 3;
+    }
+    .face-happy::before { content: '^ ^'; font-size: 16px; position: absolute; top: 10px; left: 4px; font-weight: bold; letter-spacing: 2px;}
+    .face-neutral::before { content: 'o o'; font-size: 16px; position: absolute; top: 10px; left: 4px; font-weight: bold; letter-spacing: 2px;}
+    .face-angry::before { content: '> <'; font-size: 16px; position: absolute; top: 10px; left: 4px; font-weight: bold; letter-spacing: 2px; color: #ff0055;}
 
-        .menu-scroll-area {
-            flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;
-            scrollbar-width: thin; scrollbar-color: #ff0055 #333;
-        }
-        .menu-scroll-area::-webkit-scrollbar { width: 4px; }
-        .menu-scroll-area::-webkit-scrollbar-thumb { background: #ff0055; border-radius: 4px; }
+    .patience-bar-container {
+        width: 75px; height: 8px; background: #333; border-radius: 5px; margin-top: 20px;
+        overflow: hidden; border: 1px solid #000;
+    }
+    .patience-bar {
+        height: 100%; width: 100%; background: #2ed573; transition: width 0.1s linear, background 0.3s;
+    }
 
-        .menu-section { margin-bottom: 12px; }
-        .category-title { font-size: 14px; color: #888; font-weight: bold; margin-bottom: 6px; text-align: left; padding-left: 5px; }
-        
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-            gap: 8px;
-        }
-        
-        .menu-btn {
-            background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
-            border-radius: 10px; color: #fff; font-size: 14px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; gap: 3px;
-            box-shadow: 0 3px 0 #000; transition: 0.1s; cursor: pointer;
-            padding: 10px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .menu-btn:active { transform: translateY(3px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
+    /* 👇 下方控制區 & 烘烤區 👇 */
+    #controls {
+        height: auto; max-height: 65vh; background: rgba(20, 20, 20, 0.95);
+        border-top: 4px solid #ffd32a; display: flex; flex-direction: column;
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+        z-index: 20; flex-shrink: 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+        border-radius: 20px 20px 0 0; overflow: hidden;
+    }
+    
+    /* 烤爐區 */
+    .cooking-station {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #1a1a1a; border: 2px dashed #555; border-radius: 12px;
+        padding: 10px; margin-bottom: 10px; height: 100px; flex-shrink: 0;
+    }
+    .current-order-display {
+        font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 8px;
+        min-height: 24px; text-align: center; line-height: 1.4;
+    }
+    .cook-progress-bg {
+        width: 80%; height: 12px; background: #333; border-radius: 6px; overflow: hidden;
+        display: none; margin-top: 5px;
+    }
+    .cook-progress-bar {
+        height: 100%; width: 0%; background: #ffd32a; transition: width 0.1s linear;
+    }
 
-        .action-row { display: flex; gap: 10px; height: 50px; flex-shrink: 0; }
-        .btn-serve {
-            flex: 2; background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff;
-            border: none; border-radius: 10px; font-size: 20px; font-weight: 900;
-            box-shadow: 0 5px 0 #145a32; cursor: pointer; transition: 0.1s;
-        }
-        .btn-serve:active { transform: translateY(5px); box-shadow: none; }
-        .btn-clear {
-            flex: 1; background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff;
-            border: none; border-radius: 10px; font-size: 18px; font-weight: 900;
-            box-shadow: 0 5px 0 #7b241c; cursor: pointer; transition: 0.1s;
-        }
-        .btn-clear:active { transform: translateY(5px); box-shadow: none; }
+    /* 配料區 */
+    .menu-scroll-area {
+        flex: 1; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;
+        scrollbar-width: none;
+    }
+    .menu-scroll-area::-webkit-scrollbar { display: none; }
 
-        .modal {
-            position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85);
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 30; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 20px; text-align: center;
-        }
-        .modal.active { display: flex; }
-        .modal h2 { color: #ff0055; font-size: 32px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ff0055; margin-bottom: 15px; }
-        .modal p { font-size: 16px; color: #ccc; line-height: 1.6; margin-bottom: 20px; }
-        .modal button {
-            padding: 16px 40px; background: linear-gradient(135deg, #ff0055, #ffd32a);
-            color: #000; border: none; border-radius: 12px; font-family: 'Orbitron', sans-serif;
-            font-size: 20px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b3003b;
-            margin-top: 10px; width: 100%; max-width: 300px;
-        }
-        .modal button:active { transform: translateY(5px); box-shadow: none; }
+    .menu-section { margin-bottom: 10px; }
+    .category-title { font-size: 13px; color: #888; font-weight: bold; margin-bottom: 6px; text-align: left; padding-left: 5px; }
+    
+    .menu-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    
+    .menu-btn {
+        background: linear-gradient(180deg, #333, #111); border: 1px solid #555;
+        border-radius: 10px; color: #fff; font-size: 13px; font-weight: bold;
+        display: flex; align-items: center; justify-content: center; gap: 4px;
+        box-shadow: 0 3px 0 #000; transition: 0.1s; cursor: pointer;
+        padding: 8px 4px; white-space: nowrap;
+    }
+    .menu-btn:active { transform: translateY(3px); box-shadow: none; background: linear-gradient(180deg, #555, #333); }
+    .menu-btn:disabled { opacity: 0.3; }
 
-        .shop-item {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.05); border: 1px solid #444;
-            padding: 15px; border-radius: 12px; margin-bottom: 12px; width: 100%; max-width: 350px;
-        }
-        .shop-info b { display: block; font-size: 16px; color: #fff; text-align: left; }
-        .shop-info small { font-size: 13px; color: #aaa; display: block; text-align: left; margin-top: 4px;}
-        .buy-btn {
-            padding: 10px 18px; background: linear-gradient(180deg, #2ed573, #27ae60); color: #000; 
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 0; font-size: 16px;
-            box-shadow: 0 3px 0 #145a32; white-space: nowrap;
-        }
-        .buy-btn:disabled { background: #333; color: #666; box-shadow: none; cursor: not-allowed; }
+    /* 底部按鈕 */
+    .action-row { display: flex; gap: 10px; height: 50px; flex-shrink: 0; }
+    .btn-action {
+        flex: 1; border: none; border-radius: 10px; font-size: 18px; font-weight: 900;
+        cursor: pointer; transition: 0.1s; font-family: 'Noto Sans HK', sans-serif;
+    }
+    .btn-cook { background: linear-gradient(180deg, #00d2d3, #008b8b); color: #fff; box-shadow: 0 4px 0 #004d4d; }
+    .btn-serve { background: linear-gradient(180deg, #2ed573, #27ae60); color: #fff; box-shadow: 0 4px 0 #145a32; display: none;}
+    .btn-clear { background: linear-gradient(180deg, #ff4757, #c0392b); color: #fff; box-shadow: 0 4px 0 #7b241c; flex: 0.5;}
+    
+    .btn-action:active { transform: translateY(4px); box-shadow: none; }
 
-        #status-text {
-            position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ff0055;
-            pointer-events: none; opacity: 0; transition: 0.3s; z-index: 25; text-align: center; width: 90%;
-        }
-        #status-text.show { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        
-        .coin-anim {
-            position: absolute; font-size: 24px; font-weight: 900; color: #ffd32a;
-            text-shadow: 0 0 10px #ffd32a; pointer-events: none; z-index: 25;
-            animation: floatUp 1s forwards;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
-        }
-    </style>
+    /* 彈窗 */
+    .modal {
+        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85);
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 30; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 20px; text-align: center;
+    }
+    .modal.active { display: flex; }
+    .modal h2 { color: #ffd32a; font-size: 32px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 20px #ffd32a; margin-bottom: 15px; }
+    .modal p { font-size: 16px; color: #ccc; line-height: 1.6; margin-bottom: 20px; }
+    .modal button {
+        padding: 15px 40px; background: linear-gradient(135deg, #ffd32a, #ff9f43);
+        color: #000; border: none; border-radius: 12px; font-family: 'Orbitron', sans-serif;
+        font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b38f00;
+        margin-top: 10px; width: 100%; max-width: 300px;
+    }
+    .modal button:active { transform: translateY(5px); box-shadow: none; }
+
+    .shop-item {
+        display: flex; justify-content: space-between; align-items: center;
+        background: rgba(255,255,255,0.05); border: 1px solid #444;
+        padding: 15px; border-radius: 12px; margin-bottom: 12px; width: 100%; max-width: 350px;
+    }
+    .shop-info b { display: block; font-size: 16px; color: #fff; text-align: left; }
+    .shop-info small { font-size: 13px; color: #aaa; display: block; text-align: left; margin-top: 4px;}
+    .buy-btn {
+        padding: 10px 18px; background: linear-gradient(180deg, #2ed573, #27ae60); color: #000; 
+        border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 0; font-size: 16px;
+        box-shadow: 0 3px 0 #145a32; white-space: nowrap;
+    }
+    .buy-btn:disabled { background: #333; color: #666; box-shadow: none; cursor: not-allowed; }
+
+    #status-text {
+        position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
+        font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #ffd32a;
+        pointer-events: none; opacity: 0; transition: 0.3s; z-index: 25; text-align: center; width: 90%;
+    }
+    #status-text.show { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+</style>
 </head>
 <body>
 
-    <div class="neon-bg">茶 餐 廳 大 亨</div>
+    <a href="../" class="back-btn">⬅ 返回大廳</a>
 
     <div id="hud">
-        <a href="../" class="back-btn">⬅ 大廳</a>
         <div class="stats">
             <div class="stat-box">
-                <span class="stat-label">錢包</span>
-                <span class="stat-val" id="wallet-val">0</span>
-            </div>
-            <div class="stat-box">
                 <span class="stat-label">營業額</span>
-                <span class="stat-val score" id="money-val">0</span>
+                <span class="stat-val score" id="money-val">$0</span>
             </div>
             <div class="stat-box">
                 <span class="stat-label">聲譽</span>
                 <span class="stat-val hp" id="hp-val">100</span>
             </div>
-            <button class="shop-btn" onclick="openShop()">🏪 升級</button>
         </div>
+        <button class="upgrade-btn" onclick="openShop()">🏪 升級</button>
     </div>
 
-    <div id="customer-area">
+    <div id="game-area">
         <div id="status-text"></div>
     </div>
 
     <div id="controls">
-        <div class="tray-area" id="tray">
-            點擊下方餐點加入托盤
+        <div class="cooking-station">
+            <div class="current-order-display" id="current-order-display">紙袋空空的... 請選擇配料</div>
+            <div class="cook-progress-bg" id="cook-progress-bg">
+                <div class="cook-progress-bar" id="cook-progress-bar"></div>
+            </div>
         </div>
-        
+
         <div class="menu-scroll-area">
             <div class="menu-section">
-                <div class="category-title">🍹 飲品</div>
-                <div class="menu-grid">
-                    <button class="menu-btn" onclick="addToTray('凍檸茶', '🍹')">🍹凍檸茶</button>
-                    <button class="menu-btn" onclick="addToTray('熱奶茶', '☕')">☕熱奶茶</button>
-                    <button class="menu-btn" onclick="addToTray('凍鴛鴦', '🧋')">🧋凍鴛鴦</button>
-                    <button class="menu-btn" onclick="addToTray('紅豆冰', '🧊')">🧊紅豆冰</button>
-                    <button class="menu-btn" onclick="addToTray('檸檬水', '🍋')">🍋檸檬水</button>
-                    <button class="menu-btn" onclick="addToTray('凍咖啡', '🥤')">🥤凍咖啡</button>
-                    <button class="menu-btn" onclick="addToTray('阿華田', '🍫')">🍫阿華田</button>
-                    <button class="menu-btn" onclick="addToTray('好立克', '🥛')">🥛好立克</button>
-                    <button class="menu-btn" onclick="addToTray('凍檸蜜', '🍯')">🍯凍檸蜜</button>
-                    <button class="menu-btn" onclick="addToTray('利賓納', '🍇')">🍇利賓納</button>
-                </div>
+                <div class="category-title">🧇 雞蛋仔底</div>
+                <div class="menu-grid" id="egg-bases-grid"></div>
             </div>
-
             <div class="menu-section">
-                <div class="category-title">🍞 食物</div>
-                <div class="menu-grid">
-                    <button class="menu-btn" onclick="addToTray('西多士', '🍞')">🍞西多士</button>
-                    <button class="menu-btn" onclick="addToTray('干炒牛河', '🍜')">🍜干炒牛河</button>
-                    <button class="menu-btn" onclick="addToTray('菠蘿油', '🍔')">🍔菠蘿油</button>
-                    <button class="menu-btn" onclick="addToTray('酥皮蛋撻', '🥧')">🥧酥皮蛋撻</button>
-                    <button class="menu-btn" onclick="addToTray('沙嗲牛麵', '🍲')">🍲沙嗲牛麵</button>
-                    <button class="menu-btn" onclick="addToTray('焗豬扒飯', '🍛')">🍛焗豬扒飯</button>
-                    <button class="menu-btn" onclick="addToTray('揚州炒飯', '🍚')">🍚揚州炒飯</button>
-                    <button class="menu-btn" onclick="addToTray('餐蛋麵', '🍳')">🍳餐蛋麵</button>
-                    <button class="menu-btn" onclick="addToTray('叉燒飯', '🍖')">🍖叉燒飯</button>
-                    <button class="menu-btn" onclick="addToTray('菠蘿包', '🥯')">🥯菠蘿包</button>
-                    <button class="menu-btn" onclick="addToTray('奶油豬', '🧈')">🧈奶油豬</button>
-                    <button class="menu-btn" onclick="addToTray('蛋治', '🥪')">🥪蛋治</button>
-                </div>
+                <div class="category-title">🥞 格仔餅底</div>
+                <div class="menu-grid" id="waffle-bases-grid"></div>
+            </div>
+            <div class="menu-section">
+                <div class="category-title">✨ 加料 / 醬料</div>
+                <div class="menu-grid" id="toppings-grid"></div>
             </div>
         </div>
 
         <div class="action-row">
-            <button class="btn-clear" onclick="clearTray()">🗑️ 清空</button>
-            <button class="btn-serve" onclick="serveCustomer()">🍽️ 出餐</button>
+            <button class="btn-action btn-clear" onclick="clearTray()">🗑️ 清空</button>
+            <button class="btn-action btn-cook" id="btn-cook" onclick="startCooking()">🔥 倒入模具</button>
+            <button class="btn-action btn-serve" id="btn-serve" onclick="serveCustomer()">🍽️ 起出餐點</button>
         </div>
     </div>
 
     <div id="intro-modal" class="modal active">
-        <h2>🍳 茶餐廳大亨</h2>
-        <p>體驗澳牛極速節奏！<br>喺客人發脾氣前，準確無誤咁出餐！<br>營業額越高，升級越快！</p>
-        <button onclick="startGame()">開舖</button>
+        <h2>🧇 雞蛋仔 & 格仔餅</h2>
+        <p>挑戰極速整小食！<br>1. 點擊下方配料 (留意客人的要求)<br>2. 倒入模具烘烤<br>3. 起出並交俾客人！</p>
+        <button onclick="startGame()">開爐</button>
     </div>
 
     <div id="shop-modal" class="modal">
-        <h2>🏪 茶餐廳升級</h2>
+        <h2>🏪 店鋪升級</h2>
         <div class="shop-item">
             <div class="shop-info"><b>❄️ 強力冷氣</b><small>客人耐心消耗減少 (Lv.<span id="lvl-ac">0</span>)</small></div>
             <button class="buy-btn" id="buy-ac" onclick="buyUpgrade('ac')">$300</button>
         </div>
         <div class="shop-item">
-            <div class="shop-info"><b>👨‍🍳 資深伙記</b><small>出餐正確額外獎金增加 (Lv.<span id="lvl-staff">0</span>)</small></div>
+            <div class="shop-info"><b>👨‍🍳 熟手師傅</b><small>出餐正確額外獎金增加 (Lv.<span id="lvl-staff">0</span>)</small></div>
             <button class="buy-btn" id="buy-staff" onclick="buyUpgrade('staff')">$500</button>
         </div>
         <button onclick="closeShop()" style="background:#444; color:#fff; box-shadow: 0 4px 0 #111; margin-top:10px;">關閉</button>
@@ -314,360 +303,454 @@
         <button onclick="backToLobby()" style="background:#444; color:#fff; box-shadow:0 4px 0 #111; margin-top:10px;">🏠 返回大廳</button>
     </div>
 
-    <script>
-        const walletVal = document.getElementById('wallet-val');
-        const moneyVal = document.getElementById('money-val');
-        const hpVal = document.getElementById('hp-val');
-        const customerArea = document.getElementById('customer-area');
-        const statusText = document.getElementById('status-text');
-        const trayEl = document.getElementById('tray');
-        const gameoverScreen = document.getElementById('gameover');
-        const introModal = document.getElementById('intro-modal');
-        const shopModal = document.getElementById('shop-modal');
+<script>
+    window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
-        let totalMoney = parseInt(localStorage.getItem('chaChaanTeng_money') || '0');
-        let upgrades = JSON.parse(localStorage.getItem('chaChaanTeng_upgrades') || '{"ac":0,"staff":0}');
-        let bestScore = parseInt(localStorage.getItem('chaChaanTeng_best') || '0');
+    const moneyVal = document.getElementById('money-val');
+    const hpVal = document.getElementById('hp-val');
+    const customerArea = document.getElementById('game-area');
+    const statusText = document.getElementById('status-text');
+    const currentOrderDisplay = document.getElementById('current-order-display');
+    const cookProgressBg = document.getElementById('cook-progress-bg');
+    const cookProgressBar = document.getElementById('cook-progress-bar');
+    const btnCook = document.getElementById('btn-cook');
+    const btnServe = document.getElementById('btn-serve');
+    
+    const gameoverScreen = document.getElementById('gameover');
+    const introModal = document.getElementById('intro-modal');
+    const shopModal = document.getElementById('shop-modal');
+
+    // LocalStorage Key 保持不變
+    let totalMoney = parseInt(localStorage.getItem('eggWaffle_money') || '0');
+    let upgrades = JSON.parse(localStorage.getItem('eggWaffle_upgrades') || '{"ac":0,"staff":0}');
+    let bestScore = parseInt(localStorage.getItem('eggWaffle_best') || '0');
+    
+    let state = 'menu'; 
+    let currentDayMoney = 0;
+    let hp = 100;
+    let gameTimer = null;
+    let spawnTimer = null;
+    let statusTimer = null;
+    let cookTimer = null;
+    
+    let customers = [];
+    let customerIdCounter = 0;
+
+    let currentTray = []; 
+    let isCooking = false; 
+    let isCooked = false; 
+
+    // 🍳 餐點選項
+    const EGG_BASES = [
+        { name: '原味雞蛋仔', emoji: '🧇' }, { name: '朱古力雞蛋仔', emoji: '🍫' },
+        { name: '抹茶雞蛋仔', emoji: '🍵' }, { name: '斑蘭雞蛋仔', emoji: '🌿' }
+    ];
+    const WAFFLE_BASES = [
+        { name: '原味格仔餅', emoji: '🥞' }, { name: '朱古力格仔餅', emoji: '🍫' }
+    ];
+    const TOPPINGS = [
+        { name: '加煉奶', emoji: '🥛' }, { name: '加花生醬', emoji: '🥜' },
+        { name: '加朱古力醬', emoji: '🍫' }, { name: '加OREO碎', emoji: '🍪' },
+        { name: '加果醬', emoji: '🍓' }
+    ];
+
+    const NAMES = ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'];
+    const SHIRTS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
+    
+    // 音效系統
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'click') { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'fail') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+        } catch (e) { console.error(e); }
+    }
+
+    function initMenuButtons() {
+        const eggGrid = document.getElementById('egg-bases-grid');
+        const waffleGrid = document.getElementById('waffle-bases-grid');
+        const toppingsGrid = document.getElementById('toppings-grid');
         
-        let state = 'menu'; 
-        let currentDayMoney = 0;
-        let hp = 100;
-        let gameTimer = null;
-        let spawnTimer = null;
-        let statusTimer = null;
-        let customers = [];
-        let tray = [];
-        let customerIdCounter = 0;
-
-        const DRINKS = ['凍檸茶', '熱奶茶', '凍鴛鴦', '紅豆冰', '檸檬水', '凍咖啡', '阿華田', '好立克', '凍檸蜜', '利賓納'];
-        const FOODS = ['西多士', '干炒牛河', '菠蘿油', '酥皮蛋撻', '沙嗲牛麵', '焗豬扒飯', '揚州炒飯', '餐蛋麵', '叉燒飯', '菠蘿包', '奶油豬', '蛋治'];
-
-        const NAMES = ['陳生', '李太', '張小姐', '王叔', '呀明', '阿珍', '劉經理', '黃師傅'];
-        const SHIRTS = ['#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#f1c40f', '#e67e22'];
+        eggGrid.innerHTML = ''; waffleGrid.innerHTML = ''; toppingsGrid.innerHTML = '';
         
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            try {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                if (type === 'click') { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
-                else if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
-                else if (type === 'fail') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioCtx.currentTime); osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
-            } catch (e) { console.error(e); }
-        }
+        EGG_BASES.forEach(b => {
+            let btn = document.createElement('button');
+            btn.className = 'menu-btn';
+            btn.innerHTML = `${b.emoji} ${b.name.replace('雞蛋仔','')}`;
+            btn.onclick = () => addToTray(b.name, b.emoji);
+            eggGrid.appendChild(btn);
+        });
+        WAFFLE_BASES.forEach(b => {
+            let btn = document.createElement('button');
+            btn.className = 'menu-btn';
+            btn.innerHTML = `${b.emoji} ${b.name.replace('格仔餅','')}`;
+            btn.onclick = () => addToTray(b.name, b.emoji);
+            waffleGrid.appendChild(btn);
+        });
+        TOPPINGS.forEach(t => {
+            let btn = document.createElement('button');
+            btn.className = 'menu-btn';
+            btn.innerHTML = `${t.emoji} ${t.name.replace('加','')}`;
+            btn.onclick = () => addToTray(t.name, t.emoji);
+            toppingsGrid.appendChild(btn);
+        });
+    }
 
-        function startGame() {
-            introModal.classList.remove('active');
-            gameoverScreen.classList.remove('active');
-            state = 'playing';
-            currentDayMoney = 0;
-            hp = 100;
-            customers = [];
-            tray = [];
-            customerIdCounter = 0;
-            
-            document.querySelectorAll('.customer-container').forEach(el => el.remove());
-            updateHUD();
-            updateTrayUI();
-            
-            if (gameTimer) clearInterval(gameTimer);
-            if (spawnTimer) clearTimeout(spawnTimer);
+    function startGame() {
+        introModal.classList.remove('active');
+        gameoverScreen.classList.remove('active');
+        state = 'playing';
+        currentDayMoney = 0;
+        hp = 100;
+        customers = [];
+        customerIdCounter = 0;
+        
+        document.querySelectorAll('.customer-container').forEach(el => el.remove());
+        clearTray();
+        updateHUD();
+        
+        if (gameTimer) clearInterval(gameTimer);
+        if (spawnTimer) clearTimeout(spawnTimer);
 
-            gameTimer = setInterval(() => {
-                if (state !== 'playing') return;
-                
-                for (let i = customers.length - 1; i >= 0; i--) {
-                    let c = customers[i];
-                    let decreaseRate = 0.5 + (upgrades.ac * -0.05); 
-                    if (decreaseRate < 0.15) decreaseRate = 0.15;
-                    
-                    c.patience -= decreaseRate;
-                    
-                    if (c.patience <= 0) {
-                        c.patience = 0;
-                        customers.splice(i, 1);
-                        c.element.remove();
-                        hp = Math.max(0, hp - 15);
-                        playSound('fail');
-                        showStatus('😡 客人等到發脾氣！扣減聲譽！', '#ff4757');
-                        updateHUD();
-                        
-                        if (hp <= 0) {
-                            gameOver();
-                            return;
-                        }
-                    } else {
-                        let bar = c.element.querySelector('.patience-bar');
-                        if (bar) {
-                            bar.style.width = c.patience + '%';
-                            if (c.patience < 30) {
-                                bar.style.background = '#ff4757';
-                                c.element.classList.add('angry');
-                                c.element.querySelector('.customer-face').className = 'customer-face face-angry';
-                            } else if (c.patience < 60) {
-                                bar.style.background = '#f39c12';
-                                c.element.querySelector('.customer-face').className = 'customer-face face-neutral';
-                            }
-                        }
-                    }
-                }
-            }, 50);
-
-            spawnCustomer();
-        }
-
-        function spawnCustomer() {
+        gameTimer = setInterval(() => {
             if (state !== 'playing') return;
             
-            let maxCustomers = Math.min(3, 1 + Math.floor(currentDayMoney / 500));
-            if (customers.length < maxCustomers) {
-                let id = customerIdCounter++;
-                let name = NAMES[Math.floor(Math.random() * NAMES.length)];
-                let shirt = SHIRTS[Math.floor(Math.random() * SHIRTS.length)];
-                
-                let orders = [];
-                let numItems = Math.random() < 0.3 ? 1 : 2;
-                if (numItems === 1) {
-                    if (Math.random() < 0.5) orders.push(DRINKS[Math.floor(Math.random() * DRINKS.length)]);
-                    else orders.push(FOODS[Math.floor(Math.random() * FOODS.length)]);
-                } else {
-                    orders.push(DRINKS[Math.floor(Math.random() * DRINKS.length)]);
-                    orders.push(FOODS[Math.floor(Math.random() * FOODS.length)]);
-                }
-
-                let el = document.createElement('div');
-                el.className = 'customer-container';
-                el.id = 'customer-' + id;
-                
-                let orderHtml = orders.map(o => `<span class="order-item">${o}</span>`).join('');
-                
-                el.innerHTML = `
-                    <div class="speech-bubble">${orderHtml}</div>
-                    <div class="customer-body" style="background:${shirt}">
-                        <div class="customer-face face-happy"></div>
-                    </div>
-                    <div class="patience-bar-container">
-                        <div class="patience-bar" style="width: 100%"></div>
-                    </div>
-                `;
-                
-                customerArea.appendChild(el);
-                
-                customers.push({
-                    id: id,
-                    name: name,
-                    orders: orders,
-                    patience: 100,
-                    element: el
-                });
-            }
-
-            let nextSpawn = Math.max(2000, 5000 - currentDayMoney);
-            spawnTimer = setTimeout(spawnCustomer, nextSpawn);
-        }
-
-        function addToTray(item, emoji) {
-            if (state !== 'playing') return;
-            playSound('click');
-            tray.push({ name: item, emoji: emoji });
-            updateTrayUI();
-        }
-
-        function clearTray() {
-            if (state !== 'playing') return;
-            playSound('click');
-            tray = [];
-            updateTrayUI();
-        }
-
-        function updateTrayUI() {
-            if (tray.length === 0) {
-                trayEl.innerHTML = '點擊下方餐點加入托盤';
-            } else {
-                trayEl.innerHTML = tray.map(t => `<span class="tray-item">${t.emoji}</span>`).join('');
-            }
-        }
-
-        function serveCustomer() {
-            if (state !== 'playing') return;
-            if (tray.length === 0) {
-                showStatus('托盤係空嘅！', '#ff4757');
-                return;
-            }
-
-            let matchedCustomerIndex = -1;
-            for (let i = 0; i < customers.length; i++) {
+            for (let i = customers.length - 1; i >= 0; i--) {
                 let c = customers[i];
-                let trayCopy = [...tray.map(t => t.name)];
-                let matchCount = 0;
+                let decreaseRate = 0.5 + (upgrades.ac * -0.05); 
+                if (decreaseRate < 0.15) decreaseRate = 0.15;
                 
-                for (let orderItem of c.orders) {
-                    let idx = trayCopy.indexOf(orderItem);
-                    if (idx !== -1) {
-                        matchCount++;
-                        trayCopy.splice(idx, 1);
+                c.patience -= decreaseRate;
+                
+                if (c.patience <= 0) {
+                    c.patience = 0;
+                    customers.splice(i, 1);
+                    c.element.remove();
+                    hp = Math.max(0, hp - 15);
+                    playSound('fail');
+                    showStatus('😡 客人等到發脾氣！扣減聲譽！', '#ff4757');
+                    updateHUD();
+                    
+                    if (hp <= 0) gameOver();
+                } else {
+                    let bar = c.element.querySelector('.patience-bar');
+                    if (bar) {
+                        bar.style.width = c.patience + '%';
+                        if (c.patience < 30) {
+                            bar.style.background = '#ff4757';
+                            c.element.classList.add('angry');
+                            c.element.querySelector('.customer-face').className = 'customer-face face-angry';
+                        } else if (c.patience < 60) {
+                            bar.style.background = '#f39c12';
+                            c.element.querySelector('.customer-face').className = 'customer-face face-neutral';
+                        }
                     }
                 }
-                
-                if (matchCount === c.orders.length) {
-                    matchedCustomerIndex = i;
-                    break;
+            }
+        }, 50);
+
+        spawnCustomer();
+    }
+
+    function spawnCustomer() {
+        if (state !== 'playing') return;
+        
+        let maxCustomers = Math.min(3, 1 + Math.floor(currentDayMoney / 500));
+        if (customers.length < maxCustomers) {
+            let id = customerIdCounter++;
+            let name = NAMES[Math.floor(Math.random() * NAMES.length)];
+            let shirt = SHIRTS[Math.floor(Math.random() * SHIRTS.length)];
+            
+            let orders = [];
+            // 隨機決定要雞蛋仔定格仔餅
+            let isWaffle = Math.random() < 0.4; // 40% 機會要格仔餅
+            if (isWaffle) {
+                orders.push(WAFFLE_BASES[Math.floor(Math.random() * WAFFLE_BASES.length)].name);
+                // 格仔餅通常必配醬
+                orders.push(TOPPINGS[Math.floor(Math.random() * TOPPINGS.length)].name);
+            } else {
+                orders.push(EGG_BASES[Math.floor(Math.random() * EGG_BASES.length)].name);
+                if (Math.random() < 0.6) {
+                    orders.push(TOPPINGS[Math.floor(Math.random() * TOPPINGS.length)].name);
                 }
             }
 
-            if (matchedCustomerIndex !== -1) {
-                let c = customers[matchedCustomerIndex];
-                let rect = c.element.getBoundingClientRect();
-                
-                customers.splice(matchedCustomerIndex, 1);
-                c.element.remove();
-                
-                let baseMoney = 50;
-                let bonus = upgrades.staff * 20;
-                let earned = baseMoney + bonus + Math.floor(c.patience);
-                currentDayMoney += earned;
-                totalMoney += earned;
-                localStorage.setItem('chaChaanTeng_money', totalMoney);
-                
+            let el = document.createElement('div');
+            el.className = 'customer-container';
+            el.id = 'customer-' + id;
+            
+            let orderHtml = orders.map(o => `<span class="order-item">${o}</span>`).join('');
+            
+            el.innerHTML = `
+                <div class="speech-bubble">${orderHtml}</div>
+                <div class="customer-body-wrap" style="--c-color: ${shirt};">
+                    <div class="arm left"></div>
+                    <div class="arm right"></div>
+                    <div class="torso"></div>
+                    <div class="leg left"></div>
+                    <div class="leg right"></div>
+                    <div class="customer-face face-happy"></div>
+                </div>
+                <div class="patience-bar-container">
+                    <div class="patience-bar" style="width: 100%"></div>
+                </div>
+            `;
+            
+            customerArea.appendChild(el);
+            
+            customers.push({
+                id: id, name: name, orders: orders, patience: 100, element: el
+            });
+        }
+
+        let nextSpawn = Math.max(2000, 5000 - currentDayMoney);
+        spawnTimer = setTimeout(spawnCustomer, nextSpawn);
+    }
+
+    function addToTray(item, emoji) {
+        if (state !== 'playing' || isCooking || isCooked) return;
+        if (currentTray.length >= 2) return; 
+        
+        playSound('click');
+        currentTray.push({ name: item, emoji: emoji });
+        updateTrayDisplay();
+    }
+
+    function clearTray() {
+        if (state !== 'playing' && state !== 'menu') return;
+        if (isCooking) return;
+        playSound('click');
+        currentTray = [];
+        isCooking = false;
+        isCooked = false;
+        
+        cookProgressBg.style.display = 'none';
+        cookProgressBar.style.width = '0%';
+        btnCook.style.display = 'block';
+        btnServe.style.display = 'none';
+        updateTrayDisplay();
+    }
+
+    function updateTrayDisplay() {
+        if (currentTray.length === 0) {
+            currentOrderDisplay.innerHTML = '紙袋空空的... 請選擇配料';
+        } else {
+            currentOrderDisplay.innerHTML = '紙袋入面：' + currentTray.map(t => t.emoji + t.name).join(' + ');
+        }
+    }
+
+    function startCooking() {
+        if (state !== 'playing' || isCooking || isCooked) return;
+        if (currentTray.length === 0) {
+            showStatus('紙袋係空嘅！', '#ff4757');
+            return;
+        }
+
+        isCooking = true;
+        playSound('click');
+        btnCook.style.display = 'none';
+        cookProgressBg.style.display = 'block';
+        cookProgressBar.style.width = '0%';
+        currentOrderDisplay.innerHTML = '🔥 烘烤中...';
+
+        let progress = 0;
+        if (cookTimer) clearInterval(cookTimer);
+        
+        cookTimer = setInterval(() => {
+            progress += 2; 
+            cookProgressBar.style.width = progress + '%';
+            
+            if (progress >= 100) {
+                clearInterval(cookTimer);
+                isCooking = false;
+                isCooked = true;
                 playSound('success');
-                showStatus(`✅ 出餐成功！賺取 $${earned}`, '#2ed573');
-                createCoinEffect(rect.left + rect.width / 2, rect.top + 50, earned);
-                
-                tray = [];
-                updateTrayUI();
-                updateHUD();
-            } else {
-                playSound('fail');
-                showStatus('❌ 錯單！客人唔係叫呢啲！', '#ff4757');
-                hp = Math.max(0, hp - 5);
-                updateHUD();
-                if (hp <= 0) gameOver();
+                currentOrderDisplay.innerHTML = '✅ 烘烤完成！請起出餐點';
+                btnServe.style.display = 'block';
             }
-        }
+        }, 50);
+    }
 
-        function createCoinEffect(x, y, amount) {
-            let coin = document.createElement('div');
-            coin.className = 'coin-anim';
-            coin.innerText = '+$' + amount;
-            coin.style.left = x + 'px';
-            coin.style.top = y + 'px';
-            document.body.appendChild(coin);
-            setTimeout(() => coin.remove(), 1000);
-        }
+    function serveCustomer() {
+        if (state !== 'playing' || !isCooked) return;
 
-        function updateHUD() {
-            walletVal.innerText = '$' + totalMoney;
-            moneyVal.innerText = '$' + currentDayMoney;
-            hpVal.innerText = hp;
-            hpVal.style.color = hp < 30 ? '#ff4757' : '#ffd32a';
-        }
-
-        function showStatus(text, color) {
-            if (statusTimer) clearTimeout(statusTimer);
-            statusText.innerText = text;
-            statusText.style.color = color;
-            statusText.style.textShadow = `0 0 20px ${color}`;
-            statusText.classList.add('show');
-            statusTimer = setTimeout(() => {
-                statusText.classList.remove('show');
-            }, 1500);
-        }
-
-        function gameOver() {
-            state = 'gameover';
-            if (gameTimer) clearInterval(gameTimer);
-            if (spawnTimer) clearTimeout(spawnTimer);
+        let matchedCustomerIndex = -1;
+        for (let i = 0; i < customers.length; i++) {
+            let c = customers[i];
+            let trayCopy = [...currentTray.map(t => t.name)];
+            let matchCount = 0;
             
-            if (currentDayMoney > bestScore) {
-                bestScore = currentDayMoney;
-                localStorage.setItem('chaChaanTeng_best', bestScore);
+            for (let orderItem of c.orders) {
+                let idx = trayCopy.indexOf(orderItem);
+                if (idx !== -1) {
+                    matchCount++;
+                    trayCopy.splice(idx, 1);
+                }
             }
             
-            document.getElementById('final-score').innerText = '$' + currentDayMoney;
-            document.getElementById('best-score').innerText = '$' + bestScore;
-            gameoverScreen.classList.add('active');
-        }
-
-        function retryCurrentLevel() {
-            try {
-                gameoverScreen.classList.remove('active');
-                startGame();
-            } catch (e) {
-                console.error(e);
+            if (matchCount === c.orders.length && trayCopy.length === 0) {
+                matchedCustomerIndex = i;
+                break;
             }
         }
 
-        function backToLobby() {
+        if (matchedCustomerIndex !== -1) {
+            let c = customers[matchedCustomerIndex];
+            let rect = c.element.getBoundingClientRect();
+            
+            customers.splice(matchedCustomerIndex, 1);
+            c.element.remove();
+            
+            let baseMoney = 50;
+            let bonus = upgrades.staff * 20;
+            let earned = baseMoney + bonus + Math.floor(c.patience);
+            currentDayMoney += earned;
+            totalMoney += earned;
+            localStorage.setItem('eggWaffle_money', totalMoney);
+            
+            playSound('success');
+            showStatus(`✅ 出餐成功！賺取 $${earned}`, '#2ed573');
+            
             try {
-                location.href = '../index.html';
-            } catch (e) {
-                console.error(e);
-            }
+                let coin = document.createElement('div');
+                coin.style.cssText = "position:absolute;font-size:24px;font-weight:900;color:#ffd32a;text-shadow:0 0 10px #ffd32a;pointer-events:none;z-index:25;animation:floatUp 1s forwards;";
+                coin.innerText = '+$' + earned;
+                coin.style.left = (rect.left + rect.width / 2) + 'px';
+                coin.style.top = (rect.top + 50) + 'px';
+                document.body.appendChild(coin);
+                setTimeout(() => coin.remove(), 1000);
+            } catch(e){}
+            
+            clearTray(); 
+            updateHUD();
+        } else {
+            playSound('fail');
+            showStatus('❌ 錯單！客人唔係叫呢啲！', '#ff4757');
+            hp = Math.max(0, hp - 5);
+            updateHUD();
+            clearTray(); 
+            if (hp <= 0) gameOver();
         }
+    }
 
-        function openShop() {
-            if (state === 'gameover' || state === 'menu') return;
-            if (state === 'playing') state = 'paused';
-            shopModal.classList.add('active');
+    function updateHUD() {
+        moneyVal.innerText = '$' + currentDayMoney;
+        hpVal.innerText = hp;
+        hpVal.style.color = hp < 30 ? '#ff4757' : '#ffd32a';
+    }
+
+    function showStatus(text, color) {
+        if (statusTimer) clearTimeout(statusTimer);
+        statusText.innerText = text;
+        statusText.style.color = color;
+        statusText.style.textShadow = `0 0 20px ${color}`;
+        statusText.classList.add('show');
+        statusTimer = setTimeout(() => {
+            statusText.classList.remove('show');
+        }, 1500);
+    }
+
+    function gameOver() {
+        state = 'gameover';
+        if (gameTimer) clearInterval(gameTimer);
+        if (spawnTimer) clearTimeout(spawnTimer);
+        if (cookTimer) clearInterval(cookTimer);
+        
+        if (currentDayMoney > bestScore) {
+            bestScore = currentDayMoney;
+            localStorage.setItem('eggWaffle_best', bestScore);
+        }
+        
+        document.getElementById('final-score').innerText = '$' + currentDayMoney;
+        document.getElementById('best-score').innerText = '$' + bestScore;
+        gameoverScreen.classList.add('active');
+    }
+
+    function retryCurrentLevel() {
+        try {
+            gameoverScreen.classList.remove('active');
+            startGame();
+        } catch (e) { console.error(e); }
+    }
+
+    function backToLobby() {
+        try { location.href = '../'; } catch (e) { console.error(e); }
+    }
+
+    function openShop() {
+        if (state === 'gameover' || state === 'menu') return;
+        if (state === 'playing') state = 'paused';
+        shopModal.classList.add('active');
+        updateShopUI();
+    }
+
+    function closeShop() {
+        shopModal.classList.remove('active');
+        if (state === 'paused') state = 'playing';
+    }
+
+    function updateShopUI() {
+        document.getElementById('lvl-ac').innerText = upgrades.ac;
+        document.getElementById('lvl-staff').innerText = upgrades.staff;
+        document.getElementById('buy-ac').innerText = `$${300 * (upgrades.ac + 1)}`;
+        document.getElementById('buy-staff').innerText = `$${500 * (upgrades.staff + 1)}`;
+        document.getElementById('buy-ac').disabled = totalMoney < 300 * (upgrades.ac + 1);
+        document.getElementById('buy-staff').disabled = totalMoney < 500 * (upgrades.staff + 1);
+    }
+
+    function buyUpgrade(type) {
+        let cost = type === 'ac' ? 300 * (upgrades.ac + 1) : 500 * (upgrades.staff + 1);
+        if (totalMoney >= cost) {
+            totalMoney -= cost;
+            upgrades[type]++;
+            localStorage.setItem('eggWaffle_money', totalMoney);
+            localStorage.setItem('eggWaffle_upgrades', JSON.stringify(upgrades));
+            playSound('success');
+            updateHUD();
             updateShopUI();
         }
+    }
 
-        function closeShop() {
-            shopModal.classList.remove('active');
-            if (state === 'paused') state = 'playing';
+    // 加返個 CSS 飛行動畫
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.5); } }`;
+    document.head.appendChild(style);
+
+    initMenuButtons();
+    clearTray();
+    
+</script>
+
+<!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    try {
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        let userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
         }
-
-        function updateShopUI() {
-            document.getElementById('lvl-ac').innerText = upgrades.ac;
-            document.getElementById('lvl-staff').innerText = upgrades.staff;
-            document.getElementById('buy-ac').innerText = `$${300 * (upgrades.ac + 1)}`;
-            document.getElementById('buy-staff').innerText = `$${500 * (upgrades.staff + 1)}`;
-            document.getElementById('buy-ac').disabled = totalMoney < 300 * (upgrades.ac + 1);
-            document.getElementById('buy-staff').disabled = totalMoney < 500 * (upgrades.staff + 1);
-        }
-
-        function buyUpgrade(type) {
-            let cost = type === 'ac' ? 300 * (upgrades.ac + 1) : 500 * (upgrades.staff + 1);
-            if (totalMoney >= cost) {
-                totalMoney -= cost;
-                upgrades[type]++;
-                localStorage.setItem('chaChaanTeng_money', totalMoney);
-                localStorage.setItem('chaChaanTeng_upgrades', JSON.stringify(upgrades));
-                playSound('success');
-                updateHUD();
-                updateShopUI();
+        
+        let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
+        let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
+        const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
+        
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                userStatusRef.onDisconnect().remove();
+                userStatusRef.set(true);
             }
-        }
-    </script>
-
-    <!-- 🟢 Firebase 在線統計 (已加入永久裝置 ID) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-        try {
-            const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-            
-            // 👇 綁定永久裝置 ID，防止刷新重複計算 👇
-            let userId = localStorage.getItem('global_device_id');
-            if (!userId) {
-                userId = 'user_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('global_device_id', userId);
-            }
-            
-            let pathParts = window.location.pathname.split('/').filter(p => p && p !== 'index.html');
-            let gameId = pathParts[pathParts.length - 1] || 'unknown'; 
-            const userStatusRef = db.ref('online_status/' + gameId + '/' + userId);
-            
-            db.ref('.info/connected').on('value', (snap) => {
-                if (snap.val() === true) {
-                    userStatusRef.onDisconnect().remove();
-                    userStatusRef.set(true);
-                }
-            });
-        } catch(e) { console.error("Firebase Error:", e); }
-    </script>
+        });
+    } catch(e) { console.error("Firebase Error:", e); }
+</script>
 </body>
 </html>
