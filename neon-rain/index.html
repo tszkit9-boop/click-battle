@@ -81,7 +81,7 @@
         border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent transparent transparent;
     }
 
-    /* 底部三粒控制掣：居中緊密排列 */
+    /* 底部三粒控制掣 */
     #controls {
         height: 90px; background: rgba(10,10,20,0.95); border-top: 2px solid #333;
         display: flex; justify-content: center; align-items: center; gap: 40px;
@@ -207,7 +207,6 @@
         </div>
     </div>
 
-    <!-- 底部三粒掣 -->
     <div id="controls">
         <button class="control-btn" id="btn-left">◀</button>
         <button class="control-btn" id="umbrella-btn">🌂</button>
@@ -557,7 +556,8 @@
             vx: (Math.random() - 0.5) * 1.0,
             speed: 1,
             radius: 12, // 稍微加大碰撞半徑以符合真人大小
-            color: colors[Math.floor(Math.random() * colors.length)]
+            color: colors[Math.floor(Math.random() * colors.length)],
+            phase: Math.random() * Math.PI * 2 // 🐛 新增：隨機初始動畫相位
         });
     }
 
@@ -568,68 +568,84 @@
         });
     }
 
-    // 🐛 新增：繪製真人角色
-    function drawHuman(x, y, isPlayer, color) {
-        // 1. 畫影子
+    // 🐛 輔助函數：畫圓角矩形 (因為部分舊瀏覽器唔支援 ctx.roundRect)
+    function roundRect(x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    // 🐛 全面升級：繪製有動畫感的人仔
+    function drawHuman(x, y, isPlayer, color, phase = 0) {
+        // 1. 畫影子 (不隨上下浮動)
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.beginPath();
         ctx.ellipse(x, y + 15, 12, 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2. 行路動畫 (手腳交替)
-        let walkOffset = Math.sin(gameTime * 0.2) * 4;
-        
-        // 3. 腿 (深色)
-        ctx.fillStyle = isPlayer ? '#333' : '#2c3e50';
-        ctx.fillRect(x - 6, y + 5, 5, 10 + walkOffset);
-        ctx.fillRect(x + 1, y + 5, 5, 10 - walkOffset);
+        // 2. 計算上下起伏 (Bobbing)
+        let bob = Math.sin(gameTime * 0.15 + phase) * 3;
 
-        // 4. 身體 (衣服)
+        // 移動原點到角色腳底 (x, y + 15)
+        ctx.save();
+        ctx.translate(x, y + 15 + bob);
+
+        // 3. 腿 (使用線條，帶有粗度)
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = isPlayer ? '#2c3e50' : '#34495e';
+
+        let legSwing = Math.sin(gameTime * 0.15 + phase) * 0.6;
+        // 左腿
+        ctx.beginPath(); ctx.moveTo(-4, -12); ctx.lineTo(-4 - Math.sin(legSwing) * 8, 0); ctx.stroke();
+        // 右腿
+        ctx.beginPath(); ctx.moveTo(4, -12); ctx.lineTo(4 + Math.sin(legSwing) * 8, 0); ctx.stroke();
+
+        // 4. 身體 (衣服，用圓角矩形)
         ctx.fillStyle = isPlayer ? '#00d2d3' : color;
-        ctx.beginPath();
-        // 畫個簡單嘅圓角矩形做身體
-        ctx.moveTo(x - 10, y - 10);
-        ctx.lineTo(x + 10, y - 10);
-        ctx.lineTo(x + 10, y + 8);
-        ctx.lineTo(x - 10, y + 8);
+        roundRect(-12, -32, 24, 22, 8);
         ctx.fill();
 
-        // 5. 手 (膚色)
+        // 5. 手 (膚色，反向擺動)
+        ctx.strokeStyle = '#f5cba7'; 
+        ctx.lineWidth = 5;
+        let armSwing = Math.sin(gameTime * 0.15 + phase + Math.PI) * 0.6; 
+        // 左手
+        ctx.beginPath(); ctx.moveTo(-10, -26); ctx.lineTo(-12 - Math.sin(armSwing) * 8, -12); ctx.stroke();
+        // 右手
+        ctx.beginPath(); ctx.moveTo(10, -26); ctx.lineTo(12 + Math.sin(armSwing) * 8, -12); ctx.stroke();
+
+        // 6. 頭
         ctx.fillStyle = '#f5cba7';
-        ctx.beginPath();
-        ctx.arc(x - 14, y + Math.cos(gameTime * 0.2) * 3, 4, 0, Math.PI * 2);
-        ctx.arc(x + 14, y - Math.cos(gameTime * 0.2) * 3, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -45, 11, 0, Math.PI * 2); ctx.fill();
 
-        // 6. 頭 (膚色)
-        ctx.fillStyle = '#f5cba7';
-        ctx.beginPath();
-        ctx.arc(x, y - 18, 10, 0, Math.PI * 2);
-        ctx.fill();
+        // 7. 頭髮
+        ctx.fillStyle = isPlayer ? '#1a1a1a' : '#2c3e50';
+        ctx.beginPath(); ctx.arc(0, -47, 11, Math.PI, 0); ctx.fill();
+        // 瀏海
+        ctx.beginPath(); ctx.moveTo(-11, -47); ctx.lineTo(-4, -40); ctx.lineTo(4, -40); ctx.lineTo(11, -47); ctx.fill();
 
-        // 7. 頭髮 (黑色半圓)
-        ctx.fillStyle = isPlayer ? '#222' : '#1a1a1a';
-        ctx.beginPath();
-        ctx.arc(x, y - 20, 10, Math.PI, 0);
-        ctx.fill();
-
-        // 8. 眼睛 (兩粒黑點)
+        // 8. 眼睛
         ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(x - 4, y - 18, 1.5, 0, Math.PI * 2);
-        ctx.arc(x + 4, y - 18, 1.5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(-4, -45, 1.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -45, 1.5, 0, Math.PI*2); ctx.fill();
 
-        // 9. 如果係玩家，加頂廚師帽
+        // 9. 玩家專屬廚師帽
         if (isPlayer) {
             ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.ellipse(x, y - 30, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, -58, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
             // 帽腳
             ctx.fillStyle = '#ddd';
-            ctx.fillRect(x - 8, y - 26, 16, 3);
+            ctx.fillRect(-10, -54, 20, 4);
         }
+
+        ctx.restore();
     }
 
     function draw() {
@@ -658,19 +674,20 @@
             ctx.beginPath(); ctx.arc(c.x - 3, c.y - 3, 3, 0, Math.PI * 2); ctx.fill();
         });
 
-        // 畫路人 (使用真人繪製函數)
+        // 畫路人 (傳入隨機相位)
         pedestrians.forEach(p => {
-            drawHuman(p.x, p.y, false, p.color);
+            drawHuman(p.x, p.y, false, p.color, p.phase);
         });
 
-        // 畫玩家 (使用真人繪製函數)
-        drawHuman(player.x, player.y, true);
+        // 畫玩家
+        drawHuman(player.x, player.y, true, null, 0);
 
-        // 畫雨傘 (蓋在玩家頭頂)
+        // 畫雨傘
         if (isUmbrellaOpen) {
+            // 計算與玩家相同的 bob
+            let playerBob = Math.sin(gameTime * 0.15) * 3;
             ctx.save();
-            // 將傘的中心點放喺玩家頭頂稍上的位置
-            ctx.translate(player.x, player.y - 25);
+            ctx.translate(player.x, player.y - 25 + playerBob);
             ctx.rotate(player.tilt);
 
             // 傘面
