@@ -108,6 +108,8 @@
     .tag-online { color: #2ed573; font-weight: bold; text-shadow: 0 0 5px #2ed573; }
     .tag-offline { color: #666; }
     .tag-plays { color: var(--neon-gold); font-weight: bold; font-family: 'Orbitron'; }
+    
+    .player-id-list { font-size: 11px; color: #00d2d3; word-break: break-all; background: rgba(0,210,211,0.1); padding: 4px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
@@ -169,7 +171,7 @@
                     <thead>
                         <tr>
                             <th>遊戲名稱</th>
-                            <th>當前在線</th>
+                            <th>在線玩家 ID</th>
                             <th>累積遊玩次數</th>
                         </tr>
                     </thead>
@@ -283,29 +285,37 @@
             // 整理數據
             const adminList = games.map(g => {
                 let plays = gameStats[g.id] || 0;
-                let online = onlineStats[g.id] ? Object.keys(onlineStats[g.id]).length : 0;
+                let players = onlineStats[g.id] ? Object.keys(onlineStats[g.id]) : [];
                 totalPlays += plays;
-                totalOnline += online;
-                return { name: g.name, id: g.id, icon: g.icon, plays, online };
+                totalOnline += players.length;
+                return { name: g.name, id: g.id, icon: g.icon, plays, players };
             });
 
             // 排序：在線人數優先，然後遊玩次數
             adminList.sort((a, b) => {
-                if (b.online !== a.online) return b.online - a.online;
+                if (b.players.length !== a.players.length) return b.players.length - a.players.length;
                 return b.plays - a.plays;
             });
 
             adminList.forEach(item => {
                 let tr = document.createElement('tr');
                 
-                let onlineHtml = item.online > 0 
-                    ? `<span class="tag-online">🟢 ${item.online} 人</span>` 
-                    : `<span class="tag-offline">⚫ 0 人</span>`;
+                let onlineHtml = '';
+                if (item.players.length > 0) {
+                    // 如果人多，只顯示前 3 個，後面加 +N
+                    let displayIds = item.players.slice(0, 3).map(id => `<div class="player-id-list">${id}</div>`).join('');
+                    if (item.players.length > 3) {
+                        displayIds += `<div style="font-size:10px; color:#888; margin-top:4px;">...仲有 ${item.players.length - 3} 人</div>`;
+                    }
+                    onlineHtml = `<span class="tag-online">🟢 ${item.players.length} 人</span><br>${displayIds}`;
+                } else {
+                    onlineHtml = `<span class="tag-offline">⚫ 0 人</span>`;
+                }
 
                 tr.innerHTML = `
-                    <td style="font-weight: bold;">${item.icon} ${item.name}</td>
-                    <td>${onlineHtml}</td>
-                    <td class="tag-plays">${item.plays.toLocaleString()}</td>
+                    <td style="font-weight: bold; vertical-align: top;">${item.icon} ${item.name}</td>
+                    <td style="vertical-align: top;">${onlineHtml}</td>
+                    <td class="tag-plays" style="vertical-align: top;">${item.plays.toLocaleString()}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -355,7 +365,7 @@
                 return;
             }
             let pwd = prompt("🔐 請輸入管理員密碼：");
-            if (pwd === "z54060437K") {
+            if (pwd === "admin") {
                 isAdminMode = true;
                 document.getElementById('game-grid').style.display = 'none';
                 document.getElementById('search-area').style.display = 'none';
