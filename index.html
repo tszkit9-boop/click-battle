@@ -139,6 +139,10 @@
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
+
+<!-- 將 Firebase 引入放喺最頂，保證加載完成 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -266,7 +270,7 @@
             <h3>💬 意見反饋</h3>
             <p style="font-size: 12px; color: #aaa; margin-bottom: 15px;">遇到 Bug、有咩想加，或者純粹想讚下我哋，都可以喺度留低！</p>
             <textarea id="feedback-input" class="feedback-textarea" placeholder="請輸入您的意見或發現的 Bug..."></textarea>
-            <button class="btn-submit" onclick="submitFeedback()">發送反饋</button>
+            <button class="btn-submit" id="btn-send-feedback" onclick="submitFeedback()">發送反饋</button>
             <button class="btn-close" onclick="closeFeedback()">取消</button>
         </div>
     </div>
@@ -305,21 +309,90 @@
         let gameStats = {};
         let onlineStats = {};
         let isAdminMode = false;
+        
+        // 初始化 Firebase
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
         let db = null;
         let userId = '';
 
-        // 初始化 Firebase 同獲取玩家 ID
         try {
-            const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             
-            // 獲取永久裝置 ID
             userId = localStorage.getItem('global_device_id');
             if (!userId) {
                 userId = 'user_' + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('global_device_id', userId);
             }
+
+            // 監聽數據
+            db.ref('game_stats').on('value', (snap) => {
+                gameStats = snap.val() || {};
+                renderGames();
+                renderAdminData();
+            });
+
+            db.ref('online_status').on('value', (snap) => {
+                onlineStats = snap.val() || {};
+                let total = 0;
+                for (let game in onlineStats) {
+                    total += Object.keys(onlineStats[game]).length;
+                }
+                document.getElementById('total-online').innerText = total;
+                renderAdminData();
+            });
+
+            db.ref('feedback').on('value', (snap) => {
+                if (!isAdminMode) return;
+                const tbody = document.getElementById('feedback-log-body');
+                const data = snap.val();
+                tbody.innerHTML = '';
+                
+                if (!data) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無留言</td></tr>';
+                    return;
+                }
+
+                const logs = Object.entries(data).map(([key, val]) => ({ key, ...val })).sort((a,b) => b.time - a.time);
+                logs.forEach(log => {
+                    const d = new Date(log.time);
+                    const timeStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:#aaa; font-size:12px; white-space:nowrap; vertical-align:top;">${timeStr}</td>
+                        <td style="color:var(--neon-blue); font-size:11px; vertical-align:top;">${log.user}</td>
+                        <td><div class="feedback-msg">${log.msg}</div></td>
+                        <td style="vertical-align:top;"><button class="btn-delete" onclick="deleteFeedback('${log.key}')">刪除</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+
+            db.ref('error_logs').limitToLast(20).on('value', (snap) => {
+                if (!isAdminMode) return;
+                const tbody = document.getElementById('error-log-body');
+                const data = snap.val();
+                tbody.innerHTML = '';
+                
+                if (!data) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無錯誤紀錄</td></tr>';
+                    return;
+                }
+
+                const logs = Object.values(data).sort((a,b) => b.time - a.time);
+                logs.forEach(log => {
+                    const d = new Date(log.time);
+                    const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:#aaa; font-size:12px; white-space:nowrap;">${timeStr}</td>
+                        <td style="color:var(--neon-blue); font-weight:bold;">${log.game}</td>
+                        <td style="color:#888; font-size:11px;">${log.user}</td>
+                        <td><div class="error-msg">${log.msg}</div></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
         } catch(e) { console.error("Firebase Init Error:", e); }
 
         function renderGames() {
@@ -445,9 +518,6 @@
             window.location.href = `./${gameId}/`;
         }
 
-        // ==========================================
-        // 意見反饋 (前端邏輯)
-        // ==========================================
         function openFeedback() {
             document.getElementById('feedback-modal').classList.add('active');
             document.getElementById('feedback-input').value = '';
@@ -460,7 +530,11 @@
         function submitFeedback() {
             const msg = document.getElementById('feedback-input').value.trim();
             if (!msg) { alert("請輸入反饋內容！"); return; }
-            if (!db) return;
+            if (!db) { alert("數據庫未連接，請稍後再試。"); return; }
+
+            const btn = document.getElementById('btn-send-feedback');
+            btn.innerText = "發送中...";
+            btn.disabled = true;
 
             db.ref('feedback').push({
                 user: userId,
@@ -470,20 +544,20 @@
                 alert("✅ 反饋已成功送出！多謝你嘅意見！");
                 closeFeedback();
             }).catch(err => {
-                alert("發送失敗，請稍後再試。");
+                alert("發送失敗：" + err.message);
+            }).finally(() => {
+                btn.innerText = "發送反饋";
+                btn.disabled = false;
             });
         }
 
-        // ==========================================
-        // 後台控制邏輯
-        // ==========================================
         function promptAdmin() {
             if (isAdminMode) {
                 closeAdmin();
                 return;
             }
             let pwd = prompt("🔐 請輸入管理員密碼：");
-            if (pwd === "z54060437K") { 
+            if (pwd === "z54060437k") { 
                 isAdminMode = true;
                 document.getElementById('game-grid').style.display = 'none';
                 document.getElementById('search-area').style.display = 'none';
@@ -504,9 +578,6 @@
             renderGames();
         }
 
-        renderGames();
-
-        // 發送廣播
         function sendBroadcast() {
             const msg = document.getElementById('broadcast-msg').value.trim();
             if (!msg) { alert("請輸入廣播內容！"); return; }
@@ -518,96 +589,13 @@
             });
         }
 
-        // 刪除反饋
         function deleteFeedback(key) {
             if (confirm("確定要刪除這條反饋嗎？")) {
                 db.ref('feedback/' + key).remove();
             }
         }
 
-    </script>
-
-    <!-- Firebase 引入與後台監聽 -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-        try {
-            if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" });
-            const db = firebase.database();
-            
-            // 1. 遊戲統計
-            db.ref('game_stats').on('value', (snap) => {
-                gameStats = snap.val() || {};
-                renderGames();
-                renderAdminData();
-            });
-
-            // 2. 在線狀態
-            db.ref('online_status').on('value', (snap) => {
-                onlineStats = snap.val() || {};
-                let total = 0;
-                for (let game in onlineStats) {
-                    total += Object.keys(onlineStats[game]).length;
-                }
-                document.getElementById('total-online').innerText = total;
-                renderAdminData();
-            });
-
-            // 3. 玩家反饋
-            db.ref('feedback').on('value', (snap) => {
-                if (!isAdminMode) return;
-                const tbody = document.getElementById('feedback-log-body');
-                const data = snap.val();
-                tbody.innerHTML = '';
-                
-                if (!data) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無留言</td></tr>';
-                    return;
-                }
-
-                const logs = Object.entries(data).map(([key, val]) => ({ key, ...val })).sort((a,b) => b.time - a.time);
-                logs.forEach(log => {
-                    const d = new Date(log.time);
-                    const timeStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="color:#aaa; font-size:12px; white-space:nowrap; vertical-align:top;">${timeStr}</td>
-                        <td style="color:var(--neon-blue); font-size:11px; vertical-align:top;">${log.user}</td>
-                        <td><div class="feedback-msg">${log.msg}</div></td>
-                        <td style="vertical-align:top;"><button class="btn-delete" onclick="deleteFeedback('${log.key}')">刪除</button></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            });
-
-            // 4. 實時錯誤日誌
-            db.ref('error_logs').limitToLast(20).on('value', (snap) => {
-                if (!isAdminMode) return;
-                const tbody = document.getElementById('error-log-body');
-                const data = snap.val();
-                tbody.innerHTML = '';
-                
-                if (!data) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無錯誤紀錄</td></tr>';
-                    return;
-                }
-
-                const logs = Object.values(data).sort((a,b) => b.time - a.time);
-                logs.forEach(log => {
-                    const d = new Date(log.time);
-                    const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="color:#aaa; font-size:12px; white-space:nowrap;">${timeStr}</td>
-                        <td style="color:var(--neon-blue); font-weight:bold;">${log.game}</td>
-                        <td style="color:#888; font-size:11px;">${log.user}</td>
-                        <td><div class="error-msg">${log.msg}</div></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            });
-
-        } catch(e) { console.error("Firebase Init Error:", e); }
+        renderGames();
     </script>
 
 </body>
