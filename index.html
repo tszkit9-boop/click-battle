@@ -36,27 +36,26 @@
 
     .top-bar { display: flex; justify-content: space-between; align-items: center; }
     .logo { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+    
+    .header-right { display: flex; align-items: center; gap: 10px; }
     .online-status { font-size: 13px; color: #fff; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; border: 1px solid #444;}
     .online-dot { width: 8px; height: 8px; background: #2ed573; border-radius: 50%; box-shadow: 0 0 10px #2ed573; animation: pulse 2s infinite; }
+    
+    .admin-btn { background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .admin-btn:hover { background: var(--neon-pink); border-color: var(--neon-pink); }
 
     /* 搜尋與分類 */
     .search-row { display: flex; gap: 10px; }
     .search-input {
         flex: 1; padding: 10px 15px; background: rgba(255,255,255,0.1); border: 1px solid #555;
         border-radius: 8px; color: #fff; font-size: 14px; font-family: 'Noto Sans HK', sans-serif;
-        outline: none; transition: 0.2s;
+        outline: none; transition: 0.2s; user-select: text; -webkit-user-select: text;
     }
     .search-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0,210,211,0.3); }
 
-    .categories {
-        display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;
-        scrollbar-width: none; /* Firefox */
-    }
-    .categories::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
-    .cat-btn {
-        padding: 6px 15px; background: transparent; border: 1px solid #555; border-radius: 20px;
-        color: #aaa; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; transition: 0.2s;
-    }
+    .categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+    .categories::-webkit-scrollbar { display: none; }
+    .cat-btn { padding: 6px 15px; background: transparent; border: 1px solid #555; border-radius: 20px; color: #aaa; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; transition: 0.2s; }
     .cat-btn.active { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
 
     /* 遊戲列表 Grid */
@@ -65,10 +64,7 @@
         display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
         max-width: 1200px; margin: 0 auto;
     }
-    
-    @media (max-width: 600px) {
-        .game-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    }
+    @media (max-width: 600px) { .game-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 
     /* 遊戲卡片 */
     .game-card {
@@ -78,28 +74,40 @@
     }
     .game-card:active { transform: scale(0.95); }
     .game-card:hover { border-color: var(--neon-blue); box-shadow: 0 0 20px rgba(0,210,211,0.3); }
-
-    .card-header {
-        height: 100px; display: flex; align-items: center; justify-content: center; font-size: 50px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.5));
-        position: relative;
-    }
-    
-    .card-category {
-        position: absolute; top: 8px; right: 8px; font-size: 10px; background: rgba(0,0,0,0.6);
-        padding: 2px 8px; border-radius: 10px; color: #ccc; border: 1px solid rgba(255,255,255,0.2);
-    }
-
+    .card-header { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 50px; background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.5)); position: relative; }
+    .card-category { position: absolute; top: 8px; right: 8px; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 10px; color: #ccc; border: 1px solid rgba(255,255,255,0.2); }
     .card-body { padding: 10px; flex: 1; display: flex; flex-direction: column; }
     .card-title { font-size: 14px; font-weight: 900; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-desc { font-size: 11px; color: #aaa; margin-bottom: 10px; flex: 1; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
-    
     .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 8px; }
     .best-score { font-size: 11px; color: var(--neon-gold); font-family: 'Orbitron', sans-serif; font-weight: bold; }
     .play-count { font-size: 10px; color: #777; }
 
-    /* 底部 */
-    footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    /* 👇 後台控制台面板 👇 */
+    #admin-panel {
+        display: none; padding: 20px; max-width: 1000px; margin: 0 auto; width: 100%;
+    }
+    #admin-panel.active { display: block; }
+    
+    .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-pink); padding-bottom: 15px; margin-bottom: 20px; }
+    .admin-header h2 { color: var(--neon-pink); font-family: 'Orbitron'; font-size: 22px; text-shadow: 0 0 10px var(--neon-pink); }
+    .close-admin { background: transparent; border: 1px solid #555; color: #fff; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .close-admin:hover { background: var(--neon-pink); border-color: var(--neon-pink); }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .stat-box { background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; padding: 20px; text-align: center; }
+    .stat-box h3 { font-size: 12px; color: #aaa; margin-bottom: 10px; letter-spacing: 1px; }
+    .stat-box .value { font-family: 'Orbitron'; font-size: 28px; font-weight: 900; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+
+    .table-container { background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 12px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+    th { background: rgba(0,210,211,0.1); color: var(--neon-blue); padding: 12px 15px; font-size: 13px; border-bottom: 2px solid var(--neon-blue); }
+    td { padding: 12px 15px; font-size: 14px; border-bottom: 1px solid #222; }
+    tr:hover { background: rgba(255,255,255,0.05); }
+    
+    .tag-online { color: #2ed573; font-weight: bold; text-shadow: 0 0 5px #2ed573; }
+    .tag-offline { color: #666; }
+    .tag-plays { color: var(--neon-gold); font-weight: bold; font-family: 'Orbitron'; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
@@ -109,15 +117,18 @@
     <header>
         <div class="top-bar">
             <div class="logo">🎮 呀樂遊戲工作室</div>
-            <div class="online-status">
-                <div class="online-dot"></div>
-                <span id="total-online">0</span> 人正在玩
+            <div class="header-right">
+                <div class="online-status">
+                    <div class="online-dot"></div>
+                    <span id="total-online">0</span> 人正在玩
+                </div>
+                <button class="admin-btn" onclick="promptAdmin()">⚙️ 管理</button>
             </div>
         </div>
-        <div class="search-row">
+        <div class="search-row" id="search-area">
             <input type="text" class="search-input" id="search-input" placeholder="🔍 搜尋遊戲名稱...">
         </div>
-        <div class="categories" id="categories">
+        <div class="categories" id="categories-area">
             <button class="cat-btn active" onclick="filterCategory('全部', this)">全部</button>
             <button class="cat-btn" onclick="filterCategory('動作', this)">動作</button>
             <button class="cat-btn" onclick="filterCategory('休閒', this)">休閒</button>
@@ -128,205 +139,279 @@
     </header>
 
     <main>
-        <div class="game-grid" id="game-grid">
-            <!-- 遊戲卡片會由 JS 動態生成 -->
+        <!-- 普通遊戲列表 -->
+        <div class="game-grid" id="game-grid"></div>
+        
+        <!-- 👇 後台數據控制台 (隱藏) 👇 -->
+        <div id="admin-panel">
+            <div class="admin-header">
+                <h2>🛠️ 全站數據控制台</h2>
+                <button class="close-admin" onclick="closeAdmin()">✖ 返回大廳</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3>全站實時在線</h3>
+                    <div class="value" id="admin-online">0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>全站總遊玩次數</h3>
+                    <div class="value" id="admin-total-plays">0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>已上架遊戲</h3>
+                    <div class="value" id="admin-total-games">0</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>遊戲名稱</th>
+                            <th>當前在線</th>
+                            <th>累積遊玩次數</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                        <tr><td colspan="3" style="text-align: center; color: #666; padding: 30px;">正在加載 Firebase 數據...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
-    <footer>
-        © 2026 呀樂遊戲工作室 | 專注為你帶來歡樂
-    </footer>
+    <script>
+        window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
-<script>
-    window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
+        // ==========================================
+        // 📋 遊戲清單
+        // ==========================================
+        const games = [
+            { id: 'neon-rain', name: '霓虹雨夜：考牌大師', category: '休閒', desc: '考牌遇上暴雨，單手擔遮避開路人！', icon: '☔', bestKey: 'neon_rain_best', unit: 'm' },
+            { id: 'cha-chaan-teng', name: '茶記大亨：樓面生存戰', category: '模擬', desc: '做茶記樓面，瘋狂接單出餐！', icon: '🍳', bestKey: 'chaChaanTeng_best', unit: '$' },
+            { id: 'cha-chaan-teng-2', name: '茶記點餐：記憶大考驗', category: '休閒', desc: '考驗記憶力，憑記憶點餐！', icon: '🧠', bestKey: 'chaChaanTeng_best', unit: '$' },
+            { id: 'egg-waffle', name: '雞蛋仔 & 格仔餅', category: '休閒', desc: '整出完美嘅雞蛋仔同格仔餅！', icon: '🧇', bestKey: 'eggWaffle_best', unit: '$' },
+            { id: 'office-slave', name: '社畜人生 3D', category: '模擬', desc: '打工、買樓、結婚、炒股、上市！', icon: '💼', bestKey: 'officeSlaveSave_v53', unit: '' },
+            { id: 'doomsday-shelter', name: '末日避難所', category: '策略', desc: '分配資源，生存到最後一刻。', icon: '☢️', bestKey: 'doomsday_best', unit: '' },
+            { id: 'klt-defense', name: '九龍城寨保衛戰', category: '策略', desc: '抵禦外敵，保衛城寨！', icon: '🏯', bestKey: 'kltDefense_best', unit: '' },
+            { id: 'black-hole', name: '黑洞吞噬', category: '動作', desc: '操控黑洞，吞噬一切！', icon: '🕳️', bestKey: 'blackHole_best', unit: '' },
+            { id: 'magic-survivor', name: '魔法狂潮', category: '動作', desc: '無盡怪物，法術狂轟！', icon: '🔮', bestKey: 'magicSurvivor_best', unit: '' },
+            { id: 'one-line-life', name: '一筆定生死', category: '硬核', desc: '一筆畫完，避開所有障礙！', icon: '✏️', bestKey: 'oneLine_best', unit: '' },
+            { id: 'zen-reliever', name: '無限減壓艙', category: '休閒', desc: '撳爆一切，釋放壓力。', icon: '🫧', bestKey: 'zen_best', unit: '' },
+            { id: 'neon-music-box', name: '霓虹音樂盒', category: '休閒', desc: '跟隨節奏，點擊霓虹音符。', icon: '🎵', bestKey: 'musicBox_best', unit: '' },
+            { id: 'carpet-cleaning', name: '極致洗地毯', category: '休閒', desc: '洗走所有污垢，極度解壓！', icon: '🧽', bestKey: 'carpet_best', unit: '' },
+            { id: 'cyber-trader', name: '賽博股神', category: '策略', desc: '低買高賣，成為賽博首富。', icon: '📈', bestKey: 'trader_best', unit: '$' },
+            { id: 'snowball-game', name: '香港大富翁', category: '策略', desc: '擲骰買地，成為地產霸權！', icon: '🎲', bestKey: 'monopoly_best', unit: '$' },
+            { id: 'endless-maze', name: '無盡迷宮', category: '硬核', desc: '走出無盡迷宮，考驗方向感。', icon: '🌀', bestKey: 'maze_best', unit: '' },
+            { id: 'escape-room', name: '賽博密室', category: '硬核', desc: '解開謎題，逃出賽博密室。', icon: '🔐', bestKey: 'escape_best', unit: '' },
+            { id: 'office-slave-old', name: '社畜人生 (舊版)', category: '模擬', desc: '體驗社畜嘅悲慘加班生活。', icon: '💼', bestKey: 'office_best', unit: '' },
+            { id: 'gingerbread-house', name: '薑餅人建屋', category: '休閒', desc: '起一間最靚嘅薑餅屋。', icon: '🍪', bestKey: 'gingerbread_best', unit: '' },
+            { id: 'time-loan-shark', name: '時間高利貸', category: '策略', desc: '借時間定還時間？自己揀！', icon: '⏳', bestKey: 'loan_best', unit: '' },
+            { id: 'cyber-judge', name: '賽博判官', category: '策略', desc: '審判賽博罪犯，決定生死。', icon: '⚖️', bestKey: 'judge_best', unit: '' },
+            { id: 'grudge-game', name: '會記仇的遊戲', category: '動作', desc: '你打敵人一鎚，佢會記住你。', icon: '😡', bestKey: 'grudge_best', unit: '' },
+            { id: 'deep-miner', name: '深淵礦工', category: '休閒', desc: '向下挖掘，尋找稀有礦石。', icon: '⛏️', bestKey: 'miner_best', unit: 'm' }
+        ];
 
-    // ==========================================
-    // 📋 遊戲清單 (只需喺度加新遊戲)
-    // ==========================================
-    const games = [
-        { id: 'neon-rain', name: '霓虹雨夜：考牌大師', category: '休閒', desc: '考牌遇上暴雨，單手擔遮避開路人！', icon: '☔', bestKey: 'neon_rain_best', unit: 'm' },
-        { id: 'cha-chaan-teng', name: '茶記大亨：樓面生存戰', category: '模擬', desc: '做茶記樓面，瘋狂接單出餐！', icon: '🍳', bestKey: 'chaChaanTeng_best', unit: '$' },
-        { id: 'cha-chaan-teng-2', name: '茶記點餐：記憶大考驗', category: '休閒', desc: '考驗記憶力，憑記憶點餐！', icon: '🧠', bestKey: 'chaChaanTeng_best', unit: '$' },
-        { id: 'egg-waffle', name: '雞蛋仔大挑戰', category: '休閒', desc: '整出完美嘅雞蛋仔！', icon: '🧇', bestKey: 'eggWaffle_best', unit: '' },
-        { id: 'doomsday-shelter', name: '末日避難所', category: '策略', desc: '分配資源，生存到最後一刻。', icon: '☢️', bestKey: 'doomsday_best', unit: '' },
-        { id: 'klt-defense', name: '九龍城寨保衛戰', category: '策略', desc: '抵禦外敵，保衛城寨！', icon: '🏯', bestKey: 'kltDefense_best', unit: '' },
-        { id: 'black-hole', name: '黑洞吞噬', category: '動作', desc: '操控黑洞，吞噬一切！', icon: '🕳️', bestKey: 'blackHole_best', unit: '' },
-        { id: 'magic-survivor', name: '魔法狂潮', category: '動作', desc: '無盡怪物，法術狂轟！', icon: '🔮', bestKey: 'magicSurvivor_best', unit: '' },
-        { id: 'one-line-life', name: '一筆定生死', category: '硬核', desc: '一筆畫完，避開所有障礙！', icon: '✏️', bestKey: 'oneLine_best', unit: '' },
-        { id: 'zen-reliever', name: '無限減壓艙', category: '休閒', desc: '撳爆一切，釋放壓力。', icon: '🫧', bestKey: 'zen_best', unit: '' },
-        { id: 'neon-music-box', name: '霓虹音樂盒', category: '休閒', desc: '跟隨節奏，點擊霓虹音符。', icon: '🎵', bestKey: 'musicBox_best', unit: '' },
-        { id: 'carpet-cleaning', name: '極致洗地毯', category: '休閒', desc: '洗走所有污垢，極度解壓！', icon: '🧽', bestKey: 'carpet_best', unit: '' },
-        { id: 'cyber-trader', name: '賽博股神', category: '策略', desc: '低買高賣，成為賽博首富。', icon: '📈', bestKey: 'trader_best', unit: '$' },
-        { id: 'snowball-game', name: '香港大富翁', category: '策略', desc: '擲骰買地，成為地產霸權！', icon: '🎲', bestKey: 'monopoly_best', unit: '$' },
-        { id: 'endless-maze', name: '無盡迷宮', category: '硬核', desc: '走出無盡迷宮，考驗方向感。', icon: '🌀', bestKey: 'maze_best', unit: '' },
-        { id: 'escape-room', name: '賽博密室', category: '硬核', desc: '解開謎題，逃出賽博密室。', icon: '🔐', bestKey: 'escape_best', unit: '' },
-        { id: 'office-slave', name: '社畜人生', category: '模擬', desc: '體驗社畜嘅悲慘加班生活。', icon: '💼', bestKey: 'office_best', unit: '' },
-        { id: 'gingerbread-house', name: '薑餅人建屋', category: '休閒', desc: '起一間最靚嘅薑餅屋。', icon: '🍪', bestKey: 'gingerbread_best', unit: '' },
-        { id: 'time-loan-shark', name: '時間高利貸', category: '策略', desc: '借時間定還時間？自己揀！', icon: '⏳', bestKey: 'loan_best', unit: '' },
-        { id: 'cyber-judge', name: '賽博判官', category: '策略', desc: '審判賽博罪犯，決定生死。', icon: '⚖️', bestKey: 'judge_best', unit: '' },
-        { id: 'grudge-game', name: '會記仇的遊戲', category: '動作', desc: '你打敵人一鎚，佢會記住你。', icon: '😡', bestKey: 'grudge_best', unit: '' },
-        { id: 'deep-miner', name: '深淵礦工', category: '休閒', desc: '向下挖掘，尋找稀有礦石。', icon: '⛏️', bestKey: 'miner_best', unit: 'm' }
-    ];
+        let currentCategory = '全部';
+        let searchQuery = '';
+        let gameStats = {};
+        let onlineStats = {};
+        let isAdminMode = false;
 
-    let currentCategory = '全部';
-    let searchQuery = '';
-    let gameStats = {};
+        // ==========================================
+        // 渲染遊戲列表
+        // ==========================================
+        function renderGames() {
+            if (isAdminMode) return;
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
 
-    // ==========================================
-    // Firebase 初始化與連線
-    // ==========================================
-    const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
-    let db = null;
-    try {
-        if (typeof firebase !== 'undefined') {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-        }
-    } catch(e) { console.error("Firebase Init Error:", e); }
-
-    // 全局在線人數
-    try {
-        if (db) {
-            db.ref('online_status').on('value', (snap) => {
-                let total = 0;
-                const data = snap.val();
-                if (data) {
-                    for (let game in data) {
-                        total += Object.keys(data[game]).length;
-                    }
-                }
-                document.getElementById('total-online').innerText = total;
+            const filtered = games.filter(g => {
+                const matchCat = currentCategory === '全部' || g.category === currentCategory;
+                const matchSearch = g.name.toLowerCase().includes(searchQuery.toLowerCase()) || g.desc.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchCat && matchSearch;
             });
-        }
-    } catch(e) { console.error("Firebase Online Error:", e); }
 
-    // 遊戲遊玩次數
-    try {
-        if (db) {
-            db.ref('game_stats').on('value', (snap) => {
-                gameStats = snap.val() || {};
-                renderGames(); // 重新渲染以更新次數
-            });
-        }
-    } catch(e) { console.error("Firebase Stats Error:", e); }
-
-    // ==========================================
-    // 渲染邏輯
-    // ==========================================
-    function renderGames() {
-        const grid = document.getElementById('game-grid');
-        grid.innerHTML = '';
-
-        const filtered = games.filter(g => {
-            const matchCat = currentCategory === '全部' || g.category === currentCategory;
-            const matchSearch = g.name.toLowerCase().includes(searchQuery.toLowerCase()) || g.desc.toLowerCase().includes(searchQuery.toLowerCase());
-            return matchCat && matchSearch;
-        });
-
-        if (filtered.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #777; padding: 50px;">搵唔到相關遊戲...</div>';
-            return;
-        }
-
-        filtered.forEach(g => {
-            // 讀取最高紀錄
-            let best = localStorage.getItem(g.bestKey);
-            let bestText = '未有紀錄';
-            if (best !== null) {
-                // 處理如果有單位的情況
-                if (g.unit === '$') bestText = '$' + best;
-                else if (g.unit === 'm') bestText = best + 'm';
-                else bestText = best;
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #777; padding: 50px;">搵唔到相關遊戲...</div>';
+                return;
             }
 
-            // 讀取遊玩次數
-            let plays = gameStats[g.id] || 0;
+            filtered.forEach(g => {
+                let best = localStorage.getItem(g.bestKey);
+                let bestText = '未有紀錄';
+                if (best !== null) {
+                    if (g.unit === '$') bestText = '$' + parseInt(best).toLocaleString();
+                    else if (g.unit === 'm') bestText = best + 'm';
+                    else bestText = best;
+                }
+                let plays = gameStats[g.id] || 0;
 
-            const card = document.createElement('div');
-            card.className = 'game-card';
-            card.onclick = () => playGame(g.id);
-            card.innerHTML = `
-                <div class="card-header">
-                    ${g.icon}
-                    <div class="card-category">${g.category}</div>
-                </div>
-                <div class="card-body">
-                    <div class="card-title">${g.name}</div>
-                    <div class="card-desc">${g.desc}</div>
-                    <div class="card-footer">
-                        <span class="best-score">🏆 ${bestText}</span>
-                        <span class="play-count">▶ ${plays}</span>
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.onclick = () => playGame(g.id);
+                card.innerHTML = `
+                    <div class="card-header">
+                        ${g.icon}
+                        <div class="card-category">${g.category}</div>
                     </div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
-
-    // ==========================================
-    // 互動事件
-    // ==========================================
-    document.getElementById('search-input').addEventListener('input', (e) => {
-        searchQuery = e.target.value;
-        renderGames();
-    });
-
-    function filterCategory(cat, btn) {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderGames();
-    }
-
-    function playGame(gameId) {
-        try {
-            // 記錄遊玩次數 (防重複計算機制)
-            const sessionKey = `played_${gameId}`;
-            if (!sessionStorage.getItem(sessionKey)) {
-                sessionStorage.setItem(sessionKey, 'true');
-                if (db) {
-                    db.ref(`game_stats/${gameId}`).transaction((current) => {
-                        return (current || 0) + 1;
-                    }).catch(err => console.warn("Stats err:", err));
-                }
-            }
-        } catch(e) {}
-
-        // 跳轉
-        window.location.href = `./${gameId}/`;
-    }
-
-    // 初始化渲染
-    renderGames();
-
-</script>
-
-<!-- Firebase 引入 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script>
-    // 因為 Firebase 係最後載入，所以要喺度重新觸發一次連線
-    try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp({ databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" });
+                    <div class="card-body">
+                        <div class="card-title">${g.name}</div>
+                        <div class="card-desc">${g.desc}</div>
+                        <div class="card-footer">
+                            <span class="best-score">🏆 ${bestText}</span>
+                            <span class="play-count">▶ ${plays}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
-        const db = firebase.database();
-        
-        // 在線人數
-        db.ref('online_status').on('value', (snap) => {
-            let total = 0;
-            const data = snap.val();
-            if (data) for (let game in data) total += Object.keys(data[game]).length;
-            document.getElementById('total-online').innerText = total;
-        });
 
-        // 遊玩次數
-        db.ref('game_stats').on('value', (snap) => {
-            gameStats = snap.val() || {};
+        // ==========================================
+        // 渲染後台數據
+        // ==========================================
+        function renderAdminData() {
+            if (!isAdminMode) return;
+            const tbody = document.getElementById('admin-table-body');
+            tbody.innerHTML = '';
+
+            let totalPlays = 0;
+            let totalOnline = 0;
+
+            // 整理數據
+            const adminList = games.map(g => {
+                let plays = gameStats[g.id] || 0;
+                let online = onlineStats[g.id] ? Object.keys(onlineStats[g.id]).length : 0;
+                totalPlays += plays;
+                totalOnline += online;
+                return { name: g.name, id: g.id, icon: g.icon, plays, online };
+            });
+
+            // 排序：在線人數優先，然後遊玩次數
+            adminList.sort((a, b) => {
+                if (b.online !== a.online) return b.online - a.online;
+                return b.plays - a.plays;
+            });
+
+            adminList.forEach(item => {
+                let tr = document.createElement('tr');
+                
+                let onlineHtml = item.online > 0 
+                    ? `<span class="tag-online">🟢 ${item.online} 人</span>` 
+                    : `<span class="tag-offline">⚫ 0 人</span>`;
+
+                tr.innerHTML = `
+                    <td style="font-weight: bold;">${item.icon} ${item.name}</td>
+                    <td>${onlineHtml}</td>
+                    <td class="tag-plays">${item.plays.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('admin-online').innerText = totalOnline;
+            document.getElementById('admin-total-plays').innerText = totalPlays.toLocaleString();
+            document.getElementById('admin-total-games').innerText = games.length;
+        }
+
+        // ==========================================
+        // 互動事件
+        // ==========================================
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
             renderGames();
         });
-    } catch(e) {}
-</script>
+
+        function filterCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderGames();
+        }
+
+        function playGame(gameId) {
+            if (isAdminMode) return;
+            try {
+                const sessionKey = `played_${gameId}`;
+                if (!sessionStorage.getItem(sessionKey)) {
+                    sessionStorage.setItem(sessionKey, 'true');
+                    if (db) {
+                        db.ref(`game_stats/${gameId}`).transaction((current) => {
+                            return (current || 0) + 1;
+                        }).catch(err => console.warn("Stats err:", err));
+                    }
+                }
+            } catch(e) {}
+            window.location.href = `./${gameId}/`;
+        }
+
+        // ==========================================
+        // 後台控制邏輯
+        // ==========================================
+        function promptAdmin() {
+            if (isAdminMode) {
+                closeAdmin();
+                return;
+            }
+            let pwd = prompt("🔐 請輸入管理員密碼：");
+            if (pwd === "z54060437K") {
+                isAdminMode = true;
+                document.getElementById('game-grid').style.display = 'none';
+                document.getElementById('search-area').style.display = 'none';
+                document.getElementById('categories-area').style.display = 'none';
+                document.getElementById('admin-panel').classList.add('active');
+                renderAdminData();
+            } else if (pwd !== null) {
+                alert("密碼錯誤！");
+            }
+        }
+
+        function closeAdmin() {
+            isAdminMode = false;
+            document.getElementById('game-grid').style.display = 'grid';
+            document.getElementById('search-area').style.display = 'flex';
+            document.getElementById('categories-area').style.display = 'flex';
+            document.getElementById('admin-panel').classList.remove('active');
+            renderGames();
+        }
+
+        // 初始化渲染
+        renderGames();
+    </script>
+
+    <!-- Firebase 引入 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        let db = null;
+        try {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            
+            // 1. 監聽全站遊戲統計
+            db.ref('game_stats').on('value', (snap) => {
+                gameStats = snap.val() || {};
+                renderGames();
+                renderAdminData();
+            });
+
+            // 2. 監聽全站在線狀態
+            db.ref('online_status').on('value', (snap) => {
+                onlineStats = snap.val() || {};
+                
+                // 計算總在線人數 (顯示喺右上角)
+                let total = 0;
+                for (let game in onlineStats) {
+                    total += Object.keys(onlineStats[game]).length;
+                }
+                document.getElementById('total-online').innerText = total;
+                
+                renderAdminData();
+            });
+        } catch(e) { console.error("Firebase Init Error:", e); }
+    </script>
 
 </body>
 </html>
