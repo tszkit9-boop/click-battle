@@ -1,151 +1,151 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>社畜人生 3D</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-        html, body { overscroll-behavior: none; }
-        body { background-color: #050510; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1a2e, #050510); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(10, 10, 20, 0.95); border-bottom: 1px solid #333; z-index: 20; flex-shrink: 0; }
-        .back-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); }
-        .top-right-btns { display: flex; gap: 8px; }
-        .voice-btn, .reset-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; }
-        .voice-btn { color: #f1c40f; border: 2px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); width: 75px; text-align: center; }
-        .reset-btn { color: #e74c3c; border: 2px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
-        #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8); overflow: hidden; }
-        #hud { background: rgba(10, 10, 20, 0.95); padding: 12px 8px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 14px; z-index: 10; backdrop-filter: blur(5px); flex-shrink: 0; }
-        .stat-item { display: flex; align-items: center; gap: 4px; }
-        .stat-label { width: 26px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 12px; white-space: nowrap; }
-        .stat-bar { flex: 1; height: 14px; background: #111; border-radius: 7px; overflow: hidden; border: 1px solid #333; position: relative; }
-        .stat-fill { height: 100%; transition: width 0.3s; border-radius: 6px; }
-        .fill-money { background: linear-gradient(90deg, #f1c40f, #f39c12); box-shadow: 0 0 10px #f1c40f; }
-        .fill-energy { background: linear-gradient(90deg, #e74c3c, #c0392b); box-shadow: 0 0 10px #e74c3c; }
-        .fill-mood { background: linear-gradient(90deg, #3498db, #2980b9); box-shadow: 0 0 10px #3498db; }
-        .fill-stress { background: linear-gradient(90deg, #9b59b6, #8e44ad); box-shadow: 0 0 10px #9b59b6; }
-        .fill-health { background: linear-gradient(90deg, #2ecc71, #27ae60); box-shadow: 0 0 10px #2ecc71; }
-        .stat-val { position: absolute; right: 4px; top: 0; font-size: 11px; line-height: 14px; color: #fff; text-shadow: 1px 1px 2px #000; font-weight: bold; }
-        #status-display { grid-column: span 3; text-align: center; color: #a4b0be; font-size: 13px; font-weight: bold; margin-top: 4px; padding-top: 8px; border-top: 1px dashed #333; }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .warning-flash { animation: flash 1s infinite; background: #ff0000 !important; box-shadow: 0 0 10px #ff0000 !important; }
-        #scene { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: background 1s ease; min-height: 0; background: rgba(8, 10, 25, 0.5) !important; }
-        #office-view { display: none; position: absolute; inset: 0; z-index: 6; padding: 15px; padding-top: 30px; padding-bottom: 30px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-direction: column; align-items: center; justify-content: flex-start; background: transparent !important; }
-        #office-view.active { display: flex; }
-        .office-title { text-align: center; color: #f1c40f; font-size: 14px; font-weight: bold; margin-bottom: 12px; text-shadow: 0 0 10px rgba(241, 196, 15, 0.6); }
-        .staff-grid { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; max-width: 100% !important; padding-bottom: 20px; }
-        .staff-desk { background: linear-gradient(135deg, rgba(44, 62, 80, 0.6), rgba(30, 39, 46, 0.6)) !important; backdrop-filter: blur(2px); border: 2px solid #3498db; border-radius: 12px; padding: 6px 4px 4px !important; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(52, 152, 219, 0.3); position: relative; overflow: hidden; min-height: 78px !important; }
-        .staff-desk.manager { border-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
-        .staff-desk.optioned { border-color: #e84393; box-shadow: 0 0 15px rgba(232, 67, 147, 0.5); }
-        .staff-desk .desk-name { font-size: 10px !important; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .staff-desk .desk-status { font-size: 9px !important; color: #a4b0be; background: rgba(0, 0, 0, 0.5); padding: 2px 8px; border-radius: 8px; margin-top: 2px; }
-        .staff-desk .desk-level { position: absolute; top: 6px; right: 6px; font-size: 9px; color: #f1c40f; background: rgba(0, 0, 0, 0.6); padding: 1px 5px; border-radius: 4px; }
-        .staff-desk.slacking { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); cursor: pointer; animation: slackingPulse 1.5s infinite; }
-        @keyframes slackingPulse { 0%, 100% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); } 50% { box-shadow: 0 0 25px rgba(231, 76, 60, 1); } }
-        .catch-hint { font-size: 9px; color: #fff; background: #e74c3c; padding: 2px 8px; border-radius: 8px; margin-top: 3px; animation: flash 1s infinite; }
-        .empty-desk { background: rgba(44, 62, 80, 0.35); border: 2px dashed #555; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px; min-height: 78px !important; }
-        
-        /* 2D 員工動畫人仔 */
-        .staff-char { width: 40px; height: 50px; position: relative; display: flex; justify-content: center; align-items: flex-end; margin-top: 5px; }
-        .s-torso { position: absolute; bottom: 10px; width: 26px; height: 22px; background: var(--c-color, #3498db); border-radius: 8px 8px 4px 4px; box-shadow: inset -3px -3px 5px rgba(0,0,0,0.3); z-index: 2; }
-        .s-arm { position: absolute; bottom: 18px; width: 6px; height: 16px; background: #f5cba7; border-radius: 3px; transform-origin: top center; z-index: 1; }
-        .s-arm.left { left: 3px; animation: s-arm 0.4s infinite alternate ease-in-out; }
-        .s-arm.right { right: 3px; animation: s-arm 0.4s infinite alternate-reverse ease-in-out; }
-        .s-leg { position: absolute; bottom: 0; width: 6px; height: 12px; background: #2c3e50; border-radius: 3px; transform-origin: top center; }
-        .s-leg.left { left: 10px; animation: s-leg 0.4s infinite alternate ease-in-out; }
-        .s-leg.right { right: 10px; animation: s-leg 0.4s infinite alternate-reverse ease-in-out; }
-        .s-face { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: #ffccaa; border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); z-index: 3; display: flex; justify-content: center; align-items: center; font-size: 10px; }
-        .staff-desk.slacking .s-torso { background: #e74c3c !important; }
-        .staff-desk.typing .s-arm.left { animation: s-type 0.2s infinite alternate ease-in-out; }
-        .staff-desk.typing .s-arm.right { animation: s-type 0.2s infinite alternate-reverse ease-in-out; }
-        @keyframes s-arm { 0% { transform: rotate(-15deg); } 100% { transform: rotate(15deg); } }
-        @keyframes s-leg { 0% { transform: rotate(10deg); } 100% { transform: rotate(-10deg); } }
-        @keyframes s-type { 0% { transform: rotate(-40deg); } 100% { transform: rotate(-10deg); } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>社畜人生 3D：終極地獄版</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+    html, body { overscroll-behavior: none; }
+    body { background-color: #050510; color: #fff; font-family: 'Noto Sans HK', sans-serif; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1a2e, #050510); }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(10, 10, 20, 0.95); border-bottom: 1px solid #333; z-index: 20; flex-shrink: 0; }
+    .back-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); color: #00d2d3; border: 2px solid #00d2d3; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0, 210, 211, 0.5); }
+    .top-right-btns { display: flex; gap: 8px; }
+    .voice-btn, .reset-btn { padding: 6px 12px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; }
+    .voice-btn { color: #f1c40f; border: 2px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); width: 75px; text-align: center; }
+    .reset-btn { color: #e74c3c; border: 2px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
+    #game-container { flex: 1; position: relative; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; background: #1e1e2f; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8); overflow: hidden; }
+    #hud { background: rgba(10, 10, 20, 0.95); padding: 12px 8px; border-bottom: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 14px; z-index: 10; backdrop-filter: blur(5px); flex-shrink: 0; }
+    .stat-item { display: flex; align-items: center; gap: 4px; }
+    .stat-label { width: 26px; font-weight: bold; color: #a4b0be; text-align: right; font-size: 12px; white-space: nowrap; }
+    .stat-bar { flex: 1; height: 14px; background: #111; border-radius: 7px; overflow: hidden; border: 1px solid #333; position: relative; }
+    .stat-fill { height: 100%; transition: width 0.3s; border-radius: 6px; }
+    .fill-money { background: linear-gradient(90deg, #f1c40f, #f39c12); box-shadow: 0 0 10px #f1c40f; }
+    .fill-energy { background: linear-gradient(90deg, #e74c3c, #c0392b); box-shadow: 0 0 10px #e74c3c; }
+    .fill-mood { background: linear-gradient(90deg, #3498db, #2980b9); box-shadow: 0 0 10px #3498db; }
+    .fill-stress { background: linear-gradient(90deg, #9b59b6, #8e44ad); box-shadow: 0 0 10px #9b59b6; }
+    .fill-health { background: linear-gradient(90deg, #2ecc71, #27ae60); box-shadow: 0 0 10px #2ecc71; }
+    .stat-val { position: absolute; right: 4px; top: 0; font-size: 11px; line-height: 14px; color: #fff; text-shadow: 1px 1px 2px #000; font-weight: bold; }
+    #status-display { grid-column: span 3; text-align: center; color: #a4b0be; font-size: 13px; font-weight: bold; margin-top: 4px; padding-top: 8px; border-top: 1px dashed #333; }
+    @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .warning-flash { animation: flash 1s infinite; background: #ff0000 !important; box-shadow: 0 0 10px #ff0000 !important; }
+    #scene { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: background 1s ease; min-height: 0; background: rgba(8, 10, 25, 0.5) !important; }
+    #office-view { display: none; position: absolute; inset: 0; z-index: 6; padding: 15px; padding-top: 30px; padding-bottom: 30px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-direction: column; align-items: center; justify-content: flex-start; background: transparent !important; }
+    #office-view.active { display: flex; }
+    .office-title { text-align: center; color: #f1c40f; font-size: 14px; font-weight: bold; margin-bottom: 12px; text-shadow: 0 0 10px rgba(241, 196, 15, 0.6); }
+    .staff-grid { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; max-width: 100% !important; padding-bottom: 20px; }
+    .staff-desk { background: linear-gradient(135deg, rgba(44, 62, 80, 0.6), rgba(30, 39, 46, 0.6)) !important; backdrop-filter: blur(2px); border: 2px solid #3498db; border-radius: 12px; padding: 6px 4px 4px !important; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(52, 152, 219, 0.3); position: relative; overflow: hidden; min-height: 78px !important; }
+    .staff-desk.manager { border-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
+    .staff-desk.optioned { border-color: #e84393; box-shadow: 0 0 15px rgba(232, 67, 147, 0.5); }
+    .staff-desk .desk-name { font-size: 10px !important; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .staff-desk .desk-status { font-size: 9px !important; color: #a4b0be; background: rgba(0, 0, 0, 0.5); padding: 2px 8px; border-radius: 8px; margin-top: 2px; }
+    .staff-desk .desk-level { position: absolute; top: 6px; right: 6px; font-size: 9px; color: #f1c40f; background: rgba(0, 0, 0, 0.6); padding: 1px 5px; border-radius: 4px; }
+    .staff-desk.slacking { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); cursor: pointer; animation: slackingPulse 1.5s infinite; }
+    @keyframes slackingPulse { 0%, 100% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); } 50% { box-shadow: 0 0 25px rgba(231, 76, 60, 1); } }
+    .catch-hint { font-size: 9px; color: #fff; background: #e74c3c; padding: 2px 8px; border-radius: 8px; margin-top: 3px; animation: flash 1s infinite; }
+    .empty-desk { background: rgba(44, 62, 80, 0.35); border: 2px dashed #555; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px; min-height: 78px !important; }
+    
+    /* 2D 員工動畫人仔 */
+    .staff-char { width: 40px; height: 50px; position: relative; display: flex; justify-content: center; align-items: flex-end; margin-top: 5px; }
+    .s-torso { position: absolute; bottom: 10px; width: 26px; height: 22px; background: var(--c-color, #3498db); border-radius: 8px 8px 4px 4px; box-shadow: inset -3px -3px 5px rgba(0,0,0,0.3); z-index: 2; }
+    .s-arm { position: absolute; bottom: 18px; width: 6px; height: 16px; background: #f5cba7; border-radius: 3px; transform-origin: top center; z-index: 1; }
+    .s-arm.left { left: 3px; animation: s-arm 0.4s infinite alternate ease-in-out; }
+    .s-arm.right { right: 3px; animation: s-arm 0.4s infinite alternate-reverse ease-in-out; }
+    .s-leg { position: absolute; bottom: 0; width: 6px; height: 12px; background: #2c3e50; border-radius: 3px; transform-origin: top center; }
+    .s-leg.left { left: 10px; animation: s-leg 0.4s infinite alternate ease-in-out; }
+    .s-leg.right { right: 10px; animation: s-leg 0.4s infinite alternate-reverse ease-in-out; }
+    .s-face { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: #ffccaa; border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); z-index: 3; display: flex; justify-content: center; align-items: center; font-size: 10px; }
+    .staff-desk.slacking .s-torso { background: #e74c3c !important; }
+    .staff-desk.typing .s-arm.left { animation: s-type 0.2s infinite alternate ease-in-out; }
+    .staff-desk.typing .s-arm.right { animation: s-type 0.2s infinite alternate-reverse ease-in-out; }
+    @keyframes s-arm { 0% { transform: rotate(-15deg); } 100% { transform: rotate(15deg); } }
+    @keyframes s-leg { 0% { transform: rotate(10deg); } 100% { transform: rotate(-10deg); } }
+    @keyframes s-type { 0% { transform: rotate(-40deg); } 100% { transform: rotate(-10deg); } }
 
-        .modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto; margin: auto; }
-        .modal-box h2 { color: #f1c40f; margin-bottom: 12px; font-size: 18px; }
-        .modal-box p { color: #ccc; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
-        .modal-btn { width: 100%; padding: 12px 10px; margin-bottom: 8px; border: none; border-radius: 8px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; touch-action: manipulation; text-align: left; }
-        .modal-btn.primary { background: #3498db; color: #fff; }
-        .modal-btn.danger { background: #e74c3c; color: #fff; }
-        .modal-btn.warning { background: #f39c12; color: #fff; }
-        .modal-btn.casino { background: #e84393; color: #fff; }
-        .modal-btn.boss { background: #f1c40f; color: #000; }
-        .modal-btn small { display: block; font-size: 10px; font-weight: normal; margin-top: 3px; opacity: 0.8; }
-        .staff-card { background: #2c3e50; border: 2px solid #555; border-radius: 8px; padding: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-        .staff-info { text-align: left; flex: 1; }
-        .staff-info b { font-size: 13px; color: #f1c40f; }
-        .staff-info small { font-size: 10px; color: #bbb; display: block; margin-top: 2px; }
-        .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 12px 6px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .bet-btn:active { transform: scale(0.95); background: #f39c12; color: #000; }
-        .bet-btn .odds { display: block; font-size: 11px; color: #f1c40f; margin-top: 3px; }
-        .job-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-        .job-btn { background: #2c3e50; border: 2px solid #3498db; color: #fff; padding: 8px 4px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; text-align: center; }
-        .job-btn small { display: block; font-size: 9px; font-weight: normal; margin-top: 2px; color: #f1c40f; }
-        #end-screen { position: absolute; inset: 0; background: rgba(5, 5, 10, 0.98); z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        #end-screen h1 { color: #f1c40f; font-size: 32px; margin-bottom: 15px; }
-        #end-screen p { font-size: 14px; line-height: 1.8; margin-bottom: 25px; color: #ccc; }
-        #end-screen button { padding: 12px 30px; background: #f1c40f; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        #dialogue-box { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.8) 80%, transparent 100%); padding: 15px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
-        #speaker-name { color: #f1c40f; font-weight: bold; font-size: 14px; }
-        #dialogue-text { font-size: 15px; line-height: 1.5; min-height: 35px; }
-        #choices { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 35vh; overflow-y: auto; }
-        .choice-btn { background: rgba(30, 30, 47, 0.9); color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-size: 13px; text-align: left; cursor: pointer; }
-        #actions { background: #111; padding: 8px 6px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; z-index: 10; max-height: 42vh; overflow-y: auto; flex-shrink: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
-        .action-btn { background: linear-gradient(to bottom, #3498db, #2980b9); color: #fff; border: 2px solid #000; border-radius: 8px; padding: 10px 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; }
-        .action-btn:active { transform: translateY(4px); box-shadow: none; }
-        .action-btn.work { background: linear-gradient(to bottom, #e67e22, #d35400); box-shadow: 0 3px 0 #a04000; }
-        .action-btn.rest { background: linear-gradient(to bottom, #2ecc71, #27ae60); box-shadow: 0 3px 0 #196f3d; }
-        .action-btn.buy { background: linear-gradient(to bottom, #9b59b6, #8e44ad); box-shadow: 0 3px 0 #6c3483; }
-        .action-btn.casino { background: linear-gradient(to bottom, #e84393, #c2185b); box-shadow: 0 3px 0 #7b1fa2; }
-        .action-btn.boss { background: linear-gradient(to bottom, #f1c40f, #f39c12); box-shadow: 0 3px 0 #b38f00; color: #000; }
-        .action-btn small { font-size: 9px; font-weight: normal; opacity: 0.8; }
-        #toast { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.9); border: 2px solid #f1c40f; padding: 10px 16px; border-radius: 20px; font-weight: bold; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; color: #f1c40f; font-size: 13px; max-width: 90%; word-wrap: break-word; white-space: normal; }
-        .event-screen { position: absolute; inset: 0; z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); }
-        .event-screen h1 { font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 20px currentColor; }
-        .event-icon { font-size: 100px; margin-bottom: 20px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-        #wedding-screen { background: rgba(255, 105, 180, 0.9); }
-        #wedding-screen h1 { color: #fff; }
-        #baby-screen { background: rgba(135, 206, 235, 0.9); }
-        #baby-screen h1 { color: #1e1e2f; text-shadow: 0 0 20px #fff; }
-        .confetti { position: absolute; font-size: 24px; animation: fall 2s linear infinite; top: -50px; }
-        @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
-        #family-interact-screen { background: rgba(44, 62, 80, 0.95); z-index: 160; }
-        #family-interact-screen h1 { color: #f1c40f; font-size: 24px; margin-bottom: 10px; }
-        .interact-avatar { font-size: 80px; margin-bottom: 10px; animation: float 2s infinite ease-in-out; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        #slacking-caught-modal .modal-box { border-color: #e74c3c; border-width: 4px; }
-        #slacking-excuse-input { width: 100%; height: 100px; background: #111; color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; resize: none; margin-bottom: 10px; outline: none; user-select: text; -webkit-user-select: text; }
-        #slacking-excuse-input:focus { border-color: #f1c40f; }
-        .excuse-tip { font-size: 11px; color: #a4b0be; text-align: left; margin-bottom: 10px; line-height: 1.5; }
-        #boss-verdict { display: none; font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 10px; line-height: 1.6; text-align: left; }
-        #boss-verdict.success { background: rgba(46, 204, 113, 0.2); border: 2px solid #2ecc71; color: #2ecc71; }
-        #boss-verdict.fail { background: rgba(231, 76, 60, 0.2); border: 2px solid #e74c3c; color: #e74c3c; }
-        #stock-chart { width: 100%; height: 100px; background: #111; border: 1px solid #333; margin-bottom: 10px; display: flex; align-items: flex-end; justify-content: space-between; padding: 5px; gap: 2px; }
-        .stock-bar { flex: 1; background: #e74c3c; transition: height 0.3s; }
-        .stock-bar.up { background: #2ecc71; }
-        #scene3d { position: absolute; inset: 0; z-index: 0; pointer-events: auto; }
-        #scene3d canvas { display: block; width: 100% !important; height: 100% !important; }
-        @media (max-width: 600px) {
-            .voice-btn, .reset-btn, .back-btn { padding: 4px 8px; font-size: 11px; }
-            #hud { padding: 8px 4px; gap: 6px; font-size: 13px; }
-            .stat-label { font-size: 11px; width: 22px; }
-            .stat-val { font-size: 10px; line-height: 12px; }
-            .stat-bar { height: 12px; }
-            #status-display { font-size: 12px; margin-top: 2px; padding-top: 6px; }
-            #actions { padding: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); gap: 4px; }
-            .action-btn { padding: 8px 2px; font-size: 11px; min-height: 44px; }
-            .action-btn small { font-size: 8px; }
-            .modal-box { padding: 15px; width: 95%; max-width: none; }
-            .modal-btn { padding: 10px; font-size: 12px; }
-            .job-btn { padding: 6px 2px; font-size: 11px; }
-            .staff-desk { padding: 8px 6px 6px; min-height: 90px; }
-        }
-    </style>
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 110; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; backdrop-filter: blur(5px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-box { background: #1e1e2f; border: 3px solid #f1c40f; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto; margin: auto; }
+    .modal-box h2 { color: #f1c40f; margin-bottom: 12px; font-size: 18px; }
+    .modal-box p { color: #ccc; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+    .modal-btn { width: 100%; padding: 12px 10px; margin-bottom: 8px; border: none; border-radius: 8px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s; touch-action: manipulation; text-align: left; }
+    .modal-btn.primary { background: #3498db; color: #fff; }
+    .modal-btn.danger { background: #e74c3c; color: #fff; }
+    .modal-btn.warning { background: #f39c12; color: #fff; }
+    .modal-btn.casino { background: #e84393; color: #fff; }
+    .modal-btn.boss { background: #f1c40f; color: #000; }
+    .modal-btn small { display: block; font-size: 10px; font-weight: normal; margin-top: 3px; opacity: 0.8; }
+    .staff-card { background: #2c3e50; border: 2px solid #555; border-radius: 8px; padding: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .staff-info { text-align: left; flex: 1; }
+    .staff-info b { font-size: 13px; color: #f1c40f; }
+    .staff-info small { font-size: 10px; color: #bbb; display: block; margin-top: 2px; }
+    .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .bet-btn { background: #2c3e50; border: 2px solid #555; color: #fff; padding: 12px 6px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
+    .bet-btn:active { transform: scale(0.95); background: #f39c12; color: #000; }
+    .bet-btn .odds { display: block; font-size: 11px; color: #f1c40f; margin-top: 3px; }
+    .job-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .job-btn { background: #2c3e50; border: 2px solid #3498db; color: #fff; padding: 8px 4px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; text-align: center; }
+    .job-btn small { display: block; font-size: 9px; font-weight: normal; margin-top: 2px; color: #f1c40f; }
+    #end-screen { position: absolute; inset: 0; background: rgba(5, 5, 10, 0.98); z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    #end-screen h1 { color: #f1c40f; font-size: 32px; margin-bottom: 15px; }
+    #end-screen p { font-size: 14px; line-height: 1.8; margin-bottom: 25px; color: #ccc; }
+    #end-screen button { padding: 12px 30px; background: #f1c40f; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    #dialogue-box { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.8) 80%, transparent 100%); padding: 15px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
+    #speaker-name { color: #f1c40f; font-weight: bold; font-size: 14px; }
+    #dialogue-text { font-size: 15px; line-height: 1.5; min-height: 35px; }
+    #choices { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 35vh; overflow-y: auto; }
+    .choice-btn { background: rgba(30, 30, 47, 0.9); color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-size: 13px; text-align: left; cursor: pointer; }
+    #actions { background: #111; padding: 8px 6px; border-top: 2px solid #333; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; z-index: 10; max-height: 42vh; overflow-y: auto; flex-shrink: 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+    .action-btn { background: linear-gradient(to bottom, #3498db, #2980b9); color: #fff; border: 2px solid #000; border-radius: 8px; padding: 10px 4px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; }
+    .action-btn:active { transform: translateY(4px); box-shadow: none; }
+    .action-btn.work { background: linear-gradient(to bottom, #e67e22, #d35400); box-shadow: 0 3px 0 #a04000; }
+    .action-btn.rest { background: linear-gradient(to bottom, #2ecc71, #27ae60); box-shadow: 0 3px 0 #196f3d; }
+    .action-btn.buy { background: linear-gradient(to bottom, #9b59b6, #8e44ad); box-shadow: 0 3px 0 #6c3483; }
+    .action-btn.casino { background: linear-gradient(to bottom, #e84393, #c2185b); box-shadow: 0 3px 0 #7b1fa2; }
+    .action-btn.boss { background: linear-gradient(to bottom, #f1c40f, #f39c12); box-shadow: 0 3px 0 #b38f00; color: #000; }
+    .action-btn small { font-size: 9px; font-weight: normal; opacity: 0.8; }
+    #toast { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.9); border: 2px solid #f1c40f; padding: 10px 16px; border-radius: 20px; font-weight: bold; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; color: #f1c40f; font-size: 13px; max-width: 90%; word-wrap: break-word; white-space: normal; }
+    .event-screen { position: absolute; inset: 0; z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); }
+    .event-screen h1 { font-size: 36px; margin-bottom: 20px; text-shadow: 0 0 20px currentColor; }
+    .event-icon { font-size: 100px; margin-bottom: 20px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+    #wedding-screen { background: rgba(255, 105, 180, 0.9); }
+    #wedding-screen h1 { color: #fff; }
+    #baby-screen { background: rgba(135, 206, 235, 0.9); }
+    #baby-screen h1 { color: #1e1e2f; text-shadow: 0 0 20px #fff; }
+    .confetti { position: absolute; font-size: 24px; animation: fall 2s linear infinite; top: -50px; }
+    @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+    #family-interact-screen { background: rgba(44, 62, 80, 0.95); z-index: 160; }
+    #family-interact-screen h1 { color: #f1c40f; font-size: 24px; margin-bottom: 10px; }
+    .interact-avatar { font-size: 80px; margin-bottom: 10px; animation: float 2s infinite ease-in-out; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    #slacking-caught-modal .modal-box { border-color: #e74c3c; border-width: 4px; }
+    #slacking-excuse-input { width: 100%; height: 100px; background: #111; color: #fff; border: 2px solid #555; border-radius: 8px; padding: 10px; font-family: 'Noto Sans HK', sans-serif; font-size: 13px; resize: none; margin-bottom: 10px; outline: none; user-select: text; -webkit-user-select: text; }
+    #slacking-excuse-input:focus { border-color: #f1c40f; }
+    .excuse-tip { font-size: 11px; color: #a4b0be; text-align: left; margin-bottom: 10px; line-height: 1.5; }
+    #boss-verdict { display: none; font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 10px; line-height: 1.6; text-align: left; }
+    #boss-verdict.success { background: rgba(46, 204, 113, 0.2); border: 2px solid #2ecc71; color: #2ecc71; }
+    #boss-verdict.fail { background: rgba(231, 76, 60, 0.2); border: 2px solid #e74c3c; color: #e74c3c; }
+    #stock-chart { width: 100%; height: 100px; background: #111; border: 1px solid #333; margin-bottom: 10px; display: flex; align-items: flex-end; justify-content: space-between; padding: 5px; gap: 2px; }
+    .stock-bar { flex: 1; background: #e74c3c; transition: height 0.3s; }
+    .stock-bar.up { background: #2ecc71; }
+    #scene3d { position: absolute; inset: 0; z-index: 0; pointer-events: auto; }
+    #scene3d canvas { display: block; width: 100% !important; height: 100% !important; }
+    @media (max-width: 600px) {
+        .voice-btn, .reset-btn, .back-btn { padding: 4px 8px; font-size: 11px; }
+        #hud { padding: 8px 4px; gap: 6px; font-size: 13px; }
+        .stat-label { font-size: 11px; width: 22px; }
+        .stat-val { font-size: 10px; line-height: 12px; }
+        .stat-bar { height: 12px; }
+        #status-display { font-size: 12px; margin-top: 2px; padding-top: 6px; }
+        #actions { padding: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); gap: 4px; }
+        .action-btn { padding: 8px 2px; font-size: 11px; min-height: 44px; }
+        .action-btn small { font-size: 8px; }
+        .modal-box { padding: 15px; width: 95%; max-width: none; }
+        .modal-btn { padding: 10px; font-size: 12px; }
+        .job-btn { padding: 6px 2px; font-size: 11px; }
+        .staff-desk { padding: 8px 6px 6px; min-height: 90px; }
+    }
+</style>
 </head>
 <body>
 
@@ -354,6 +354,7 @@
         </div>
         <div id="pet-actions" style="display:none;">
             <button class="modal-btn warning" onclick="healPet()">🏥 帶主子睇獸醫 ($5,000)<small>回復主子健康</small></button>
+            <button class="modal-btn primary" onclick="petShow()">🏆 帶主子去寵物展<small>有機率贏取獎金</small></button>
         </div>
         <button class="modal-btn danger" style="background:#555;" onclick="closeModal('pet-modal')">離開</button>
     </div>
@@ -362,7 +363,7 @@
 <div id="jail-modal" class="modal-overlay">
     <div class="modal-box" style="border-color: #e74c3c; border-width: 4px;">
         <h2 style="color: #e74c3c;">🚨 警署扣留</h2>
-        <p>你因為參與非法外圍賭博被警察拘捕！<br><br>你想點做？</p>
+        <p id="jail-reason">你因為參與非法外圍賭博被警察拘捕！<br><br>你想點做？</p>
         <button class="modal-btn primary" onclick="hireLawyer()">👨‍⚖️ 請大律師 ($30,000)<small>有 60% 機率打甩，40% 機率敗訴入獄</small></button>
         <button class="modal-btn danger" onclick="goToJail('你自己認罪，放棄抗辯。')">🙇‍♂️ 自己認罪<small>直接坐監，罰款 $50,000</small></button>
     </div>
@@ -433,6 +434,7 @@
         <button class="modal-btn danger" onclick="takeLoan()">💸 向財仔借 $100,000<small>每月 10% 利息，還唔到即破產</small></button>
         <button class="modal-btn primary" onclick="repayLoan()">💰 還清貸款<small>清還所有本金及利息</small></button>
         <button class="modal-btn primary" onclick="buyLifeInsurance()" style="background:#e67e22;">🛡️ 買人壽保險 ($10,000/年)<small>死後留筆錢俾家人</small></button>
+        <button class="modal-btn primary" onclick="buyVHIS()" style="background:#2ecc71;">🏥 買自願醫保 VHIS ($15,000/年)<small>醫療費大減，保障更好</small></button>
         <button class="modal-btn danger" style="background:#555;" onclick="closeModal('property-modal')">離開</button>
     </div>
 </div>
@@ -453,6 +455,7 @@
         <h2 style="color: #e84393;">💸 終極賭徒</h2>
         <button class="modal-btn casino" onclick="openHorseBet()">🐎 賽馬 (每注 $500)</button>
         <button class="modal-btn casino" onclick="openFootballBet()">⚽ 賭波 (每注 $500)</button>
+        <button class="modal-btn danger" onclick="openIllegalBet()">🕶️ 外圍波 (高賠率，有機會被拉)</button>
         <button class="modal-btn danger" onclick="playLottery()">🎰 六合彩 ($100 贏 500萬)</button>
         <button class="modal-btn primary" onclick="playStock()">📈 炒股 (舊版)</button>
         <button class="modal-btn primary" onclick="openStockModal()" style="background:#2ecc71;">📊 真實 K 線股市</button>
@@ -559,6 +562,26 @@
     </div>
 </div>
 
+<div id="mpf-modal" class="modal-overlay">
+    <div class="modal-box" style="border-color: #3498db;">
+        <h2 style="color: #3498db;">📊 強積金 (MPF) 投資組合</h2>
+        <p id="mpf-balance">當前結餘：$0</p>
+        <button class="modal-btn warning" onclick="setMPF('conservative')">🛡️ 保守基金<small>保證唔會蝕，回報極低</small></button>
+        <button class="modal-btn primary" onclick="setMPF('index')">📈 恒指基金<small>跟隨大市，有升有跌</small></button>
+        <button class="modal-btn casino" onclick="setMPF('tech')">🚀 高風險科技基金<small>有機率賺 20%，亦有大機會蝕 30%</small></button>
+        <button class="modal-btn danger" style="background:#555; margin-top:10px;" onclick="closeModal('mpf-modal')">關閉</button>
+    </div>
+</div>
+
+<div id="weather-modal" class="modal-overlay">
+    <div class="modal-box" style="border-color: #f39c12;">
+        <h2 style="color: #f39c12;">🌪️ 極端天氣警告！</h2>
+        <p id="weather-desc"></p>
+        <button class="modal-btn primary" onclick="resolveWeather('wfh')">🏠 申請 WFH<small>壓力微增，但安全</small></button>
+        <button class="modal-btn danger" onclick="resolveWeather('brave')">🚇 冒死返公司<small>扣健康，但有機會加 Bonus</small></button>
+    </div>
+</div>
+
 <div id="toast">提示訊息</div>
 <div id="end-screen">
     <h1 id="end-title">人生落幕</h1>
@@ -572,7 +595,7 @@
         return false;
     };
 
-    const SAVE_KEY = 'officeSlaveSave_v52';
+    const SAVE_KEY = 'officeSlaveSave_v53';
     function saveGame() {
         try {
             if (player.stage === 'end' || player.stage === 'job_select' || player.stage === 'gender_select') {
@@ -608,6 +631,8 @@
                 if (player.stockLeverage === undefined) player.stockLeverage = 1;
                 if (player.stockPrice === undefined) player.stockPrice = 100;
                 if (player.stockHistory === undefined) player.stockHistory = Array(10).fill(100);
+                if (player.mpfChoice === undefined) player.mpfChoice = 'index';
+                if (player.hasVHIS === undefined) player.hasVHIS = false;
                 return true;
             }
         } catch (e) {}
@@ -648,13 +673,13 @@
 
     let player = {
         gender: 'male', age: 22, money: 0, energy: 100, mood: 80, stress: 10, health: 100,
-        job: '求職中', salary: 0, stage: 'gender_select', isInHospital: false, workCount: 0, hasInsurance: false,
+        job: '求職中', salary: 0, stage: 'gender_select', isInHospital: false, workCount: 0, hasInsurance: false, hasVHIS: false,
         isBoss: false, companyName: '社畜無限公司', staffList: [], promotionLevel: 0,
         properties: [], mortgage: 0, loan: 0, jobType: null,
         car: null, hasParking: false, hasDailyParking: false, demeritPoints: 0, pet: null,
-        isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", hasLifeInsurance: false,
+        isDating: false, isMarried: false, hasKid: false, kidGender: null, kidAge: 1, mpf: 0, mpfTrend: "", mpfChoice: 'index', hasLifeInsurance: false,
         companyValue: 0, isListed: false, dividendPerMonth: 0, competitor: null, competitorMultiplier: 1, permanentProfitBonus: 1,
-        slackCount: 0, autoBusiness: false, bossMpfRate: 0.05,
+        slackCount: 0, autoBusiness: false, bossMpfRate: 0.05, hasBootlicked: false,
         sideHustles: [], fixedDeposit: 0, creditCardDebt: 0, creditScore: 100, divorceWarnings: 0,
         reputation: 0, luxury: { jet: false, yacht: false }, isGroup: false, hasHorse: false,
         blackLoan: 0, blackDue: 0, stockPos: null, stockLeverage: 1, stockPrice: 100, stockHistory: Array(10).fill(100)
@@ -913,6 +938,7 @@
         timeOfDay++;
         if (timeOfDay > 2) {
             timeOfDay = 0; currentDay++;
+            player.hasBootlicked = false; // 重置擦鞋
             if (player.hasDailyParking) { player.hasDailyParking = false; showToast("⏱️ 日租停車場已到期！"); }
             if (player.isMarried && player.hasKid && Math.random() < 0.2 && player.stage === 'work') triggerFamilyEvent(false);
         }
@@ -979,6 +1005,29 @@
             showToast(`🎉 升職啦！你現在係 ${player.job}！`);
         } else { showToast(`未夠資格！需要工作 ${reqWork} 次。`); }
         updateHUD(); updateActionButtons();
+    }
+
+    function suckUpToBoss() {
+        if (player.hasBootlicked) { showToast("今日擦咗啦！"); return; }
+        if (player.money < 100) { showToast("連 $100 咖啡錢都冇！"); return; }
+        player.money -= 100;
+        player.mood = Math.min(100, player.mood + 15);
+        player.hasBootlicked = true;
+        showToast("☕ 你幫老細買咗杯咖啡，佢對你笑咗笑！心情+15");
+        advanceTime(); updateHUD(); updateActionButtons();
+    }
+
+    function shiftBlame() {
+        if (Math.random() < 0.6) {
+            player.mood = Math.min(100, player.mood + 10);
+            player.stress = Math.max(0, player.stress - 10);
+            showToast("🤫 你成功將個鑊卸咗俾同事，心情放鬆晒！");
+        } else {
+            player.stress = Math.min(100, player.stress + 20);
+            player.health -= 10;
+            showToast("😱 老細發現咗你篤灰，鬧到你狗血淋頭！");
+        }
+        advanceTime(); updateHUD(); updateActionButtons();
     }
 
     function openRelaxModal() { document.getElementById('relax-modal').style.display = 'flex'; }
@@ -1133,6 +1182,20 @@
     }
     function buyPet(name, price, cost) { if (player.money < price) { showToast("冇錢！"); return; } if (player.pet) { showToast("有啦！"); return; } player.money -= price; player.pet = { name, cost, health: 100 }; player.mood = Math.min(100, player.mood + 30); showToast(`🎉 領養 ${name}！`); closeModal('pet-modal'); updateHUD(); updateActionButtons(); }
     function healPet() { if (!player.pet) return; if (player.money < 5000) { showToast("冇錢！"); return; } player.money -= 5000; player.pet.health = 100; showToast("🏥 主子康復！"); closeModal('pet-modal'); updateHUD(); }
+    function petShow() {
+        if (!player.pet) return;
+        if (player.money < 1000) { showToast("連 $1000 報名費都冇！"); return; }
+        player.money -= 1000;
+        if (Math.random() < 0.4) {
+            let prize = Math.floor(Math.random() * 20000) + 5000;
+            player.money += prize; player.mood = Math.min(100, player.mood + 20);
+            showToast(`🏆 主子贏咗冠軍！獎金 $${prize}！`);
+        } else {
+            player.mood = Math.max(0, player.mood - 10);
+            showToast(`😢 主子發揮失常，輸咗...`);
+        }
+        closeModal('pet-modal'); updateHUD(); updateActionButtons();
+    }
 
     function openCarModal() {
         document.getElementById('car-modal').style.display = 'flex';
@@ -1186,6 +1249,7 @@
     function takeLoan() { if (player.loan >= 100000) { showToast("借爆啦！"); return; } player.money += 100000; player.loan += 100000; showToast("💸 借咗 $100,000！"); closeModal('property-modal'); updateHUD(); }
     function repayLoan() { if (player.loan === 0) { showToast("冇欠債！"); return; } if (player.money < player.loan) { showToast("錢唔夠！"); return; } player.money -= player.loan; player.loan = 0; showToast("✅ 還清！"); closeModal('property-modal'); updateHUD(); }
     function buyLifeInsurance() { if (player.hasLifeInsurance) { showToast("買咗啦！"); closeModal('property-modal'); return; } if (player.money < 10000) { showToast("冇錢！"); return; } player.money -= 10000; player.hasLifeInsurance = true; showToast("🛡️ 買咗人壽保險！"); closeModal('property-modal'); updateHUD(); }
+    function buyVHIS() { if (player.hasVHIS) { showToast("買咗啦！"); closeModal('property-modal'); return; } if (player.money < 15000) { showToast("冇錢！"); return; } player.money -= 15000; player.hasVHIS = true; showToast("🏥 買咗自願醫保 VHIS！"); closeModal('property-modal'); updateHUD(); }
 
     function doPartTime(money, energyCost, stressCost, name) {
         if (player.energy < energyCost) { showToast("體力不足！"); return; }
@@ -1220,6 +1284,42 @@
         let ev = events[Math.floor(Math.random() * events.length)]; ev.effect(); showToast(ev.msg);
     }
 
+    function triggerWeatherEvent() {
+        if (Math.random() > 0.15) return;
+        document.getElementById('weather-modal').style.display = 'flex';
+        document.getElementById('weather-desc').innerHTML = `天文台發出<b style="color:#f39c12;">黑色暴雨警告</b>！<br>全港交通癱瘓，你要點做？`;
+        speakText("黑色暴雨警告！");
+    }
+
+    function resolveWeather(choice) {
+        closeModal('weather-modal');
+        if (choice === 'wfh') {
+            player.stress = Math.min(100, player.stress + 5);
+            showToast("🏠 你選擇咗 WFH，安全但沉悶...");
+            advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+        } else {
+            player.health = Math.max(0, player.health - 15);
+            player.stress = Math.min(100, player.stress + 10);
+            if (Math.random() < 0.3) {
+                player.money += 5000; player.mood = Math.min(100, player.mood + 20);
+                showToast("🚇 你冒死返到公司，老細好感動，派咗 $5000 Bonus！");
+            } else {
+                showToast("🚇 你濕身返到公司，結果發現全公司得你一個...");
+            }
+            advanceTime(); checkMonthEnd(); updateHUD(); updateActionButtons();
+        }
+    }
+
+    function openMPFModal() {
+        document.getElementById('mpf-modal').style.display = 'flex';
+        document.getElementById('mpf-balance').innerHTML = `當前結餘：$${player.mpf.toLocaleString()}<br>當前選擇：<b>${player.mpfChoice === 'conservative' ? '保守基金' : (player.mpfChoice === 'index' ? '恒指基金' : '科技基金')}</b>`;
+    }
+    function setMPF(choice) {
+        player.mpfChoice = choice;
+        showToast(`📊 已將 MPF 轉為 ${choice === 'conservative' ? '保守' : (choice === 'index' ? '恒指' : '科技')} 基金！`);
+        closeModal('mpf-modal'); updateHUD();
+    }
+
     function playCrypto() { if (player.money < 10000) { showToast("最少 $10000！"); return; } player.money -= 10000; if (Math.random() < 0.1) { player.money += 100000; showToast("🚀 暴漲！+$100,000！"); } else showToast("📉 歸零！輸 $10,000..."); closeModal('invest-modal'); updateHUD(); }
 
     function openHorseBet() { closeModal('invest-modal'); document.getElementById('horse-modal').style.display = 'flex'; document.getElementById('racing-anim').style.display = 'none'; document.getElementById('horse-buttons').style.display = 'grid'; }
@@ -1243,6 +1343,24 @@
             else showToast(`⚽ 輸 $500...`);
             document.getElementById('football-anim').style.display = 'none'; closeModal('football-modal'); updateHUD(); updateActionButtons();
         }, 1000);
+    }
+
+    function openIllegalBet() {
+        closeModal('invest-modal');
+        if (player.money < 1000) { showToast("最少 $1000！"); return; }
+        player.money -= 1000;
+        let roll = Math.random();
+        if (roll < 0.1) {
+            document.getElementById('jail-reason').innerHTML = "你因為參與非法外圍賭博被警察拘捕！<br><br>你想點做？";
+            openJail();
+        } else if (roll < 0.5) {
+            player.money += 10000;
+            showToast("🕶️ 外圍波贏大錢！+$10,000！");
+            updateHUD();
+        } else {
+            showToast("🕶️ 外圍波輸咗 $1000...");
+            updateHUD();
+        }
     }
 
     function playLottery() { if (player.money < 100) { showToast("冇 $100！"); return; } player.money -= 100; if (Math.random() < 0.01) { player.money += 5000000; showToast("🎉 中頭獎！500萬！"); } else showToast("😢 做善事。"); closeModal('invest-modal'); updateHUD(); }
@@ -1281,6 +1399,21 @@
             player.money += pnl; player.stockPos = null; player.stockLeverage = 1; player.stockPrice = 100; player.stockHistory = Array(10).fill(100);
         }
         if (player.blackLoan > 0 && currentDay > player.blackDue) { showToast("🩸 大耳窿上門！"); player.health -= 50; player.money = Math.max(0, player.money - 500000); if (player.health <= 0) { gameOver("被淋紅油，傷重不治！"); return; } }
+        
+        // MPF 投資回報
+        if (player.mpf > 0) {
+            if (player.mpfChoice === 'conservative') {
+                let gain = Math.floor(player.mpf * 0.001);
+                player.mpf += gain; player.mpfTrend = `📈 回報：+$${gain}`;
+            } else if (player.mpfChoice === 'index') {
+                if (Math.random() < 0.6) { let rate = 0.01 + Math.random() * 0.05; let gain = Math.floor(player.mpf * rate); player.mpf += gain; player.mpfTrend = `📈 回報：+$${gain}`; }
+                else { let rate = 0.01 + Math.random() * 0.05; let loss = Math.floor(player.mpf * rate); player.mpf -= loss; player.mpfTrend = `📉 回報：-$${loss}`; }
+            } else if (player.mpfChoice === 'tech') {
+                if (Math.random() < 0.4) { let gain = Math.floor(player.mpf * 0.2); player.mpf += gain; player.mpfTrend = `🚀 暴漲：+$${gain}`; }
+                else { let loss = Math.floor(player.mpf * 0.3); player.mpf -= loss; player.mpfTrend = `💥 暴跌：-$${loss}`; }
+            }
+        }
+
         if (player.isListed) { player.money += player.dividendPerMonth; showToast(`💹 收股息 $${player.dividendPerMonth.toLocaleString()}`); }
         else if (player.isBoss) {
             let totalSalary = 0, totalProfit = 0, managerCount = 0, hasOptions = false;
@@ -1308,13 +1441,25 @@
         if (player.luxury.jet) player.money -= 50000; if (player.luxury.yacht) player.money -= 100000;
         if (player.fixedDeposit > 0) { let int = Math.floor(player.fixedDeposit * 0.003); player.fixedDeposit += int; showToast(`🏦 定期利息 +$${int}`); }
         if (player.creditCardDebt > 0) { let int = Math.floor(player.creditCardDebt * 0.05); player.creditCardDebt += int; player.creditScore = Math.max(0, player.creditScore - 10); showToast(`💳 卡數利息 +$${int}`); }
-        if (player.mpf > 0) { if (Math.random() < 0.7) { let rate = 0.01 + Math.random() * 0.03; let gain = Math.floor(player.mpf * rate); player.mpf += gain; player.mpfTrend = `📈 回報：+$${gain}`; } else { let rate = 0.005 + Math.random() * 0.015; let loss = Math.floor(player.mpf * rate); player.mpf -= loss; player.mpfTrend = `📉 回報：-$${loss}`; } }
         if (player.mortgage > 0) { player.money -= player.mortgage; let rentInc = player.properties.reduce((a, b) => a + b.rent, 0); player.money += rentInc; showToast(`🏠 供樓 -$${player.mortgage}，收租 +$${rentInc}`); }
         if (player.hasParking) { player.money -= 2500; showToast(`🚗 車位月租 -$2,500`); }
         if (player.loan > 0) { let int = Math.floor(player.loan * 0.1); player.money -= int; showToast(`💸 財仔利息 -$${int}`); if (player.money < 0) { gameOver("欠債破產！"); return; } }
         if (player.pet) { player.money -= player.pet.cost; player.pet.health -= 10; if (player.pet.health <= 0) { showToast(`💔 ${player.pet.name} 病死...`); player.pet = null; player.mood -= 50; } else showToast(`🐱 主子開支 -$${player.pet.cost}`); }
         if (player.hasKid) { let kidCost = 8000; player.money -= kidCost; showToast(`👶 奶粉錢 -$${kidCost}`); }
         if (player.isMarried) { if (player.stress > 80) { player.divorceWarnings++; showToast(`⚠️ 離婚警告 (${player.divorceWarnings}/3)`); } if (player.divorceWarnings >= 3) { triggerDivorce(); return; } }
+        
+        // 職業病檢查
+        if (player.energy < 30 && Math.random() < 0.2) {
+            if (Math.random() < 0.5) {
+                showToast("🏥 你因為長期打字患上滑鼠手，睇醫生扣 $5000！");
+                if (player.money >= 5000) player.money -= 5000; else player.money = 0;
+                player.health = Math.max(0, player.health - 10);
+            } else {
+                showToast("🏥 你因為長期熬夜爆肝，健康大跌！");
+                player.health = Math.max(0, player.health - 20);
+            }
+        }
+
         if (player.money < 0) { gameOver("破產！"); return; }
         if (Math.random() < 0.2) { showToast("🎉 派花紅 +$2000！"); player.money += 2000; }
         if (currentDay % 30 === 0) { player.age++; showToast(`🎂 生日！${player.age} 歲！`); if (player.hasKid) player.kidAge++; if (player.age >= 100) { gameOver("活到 100 歲，壽終正寢..."); return; } }
@@ -1469,6 +1614,7 @@
             addActionBtn('🕶️ 黑市', '高利貸/洗錢', 'casino', openBlackMarketModal);
             addActionBtn('🏛️ 慈善', '捐錢', 'buy', openCharityModal);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
+            addActionBtn('📊 MPF 組合', '管理退休金', 'buy', openMPFModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借錢', 'buy', openPropertyModal);
@@ -1485,6 +1631,7 @@
             addActionBtn('🕶️ 黑市', '高利貸/洗錢', 'casino', openBlackMarketModal);
             addActionBtn('🏛️ 慈善', '捐錢', 'buy', openCharityModal);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
+            addActionBtn('📊 MPF 組合', '管理退休金', 'buy', openMPFModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借錢', 'buy', openPropertyModal);
@@ -1498,13 +1645,16 @@
                 else if (timeOfDay === 2) { earn = Math.floor(earn * 0.8); stressAdd = Math.floor(stressAdd * 1.1); energyCost = Math.floor(energyCost * 1.1); }
                 if (player.energy < energyCost) { showToast("體力不足！"); return; }
                 player.money += earn; player.energy -= energyCost; player.stress += stressAdd; player.workCount++;
-                advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons();
+                if (Math.random() < 0.1) triggerWeatherEvent();
+                else { advanceTime(); triggerRandomEvent(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
             });
             addActionBtn('🐟 摸魚', '有機率被老闆捉', 'rest', () => {
                 let caught = Math.random() < 0.3;
                 if (caught) showSlackingCaughtModal();
                 else { player.mood = Math.min(100, player.mood + 10); player.stress = Math.max(0, player.stress - 10); player.slackCount = (player.slackCount || 0) + 1; showToast("🐟 摸魚成功！"); advanceTime(); triggerTicketEvent(); checkMonthEnd(); updateHUD(); updateActionButtons(); }
             });
+            addActionBtn('☕ 幫老細買咖啡', '擦鞋加心情', 'work', suckUpToBoss);
+            addActionBtn('🤫 卸鑊俾同事', '高風險高回報', 'casino', shiftBlame);
             addActionBtn('📈 申請升職', `需工作 ${(player.promotionLevel + 1) * 15} 次`, 'buy', askPromotion);
             addActionBtn('🛏️ 睡覺休息', '壓力清零，體力回滿', 'rest', () => { player.energy = 100; player.stress = 0; player.mood = Math.min(100, player.mood + 5); if (player.pet) player.mood = Math.min(100, player.mood + 10); currentDay++; timeOfDay = 0; triggerTicketEvent(); showToast("😴 瞓個好覺！"); checkMonthEnd(); updateHUD(); updateActionButtons(); });
             addActionBtn('🎮 休閒減壓', '按摩/食大餐/唱K', 'rest', openRelaxModal);
@@ -1513,6 +1663,7 @@
             addActionBtn('🕶️ 黑市', '高利貸/洗錢', 'casino', openBlackMarketModal);
             addActionBtn('🏛️ 慈善', '捐錢', 'buy', openCharityModal);
             addActionBtn('🏦 銀行', '定期/信用卡', 'buy', openBankModal);
+            addActionBtn('📊 MPF 組合', '管理退休金', 'buy', openMPFModal);
             addActionBtn('💍 感情/家庭', '拍拖/結婚/生仔', 'buy', openFamilyModal);
             addActionBtn('🚗 車行', '買車/租車位', 'buy', openCarModal);
             addActionBtn('🏠 地產/貸款', '買樓/供樓/借錢', 'buy', openPropertyModal);
