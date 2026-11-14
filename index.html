@@ -25,7 +25,6 @@
         overflow-y: auto; overflow-x: hidden;
     }
 
-    /* 頂部導航列 */
     header {
         position: sticky; top: 0; z-index: 100;
         background: var(--glass-bg); backdrop-filter: blur(10px);
@@ -44,7 +43,6 @@
     .admin-btn { background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 14px; cursor: pointer; transition: 0.2s; }
     .admin-btn:hover { background: var(--neon-pink); border-color: var(--neon-pink); }
 
-    /* 搜尋與分類 */
     .search-row { display: flex; gap: 10px; }
     .search-input {
         flex: 1; padding: 10px 15px; background: rgba(255,255,255,0.1); border: 1px solid #555;
@@ -58,7 +56,6 @@
     .cat-btn { padding: 6px 15px; background: transparent; border: 1px solid #555; border-radius: 20px; color: #aaa; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; transition: 0.2s; }
     .cat-btn.active { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
 
-    /* 遊戲列表 Grid */
     main { padding: 20px; flex: 1; }
     .game-grid {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;
@@ -66,7 +63,6 @@
     }
     @media (max-width: 600px) { .game-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 
-    /* 遊戲卡片 */
     .game-card {
         background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
         border-radius: 15px; overflow: hidden; cursor: pointer; transition: 0.2s;
@@ -99,7 +95,7 @@
     .stat-box h3 { font-size: 12px; color: #aaa; margin-bottom: 10px; letter-spacing: 1px; }
     .stat-box .value { font-family: 'Orbitron'; font-size: 28px; font-weight: 900; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
 
-    .table-container { background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 12px; overflow-x: auto; }
+    .table-container { background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 12px; overflow-x: auto; margin-bottom: 20px;}
     table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
     th { background: rgba(0,210,211,0.1); color: var(--neon-blue); padding: 12px 15px; font-size: 13px; border-bottom: 2px solid var(--neon-blue); }
     td { padding: 12px 15px; font-size: 14px; border-bottom: 1px solid #222; }
@@ -108,8 +104,17 @@
     .tag-online { color: #2ed573; font-weight: bold; text-shadow: 0 0 5px #2ed573; }
     .tag-offline { color: #666; }
     .tag-plays { color: var(--neon-gold); font-weight: bold; font-family: 'Orbitron'; }
-    
     .player-id-list { font-size: 11px; color: #00d2d3; word-break: break-all; background: rgba(0,210,211,0.1); padding: 4px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; }
+
+    /* 廣播與日誌 UI */
+    .admin-section { background: rgba(255,255,255,0.02); border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .admin-section h3 { font-size: 16px; margin-bottom: 15px; }
+    .broadcast-box { display: flex; gap: 10px; }
+    .broadcast-input { flex: 1; padding: 10px 15px; background: #111; border: 1px solid var(--neon-pink); border-radius: 8px; color: #fff; outline: none; font-family: 'Noto Sans HK'; }
+    .broadcast-btn { padding: 10px 20px; background: var(--neon-pink); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .broadcast-btn:active { transform: scale(0.95); }
+    
+    .error-msg { color: #e74c3c; font-family: monospace; font-size: 12px; background: rgba(231,76,60,0.1); padding: 4px 8px; border-radius: 4px; word-break: break-all; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
@@ -141,10 +146,8 @@
     </header>
 
     <main>
-        <!-- 普通遊戲列表 -->
         <div class="game-grid" id="game-grid"></div>
         
-        <!-- 👇 後台數據控制台 (隱藏) 👇 -->
         <div id="admin-panel">
             <div class="admin-header">
                 <h2>🛠️ 全站數據控制台</h2>
@@ -166,6 +169,37 @@
                 </div>
             </div>
 
+            <!-- 📢 全服廣播系統 -->
+            <div class="admin-section" style="border-color: var(--neon-pink);">
+                <h3 style="color: var(--neon-pink);">📢 全服廣播系統</h3>
+                <div class="broadcast-box">
+                    <input type="text" class="broadcast-input" id="broadcast-msg" placeholder="輸入要發送給全服的訊息...">
+                    <button class="broadcast-btn" onclick="sendBroadcast()">立即發送</button>
+                </div>
+                <p style="font-size: 11px; color: #aaa; margin-top: 8px;">* 玩家會在遊戲畫面頂部看到彈窗公告。</p>
+            </div>
+
+            <!-- 🐞 實時錯誤日誌 -->
+            <div class="admin-section" style="border-color: #e74c3c;">
+                <h3 style="color: #e74c3c;">🐞 實時錯誤日誌 (最新 20 條)</h3>
+                <div class="table-container" style="margin-bottom: 0; max-height: 250px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="color: #e74c3c; border-color: #e74c3c; background: rgba(231,76,60,0.1);">時間</th>
+                                <th style="color: #e74c3c; border-color: #e74c3c; background: rgba(231,76,60,0.1);">遊戲</th>
+                                <th style="color: #e74c3c; border-color: #e74c3c; background: rgba(231,76,60,0.1);">玩家 ID</th>
+                                <th style="color: #e74c3c; border-color: #e74c3c; background: rgba(231,76,60,0.1);">錯誤訊息</th>
+                            </tr>
+                        </thead>
+                        <tbody id="error-log-body">
+                            <tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無錯誤紀錄</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--neon-gold); margin-top: 20px;">📊 各遊戲在線與遊玩數據</h3>
             <div class="table-container">
                 <table>
                     <thead>
@@ -186,9 +220,6 @@
     <script>
         window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
-        // ==========================================
-        // 📋 遊戲清單
-        // ==========================================
         const games = [
             { id: 'neon-rain', name: '霓虹雨夜：考牌大師', category: '休閒', desc: '考牌遇上暴雨，單手擔遮避開路人！', icon: '☔', bestKey: 'neon_rain_best', unit: 'm' },
             { id: 'cha-chaan-teng', name: '茶記大亨：樓面生存戰', category: '模擬', desc: '做茶記樓面，瘋狂接單出餐！', icon: '🍳', bestKey: 'chaChaanTeng_best', unit: '$' },
@@ -221,9 +252,6 @@
         let onlineStats = {};
         let isAdminMode = false;
 
-        // ==========================================
-        // 渲染遊戲列表
-        // ==========================================
         function renderGames() {
             if (isAdminMode) return;
             const grid = document.getElementById('game-grid');
@@ -271,9 +299,6 @@
             });
         }
 
-        // ==========================================
-        // 渲染後台數據
-        // ==========================================
         function renderAdminData() {
             if (!isAdminMode) return;
             const tbody = document.getElementById('admin-table-body');
@@ -282,7 +307,6 @@
             let totalPlays = 0;
             let totalOnline = 0;
 
-            // 整理數據
             const adminList = games.map(g => {
                 let plays = gameStats[g.id] || 0;
                 let players = onlineStats[g.id] ? Object.keys(onlineStats[g.id]) : [];
@@ -291,7 +315,6 @@
                 return { name: g.name, id: g.id, icon: g.icon, plays, players };
             });
 
-            // 排序：在線人數優先，然後遊玩次數
             adminList.sort((a, b) => {
                 if (b.players.length !== a.players.length) return b.players.length - a.players.length;
                 return b.plays - a.plays;
@@ -302,7 +325,6 @@
                 
                 let onlineHtml = '';
                 if (item.players.length > 0) {
-                    // 如果人多，只顯示前 3 個，後面加 +N
                     let displayIds = item.players.slice(0, 3).map(id => `<div class="player-id-list">${id}</div>`).join('');
                     if (item.players.length > 3) {
                         displayIds += `<div style="font-size:10px; color:#888; margin-top:4px;">...仲有 ${item.players.length - 3} 人</div>`;
@@ -325,9 +347,6 @@
             document.getElementById('admin-total-games').innerText = games.length;
         }
 
-        // ==========================================
-        // 互動事件
-        // ==========================================
         document.getElementById('search-input').addEventListener('input', (e) => {
             searchQuery = e.target.value;
             renderGames();
@@ -356,16 +375,14 @@
             window.location.href = `./${gameId}/`;
         }
 
-        // ==========================================
-        // 後台控制邏輯
-        // ==========================================
         function promptAdmin() {
             if (isAdminMode) {
                 closeAdmin();
                 return;
             }
             let pwd = prompt("🔐 請輸入管理員密碼：");
-            if (pwd === "z54060437K") {
+            // 👇 為你保留的專屬密碼 👇
+            if (pwd === "z54060437k") { 
                 isAdminMode = true;
                 document.getElementById('game-grid').style.display = 'none';
                 document.getElementById('search-area').style.display = 'none';
@@ -386,7 +403,6 @@
             renderGames();
         }
 
-        // 初始化渲染
         renderGames();
     </script>
 
@@ -400,27 +416,69 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             
-            // 1. 監聽全站遊戲統計
+            // 1. 遊戲統計
             db.ref('game_stats').on('value', (snap) => {
                 gameStats = snap.val() || {};
                 renderGames();
                 renderAdminData();
             });
 
-            // 2. 監聽全站在線狀態
+            // 2. 在線狀態
             db.ref('online_status').on('value', (snap) => {
                 onlineStats = snap.val() || {};
-                
-                // 計算總在線人數 (顯示喺右上角)
                 let total = 0;
                 for (let game in onlineStats) {
                     total += Object.keys(onlineStats[game]).length;
                 }
                 document.getElementById('total-online').innerText = total;
-                
                 renderAdminData();
             });
+
+            // 3. 實時錯誤日誌
+            db.ref('error_logs').limitToLast(20).on('value', (snap) => {
+                if (!isAdminMode) return;
+                const tbody = document.getElementById('error-log-body');
+                const data = snap.val();
+                tbody.innerHTML = '';
+                
+                if (!data) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無錯誤紀錄</td></tr>';
+                    return;
+                }
+
+                const logs = Object.values(data).sort((a,b) => b.time - a.time);
+                logs.forEach(log => {
+                    const d = new Date(log.time);
+                    const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`;
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:#aaa; font-size:12px; white-space:nowrap;">${timeStr}</td>
+                        <td style="color:var(--neon-blue); font-weight:bold;">${log.game}</td>
+                        <td style="color:#888; font-size:11px;">${log.user}</td>
+                        <td><div class="error-msg">${log.msg}</div></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+
         } catch(e) { console.error("Firebase Init Error:", e); }
+
+        // 發送廣播
+        function sendBroadcast() {
+            const msg = document.getElementById('broadcast-msg').value.trim();
+            if (!msg) { alert("請輸入廣播內容！"); return; }
+            if (!db) return;
+
+            db.ref('global_broadcast').set({
+                msg: msg,
+                timestamp: Date.now()
+            }).then(() => {
+                alert("✅ 廣播已成功發送到全站！");
+                document.getElementById('broadcast-msg').value = '';
+            }).catch(err => {
+                alert("發送失敗：" + err.message);
+            });
+        }
     </script>
 
 </body>
