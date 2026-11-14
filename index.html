@@ -40,8 +40,9 @@
     .online-status { font-size: 13px; color: #fff; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; border: 1px solid #444;}
     .online-dot { width: 8px; height: 8px; background: #2ed573; border-radius: 50%; box-shadow: 0 0 10px #2ed573; animation: pulse 2s infinite; }
     
-    .admin-btn { background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 14px; cursor: pointer; transition: 0.2s; }
-    .admin-btn:hover { background: var(--neon-pink); border-color: var(--neon-pink); }
+    .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .icon-btn:hover { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); }
+    .icon-btn.admin-btn:hover { background: var(--neon-pink); color: #fff; border-color: var(--neon-pink); }
 
     .search-row { display: flex; gap: 10px; }
     .search-input {
@@ -79,6 +80,29 @@
     .best-score { font-size: 11px; color: var(--neon-gold); font-family: 'Orbitron', sans-serif; font-weight: bold; }
     .play-count { font-size: 10px; color: #777; }
 
+    /* 👇 Modal 彈窗通用樣式 👇 */
+    .modal {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999;
+        display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-box {
+        background: #1e1e2f; border: 2px solid var(--neon-blue); border-radius: 15px;
+        padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 0 30px rgba(0,210,211,0.3);
+        text-align: center;
+    }
+    .modal-box h3 { color: var(--neon-blue); margin-bottom: 15px; font-size: 20px; }
+    .feedback-textarea {
+        width: 100%; height: 120px; background: #111; color: #fff; border: 1px solid #555;
+        border-radius: 8px; padding: 10px; font-family: 'Noto Sans HK'; font-size: 14px;
+        outline: none; resize: none; margin-bottom: 15px; user-select: text; -webkit-user-select: text;
+    }
+    .feedback-textarea:focus { border-color: var(--neon-blue); }
+    .btn-submit { width: 100%; padding: 12px; background: var(--neon-blue); color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+    .btn-submit:active { transform: scale(0.95); }
+    .btn-close { width: 100%; padding: 10px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
     /* 👇 後台控制台面板 👇 */
     #admin-panel {
         display: none; padding: 20px; max-width: 1000px; margin: 0 auto; width: 100%;
@@ -106,15 +130,12 @@
     .tag-plays { color: var(--neon-gold); font-weight: bold; font-family: 'Orbitron'; }
     .player-id-list { font-size: 11px; color: #00d2d3; word-break: break-all; background: rgba(0,210,211,0.1); padding: 4px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; }
 
-    /* 廣播與日誌 UI */
     .admin-section { background: rgba(255,255,255,0.02); border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
     .admin-section h3 { font-size: 16px; margin-bottom: 15px; }
-    .broadcast-box { display: flex; gap: 10px; }
-    .broadcast-input { flex: 1; padding: 10px 15px; background: #111; border: 1px solid var(--neon-pink); border-radius: 8px; color: #fff; outline: none; font-family: 'Noto Sans HK'; }
-    .broadcast-btn { padding: 10px 20px; background: var(--neon-pink); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .broadcast-btn:active { transform: scale(0.95); }
     
-    .error-msg { color: #e74c3c; font-family: monospace; font-size: 12px; background: rgba(231,76,60,0.1); padding: 4px 8px; border-radius: 4px; word-break: break-all; }
+    .feedback-msg { color: #fff; font-size: 13px; line-height: 1.5; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 4px; }
+    .btn-delete { background: #e74c3c; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    .btn-delete:hover { background: #c0392b; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
@@ -129,7 +150,8 @@
                     <div class="online-dot"></div>
                     <span id="total-online">0</span> 人正在玩
                 </div>
-                <button class="admin-btn" onclick="promptAdmin()">⚙️ 管理</button>
+                <button class="icon-btn" onclick="openFeedback()">💬 反饋</button>
+                <button class="icon-btn admin-btn" onclick="promptAdmin()">⚙️ 管理</button>
             </div>
         </div>
         <div class="search-row" id="search-area">
@@ -148,6 +170,7 @@
     <main>
         <div class="game-grid" id="game-grid"></div>
         
+        <!-- 👇 後台數據控制台 👇 -->
         <div id="admin-panel">
             <div class="admin-header">
                 <h2>🛠️ 全站數據控制台</h2>
@@ -169,19 +192,38 @@
                 </div>
             </div>
 
-            <!-- 📢 全服廣播系統 -->
+            <!-- 📢 全服廣播 -->
             <div class="admin-section" style="border-color: var(--neon-pink);">
                 <h3 style="color: var(--neon-pink);">📢 全服廣播系統</h3>
-                <div class="broadcast-box">
-                    <input type="text" class="broadcast-input" id="broadcast-msg" placeholder="輸入要發送給全服的訊息...">
-                    <button class="broadcast-btn" onclick="sendBroadcast()">立即發送</button>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="search-input" id="broadcast-msg" placeholder="輸入要發送給全服的訊息...">
+                    <button class="btn-submit" style="width: auto; padding: 0 20px;" onclick="sendBroadcast()">發送</button>
                 </div>
-                <p style="font-size: 11px; color: #aaa; margin-top: 8px;">* 玩家會在遊戲畫面頂部看到彈窗公告。</p>
+            </div>
+
+            <!-- 📝 玩家收件箱 -->
+            <div class="admin-section" style="border-color: var(--neon-gold);">
+                <h3 style="color: var(--neon-gold);">📝 玩家意見收件箱</h3>
+                <div class="table-container" style="margin-bottom: 0; max-height: 300px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="color: var(--neon-gold); border-color: var(--neon-gold); background: rgba(255,211,42,0.1);">時間</th>
+                                <th style="color: var(--neon-gold); border-color: var(--neon-gold); background: rgba(255,211,42,0.1);">玩家 ID</th>
+                                <th style="color: var(--neon-gold); border-color: var(--neon-gold); background: rgba(255,211,42,0.1);">留言內容</th>
+                                <th style="color: var(--neon-gold); border-color: var(--neon-gold); background: rgba(255,211,42,0.1);">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedback-log-body">
+                            <tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無留言</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- 🐞 實時錯誤日誌 -->
             <div class="admin-section" style="border-color: #e74c3c;">
-                <h3 style="color: #e74c3c;">🐞 實時錯誤日誌 (最新 20 條)</h3>
+                <h3 style="color: #e74c3c;">🐞 實時錯誤日誌</h3>
                 <div class="table-container" style="margin-bottom: 0; max-height: 250px;">
                     <table>
                         <thead>
@@ -199,7 +241,8 @@
                 </div>
             </div>
 
-            <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--neon-gold); margin-top: 20px;">📊 各遊戲在線與遊玩數據</h3>
+            <!-- 📊 遊戲數據 -->
+            <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--neon-blue); margin-top: 20px;">📊 各遊戲在線與遊玩數據</h3>
             <div class="table-container">
                 <table>
                     <thead>
@@ -216,6 +259,17 @@
             </div>
         </div>
     </main>
+
+    <!-- 💬 意見反饋彈窗 (前端) -->
+    <div id="feedback-modal" class="modal">
+        <div class="modal-box" style="border-color: var(--neon-blue);">
+            <h3>💬 意見反饋</h3>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 15px;">遇到 Bug、有咩想加，或者純粹想讚下我哋，都可以喺度留低！</p>
+            <textarea id="feedback-input" class="feedback-textarea" placeholder="請輸入您的意見或發現的 Bug..."></textarea>
+            <button class="btn-submit" onclick="submitFeedback()">發送反饋</button>
+            <button class="btn-close" onclick="closeFeedback()">取消</button>
+        </div>
+    </div>
 
     <script>
         window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
@@ -251,6 +305,22 @@
         let gameStats = {};
         let onlineStats = {};
         let isAdminMode = false;
+        let db = null;
+        let userId = '';
+
+        // 初始化 Firebase 同獲取玩家 ID
+        try {
+            const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            
+            // 獲取永久裝置 ID
+            userId = localStorage.getItem('global_device_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('global_device_id', userId);
+            }
+        } catch(e) { console.error("Firebase Init Error:", e); }
 
         function renderGames() {
             if (isAdminMode) return;
@@ -375,13 +445,44 @@
             window.location.href = `./${gameId}/`;
         }
 
+        // ==========================================
+        // 意見反饋 (前端邏輯)
+        // ==========================================
+        function openFeedback() {
+            document.getElementById('feedback-modal').classList.add('active');
+            document.getElementById('feedback-input').value = '';
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback-modal').classList.remove('active');
+        }
+
+        function submitFeedback() {
+            const msg = document.getElementById('feedback-input').value.trim();
+            if (!msg) { alert("請輸入反饋內容！"); return; }
+            if (!db) return;
+
+            db.ref('feedback').push({
+                user: userId,
+                msg: msg,
+                time: Date.now()
+            }).then(() => {
+                alert("✅ 反饋已成功送出！多謝你嘅意見！");
+                closeFeedback();
+            }).catch(err => {
+                alert("發送失敗，請稍後再試。");
+            });
+        }
+
+        // ==========================================
+        // 後台控制邏輯
+        // ==========================================
         function promptAdmin() {
             if (isAdminMode) {
                 closeAdmin();
                 return;
             }
             let pwd = prompt("🔐 請輸入管理員密碼：");
-            // 👇 為你保留的專屬密碼 👇
             if (pwd === "z54060437k") { 
                 isAdminMode = true;
                 document.getElementById('game-grid').style.display = 'none';
@@ -404,17 +505,35 @@
         }
 
         renderGames();
+
+        // 發送廣播
+        function sendBroadcast() {
+            const msg = document.getElementById('broadcast-msg').value.trim();
+            if (!msg) { alert("請輸入廣播內容！"); return; }
+            if (!db) return;
+            db.ref('global_broadcast').set({ msg: msg, timestamp: Date.now() })
+            .then(() => {
+                alert("✅ 廣播已成功發送到全站！");
+                document.getElementById('broadcast-msg').value = '';
+            });
+        }
+
+        // 刪除反饋
+        function deleteFeedback(key) {
+            if (confirm("確定要刪除這條反饋嗎？")) {
+                db.ref('feedback/' + key).remove();
+            }
+        }
+
     </script>
 
-    <!-- Firebase 引入 -->
+    <!-- Firebase 引入與後台監聽 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
-        let db = null;
         try {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
+            if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" });
+            const db = firebase.database();
             
             // 1. 遊戲統計
             db.ref('game_stats').on('value', (snap) => {
@@ -434,7 +553,34 @@
                 renderAdminData();
             });
 
-            // 3. 實時錯誤日誌
+            // 3. 玩家反饋
+            db.ref('feedback').on('value', (snap) => {
+                if (!isAdminMode) return;
+                const tbody = document.getElementById('feedback-log-body');
+                const data = snap.val();
+                tbody.innerHTML = '';
+                
+                if (!data) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 20px;">暫無留言</td></tr>';
+                    return;
+                }
+
+                const logs = Object.entries(data).map(([key, val]) => ({ key, ...val })).sort((a,b) => b.time - a.time);
+                logs.forEach(log => {
+                    const d = new Date(log.time);
+                    const timeStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:#aaa; font-size:12px; white-space:nowrap; vertical-align:top;">${timeStr}</td>
+                        <td style="color:var(--neon-blue); font-size:11px; vertical-align:top;">${log.user}</td>
+                        <td><div class="feedback-msg">${log.msg}</div></td>
+                        <td style="vertical-align:top;"><button class="btn-delete" onclick="deleteFeedback('${log.key}')">刪除</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+
+            // 4. 實時錯誤日誌
             db.ref('error_logs').limitToLast(20).on('value', (snap) => {
                 if (!isAdminMode) return;
                 const tbody = document.getElementById('error-log-body');
@@ -449,7 +595,7 @@
                 const logs = Object.values(data).sort((a,b) => b.time - a.time);
                 logs.forEach(log => {
                     const d = new Date(log.time);
-                    const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`;
+                    const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
                     let tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td style="color:#aaa; font-size:12px; white-space:nowrap;">${timeStr}</td>
@@ -462,23 +608,6 @@
             });
 
         } catch(e) { console.error("Firebase Init Error:", e); }
-
-        // 發送廣播
-        function sendBroadcast() {
-            const msg = document.getElementById('broadcast-msg').value.trim();
-            if (!msg) { alert("請輸入廣播內容！"); return; }
-            if (!db) return;
-
-            db.ref('global_broadcast').set({
-                msg: msg,
-                timestamp: Date.now()
-            }).then(() => {
-                alert("✅ 廣播已成功發送到全站！");
-                document.getElementById('broadcast-msg').value = '';
-            }).catch(err => {
-                alert("發送失敗：" + err.message);
-            });
-        }
     </script>
 
 </body>
