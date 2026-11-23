@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🚇 港鐵逼爆月台塔防</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
+
+    :root {
+        --bg-dark: #070812;
+        --neon-blue: #00d2d3;
+        --neon-pink: #ff0055;
+        --neon-gold: #ffd32a;
+        --neon-green: #2ed573;
+        --mtr-red: #e60012;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    body {
+        background: var(--bg-dark);
+        color: #fff;
+        font-family: 'Noto Sans HK', sans-serif;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    header {
+        background: rgba(12, 14, 26, 0.96);
+        border-bottom: 2px solid var(--neon-blue);
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 10;
+    }
+
+    .hud-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .back-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid #555;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .station-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 900;
+        color: #fff;
+    }
+
+    .mtr-logo {
+        background: var(--mtr-red);
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+    }
+
+    .speed-btn {
+        background: rgba(0, 210, 211, 0.15);
+        border: 1px solid var(--neon-blue);
+        color: var(--neon-blue);
+        padding: 5px 10px;
+        border-radius: 7px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .speed-btn.fast {
+        background: var(--neon-gold);
+        border-color: var(--neon-gold);
+        color: #000;
+    }
+
+    .hud-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        text-align: center;
+    }
+
+    .stat-pill {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        padding: 4px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+        color: #aaa;
+        display: block;
+    }
+
+    .stat-val {
+        font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    .val-money { color: var(--neon-gold); }
+    .val-score { color: var(--neon-blue); }
+    .val-crowd { color: var(--neon-green); }
+    .val-crowd.danger { color: var(--neon-pink); animation: blink 0.45s infinite; }
+
+    .train-bar-wrap {
+        background: #141628;
+        border-radius: 6px;
+        height: 19px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #333;
+    }
+
+    .train-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #00d2d3, #2ed573);
+        transition: width 0.1s linear;
+    }
+
+    .train-bar-fill.boarding {
+        background: linear-gradient(90deg, #ffd32a, #ff0055);
+    }
+
+    .train-bar-fill.delay {
+        background: linear-gradient(90deg, #ff6b81, #ff0055);
+    }
+
+    .train-bar-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 900;
+        text-shadow: 0 1px 3px #000;
+    }
+
+    .canvas-wrap {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* 突發事件橫幅動畫 */
+    .event-banner {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: rgba(16, 19, 38, 0.94);
+        border: 1.5px solid var(--neon-gold);
+        color: #fff;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+        z-index: 20;
+        pointer-events: none;
+        opacity: 0;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+        transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .event-banner.active {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .event-banner.alert {
+        border-color: var(--neon-pink);
+        color: #ff8fa3;
+    }
+
+    .event-banner.boost {
+        border-color: var(--neon-green);
+        color: #7bed9f;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    footer {
+        background: rgba(12, 14, 26, 0.96);
+        border-top: 2px solid var(--neon-blue);
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 10;
+    }
+
+    .tower-deck {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .tower-card {
+        background: rgba(255,255,255,0.06);
+        border: 1.5px solid #444;
+        border-radius: 10px;
+        padding: 6px 4px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .tower-card.selected {
+        border-color: var(--neon-blue);
+        background: rgba(0, 210, 211, 0.18);
+        box-shadow: 0 0 12px rgba(0, 210, 211, 0.35);
+        transform: translateY(-2px);
+    }
+
+    .tower-card.disabled {
+        opacity: 0.45;
+    }
+
+    .t-icon { font-size: 20px; line-height: 1.1; }
+    .t-name { font-size: 11px; font-weight: 900; color: #fff; white-space: nowrap; }
+    .t-cost { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: bold; color: var(--neon-gold); }
+
+    .hint-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: #bbb;
+        padding: 0 2px;
+    }
+
+    .hint-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sell-btn {
+        background: rgba(255, 0, 85, 0.2);
+        border: 1px solid var(--neon-pink);
+        color: #ff6b81;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .sell-btn.active {
+        background: var(--neon-pink);
+        color: #fff;
+    }
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 6, 14, 0.88);
+        backdrop-filter: blur(6px);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .modal-card {
+        background: #14172b;
+        border: 2px solid var(--neon-blue);
+        border-radius: 16px;
+        padding: 22px 18px;
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(0, 210, 211, 0.3);
+        animation: popIn 0.22s ease-out;
+    }
+
+    .modal-card h2 {
+        font-size: 21px;
+        color: var(--neon-blue);
+        margin-bottom: 10px;
+    }
+
+    .modal-card p {
+        font-size: 13px;
+        color: #ccc;
+        line-height: 1.6;
+        margin-bottom: 14px;
+    }
+
+    .legend-list {
+        text-align: left;
+        background: rgba(0,0,0,0.42);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        font-size: 12px;
+        line-height: 1.75;
+        color: #ddd;
+    }
+
+    .primary-btn {
+        width: 100%;
+        padding: 12px;
+        background: var(--neon-blue);
+        color: #000;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 900;
+        font-family: 'Noto Sans HK', sans-serif;
+        cursor: pointer;
+    }
+
+    .primary-btn:active { transform: scale(0.97); }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    @keyframes popIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+</style>
+
+<!-- Firebase SDK（與遊戲大廳一致） -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+<header>
+    <div class="hud-top">
+        <button class="back-btn" onclick="goBack()">⬅ 大廳</button>
+        <div class="station-badge"><span class="mtr-logo">MTR</span> 金鐘轉車站</div>
+        <button class="speed-btn" id="speed-btn" onclick="toggleSpeed()">⏩ 1X</button>
+    </div>
+    <div class="hud-stats">
+        <div class="stat-pill">
+            <span class="stat-label">營運資金</span>
+            <span class="stat-val val-money" id="ui-money">$160</span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-label">月台人數</span>
+            <span class="stat-val val-crowd" id="ui-crowd">0 / 100</span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-label">已運走</span>
+            <span class="stat-val val-score" id="ui-score">0</span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-label">最高紀錄</span>
+            <span class="stat-val val-money" id="ui-best">0</span>
+        </div>
+    </div>
+    <div class="train-bar-wrap">
+        <div class="train-bar-fill" id="train-bar"></div>
+        <div class="train-bar-text" id="train-text">下一班列車：7.0s 後埋站</div>
+    </div>
+</header>
+
+<div class="canvas-wrap" id="canvas-wrap">
+    <div class="event-banner" id="event-banner"></div>
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<footer>
+    <div class="hint-bar">
+        <span class="hint-text" id="hint-text">已選【月台助理】$50：點擊空格建造 / 點已建升級</span>
+        <button class="sell-btn" id="sell-btn" onclick="toggleSellMode()">🗑️ 拆除退款</button>
+    </div>
+    <div class="tower-deck">
+        <div class="tower-card selected" data-type="staff" onclick="selectTower('staff', this)">
+            <span class="t-icon">🦺</span>
+            <span class="t-name">月台助理</span>
+            <span class="t-cost">$50</span>
+        </div>
+        <div class="tower-card" data-type="speaker" onclick="selectTower('speaker', this)">
+            <span class="t-icon">📢</span>
+            <span class="t-name">廣播喇叭</span>
+            <span class="t-cost">$40</span>
+        </div>
+        <div class="tower-card" data-type="tape" onclick="selectTower('tape', this)">
+            <span class="t-icon">🚧</span>
+            <span class="t-name">排隊膠帶</span>
+            <span class="t-cost">$30</span>
+        </div>
+        <div class="tower-card" data-type="tea" onclick="selectTower('tea', this)">
+            <span class="t-icon">🧋</span>
+            <span class="t-name">奶茶檔</span>
+            <span class="t-cost">$60</span>
+        </div>
+    </div>
+</footer>
+
+<div class="overlay" id="start-modal">
+    <div class="modal-card">
+        <h2>🚇 港鐵逼爆月台塔防</h2>
+        <p>早繁轉車站人潮湧現！列車每 <b>10 秒</b>埋站開門 <b>3.2 秒</b>，將乘客塞入車廂運走，月台超過 <b>100 人</b>即發生踩踏事故！</p>
+        <div class="legend-list">
+            🦺 <b>月台助理</b>：開門時蓄力爆衝推人入車門<br>
+            📢 <b>廣播喇叭</b>：放出聲波催促乘客加快腳步<br>
+            🚧 <b>排隊膠帶</b>：阻擋分流，避免拖篋客塞死門口<br>
+            🧋 <b>奶茶檔</b>：吸引拖篋客停低買嘢飲兼賺外快<br>
+            ⚡ <b>突發事件</b>：信號故障、加班空車、大媽團衝閘
+        </div>
+        <button class="primary-btn" onclick="startGame()">開始疏導人潮</button>
+    </div>
+</div>
+
+<div class="overlay hidden" id="gameover-modal">
+    <div class="modal-card" style="border-color: var(--neon-pink);">
+        <h2 style="color: var(--neon-pink);">🚨 月台逼爆！服務受阻</h2>
+        <p id="gameover-desc">月台人數突破 100 人上限！</p>
+        <div class="legend-list" style="text-align: center; font-size: 14px;">
+            今局成功運走：<b style="color:var(--neon-blue); font-size:18px;" id="final-score">0</b> 人<br>
+            歷史最高紀錄：<b style="color:var(--neon-gold); font-size:16px;" id="final-best">0</b> 人
+        </div>
+        <button class="primary-btn" onclick="restartGame()">再戰早繁高峰</button>
+    </div>
+</div>
+
+<script>
+const GAME_ID = 'mtr-rush-hour';
+const BEST_KEY = 'mtrRushHour_best';
+const MAX_CROWD = 100;
+const TRAIN_WAIT_TIME = 10.0;
+const TRAIN_OPEN_TIME = 3.2;
+
+const TOWER_DEFS = {
+    staff:   { name: '月台助理', icon: '🦺', cost: 50, color: '#ffd32a', range: 98 },
+    speaker: { name: '廣播喇叭', icon: '📢', cost: 40, color: '#00d2d3', range: 118 },
+    tape:    { name: '排隊膠帶', icon: '🚧', cost: 30, color: '#ff9f43', range: 34 },
+    tea:     { name: '奶茶檔',   icon: '🧋', cost: 60, color: '#ff0055', range: 98 }
+};
+
+// Firebase 實時在線與錯誤日誌初始化
+const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+let db = null;
+let userId = '';
+let onlineRef = null;
+
+function logErrorToFirebase(errMsg) {
+    try {
+        if (!db) return;
+        db.ref('error_logs').push({
+            game: GAME_ID,
+            user: userId || 'anonymous',
+            msg: String(errMsg || 'Unknown Error').slice(0, 300),
+            time: Date.now()
+        }).catch(() => {});
+    } catch (_) {}
+}
+
+window.onerror = function(msg, src, line, col) {
+    logErrorToFirebase(`${msg} (${line}:${col})`);
+    return true;
+};
+
+window.addEventListener('unhandledrejection', function(e) {
+    const reason = e && e.reason ? (e.reason.message || String(e.reason)) : 'Unhandled Promise Rejection';
+    logErrorToFirebase(reason);
+});
+
+(function initFirebasePresence() {
+    try {
+        if (typeof firebase === 'undefined') return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+
+        userId = localStorage.getItem('global_device_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('global_device_id', userId);
+        }
+
+        onlineRef = db.ref(`online_status/${GAME_ID}/${userId}`);
+        onlineRef.set({
+            enteredAt: Date.now(),
+            station: '金鐘轉車站'
+        }).catch(() => {});
+        onlineRef.onDisconnect().remove().catch(() => {});
+
+        window.addEventListener('pagehide', () => {
+            if (onlineRef) onlineRef.remove().catch(() => {});
+        });
+    } catch (e) {
+        console.warn('Firebase init skip:', e);
+    }
+})();
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('canvas-wrap');
+const eventBanner = document.getElementById('event-banner');
+
+let W = 360, H = 560;
+let gameSpeed = 1;
+let isPlaying = false;
+let rafId = null;
+let money = 160;
+let transported = 0;
+let bestScore = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+let selectedTowerType = 'staff';
+let sellMode = false;
+
+// 列車狀態: 'waiting' | 'boarding' | 'departing'
+let trainState = 'waiting';
+let trainTimer = 7.0;
+let trainXOffset = -1;
+let doorOpenRatio = 0;
+let boardedThisTrain = 0;
+
+// 突發事件狀態
+let nextEventTimer = 14.0;
+let activeEvent = null; // { type: 'signal_delay' | 'extra_train' | 'auntie_rush', timer: number }
+let bannerHideTimeout = null;
+
+const COLS = 6;
+const ROWS = 7;
+let gridRect = { x: 0, y: 0, w: 0, h: 0, cellW: 0, cellH: 0 };
+let trackHeight = 76;
+let escalatorHeight = 66;
+let doorsX = [];
+
+let towers = [];
+let passengers = [];
+let particles = [];
+let shockwaves = [];
+let floatingTexts = [];
+
+let spawnTimer = 0;
+let waveTime = 0;
+let animClock = 0;
+let lastTime = 0;
+let pointerDownPos = null;
+
+document.getElementById('ui-best').innerText = bestScore;
+
+function resizeCanvas() {
+    const rect = wrap.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width;
+    H = rect.height;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    trackHeight = Math.max(66, Math.min(86, H * 0.135));
+    escalatorHeight = Math.max(58, Math.min(76, H * 0.12));
+
+    const padX = 12;
+    gridRect.x = padX;
+    gridRect.y = trackHeight + 12;
+    gridRect.w = Math.max(120, W - padX * 2);
+    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 24);
+    gridRect.cellW = gridRect.w / COLS;
+    gridRect.cellH = gridRect.h / ROWS;
+
+    doorsX = [W * 0.22, W * 0.50, W * 0.78];
+
+    towers.forEach(t => {
+        t.x = gridRect.x + (t.col + 0.5) * gridRect.cellW;
+        t.y = gridRect.y + (t.row + 0.5) * gridRect.cellH;
+    });
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function goBack() {
+    if (onlineRef) onlineRef.remove().catch(() => {});
+    window.location.href = '../';
+}
+
+function toggleSpeed() {
+    gameSpeed = gameSpeed === 1 ? 2 : 1;
+    const btn = document.getElementById('speed-btn');
+    btn.innerText = `⏩ ${gameSpeed}X`;
+    btn.classList.toggle('fast', gameSpeed === 2);
+}
+
+function selectTower(type, el) {
+    sellMode = false;
+    document.getElementById('sell-btn').classList.remove('active');
+    selectedTowerType = type;
+    document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+    if (el) el.classList.add('selected');
+    updateHint();
+}
+
+function toggleSellMode() {
+    sellMode = !sellMode;
+    document.getElementById('sell-btn').classList.toggle('active', sellMode);
+    if (sellMode) {
+        document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('hint-text').innerText = '點擊場上設施拆除（退回 70% 資金）';
+    } else {
+        const card = document.querySelector(`.tower-card[data-type="${selectedTowerType}"]`);
+        if (card) card.classList.add('selected');
+        updateHint();
+    }
+}
+
+function updateHint() {
+    const def = TOWER_DEFS[selectedTowerType];
+    document.getElementById('hint-text').innerText = `已選【${def.name}】$${def.cost}：點擊空格建造 / 點已建升級`;
+}
+
+function showEventBanner(text, modeClass, durationMs = 3200) {
+    if (bannerHideTimeout) {
+        clearTimeout(bannerHideTimeout);
+        bannerHideTimeout = null;
+    }
+    eventBanner.className = 'event-banner active' + (modeClass ? ` ${modeClass}` : '');
+    eventBanner.innerText = text;
+    bannerHideTimeout = setTimeout(() => {
+        eventBanner.classList.remove('active');
+    }, durationMs);
+}
+
+function clearEventBanner() {
+    if (bannerHideTimeout) {
+        clearTimeout(bannerHideTimeout);
+        bannerHideTimeout = null;
+    }
+    eventBanner.className = 'event-banner';
+    eventBanner.innerText = '';
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+    pointerDownPos = { x: e.clientX, y: e.clientY };
+});
+
+canvas.addEventListener('pointerup', (e) => {
+    if (!isPlaying || !pointerDownPos) return;
+    const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+    pointerDownPos = null;
+    if (moved > 12) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+
+    if (px < gridRect.x || px > gridRect.x + gridRect.w || py < gridRect.y || py > gridRect.y + gridRect.h) {
+        return;
+    }
+
+    const col = Math.min(COLS - 1, Math.max(0, Math.floor((px - gridRect.x) / gridRect.cellW)));
+    const row = Math.min(ROWS - 1, Math.max(0, Math.floor((py - gridRect.y) / gridRect.cellH)));
+    const existingIdx = towers.findIndex(t => t.col === col && t.row === row);
+
+    if (sellMode) {
+        if (existingIdx !== -1) {
+            const t = towers[existingIdx];
+            const refund = Math.floor(t.totalInvested * 0.7);
+            money += refund;
+            spawnBurst(t.x, t.y, '#ff6b81', 10);
+            spawnFloatText(t.x, t.y - 10, `+$${refund}`, '#2ed573');
+            towers.splice(existingIdx, 1);
+            updateUI();
+        }
+        return;
+    }
+
+    if (existingIdx !== -1) {
+        const t = towers[existingIdx];
+        if (t.level >= 3) {
+            spawnFloatText(t.x, t.y - 12, '已達最高 LV.3', '#ccc');
+            return;
+        }
+        const upgCost = Math.round(TOWER_DEFS[t.type].cost * (t.level === 1 ? 1.2 : 1.6));
+        if (money < upgCost) {
+            spawnFloatText(t.x, t.y - 12, `唔夠錢 ($${upgCost})`, '#ff0055');
+            return;
+        }
+        money -= upgCost;
+        t.level++;
+        t.totalInvested += upgCost;
+        t.animScale = 1.35;
+        shockwaves.push({ x: t.x, y: t.y, r: 10, maxR: 42, color: TOWER_DEFS[t.type].color, life: 0.35, maxLife: 0.35 });
+        spawnBurst(t.x, t.y, TOWER_DEFS[t.type].color, 14);
+        spawnFloatText(t.x, t.y - 16, `升級 LV.${t.level}!`, '#ffd32a');
+        updateUI();
+        return;
+    }
+
+    const def = TOWER_DEFS[selectedTowerType];
+    if (money < def.cost) {
+        spawnFloatText(px, py - 10, `資金不足 ($${def.cost})`, '#ff0055');
+        return;
+    }
+
+    money -= def.cost;
+    const cx = gridRect.x + (col + 0.5) * gridRect.cellW;
+    const cy = gridRect.y + (row + 0.5) * gridRect.cellH;
+    towers.push({
+        type: selectedTowerType,
+        col,
+        row,
+        x: cx,
+        y: cy,
+        level: 1,
+        totalInvested: def.cost,
+        cooldown: 0,
+        animScale: 1.3,
+        dashX: 0,
+        dashY: 0,
+        waveTimer: 0
+    });
+    shockwaves.push({ x: cx, y: cy, r: 8, maxR: 36, color: def.color, life: 0.3, maxLife: 0.3 });
+    spawnBurst(cx, cy, def.color, 12);
+    spawnFloatText(cx, cy - 12, `${def.icon} -${def.cost}`, '#ffd32a');
+    updateUI();
+});
+
+function startGame() {
+    document.getElementById('start-modal').classList.add('hidden');
+    resetState();
+    beginLoop();
+}
+
+function restartGame() {
+    document.getElementById('gameover-modal').classList.add('hidden');
+    resetState();
+    beginLoop();
+}
+
+function beginLoop() {
+    if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+    isPlaying = true;
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+}
+
+function resetState() {
+    resizeCanvas();
+    clearEventBanner();
+    money = 160;
+    transported = 0;
+    towers = [];
+    passengers = [];
+    particles = [];
+    shockwaves = [];
+    floatingTexts = [];
+    trainState = 'waiting';
+    trainTimer = 7.0;
+    trainXOffset = -1;
+    doorOpenRatio = 0;
+    boardedThisTrain = 0;
+    spawnTimer = 0.25;
+    waveTime = 0;
+    animClock = 0;
+    nextEventTimer = 13.0;
+    activeEvent = null;
+    updateUI();
+}
+
+function triggerRandomEvent() {
+    const roll = Math.random();
+    if (roll < 0.36) {
+        // 1. 信號故障（列車延誤）
+        activeEvent = { type: 'signal_delay', timer: 5.0 };
+        if (trainState === 'waiting') {
+            trainTimer += 3.0;
+        }
+        showEventBanner('⚠️ 突發：信號故障！列車延誤進站', 'alert', 3400);
+        spawnFloatText(W / 2, trackHeight + 26, '⚠️ 信號故障！', '#ff6b81');
+    } else if (roll < 0.68) {
+        // 2. 繁忙加班空車
+        activeEvent = { type: 'extra_train', timer: 6.0 };
+        if (trainState === 'waiting') {
+            trainTimer = Math.max(1.2, trainTimer - 3.5);
+        }
+        showEventBanner('🚆 突發：繁忙加班空車！上車獎金提升', 'boost', 3400);
+        spawnFloatText(W / 2, trackHeight + 26, '🚆 加班空車到站！', '#7bed9f');
+    } else {
+        // 3. 大媽團衝閘
+        activeEvent = { type: 'auntie_rush', timer: 4.5 };
+        showEventBanner('💃 突發：大媽團衝閘湧入月台！', 'alert', 3400);
+        const count = 5;
+        for (let k = 0; k < count; k++) {
+            spawnPassenger('auntie', (k - 2) * 14);
+        }
+    }
+}
+
+function spawnPassenger(forceKind = null, xJitter = 0) {
+    if (passengers.length >= MAX_CROWD + 12) return;
+
+    let kind = forceKind || 'worker';
+    if (!forceKind) {
+        const r = Math.random();
+        if (waveTime > 12 && r < 0.24) kind = 'tourist';
+        else if (waveTime > 5 && r < 0.52) kind = 'student';
+    }
+
+    const escLeft = W * 0.22 + (Math.random() - 0.5) * 44;
+    const escRight = W * 0.78 + (Math.random() - 0.5) * 44;
+    const startX = Math.max(20, Math.min(W - 20, (Math.random() < 0.5 ? escLeft : escRight) + xJitter));
+    const startY = H - escalatorHeight + 12;
+
+    const targetDoor = doorsX[Math.floor(Math.random() * doorsX.length)];
+
+    let radius = 7.5;
+    let baseSpeed = 37;
+    if (kind === 'tourist') {
+        radius = 10;
+        baseSpeed = 27;
+    } else if (kind === 'student') {
+        radius = 6.5;
+        baseSpeed = 48;
+    } else if (kind === 'auntie') {
+        radius = 10.5;
+        baseSpeed = 43;
+    }
+
+    passengers.push({
+        kind,
+        x: startX,
+        y: startY,
+        vx: 0,
+        vy: 0,
+        radius,
+        baseSpeed,
+        targetDoorX: targetDoor + (Math.random() - 0.5) * 26,
+        teaCooldown: 0,
+        teaTimer: 0,
+        boostTimer: 0,
+        boostMult: 1.45,
+        pushAnim: 0,
+        phase: Math.random() * Math.PI * 2
+    });
+}
+
+function spawnBurst(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const spd = 35 + Math.random() * 85;
+        particles.push({
+            x, y,
+            vx: Math.cos(a) * spd,
+            vy: Math.sin(a) * spd,
+            life: 0.4 + Math.random() * 0.25,
+            maxLife: 0.65,
+            color,
+            size: 2.5 + Math.random() * 2.5
+        });
+    }
+}
+
+function spawnFloatText(x, y, text, color) {
+    floatingTexts.push({ x, y, text, color, life: 0.95 });
+}
+
+function update(dt) {
+    waveTime += dt;
+    animClock += dt;
+
+    // 突發事件排程
+    if (activeEvent) {
+        activeEvent.timer -= dt;
+        if (activeEvent.timer <= 0) {
+            activeEvent = null;
+        }
+    } else {
+        nextEventTimer -= dt;
+        if (nextEventTimer <= 0) {
+            nextEventTimer = Math.max(11.0, 17.5 - waveTime * 0.04);
+            triggerRandomEvent();
+        }
+    }
+
+    // 1. 生成乘客
+    const spawnInterval = Math.max(0.24, 0.92 - waveTime * 0.008);
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+        spawnTimer = spawnInterval;
+        spawnPassenger();
+        if (waveTime > 32 && Math.random() < 0.35) spawnPassenger();
+    }
+
+    // 2. 列車狀態機
+    const bar = document.getElementById('train-bar');
+    const barText = document.getElementById('train-text');
+    const isDelayed = activeEvent && activeEvent.type === 'signal_delay';
+    const isExtraTrain = activeEvent && activeEvent.type === 'extra_train';
+
+    if (trainState === 'waiting') {
+        const waitRate = isDelayed ? 0.55 : (isExtraTrain ? 1.45 : 1.0);
+        trainTimer -= dt * waitRate;
+        const pct = Math.max(0, Math.min(100, ((TRAIN_WAIT_TIME - trainTimer) / TRAIN_WAIT_TIME) * 100));
+        bar.style.width = pct + '%';
+        bar.classList.remove('boarding');
+        bar.classList.toggle('delay', Boolean(isDelayed));
+        barText.innerText = isDelayed
+            ? `⚠️ 信號故障延誤中：${Math.max(0, trainTimer).toFixed(1)}s`
+            : `下一班列車：${Math.max(0, trainTimer).toFixed(1)}s 後埋站`;
+
+        if (trainTimer < 1.3) {
+            trainXOffset = -(trainTimer / 1.3);
+        } else {
+            trainXOffset = -1;
+        }
+        doorOpenRatio = Math.max(0, doorOpenRatio - dt * 4.5);
+
+        if (trainTimer <= 0) {
+            trainState = 'boarding';
+            trainTimer = TRAIN_OPEN_TIME;
+            trainXOffset = 0;
+            boardedThisTrain = 0;
+            spawnFloatText(W / 2, trackHeight + 22, '🚪 車門打開！快推人上車！', '#ffd32a');
+        }
+    } else if (trainState === 'boarding') {
+        trainTimer -= dt;
+        const pct = Math.max(0, (trainTimer / TRAIN_OPEN_TIME) * 100);
+        bar.style.width = pct + '%';
+        bar.classList.remove('delay');
+        bar.classList.add('boarding');
+        barText.innerText = `🚪 車門開啟中！(${Math.max(0, trainTimer).toFixed(1)}s) 本班已上車：${boardedThisTrain}人`;
+
+        doorOpenRatio = Math.min(1, doorOpenRatio + dt * 5.5);
+
+        if (trainTimer <= 0) {
+            trainState = 'departing';
+            trainTimer = 0.85;
+            if (boardedThisTrain >= 10) {
+                const mult = isExtraTrain ? 2.2 : 1.5;
+                const bonus = Math.floor(boardedThisTrain * mult);
+                money += bonus;
+                spawnFloatText(W / 2, trackHeight + 24, `🔥 爆滿清場獎金 +$${bonus}!`, '#ffd32a');
+            }
+            updateUI();
+        }
+    } else if (trainState === 'departing') {
+        trainTimer -= dt;
+        doorOpenRatio = Math.max(0, doorOpenRatio - dt * 5);
+        trainXOffset = Math.min(1, 1 - (trainTimer / 0.85));
+        bar.style.width = '100%';
+        bar.classList.remove('delay');
+        barText.innerText = '🚆 列車開出，下一班準備中...';
+
+        if (trainTimer <= 0) {
+            trainState = 'waiting';
+            trainTimer = TRAIN_WAIT_TIME;
+            trainXOffset = -1;
+        }
+    }
+
+    // 3. 設施邏輯與動畫
+    towers.forEach(t => {
+        if (t.animScale > 1) {
+            t.animScale = Math.max(1, t.animScale - dt * 2.2);
+        }
+        t.dashX *= Math.pow(0.05, dt);
+        t.dashY *= Math.pow(0.05, dt);
+        if (t.cooldown > 0) t.cooldown -= dt;
+
+        const baseRange = TOWER_DEFS[t.type].range * (1 + (t.level - 1) * 0.18);
+
+        if (t.type === 'staff') {
+            if (t.cooldown <= 0) {
+                const isDoorOpen = trainState === 'boarding';
+                t.cooldown = isDoorOpen ? Math.max(0.45, 0.88 - t.level * 0.12) : 1.55;
+
+                let targetP = null;
+                let bestDist = baseRange;
+                passengers.forEach(p => {
+                    const d = Math.hypot(p.x - t.x, p.y - t.y);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        targetP = p;
+                    }
+                });
+
+                let pushedCount = 0;
+                passengers.forEach(p => {
+                    const dx = p.x - t.x;
+                    const dy = p.y - t.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist <= baseRange) {
+                        let nearestDoor = doorsX[0];
+                        let minD = Math.abs(p.x - doorsX[0]);
+                        for (let d of doorsX) {
+                            if (Math.abs(p.x - d) < minD) {
+                                minD = Math.abs(p.x - d);
+                                nearestDoor = d;
+                            }
+                        }
+                        const ang = Math.atan2((trackHeight - 4) - p.y, nearestDoor - p.x);
+                        const kindResist = p.kind === 'auntie' ? 0.72 : 1.0;
+                        const force = (isDoorOpen ? 205 : 90) * (1 + (t.level - 1) * 0.25) * kindResist;
+                        p.vx += Math.cos(ang) * force;
+                        p.vy += Math.sin(ang) * force;
+                        p.pushAnim = 0.35;
+                        pushedCount++;
+                    }
+                });
+
+                if (pushedCount > 0) {
+                    if (targetP) {
+                        const aimAng = Math.atan2(targetP.y - t.y, targetP.x - t.x);
+                        t.dashX = Math.cos(aimAng) * 9;
+                        t.dashY = Math.sin(aimAng) * 9;
+                    }
+                    shockwaves.push({
+                        x: t.x, y: t.y, r: 10, maxR: baseRange * 0.65,
+                        color: '#ffd32a', life: 0.28, maxLife: 0.28
+                    });
+                    spawnBurst(t.x, t.y, '#ffd32a', isDoorOpen ? 9 : 4);
+                    if (isDoorOpen && pushedCount >= 4) {
+                        spawnFloatText(t.x, t.y - 18, `大力推 x${pushedCount}!`, '#ffd32a');
+                    }
+                }
+            }
+        } else if (t.type === 'speaker') {
+            t.waveTimer -= dt;
+            if (t.waveTimer <= 0) {
+                t.waveTimer = 1.25;
+                shockwaves.push({
+                    x: t.x, y: t.y, r: 12, maxR: baseRange,
+                    color: '#00d2d3', life: 0.65, maxLife: 0.65
+                });
+            }
+            passengers.forEach(p => {
+                if (Math.hypot(p.x - t.x, p.y - t.y) <= baseRange) {
+                    p.boostTimer = 0.35;
+                    p.boostMult = 1.48 + (t.level - 1) * 0.2;
+                }
+            });
+        } else if (t.type === 'tea') {
+            if (Math.random() < dt * 2.2) {
+                particles.push({
+                    x: t.x + (Math.random() - 0.5) * 14,
+                    y: t.y - 12,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: -24 - Math.random() * 14,
+                    life: 0.7,
+                    maxLife: 0.7,
+                    color: '#ff9ff3',
+                    size: 2.2
+                });
+            }
+            passengers.forEach(p => {
+                if (p.teaCooldown > 0) p.teaCooldown -= dt;
+                if (p.teaCooldown <= 0 && p.teaTimer <= 0 && Math.hypot(p.x - t.x, p.y - t.y) <= baseRange) {
+                    if (p.kind === 'tourist' || p.kind === 'auntie' || t.level >= 2) {
+                        p.teaCooldown = 8.0;
+                        p.teaTimer = 2.4 + t.level * 0.45;
+                        const earn = 4 + t.level * 2;
+                        money += earn;
+                        spawnBurst(t.x, t.y, '#ff6b81', 6);
+                        spawnFloatText(t.x, t.y - 16, `🧋 +$${earn}`, '#ff6b81');
+                    }
+                }
+            });
+        }
+    });
+
+    // 4. 更新乘客
+    const stopLineY = trackHeight + 16;
+
+    for (let i = passengers.length - 1; i >= 0; i--) {
+        const p = passengers[i];
+        p.phase += dt * 11;
+        if (p.pushAnim > 0) p.pushAnim -= dt;
+
+        if (p.teaTimer > 0) {
+            p.teaTimer -= dt;
+            p.vx *= 0.82;
+            p.vy *= 0.82;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            continue;
+        }
+
+        const goalX = p.targetDoorX;
+        const goalY = trainState === 'boarding' ? (trackHeight - 10) : stopLineY;
+        const dx = goalX - p.x;
+        const dy = goalY - p.y;
+        const dist = Math.hypot(dx, dy) || 1;
+
+        let speed = p.baseSpeed;
+        if (p.boostTimer > 0) {
+            p.boostTimer -= dt;
+            speed *= p.boostMult;
+        }
+
+        const desiredVx = (dx / dist) * speed;
+        const desiredVy = (dy / dist) * speed;
+
+        p.vx += (desiredVx - p.vx) * Math.min(1, dt * 6);
+        p.vy += (desiredVy - p.vy) * Math.min(1, dt * 6);
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        // 排隊膠帶分流
+        towers.forEach(t => {
+            if (t.type === 'tape') {
+                const barHalfW = gridRect.cellW * (0.42 + (t.level - 1) * 0.08);
+                const barHalfH = 8;
+                const relX = p.x - t.x;
+                const relY = p.y - t.y;
+                if (Math.abs(relX) < barHalfW + p.radius && Math.abs(relY) < barHalfH + p.radius) {
+                    if (relY > 0) p.y = t.y + barHalfH + p.radius;
+                    else p.y = t.y - barHalfH - p.radius;
+                    p.vx += (relX >= 0 ? 1 : -1) * 50 * dt;
+                }
+            }
+        });
+
+        p.x = Math.max(16, Math.min(W - 16, p.x));
+        if (trainState !== 'boarding' && p.y < stopLineY) {
+            p.y = stopLineY;
+            if (p.vy < 0) p.vy = 0;
+        }
+
+        if (trainState === 'boarding' && p.y <= trackHeight + 8) {
+            const nearDoor = doorsX.some(dxDoor => Math.abs(p.x - dxDoor) < 34);
+            if (nearDoor) {
+                passengers.splice(i, 1);
+                transported++;
+                boardedThisTrain++;
+                const baseTicket = (p.kind === 'tourist' || p.kind === 'auntie') ? 6 : 3;
+                const ticket = isExtraTrain ? baseTicket * 2 : baseTicket;
+                money += ticket;
+                spawnBurst(p.x, trackHeight, '#2ed573', 6);
+                if (transported > bestScore) {
+                    bestScore = transported;
+                    localStorage.setItem(BEST_KEY, String(bestScore));
+                }
+                continue;
+            } else {
+                p.y = trackHeight + 8;
+                const nearest = doorsX.reduce((prev, curr) => Math.abs(curr - p.x) < Math.abs(prev - p.x) ? curr : prev);
+                p.vx += (nearest > p.x ? 1 : -1) * 95 * dt;
+            }
+        }
+    }
+
+    // 5. 人潮推擠
+    const maxPairs = 1400;
+    let pairChecks = 0;
+    for (let i = 0; i < passengers.length && pairChecks < maxPairs; i++) {
+        const a = passengers[i];
+        for (let j = i + 1; j < passengers.length && pairChecks < maxPairs; j++) {
+            pairChecks++;
+            const b = passengers[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const minDist = a.radius + b.radius + 1;
+            const d2 = dx * dx + dy * dy;
+            if (d2 > 0.01 && d2 < minDist * minDist) {
+                const d = Math.sqrt(d2);
+                const overlap = (minDist - d) * 0.45;
+                const nx = dx / d;
+                const ny = dy / d;
+                a.x -= nx * overlap;
+                a.y -= ny * overlap;
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+            }
+        }
+    }
+
+    // 6. 衝擊波、粒子、飄字
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.life -= dt;
+        const p = 1 - Math.max(0, sw.life / sw.maxLife);
+        sw.r = 10 + (sw.maxR - 10) * p;
+        if (sw.life <= 0) shockwaves.splice(i, 1);
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.life -= dt;
+        if (pt.life <= 0) particles.splice(i, 1);
+    }
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y -= 28 * dt;
+        ft.life -= dt;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
+    }
+
+    updateUI();
+
+    if (passengers.length >= MAX_CROWD) {
+        triggerGameOver();
+    }
+}
+
+function updateUI() {
+    document.getElementById('ui-money').innerText = `$${money}`;
+    document.getElementById('ui-score').innerText = transported;
+    document.getElementById('ui-best').innerText = bestScore;
+
+    const crowdEl = document.getElementById('ui-crowd');
+    crowdEl.innerText = `${passengers.length} / ${MAX_CROWD}`;
+    crowdEl.classList.toggle('danger', passengers.length >= 80);
+
+    document.querySelectorAll('.tower-card').forEach(card => {
+        const type = card.dataset.type;
+        card.classList.toggle('disabled', money < TOWER_DEFS[type].cost);
+    });
+}
+
+function triggerGameOver() {
+    isPlaying = false;
+    activeEvent = null;
+    clearEventBanner();
+    if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+    document.getElementById('final-score').innerText = transported;
+    document.getElementById('final-best').innerText = bestScore;
+    document.getElementById('gameover-modal').classList.remove('hidden');
+}
+
+function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // 月台地板
+    ctx.fillStyle = '#0d1021';
+    ctx.fillRect(0, trackHeight, W, H - trackHeight);
+
+    // 黃色安全線動畫
+    ctx.fillStyle = '#ffd32a';
+    ctx.fillRect(0, trackHeight + 2, W, 5);
+    const pulseAlpha = 0.1 + 0.08 * Math.sin(animClock * 5);
+    ctx.fillStyle = `rgba(255, 211, 42, ${pulseAlpha})`;
+    ctx.fillRect(0, trackHeight + 7, W, 12);
+
+    // 路軌區
+    ctx.fillStyle = '#05060c';
+    ctx.fillRect(0, 0, W, trackHeight);
+
+    ctx.strokeStyle = '#1b1f38';
+    ctx.lineWidth = 3;
+    const sleeperOffset = (animClock * 30) % 22;
+    for (let x = -22 + sleeperOffset; x < W + 22; x += 22) {
+        ctx.beginPath();
+        ctx.moveTo(x, 8);
+        ctx.lineTo(x, trackHeight - 8);
+        ctx.stroke();
+    }
+
+    // 列車動畫
+    if (trainState !== 'waiting' || trainXOffset > -1) {
+        const trainX = trainXOffset * W;
+        ctx.save();
+        ctx.translate(trainX, 6);
+        const carH = trackHeight - 10;
+        const isExtra = activeEvent && activeEvent.type === 'extra_train';
+
+        ctx.fillStyle = isExtra ? '#162b2b' : '#1f2642';
+        ctx.strokeStyle = isExtra ? '#2ed573' : '#00d2d3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(8, 0, W - 16, carH, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        for (let wx = 26; wx < W - 36; wx += 34) {
+            const nearDoor = doorsX.some(dx => Math.abs(wx - dx) < 32);
+            if (!nearDoor) {
+                ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.25)' : 'rgba(0, 210, 211, 0.22)';
+                ctx.fillRect(wx, 10, 20, carH * 0.26);
+            }
+        }
+
+        ctx.fillStyle = '#e60012';
+        ctx.fillRect(10, carH * 0.44, W - 20, 6);
+
+        doorsX.forEach(dx => {
+            const doorW = 46;
+            ctx.fillStyle = trainState === 'boarding' ? 'rgba(46, 213, 115, 0.35)' : '#101426';
+            ctx.fillRect(dx - doorW / 2, 6, doorW, carH - 8);
+
+            const slide = (doorW / 2) * doorOpenRatio;
+            ctx.fillStyle = '#4a5578';
+            ctx.fillRect(dx - doorW / 2, 6, doorW / 2 - slide, carH - 8);
+            ctx.fillRect(dx + slide, 6, doorW / 2 - slide, carH - 8);
+
+            if (trainState === 'boarding') {
+                const bounce = Math.sin(animClock * 10) * 2;
+                ctx.fillStyle = '#2ed573';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('▲ IN ▲', dx, carH + 15 + bounce);
+            }
+        });
+        ctx.restore();
+    }
+
+    // 建造網格
+    ctx.strokeStyle = 'rgba(0, 210, 211, 0.13)';
+    ctx.lineWidth = 1;
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const gx = gridRect.x + c * gridRect.cellW;
+            const gy = gridRect.y + r * gridRect.cellH;
+            ctx.strokeRect(gx + 2, gy + 2, gridRect.cellW - 4, gridRect.cellH - 4);
+        }
+    }
+
+    // 底部扶手電梯動畫
+    const escY = H - escalatorHeight;
+    ctx.fillStyle = 'rgba(255, 0, 85, 0.12)';
+    ctx.fillRect(0, escY, W, escalatorHeight);
+    ctx.strokeStyle = 'rgba(255, 0, 85, 0.45)';
+    ctx.beginPath();
+    ctx.moveTo(0, escY);
+    ctx.lineTo(W, escY);
+    ctx.stroke();
+
+    [W * 0.22, W * 0.78].forEach(ex => {
+        const boxW = 74;
+        const boxH = escalatorHeight - 14;
+        const boxY = escY + 8;
+
+        ctx.fillStyle = '#1c1f36';
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(ex - boxW / 2, boxY, boxW, boxH, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 107, 129, 0.28)';
+        const stepShift = (animClock * 24) % 10;
+        for (let sy = boxY + 4 + stepShift; sy < boxY + boxH - 3; sy += 10) {
+            ctx.beginPath();
+            ctx.moveTo(ex - boxW / 2 + 6, sy);
+            ctx.lineTo(ex + boxW / 2 - 6, sy);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ff6b81';
+        ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.56);
+    });
+
+    // 衝擊波／聲波圈
+    shockwaves.forEach(sw => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.75;
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    // 設施動畫
+    towers.forEach(t => {
+        const def = TOWER_DEFS[t.type];
+        const range = def.range * (1 + (t.level - 1) * 0.18);
+        const tx = t.x + t.dashX;
+        const ty = t.y + t.dashY;
+
+        if (t.type !== 'tape') {
+            ctx.beginPath();
+            ctx.arc(tx, ty, range, 0, Math.PI * 2);
+            ctx.fillStyle = def.color + '12';
+            ctx.fill();
+            ctx.strokeStyle = def.color + '3d';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.scale(t.animScale, t.animScale);
+
+        if (t.type === 'tape') {
+            const barW = gridRect.cellW * (0.84 + (t.level - 1) * 0.16);
+            ctx.fillStyle = '#ff9f43';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-barW / 2, -7, barW, 14, 5);
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.fillStyle = '#161a30';
+            ctx.strokeStyle = def.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 17, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        ctx.font = '18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(def.icon, 0, 0);
+
+        ctx.fillStyle = '#ffd32a';
+        ctx.font = 'bold 9px Orbitron, sans-serif';
+        ctx.fillText(`LV.${t.level}`, 0, 20);
+        ctx.restore();
+    });
+
+    // 乘客走路微擺動畫
+    passengers.forEach(p => {
+        const speedNow = Math.hypot(p.vx, p.vy);
+        const bobY = speedNow > 6 ? Math.sin(p.phase) * 1.6 : 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y + bobY, p.radius, 0, Math.PI * 2);
+
+        if (p.kind === 'auntie') ctx.fillStyle = '#ff477e';
+        else if (p.kind === 'tourist') ctx.fillStyle = '#ff9f43';
+        else if (p.kind === 'student') ctx.fillStyle = '#54a0ff';
+        else ctx.fillStyle = '#00d2d3';
+
+        if (p.pushAnim > 0) ctx.fillStyle = '#ffd32a';
+        else if (p.boostTimer > 0) ctx.fillStyle = '#7bed9f';
+        ctx.fill();
+
+        ctx.strokeStyle = '#070812';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        if (p.kind === 'tourist') {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(p.x + p.radius - 2, p.y + bobY - 3, 5, 6);
+        } else if (p.kind === 'auntie') {
+            ctx.fillStyle = '#ffd32a';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y + bobY - p.radius + 1, 3.5, Math.PI, 0);
+            ctx.fill();
+        }
+
+        if (p.teaTimer > 0) {
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🧋', p.x, p.y + bobY - p.radius - 7);
+        }
+    });
+
+    // 粒子
+    particles.forEach(pt => {
+        ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // 飄字
+    floatingTexts.forEach(ft => {
+        ctx.globalAlpha = Math.max(0, ft.life);
+        ctx.fillStyle = ft.color;
+        ctx.font = '900 13px "Noto Sans HK", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(ft.text, ft.x, ft.y);
+    });
+    ctx.globalAlpha = 1;
+}
+
+function loop(now) {
+    if (!isPlaying) return;
+    const rawDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    lastTime = now;
+
+    update(rawDt * gameSpeed);
+    draw();
+    rafId = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
