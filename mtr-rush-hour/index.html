@@ -544,25 +544,31 @@ const TRAIN_OPEN_TIME = 3.2;
 const STATIONS = {
     admiral: {
         name: '金鐘轉車站',
+        code: 'ADM',
         spawnBase: 0.92,
         spawnDecay: 0.008,
         eventIntervalBase: 17.5,
-        floorTop: '#1b2854',
-        floorBottom: '#0a0f24',
-        tileLight: 'rgba(255,255,255,0.045)',
-        tileDark: 'rgba(0,210,211,0.025)',
-        lampGlow: 'rgba(130, 204, 221, 0.14)'
+        floorTop: '#26386e',
+        floorMid: '#19254d',
+        floorBottom: '#0d142b',
+        tileEven: 'rgba(220, 236, 255, 0.075)',
+        tileOdd: 'rgba(15, 23, 48, 0.35)',
+        tileBevel: 'rgba(255, 255, 255, 0.14)',
+        lampGlow: 'rgba(166, 230, 255, 0.20)'
     },
     mongkok: {
         name: '旺角轉車站',
+        code: 'MOK',
         spawnBase: 0.72,
         spawnDecay: 0.011,
         eventIntervalBase: 13.5,
-        floorTop: '#2c1859',
-        floorBottom: '#0e0a24',
-        tileLight: 'rgba(255,255,255,0.045)',
-        tileDark: 'rgba(255,0,85,0.03)',
-        lampGlow: 'rgba(255, 107, 129, 0.14)'
+        floorTop: '#3a2273',
+        floorMid: '#24154d',
+        floorBottom: '#120b29',
+        tileEven: 'rgba(255, 224, 240, 0.075)',
+        tileOdd: 'rgba(24, 14, 48, 0.38)',
+        tileBevel: 'rgba(255, 180, 210, 0.15)',
+        lampGlow: 'rgba(255, 130, 170, 0.20)'
     }
 };
 
@@ -777,9 +783,9 @@ function resizeCanvas() {
 
     const padX = 14;
     gridRect.x = padX;
-    gridRect.y = trackHeight + 20;
+    gridRect.y = trackHeight + 22;
     gridRect.w = Math.max(120, W - padX * 2);
-    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 32);
+    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 34);
     gridRect.cellW = gridRect.w / COLS;
     gridRect.cellH = gridRect.h / ROWS;
 
@@ -1060,18 +1066,27 @@ function spawnPassenger(forceKind = null, xJitter = 0) {
     const startY = H - escalatorHeight + 12;
     const targetDoor = doorsX[Math.floor(Math.random() * doorsX.length)];
 
-    let radius = 9;
+    let radius = 9.5;
     let baseSpeed = 37;
     if (kind === 'tourist') {
-        radius = 11;
+        radius = 11.5;
         baseSpeed = 27;
     } else if (kind === 'student') {
-        radius = 8;
+        radius = 8.5;
         baseSpeed = 48;
     } else if (kind === 'auntie') {
-        radius = 11.5;
+        radius = 12;
         baseSpeed = 43;
     }
+
+    const outfitPalette = {
+        worker:  ['#00b894', '#0984e3', '#6c5ce7', '#00cec9'],
+        student: ['#2e86de', '#54a0ff', '#48dbfb', '#1dd1a1'],
+        tourist: ['#ff9f43', '#feca57', '#ff6b6b', '#ff9ff3'],
+        auntie:  ['#ff477e', '#ff6b81', '#ff7979', '#f8a5c2']
+    };
+    const hairPalette = ['#2d3436', '#4a2c18', '#1e272e', '#574b90'];
+    const palette = outfitPalette[kind] || outfitPalette.worker;
 
     passengers.push({
         kind,
@@ -1087,7 +1102,10 @@ function spawnPassenger(forceKind = null, xJitter = 0) {
         boostTimer: 0,
         boostMult: 1.45,
         pushAnim: 0,
-        phase: Math.random() * Math.PI * 2
+        phase: Math.random() * Math.PI * 2,
+        coatColor: palette[Math.floor(Math.random() * palette.length)],
+        hairColor: hairPalette[Math.floor(Math.random() * hairPalette.length)],
+        hasGlasses: kind === 'worker' && Math.random() < 0.45
     });
 }
 
@@ -1618,63 +1636,235 @@ function drawRealisticMTRTrain(trainX, carY, carH, isExtra) {
     ctx.restore();
 }
 
+function drawDetailedPassenger(p) {
+    const speedNow = Math.hypot(p.vx, p.vy);
+    const moving = speedNow > 6;
+    const walkSwing = moving ? Math.sin(p.phase) : 0;
+    const hopY = moving ? Math.abs(Math.sin(p.phase)) * -4.2 : 0;
+    const py = p.y + hopY;
+    const r = p.radius;
+
+    // 1. 地面立體柔和投影
+    const shadowScale = 1 - Math.min(0.28, Math.abs(hopY) * 0.045);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 5.5, r * 0.96 * shadowScale, r * 0.44 * shadowScale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 擺動雙腿
+    ctx.strokeStyle = '#1e272e';
+    ctx.lineWidth = Math.max(2.2, r * 0.24);
+    ctx.lineCap = 'round';
+    const legSwing = walkSwing * (r * 0.42);
+    ctx.beginPath();
+    ctx.moveTo(p.x - r * 0.24, py - r * 0.15);
+    ctx.lineTo(p.x - r * 0.26 + legSwing, py + r * 0.42);
+    ctx.moveTo(p.x + r * 0.24, py - r * 0.15);
+    ctx.lineTo(p.x + r * 0.26 - legSwing, py + r * 0.42);
+    ctx.stroke();
+
+    // 3. 身體／外套漸變
+    let bodyColor = p.coatColor || '#00d2d3';
+    if (p.pushAnim > 0) bodyColor = '#ffd32a';
+    else if (p.boostTimer > 0) bodyColor = '#7bed9f';
+
+    const torsoW = r * 1.44;
+    const torsoH = r * 1.12;
+    const torsoX = p.x - torsoW / 2;
+    const torsoY = py - r * 0.95;
+
+    const torsoGrad = ctx.createLinearGradient(torsoX, torsoY, torsoX + torsoW, torsoY + torsoH);
+    torsoGrad.addColorStop(0, '#ffffff');
+    torsoGrad.addColorStop(0.18, bodyColor);
+    torsoGrad.addColorStop(1, '#1e272e');
+
+    ctx.fillStyle = torsoGrad;
+    ctx.strokeStyle = '#090b16';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(torsoX, torsoY, torsoW, torsoH, 5.5);
+    ctx.fill();
+    ctx.stroke();
+
+    // 打工仔領呔／大媽花邊細節
+    if (p.kind === 'worker') {
+        ctx.fillStyle = '#e60012';
+        ctx.fillRect(p.x - 1.4, torsoY + 2, 2.8, torsoH * 0.55);
+    } else if (p.kind === 'auntie') {
+        ctx.strokeStyle = '#ffeaa7';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(torsoX + 2, torsoY + torsoH * 0.5);
+        ctx.lineTo(torsoX + torsoW - 2, torsoY + torsoH * 0.5);
+        ctx.stroke();
+    }
+
+    // 4. 擺動手臂
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = Math.max(2.2, r * 0.22);
+    const armSwing = -walkSwing * (r * 0.35);
+    ctx.beginPath();
+    ctx.moveTo(torsoX, torsoY + 3);
+    ctx.lineTo(torsoX - r * 0.22, torsoY + torsoH * 0.65 + armSwing);
+    ctx.moveTo(torsoX + torsoW, torsoY + 3);
+    ctx.lineTo(torsoX + torsoW + r * 0.22, torsoY + torsoH * 0.65 - armSwing);
+    ctx.stroke();
+
+    // 5. 立體頭部、頭髮與五官
+    const headR = r * 0.58;
+    const headY = py - r * 1.32;
+
+    const skinGrad = ctx.createRadialGradient(p.x - headR * 0.3, headY - headR * 0.3, headR * 0.1, p.x, headY, headR);
+    skinGrad.addColorStop(0, '#fff5d6');
+    skinGrad.addColorStop(1, '#f3c68f');
+
+    ctx.fillStyle = skinGrad;
+    ctx.strokeStyle = '#090b16';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(p.x, headY, headR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 頭髮／帽飾
+    if (p.kind === 'auntie') {
+        ctx.fillStyle = '#ffd32a';
+        ctx.strokeStyle = '#090b16';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.ellipse(p.x, headY - headR * 0.55, headR * 1.38, headR * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    } else if (p.kind === 'tourist') {
+        ctx.fillStyle = '#ff5252';
+        ctx.beginPath();
+        ctx.arc(p.x, headY - headR * 0.15, headR * 0.98, Math.PI, 0);
+        ctx.fill();
+    } else {
+        ctx.fillStyle = p.hairColor || '#2d3436';
+        ctx.beginPath();
+        ctx.arc(p.x, headY - headR * 0.12, headR * 0.96, Math.PI * 0.95, Math.PI * 2.05);
+        ctx.fill();
+    }
+
+    // 眼睛
+    ctx.fillStyle = '#090b16';
+    ctx.beginPath();
+    ctx.arc(p.x - headR * 0.34, headY + headR * 0.08, 1.35, 0, Math.PI * 2);
+    ctx.arc(p.x + headR * 0.34, headY + headR * 0.08, 1.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p.hasGlasses) {
+        ctx.strokeStyle = '#2d3436';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(p.x - headR * 0.56, headY - headR * 0.12, headR * 0.42, headR * 0.34);
+        ctx.strokeRect(p.x + headR * 0.14, headY - headR * 0.12, headR * 0.42, headR * 0.34);
+    }
+
+    // 6. 角色專屬配件（行李箱／書包）
+    if (p.kind === 'tourist') {
+        const caseX = p.x + r * 0.72;
+        const caseY = py + 1;
+        draw3DBox(caseX, caseY, 9.5, 9.5, 4, '#ffffff', '#b2bec3', '#090b16');
+        ctx.strokeStyle = '#636e72';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(caseX + 4.5, caseY - 3);
+        ctx.lineTo(caseX + 4.5, caseY - 8);
+        ctx.stroke();
+    } else if (p.kind === 'student') {
+        ctx.fillStyle = '#1e3799';
+        ctx.strokeStyle = '#090b16';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(p.x - r * 0.48, torsoY + 2, r * 0.96, torsoH * 0.65, 3);
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    if (p.teaTimer > 0) {
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🧋', p.x, headY - headR - 8);
+    }
+}
+
 function draw() {
     ctx.clearRect(0, 0, W, H);
     const st = STATIONS[currentStationKey] || STATIONS.admiral;
 
-    // 1. 立體月台地板漸變與天花燈光光影
+    // 1. 港鐵站月台立體地板漸變與天花燈光光影
     const floorGrad = ctx.createLinearGradient(0, trackHeight, 0, H);
     floorGrad.addColorStop(0, st.floorTop);
+    floorGrad.addColorStop(0.55, st.floorMid);
     floorGrad.addColorStop(1, st.floorBottom);
     ctx.fillStyle = floorGrad;
     ctx.fillRect(0, trackHeight, W, H - trackHeight);
 
-    [W * 0.25, W * 0.75].forEach(lx => {
-        const spotGrad = ctx.createRadialGradient(lx, trackHeight + 55, 8, lx, trackHeight + 110, Math.max(120, W * 0.35));
+    [W * 0.25, W * 0.5, W * 0.75].forEach(lx => {
+        const spotGrad = ctx.createRadialGradient(lx, trackHeight + 50, 10, lx, trackHeight + 125, Math.max(130, W * 0.34));
         spotGrad.addColorStop(0, st.lampGlow);
         spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = spotGrad;
         ctx.fillRect(0, trackHeight, W, H - trackHeight);
     });
 
-    // 2. 2.5D 立體瓷磚格仔
+    // 站名浮水印提示
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.font = '900 28px "Orbitron", "Noto Sans HK", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${st.code} · ${st.name}`, W / 2, gridRect.y + gridRect.h * 0.5);
+    ctx.restore();
+
+    // 2. 立體瓷磚格仔（帶高光邊緣與內凹層次）
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const gx = gridRect.x + c * gridRect.cellW;
             const gy = gridRect.y + r * gridRect.cellH;
-            ctx.fillStyle = (r + c) % 2 === 0 ? st.tileLight : st.tileDark;
+            const tileX = gx + 3;
+            const tileY = gy + 3;
+            const tileW = gridRect.cellW - 6;
+            const tileH = gridRect.cellH - 6;
+
+            ctx.fillStyle = (r + c) % 2 === 0 ? st.tileEven : st.tileOdd;
             ctx.beginPath();
-            ctx.roundRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6, 4);
+            ctx.roundRect(tileX, tileY, tileW, tileH, 5);
             ctx.fill();
 
-            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = st.tileBevel;
+            ctx.lineWidth = 1.2;
             ctx.stroke();
+
+            // 瓷磚左上角微光
+            ctx.fillStyle = 'rgba(255,255,255,0.035)';
+            ctx.fillRect(tileX + 2, tileY + 2, tileW - 4, 2.5);
         }
     }
 
-    // 3. 立體月台邊緣石壆與黃色警戒燈帶
-    ctx.fillStyle = '#090c1a';
-    ctx.fillRect(0, trackHeight, W, 11);
-    ctx.fillStyle = '#34406e';
+    // 3. 立體月台邊緣石壆、黃色防墮警戒線與發光燈帶
+    ctx.fillStyle = '#070a17';
+    ctx.fillRect(0, trackHeight, W, 12);
+    ctx.fillStyle = '#47568a';
     ctx.fillRect(0, trackHeight, W, 5);
     ctx.fillStyle = '#ffd32a';
-    ctx.fillRect(0, trackHeight + 5, W, 4);
-    const pulseAlpha = 0.16 + 0.09 * Math.sin(animClock * 5);
+    ctx.fillRect(0, trackHeight + 5, W, 4.5);
+    const pulseAlpha = 0.18 + 0.10 * Math.sin(animClock * 5);
     ctx.fillStyle = `rgba(255, 211, 42, ${pulseAlpha})`;
-    ctx.fillRect(0, trackHeight + 9, W, 14);
+    ctx.fillRect(0, trackHeight + 9.5, W, 15);
 
     // 4. 立體路軌區
-    ctx.fillStyle = '#05070e';
+    ctx.fillStyle = '#04060c';
     ctx.fillRect(0, 0, W, trackHeight);
 
     const sleeperOffset = (animClock * 34) % 24;
     for (let x = -24 + sleeperOffset; x < W + 24; x += 24) {
-        draw3DBox(x, 12, 10, trackHeight - 22, 4, '#3e4a70', '#161b2e');
+        draw3DBox(x, 12, 10, trackHeight - 22, 4, '#47557d', '#181e33');
     }
 
-    ctx.strokeStyle = '#a5b1c2';
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#b2bec3';
+    ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(0, 18);
     ctx.lineTo(W, 18);
@@ -1692,12 +1882,12 @@ function draw() {
     // 6. 底部立體扶手電梯斜坡動畫
     const escY = H - escalatorHeight;
     const escBg = ctx.createLinearGradient(0, escY, 0, H);
-    escBg.addColorStop(0, 'rgba(255, 0, 85, 0.18)');
-    escBg.addColorStop(1, 'rgba(12, 14, 26, 0.85)');
+    escBg.addColorStop(0, 'rgba(255, 0, 85, 0.22)');
+    escBg.addColorStop(1, 'rgba(10, 12, 24, 0.90)');
     ctx.fillStyle = escBg;
     ctx.fillRect(0, escY, W, escalatorHeight);
 
-    ctx.strokeStyle = 'rgba(255, 0, 85, 0.55)';
+    ctx.strokeStyle = 'rgba(255, 0, 85, 0.6)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(0, escY);
@@ -1705,13 +1895,13 @@ function draw() {
     ctx.stroke();
 
     [W * 0.22, W * 0.78].forEach(ex => {
-        const boxW = 84;
+        const boxW = 86;
         const boxH = escalatorHeight - 10;
         const boxY = escY + 6;
 
-        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 6, '#323a69', '#13172b', '#ff0055');
+        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 6, '#3a457a', '#14182e', '#ff0055');
 
-        ctx.strokeStyle = 'rgba(255, 107, 129, 0.45)';
+        ctx.strokeStyle = 'rgba(255, 130, 160, 0.5)';
         ctx.lineWidth = 1.2;
         const stepShift = (animClock * 28) % 9;
         for (let sy = boxY + 2 + stepShift; sy < boxY + boxH - 8; sy += 9) {
@@ -1721,12 +1911,11 @@ function draw() {
             ctx.stroke();
         }
 
-        // 左右立體扶手帶
         ctx.fillStyle = '#ff477e';
         ctx.fillRect(ex - boxW / 2 + 2, boxY - 2, 4, boxH);
         ctx.fillRect(ex + boxW / 2 - 6, boxY - 2, 4, boxH);
 
-        ctx.fillStyle = '#ffd6e0';
+        ctx.fillStyle = '#ffe5ec';
         ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.46);
@@ -1744,7 +1933,7 @@ function draw() {
         ctx.restore();
     });
 
-    // 8. 依 Y 軸排序繪製立體設施與立體公仔乘客
+    // 8. 依 Y 軸排序繪製立體設施與精細公仔乘客
     const renderables = [];
     towers.forEach(t => renderables.push({ kind: 'tower', y: t.y, data: t }));
     passengers.forEach(p => renderables.push({ kind: 'passenger', y: p.y, data: p }));
@@ -1761,10 +1950,10 @@ function draw() {
             if (t.type !== 'tape') {
                 ctx.beginPath();
                 ctx.arc(tx, ty, range, 0, Math.PI * 2);
-                ctx.fillStyle = def.color + '12';
+                ctx.fillStyle = def.color + '14';
                 ctx.fill();
-                ctx.strokeStyle = def.color + '44';
-                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = def.color + '4a';
+                ctx.lineWidth = 1.3;
                 ctx.stroke();
             }
 
@@ -1772,7 +1961,7 @@ function draw() {
             ctx.translate(tx, ty);
             ctx.scale(t.animScale, t.animScale);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.58)';
             ctx.beginPath();
             ctx.ellipse(0, 10, t.type === 'tape' ? gridRect.cellW * 0.44 : 20, 8.5, 0, 0, Math.PI * 2);
             ctx.fill();
@@ -1789,7 +1978,7 @@ function draw() {
                 ctx.fill();
 
                 const baseGrad = ctx.createLinearGradient(0, -14, 0, 10);
-                baseGrad.addColorStop(0, '#2b3666');
+                baseGrad.addColorStop(0, '#32407a');
                 baseGrad.addColorStop(1, '#141933');
                 ctx.fillStyle = baseGrad;
                 ctx.strokeStyle = def.color;
@@ -1810,57 +1999,7 @@ function draw() {
             ctx.fillText(`LV.${t.level}`, 0, 20);
             ctx.restore();
         } else {
-            const p = item.data;
-            const speedNow = Math.hypot(p.vx, p.vy);
-            const hopY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -4.5 : 0;
-            const py = p.y + hopY;
-
-            const shadowScale = 1 - Math.min(0.25, Math.abs(hopY) * 0.04);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
-            ctx.beginPath();
-            ctx.ellipse(p.x, p.y + 5, p.radius * 0.92 * shadowScale, p.radius * 0.44 * shadowScale, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            let coatColor = '#00d2d3';
-            if (p.kind === 'auntie') coatColor = '#ff477e';
-            else if (p.kind === 'tourist') coatColor = '#ff9f43';
-            else if (p.kind === 'student') coatColor = '#54a0ff';
-            if (p.pushAnim > 0) coatColor = '#ffd32a';
-            else if (p.boostTimer > 0) coatColor = '#7bed9f';
-
-            ctx.fillStyle = coatColor;
-            ctx.strokeStyle = '#070812';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.roundRect(p.x - p.radius * 0.74, py - p.radius * 0.88, p.radius * 1.48, p.radius * 1.18, 5);
-            ctx.fill();
-            ctx.stroke();
-
-            const headY = py - p.radius * 1.28;
-            ctx.fillStyle = '#ffeaa7';
-            ctx.beginPath();
-            ctx.arc(p.x, headY, p.radius * 0.58, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            if (p.kind === 'tourist') {
-                draw3DBox(p.x + p.radius * 0.65, py + 2, 8.5, 8.5, 4, '#ffffff', '#95a5a6', '#070812');
-            } else if (p.kind === 'auntie') {
-                ctx.fillStyle = '#ffd32a';
-                ctx.beginPath();
-                ctx.ellipse(p.x, headY - 3.5, p.radius * 0.75, 3.8, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-            } else if (p.kind === 'student') {
-                ctx.fillStyle = '#2e86de';
-                ctx.fillRect(p.x - p.radius * 0.46, py - p.radius * 0.66, p.radius * 0.92, p.radius * 0.62);
-            }
-
-            if (p.teaTimer > 0) {
-                ctx.font = '12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('🧋', p.x, headY - 12);
-            }
+            drawDetailedPassenger(item.data);
         }
     });
 
