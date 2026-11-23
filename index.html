@@ -143,7 +143,7 @@
         border: 1px solid #555;
         border-radius: 10px;
         color: #fff;
-        font-size: 15px; /* >=15px 避免 iOS Safari 自動放大 */
+        font-size: 15px;
         font-family: 'Noto Sans HK', sans-serif;
         outline: none;
         transition: 0.2s;
@@ -769,6 +769,7 @@
         window.onerror = function(msg) { console.warn("防呆跳過：", msg); return true; };
 
         const games = [
+            { id: 'mtr-rush-hour', name: '港鐵逼爆月台塔防', category: '策略', desc: '10秒一班車，推人潮上車防逼爆，應付突發事件！', icon: '🚇', bestKey: 'mtrRushHour_best', unit: '人' },
             { id: 'neon-rain', name: '霓虹雨夜：考牌大師', category: '休閒', desc: '考牌遇上暴雨，單手擔遮避開路人！', icon: '☔', bestKey: 'neon_rain_best', unit: 'm' },
             { id: 'cha-chaan-teng', name: '茶記大亨：樓面生存戰', category: '模擬', desc: '做茶記樓面，瘋狂接單出餐！', icon: '🍳', bestKey: 'chaChaanTeng_best', unit: '$' },
             { id: 'cha-chaan-teng-2', name: '茶記點餐：記憶大考驗', category: '休閒', desc: '考驗記憶力，憑記憶點餐！', icon: '🧠', bestKey: 'chaChaanTeng_best', unit: '$' },
@@ -890,10 +891,14 @@
             if (!Number.isNaN(num) && Number.isFinite(num)) {
                 if (unit === '$') return '$' + Math.round(num).toLocaleString();
                 if (unit === 'm') return num + 'm';
+                if (unit === '人') return Math.round(num).toLocaleString() + '人';
                 return String(num);
             }
             if (raw.length > 14) return '已有存檔';
-            return unit === '$' ? '$' + raw : (unit === 'm' ? raw + 'm' : raw);
+            if (unit === '$') return '$' + raw;
+            if (unit === 'm') return raw + 'm';
+            if (unit === '人') return raw + '人';
+            return raw;
         }
 
         function renderGames() {
