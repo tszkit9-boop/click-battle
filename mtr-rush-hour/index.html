@@ -507,7 +507,7 @@
             🚧 <b>排隊膠帶</b>：立體分流欄阻擋拖篋客塞死門口<br>
             🧋 <b>奶茶檔</b>：吸引拖篋客停低買嘢飲兼賺外快
         </div>
-        <button class="primary-btn" onclick="startGame()">開始疏導人潮</button>
+        <button type="button" class="primary-btn" id="start-btn" onclick="startGame()">開始疏導人潮</button>
     </div>
 </div>
 
@@ -529,7 +529,7 @@
             今局成功運走：<b style="color:var(--neon-blue); font-size:18px;" id="final-score">0</b> 人<br>
             歷史最高紀錄：<b style="color:var(--neon-gold); font-size:16px;" id="final-best">0</b> 人
         </div>
-        <button class="primary-btn" onclick="restartGame()">再戰早繁高峰</button>
+        <button type="button" class="primary-btn" id="restart-btn" onclick="restartGame()">再戰早繁高峰</button>
     </div>
 </div>
 
@@ -568,10 +568,14 @@ const TOWER_DEFS = {
 };
 
 let audioCtx = null;
-let isMuted = localStorage.getItem(AUDIO_KEY) === 'true';
+let isMuted = false;
+try {
+    isMuted = localStorage.getItem(AUDIO_KEY) === 'true';
+} catch (_) {}
 
 function updateAudioButton() {
     const btn = document.getElementById('audio-btn');
+    if (!btn) return;
     btn.innerText = isMuted ? '🔇' : '🔊';
     btn.classList.toggle('muted', isMuted);
 }
@@ -620,7 +624,9 @@ function sfxAlert() { playTone(320, 0.14, 'sawtooth', 0.06, 0, 220); playTone(28
 
 function toggleAudio() {
     isMuted = !isMuted;
-    localStorage.setItem(AUDIO_KEY, String(isMuted));
+    try {
+        localStorage.setItem(AUDIO_KEY, String(isMuted));
+    } catch (_) {}
     updateAudioButton();
     if (!isMuted) {
         ensureAudioCtx();
@@ -656,7 +662,7 @@ function logErrorToFirebase(errMsg) {
 
 window.onerror = function(msg, src, line, col) {
     logErrorToFirebase(`${msg} (${line}:${col})`);
-    return true;
+    return false;
 };
 
 window.addEventListener('unhandledrejection', function(e) {
@@ -694,7 +700,8 @@ function chooseStation(key, btn) {
     document.querySelectorAll('.station-opt').forEach(b => {
         b.classList.toggle('active', b.dataset.station === key);
     });
-    document.getElementById('header-station-name').innerText = STATIONS[key].name;
+    const nameEl = document.getElementById('header-station-name');
+    if (nameEl) nameEl.innerText = STATIONS[key].name;
     syncOnlineStation();
     if (btn) playTone(600, 0.06, 'sine', 0.06, 0);
 }
@@ -710,7 +717,10 @@ let isPlaying = false;
 let rafId = null;
 let money = 160;
 let transported = 0;
-let bestScore = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+let bestScore = 0;
+try {
+    bestScore = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+} catch (_) {}
 let selectedTowerType = 'staff';
 let sellMode = false;
 
@@ -747,12 +757,13 @@ document.getElementById('ui-best').innerText = bestScore;
 
 function resizeCanvas() {
     const rect = wrap.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+    const width = rect.width > 40 ? rect.width : window.innerWidth;
+    const height = rect.height > 40 ? rect.height : Math.max(240, window.innerHeight - 190);
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = rect.width;
-    H = rect.height;
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
+    W = width;
+    H = height;
+    canvas.width = Math.max(1, Math.round(W * dpr));
+    canvas.height = Math.max(1, Math.round(H * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     trackHeight = Math.max(68, Math.min(88, H * 0.138));
@@ -927,18 +938,44 @@ canvas.addEventListener('pointerup', (e) => {
 });
 
 function startGame() {
-    ensureAudioCtx();
-    document.getElementById('start-modal').classList.add('hidden');
-    resetState();
-    beginLoop();
+    try {
+        const startModal = document.getElementById('start-modal');
+        if (startModal) startModal.classList.add('hidden');
+        try { ensureAudioCtx(); } catch (_) {}
+        resetState();
+        beginLoop();
+    } catch (err) {
+        logErrorToFirebase('startGame error: ' + (err && err.message ? err.message : String(err)));
+        isPlaying = true;
+        lastTime = performance.now();
+        if (rafId === null) rafId = requestAnimationFrame(loop);
+    }
 }
 
 function restartGame() {
-    ensureAudioCtx();
-    document.getElementById('gameover-modal').classList.add('hidden');
-    resetState();
-    beginLoop();
+    try {
+        const goModal = document.getElementById('gameover-modal');
+        if (goModal) goModal.classList.add('hidden');
+        try { ensureAudioCtx(); } catch (_) {}
+        resetState();
+        beginLoop();
+    } catch (err) {
+        logErrorToFirebase('restartGame error: ' + (err && err.message ? err.message : String(err)));
+        isPlaying = true;
+        lastTime = performance.now();
+        if (rafId === null) rafId = requestAnimationFrame(loop);
+    }
 }
+
+window.startGame = startGame;
+window.restartGame = restartGame;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    if (startBtn) startBtn.addEventListener('click', startGame);
+    if (restartBtn) restartBtn.addEventListener('click', restartGame);
+});
 
 function beginLoop() {
     if (rafId !== null) {
@@ -1340,7 +1377,7 @@ function update(dt) {
                 spawnBurst(p.x, trackHeight, '#2ed573', 6);
                 if (transported > bestScore) {
                     bestScore = transported;
-                    localStorage.setItem(BEST_KEY, String(bestScore));
+                    try { localStorage.setItem(BEST_KEY, String(bestScore)); } catch (_) {}
                 }
                 continue;
             } else {
@@ -1436,15 +1473,12 @@ function triggerGameOver() {
     document.getElementById('gameover-modal').classList.remove('hidden');
 }
 
-// 2.5D 立體繪製輔助函式
 function draw3DBox(x, y, w, h, depth, topColor, sideColor, strokeColor = null) {
-    // 側面深度（向上／向後擠壓視覺）
     ctx.fillStyle = sideColor;
     ctx.beginPath();
     ctx.roundRect(x, y - depth, w, h, 5);
     ctx.fill();
 
-    // 頂面
     ctx.fillStyle = topColor;
     ctx.beginPath();
     ctx.roundRect(x, y - depth, w, h - depth * 0.35, 5);
@@ -1461,14 +1495,12 @@ function draw() {
     ctx.clearRect(0, 0, W, H);
     const st = STATIONS[currentStationKey] || STATIONS.admiral;
 
-    // 1. 2.5D 立體月台地板漸變
     const floorGrad = ctx.createLinearGradient(0, trackHeight, 0, H);
     floorGrad.addColorStop(0, st.floorTop);
     floorGrad.addColorStop(1, st.floorBottom);
     ctx.fillStyle = floorGrad;
     ctx.fillRect(0, trackHeight, W, H - trackHeight);
 
-    // 月台邊緣立體台階（2.5D 深度感）
     ctx.fillStyle = '#1f2544';
     ctx.fillRect(0, trackHeight, W, 6);
     ctx.fillStyle = '#ffd32a';
@@ -1477,7 +1509,6 @@ function draw() {
     ctx.fillStyle = `rgba(255, 211, 42, ${pulseAlpha})`;
     ctx.fillRect(0, trackHeight + 9, W, 12);
 
-    // 2. 路軌區（帶立體鋼軌與枕木）
     ctx.fillStyle = '#04050a';
     ctx.fillRect(0, 0, W, trackHeight);
 
@@ -1490,7 +1521,6 @@ function draw() {
         ctx.lineTo(x, trackHeight - 8);
         ctx.stroke();
     }
-    // 鋼軌線
     ctx.strokeStyle = '#576574';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1500,7 +1530,6 @@ function draw() {
     ctx.lineTo(W, trackHeight - 14);
     ctx.stroke();
 
-    // 3. 立體列車車廂動畫
     if (trainState !== 'waiting' || trainXOffset > -1) {
         const trainX = trainXOffset * W;
         ctx.save();
@@ -1508,7 +1537,6 @@ function draw() {
         const carH = trackHeight - 10;
         const isExtra = activeEvent && activeEvent.type === 'extra_train';
 
-        // 車頂立體陰影與外殼
         ctx.fillStyle = isExtra ? '#132a2a' : '#1b223d';
         ctx.strokeStyle = isExtra ? '#2ed573' : '#00d2d3';
         ctx.lineWidth = 2;
@@ -1517,7 +1545,6 @@ function draw() {
         ctx.fill();
         ctx.stroke();
 
-        // 車頂高光條
         ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.22)' : 'rgba(0, 210, 211, 0.18)';
         ctx.fillRect(14, 3, W - 28, 6);
 
@@ -1553,7 +1580,6 @@ function draw() {
         ctx.restore();
     }
 
-    // 4. 立體感建造網格（帶內凹邊框）
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const gx = gridRect.x + c * gridRect.cellW;
@@ -1566,7 +1592,6 @@ function draw() {
         }
     }
 
-    // 5. 底部立體扶手電梯動畫
     const escY = H - escalatorHeight;
     ctx.fillStyle = 'rgba(255, 0, 85, 0.14)';
     ctx.fillRect(0, escY, W, escalatorHeight);
@@ -1598,7 +1623,6 @@ function draw() {
         ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.48);
     });
 
-    // 6. 衝擊波／聲波圈
     shockwaves.forEach(sw => {
         ctx.save();
         ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.8;
@@ -1610,17 +1634,9 @@ function draw() {
         ctx.restore();
     });
 
-    // 7. 依 Y 軸排序繪製立體設施與立體乘客（正確前後遮擋）
     const renderables = [];
-
-    towers.forEach(t => {
-        renderables.push({ kind: 'tower', y: t.y, data: t });
-    });
-
-    passengers.forEach(p => {
-        renderables.push({ kind: 'passenger', y: p.y, data: p });
-    });
-
+    towers.forEach(t => renderables.push({ kind: 'tower', y: t.y, data: t }));
+    passengers.forEach(p => renderables.push({ kind: 'passenger', y: p.y, data: p }));
     renderables.sort((a, b) => a.y - b.y);
 
     renderables.forEach(item => {
@@ -1645,7 +1661,6 @@ function draw() {
             ctx.translate(tx, ty);
             ctx.scale(t.animScale, t.animScale);
 
-            // 地面投影
             ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.beginPath();
             ctx.ellipse(0, 8, t.type === 'tape' ? gridRect.cellW * 0.42 : 17, 7, 0, 0, Math.PI * 2);
@@ -1655,7 +1670,6 @@ function draw() {
                 const barW = gridRect.cellW * (0.84 + (t.level - 1) * 0.16);
                 draw3DBox(-barW / 2, -2, barW, 13, 6, '#ff9f43', '#b35900', '#000');
             } else {
-                // 立體圓柱底座
                 ctx.fillStyle = '#0d1021';
                 ctx.beginPath();
                 ctx.ellipse(0, 4, 17, 12, 0, 0, Math.PI * 2);
@@ -1673,7 +1687,7 @@ function draw() {
             ctx.font = '18px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(def.icon, 0, t.type === 'tape' ? -4 : -4);
+            ctx.fillText(def.icon, 0, -4);
 
             ctx.fillStyle = '#ffd32a';
             ctx.font = 'bold 9px Orbitron, sans-serif';
@@ -1684,13 +1698,11 @@ function draw() {
             const speedNow = Math.hypot(p.vx, p.vy);
             const bobY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -3.2 : 0;
 
-            // 地面陰影
             ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
             ctx.beginPath();
             ctx.ellipse(p.x, p.y + 4, p.radius * 0.95, p.radius * 0.45, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // 立體膠囊身體
             let bodyColor = '#00d2d3';
             if (p.kind === 'auntie') bodyColor = '#ff477e';
             else if (p.kind === 'tourist') bodyColor = '#ff9f43';
@@ -1707,11 +1719,56 @@ function draw() {
             ctx.fill();
             ctx.stroke();
 
-            // 頂部高光
             ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
             ctx.beginPath();
             ctx.arc(p.x - p.radius * 0.22, py - p.radius * 0.45, p.radius * 0.32, 0, Math.PI * 2);
             ctx.fill();
 
             if (p.kind === 'tourist') {
-                draw3DBox(p.x + p.radius * 0.5
+                draw3DBox(p.x + p.radius * 0.55, py + 2, 7, 7, 3, '#ffffff', '#95a5a6', '#070812');
+            } else if (p.kind === 'auntie') {
+                ctx.fillStyle = '#ffd32a';
+                ctx.beginPath();
+                ctx.arc(p.x, py - p.radius * 0.75, 4, Math.PI, 0);
+                ctx.fill();
+            }
+
+            if (p.teaTimer > 0) {
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🧋', p.x, py - p.radius - 8);
+            }
+        }
+    });
+
+    particles.forEach(pt => {
+        ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    floatingTexts.forEach(ft => {
+        ctx.globalAlpha = Math.max(0, ft.life);
+        ctx.fillStyle = ft.color;
+        ctx.font = '900 13px "Noto Sans HK", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(ft.text, ft.x, ft.y);
+    });
+    ctx.globalAlpha = 1;
+}
+
+function loop(now) {
+    if (!isPlaying) return;
+    const rawDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    lastTime = now;
+
+    update(rawDt * gameSpeed);
+    draw();
+    rafId = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
