@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>🚇 港鐵逼爆月台塔防</title>
+<title>🚇 港鐵逼爆月台塔防 3D/2.5D</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
 
@@ -54,24 +54,30 @@
         gap: 6px;
     }
 
-    .back-btn {
+    .back-btn, .audio-btn {
         background: rgba(255,255,255,0.1);
         border: 1px solid #555;
         color: #fff;
-        padding: 5px 10px;
+        padding: 5px 9px;
         border-radius: 7px;
         font-size: 12px;
         font-weight: bold;
         cursor: pointer;
     }
 
+    .audio-btn.muted {
+        opacity: 0.55;
+        border-color: #666;
+    }
+
     .station-badge {
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 900;
         color: #fff;
+        white-space: nowrap;
     }
 
     .mtr-logo {
@@ -84,11 +90,17 @@
         letter-spacing: 0.5px;
     }
 
+    .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
     .speed-btn {
         background: rgba(0, 210, 211, 0.15);
         border: 1px solid var(--neon-blue);
         color: var(--neon-blue);
-        padding: 5px 10px;
+        padding: 5px 9px;
         border-radius: 7px;
         font-family: 'Orbitron', sans-serif;
         font-size: 12px;
@@ -174,7 +186,6 @@
         overflow: hidden;
     }
 
-    /* 突發事件橫幅動畫 */
     .event-banner {
         position: absolute;
         top: 10px;
@@ -312,7 +323,7 @@
         background: #14172b;
         border: 2px solid var(--neon-blue);
         border-radius: 16px;
-        padding: 22px 18px;
+        padding: 20px 18px;
         width: 100%;
         max-width: 360px;
         text-align: center;
@@ -321,16 +332,50 @@
     }
 
     .modal-card h2 {
-        font-size: 21px;
+        font-size: 20px;
         color: var(--neon-blue);
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .modal-card p {
         font-size: 13px;
         color: #ccc;
-        line-height: 1.6;
-        margin-bottom: 14px;
+        line-height: 1.55;
+        margin-bottom: 12px;
+    }
+
+    .station-picker {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .station-opt {
+        background: rgba(255,255,255,0.05);
+        border: 1.5px solid #444;
+        border-radius: 10px;
+        padding: 8px 6px;
+        color: #ccc;
+        font-family: 'Noto Sans HK', sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+
+    .station-opt.active {
+        border-color: var(--neon-gold);
+        background: rgba(255, 211, 42, 0.15);
+        color: var(--neon-gold);
+    }
+
+    .station-opt small {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        color: #aaa;
+        margin-top: 2px;
     }
 
     .legend-list {
@@ -338,9 +383,9 @@
         background: rgba(0,0,0,0.42);
         border-radius: 10px;
         padding: 10px 12px;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
         font-size: 12px;
-        line-height: 1.75;
+        line-height: 1.7;
         color: #ddd;
     }
 
@@ -370,7 +415,6 @@
     }
 </style>
 
-<!-- Firebase SDK（與遊戲大廳一致） -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
@@ -379,8 +423,11 @@
 <header>
     <div class="hud-top">
         <button class="back-btn" onclick="goBack()">⬅ 大廳</button>
-        <div class="station-badge"><span class="mtr-logo">MTR</span> 金鐘轉車站</div>
-        <button class="speed-btn" id="speed-btn" onclick="toggleSpeed()">⏩ 1X</button>
+        <div class="station-badge"><span class="mtr-logo">MTR</span> <span id="header-station-name">金鐘轉車站</span></div>
+        <div class="top-actions">
+            <button class="audio-btn" id="audio-btn" onclick="toggleAudio()" title="音效開關">🔊</button>
+            <button class="speed-btn" id="speed-btn" onclick="toggleSpeed()">⏩ 1X</button>
+        </div>
     </div>
     <div class="hud-stats">
         <div class="stat-pill">
@@ -442,14 +489,23 @@
 
 <div class="overlay" id="start-modal">
     <div class="modal-card">
-        <h2>🚇 港鐵逼爆月台塔防</h2>
-        <p>早繁轉車站人潮湧現！列車每 <b>10 秒</b>埋站開門 <b>3.2 秒</b>，將乘客塞入車廂運走，月台超過 <b>100 人</b>即發生踩踏事故！</p>
+        <h2>🚇 港鐵逼爆月台塔防 3D</h2>
+        <p>立體視角疏導人潮！每 <b>10 秒</b>一班車開門 <b>3.2 秒</b>，將乘客塞入車廂，月台超過 <b>100 人</b>即踩踏 Game Over！</p>
+        <div class="station-picker">
+            <button type="button" class="station-opt active" data-station="admiral" onclick="chooseStation('admiral', this)">
+                金鐘轉車站
+                <small>標準人潮 · 平衡節奏</small>
+            </button>
+            <button type="button" class="station-opt" data-station="mongkok" onclick="chooseStation('mongkok', this)">
+                旺角轉車站
+                <small>高密人潮 · 突發頻密</small>
+            </button>
+        </div>
         <div class="legend-list">
             🦺 <b>月台助理</b>：開門時蓄力爆衝推人入車門<br>
             📢 <b>廣播喇叭</b>：放出聲波催促乘客加快腳步<br>
-            🚧 <b>排隊膠帶</b>：阻擋分流，避免拖篋客塞死門口<br>
-            🧋 <b>奶茶檔</b>：吸引拖篋客停低買嘢飲兼賺外快<br>
-            ⚡ <b>突發事件</b>：信號故障、加班空車、大媽團衝閘
+            🚧 <b>排隊膠帶</b>：立體分流欄阻擋拖篋客塞死門口<br>
+            🧋 <b>奶茶檔</b>：吸引拖篋客停低買嘢飲兼賺外快
         </div>
         <button class="primary-btn" onclick="startGame()">開始疏導人潮</button>
     </div>
@@ -459,6 +515,16 @@
     <div class="modal-card" style="border-color: var(--neon-pink);">
         <h2 style="color: var(--neon-pink);">🚨 月台逼爆！服務受阻</h2>
         <p id="gameover-desc">月台人數突破 100 人上限！</p>
+        <div class="station-picker" style="margin-bottom:10px;">
+            <button type="button" class="station-opt" data-station="admiral" onclick="chooseStation('admiral', this)">
+                金鐘轉車站
+                <small>標準人潮</small>
+            </button>
+            <button type="button" class="station-opt" data-station="mongkok" onclick="chooseStation('mongkok', this)">
+                旺角轉車站
+                <small>高密人潮</small>
+            </button>
+        </div>
         <div class="legend-list" style="text-align: center; font-size: 14px;">
             今局成功運走：<b style="color:var(--neon-blue); font-size:18px;" id="final-score">0</b> 人<br>
             歷史最高紀錄：<b style="color:var(--neon-gold); font-size:16px;" id="final-best">0</b> 人
@@ -470,9 +536,29 @@
 <script>
 const GAME_ID = 'mtr-rush-hour';
 const BEST_KEY = 'mtrRushHour_best';
+const AUDIO_KEY = 'mtrRushHour_muted';
 const MAX_CROWD = 100;
 const TRAIN_WAIT_TIME = 10.0;
 const TRAIN_OPEN_TIME = 3.2;
+
+const STATIONS = {
+    admiral: {
+        name: '金鐘轉車站',
+        spawnBase: 0.92,
+        spawnDecay: 0.008,
+        eventIntervalBase: 17.5,
+        floorTop: '#121833',
+        floorBottom: '#090c1c'
+    },
+    mongkok: {
+        name: '旺角轉車站',
+        spawnBase: 0.72,
+        spawnDecay: 0.011,
+        eventIntervalBase: 13.5,
+        floorTop: '#1b1236',
+        floorBottom: '#0d091d'
+    }
+};
 
 const TOWER_DEFS = {
     staff:   { name: '月台助理', icon: '🦺', cost: 50, color: '#ffd32a', range: 98 },
@@ -481,11 +567,80 @@ const TOWER_DEFS = {
     tea:     { name: '奶茶檔',   icon: '🧋', cost: 60, color: '#ff0055', range: 98 }
 };
 
-// Firebase 實時在線與錯誤日誌初始化
+let audioCtx = null;
+let isMuted = localStorage.getItem(AUDIO_KEY) === 'true';
+
+function updateAudioButton() {
+    const btn = document.getElementById('audio-btn');
+    btn.innerText = isMuted ? '🔇' : '🔊';
+    btn.classList.toggle('muted', isMuted);
+}
+updateAudioButton();
+
+function ensureAudioCtx() {
+    if (isMuted) return null;
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        return audioCtx;
+    } catch (_) {
+        return null;
+    }
+}
+
+function playTone(freq, duration = 0.09, type = 'sine', gainVal = 0.08, delay = 0, endFreq = null) {
+    const ctxAudio = ensureAudioCtx();
+    if (!ctxAudio) return;
+    try {
+        const now = ctxAudio.currentTime + delay;
+        const osc = ctxAudio.createOscillator();
+        const gain = ctxAudio.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (endFreq !== null) {
+            osc.frequency.exponentialRampToValueAtTime(Math.max(40, endFreq), now + duration);
+        }
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(gainVal, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        osc.connect(gain);
+        gain.connect(ctxAudio.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+    } catch (_) {}
+}
+
+function sfxBuild() { playTone(520, 0.08, 'triangle', 0.09, 0, 780); }
+function sfxUpgrade() { playTone(580, 0.08, 'triangle', 0.09, 0); playTone(880, 0.11, 'triangle', 0.09, 0.07); }
+function sfxBoard() { playTone(980, 0.06, 'sine', 0.055, 0, 1240); }
+function sfxDoorOpen() { playTone(660, 0.1, 'sine', 0.08, 0); playTone(880, 0.14, 'sine', 0.08, 0.11); }
+function sfxAlert() { playTone(320, 0.14, 'sawtooth', 0.06, 0, 220); playTone(280, 0.16, 'sawtooth', 0.06, 0.15, 190); }
+
+function toggleAudio() {
+    isMuted = !isMuted;
+    localStorage.setItem(AUDIO_KEY, String(isMuted));
+    updateAudioButton();
+    if (!isMuted) {
+        ensureAudioCtx();
+        playTone(720, 0.08, 'sine', 0.07, 0);
+    }
+}
+
 const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
 let db = null;
 let userId = '';
 let onlineRef = null;
+let currentStationKey = 'admiral';
+
+function syncOnlineStation() {
+    try {
+        if (!onlineRef) return;
+        const st = STATIONS[currentStationKey] || STATIONS.admiral;
+        onlineRef.set({ enteredAt: Date.now(), station: st.name }).catch(() => {});
+    } catch (_) {}
+}
 
 function logErrorToFirebase(errMsg) {
     try {
@@ -522,10 +677,7 @@ window.addEventListener('unhandledrejection', function(e) {
         }
 
         onlineRef = db.ref(`online_status/${GAME_ID}/${userId}`);
-        onlineRef.set({
-            enteredAt: Date.now(),
-            station: '金鐘轉車站'
-        }).catch(() => {});
+        syncOnlineStation();
         onlineRef.onDisconnect().remove().catch(() => {});
 
         window.addEventListener('pagehide', () => {
@@ -535,6 +687,17 @@ window.addEventListener('unhandledrejection', function(e) {
         console.warn('Firebase init skip:', e);
     }
 })();
+
+function chooseStation(key, btn) {
+    if (!STATIONS[key]) return;
+    currentStationKey = key;
+    document.querySelectorAll('.station-opt').forEach(b => {
+        b.classList.toggle('active', b.dataset.station === key);
+    });
+    document.getElementById('header-station-name').innerText = STATIONS[key].name;
+    syncOnlineStation();
+    if (btn) playTone(600, 0.06, 'sine', 0.06, 0);
+}
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -551,23 +714,21 @@ let bestScore = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
 let selectedTowerType = 'staff';
 let sellMode = false;
 
-// 列車狀態: 'waiting' | 'boarding' | 'departing'
 let trainState = 'waiting';
 let trainTimer = 7.0;
 let trainXOffset = -1;
 let doorOpenRatio = 0;
 let boardedThisTrain = 0;
 
-// 突發事件狀態
 let nextEventTimer = 14.0;
-let activeEvent = null; // { type: 'signal_delay' | 'extra_train' | 'auntie_rush', timer: number }
+let activeEvent = null;
 let bannerHideTimeout = null;
 
 const COLS = 6;
 const ROWS = 7;
 let gridRect = { x: 0, y: 0, w: 0, h: 0, cellW: 0, cellH: 0 };
-let trackHeight = 76;
-let escalatorHeight = 66;
+let trackHeight = 78;
+let escalatorHeight = 68;
 let doorsX = [];
 
 let towers = [];
@@ -594,14 +755,14 @@ function resizeCanvas() {
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    trackHeight = Math.max(66, Math.min(86, H * 0.135));
-    escalatorHeight = Math.max(58, Math.min(76, H * 0.12));
+    trackHeight = Math.max(68, Math.min(88, H * 0.138));
+    escalatorHeight = Math.max(60, Math.min(78, H * 0.122));
 
     const padX = 12;
     gridRect.x = padX;
-    gridRect.y = trackHeight + 12;
+    gridRect.y = trackHeight + 14;
     gridRect.w = Math.max(120, W - padX * 2);
-    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 24);
+    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 26);
     gridRect.cellW = gridRect.w / COLS;
     gridRect.cellH = gridRect.h / ROWS;
 
@@ -704,8 +865,9 @@ canvas.addEventListener('pointerup', (e) => {
             const refund = Math.floor(t.totalInvested * 0.7);
             money += refund;
             spawnBurst(t.x, t.y, '#ff6b81', 10);
-            spawnFloatText(t.x, t.y - 10, `+$${refund}`, '#2ed573');
+            spawnFloatText(t.x, t.y - 14, `+$${refund}`, '#2ed573');
             towers.splice(existingIdx, 1);
+            playTone(390, 0.08, 'triangle', 0.06, 0, 260);
             updateUI();
         }
         return;
@@ -714,12 +876,12 @@ canvas.addEventListener('pointerup', (e) => {
     if (existingIdx !== -1) {
         const t = towers[existingIdx];
         if (t.level >= 3) {
-            spawnFloatText(t.x, t.y - 12, '已達最高 LV.3', '#ccc');
+            spawnFloatText(t.x, t.y - 16, '已達最高 LV.3', '#ccc');
             return;
         }
         const upgCost = Math.round(TOWER_DEFS[t.type].cost * (t.level === 1 ? 1.2 : 1.6));
         if (money < upgCost) {
-            spawnFloatText(t.x, t.y - 12, `唔夠錢 ($${upgCost})`, '#ff0055');
+            spawnFloatText(t.x, t.y - 16, `唔夠錢 ($${upgCost})`, '#ff0055');
             return;
         }
         money -= upgCost;
@@ -728,14 +890,15 @@ canvas.addEventListener('pointerup', (e) => {
         t.animScale = 1.35;
         shockwaves.push({ x: t.x, y: t.y, r: 10, maxR: 42, color: TOWER_DEFS[t.type].color, life: 0.35, maxLife: 0.35 });
         spawnBurst(t.x, t.y, TOWER_DEFS[t.type].color, 14);
-        spawnFloatText(t.x, t.y - 16, `升級 LV.${t.level}!`, '#ffd32a');
+        spawnFloatText(t.x, t.y - 20, `升級 LV.${t.level}!`, '#ffd32a');
+        sfxUpgrade();
         updateUI();
         return;
     }
 
     const def = TOWER_DEFS[selectedTowerType];
     if (money < def.cost) {
-        spawnFloatText(px, py - 10, `資金不足 ($${def.cost})`, '#ff0055');
+        spawnFloatText(px, py - 14, `資金不足 ($${def.cost})`, '#ff0055');
         return;
     }
 
@@ -758,17 +921,20 @@ canvas.addEventListener('pointerup', (e) => {
     });
     shockwaves.push({ x: cx, y: cy, r: 8, maxR: 36, color: def.color, life: 0.3, maxLife: 0.3 });
     spawnBurst(cx, cy, def.color, 12);
-    spawnFloatText(cx, cy - 12, `${def.icon} -${def.cost}`, '#ffd32a');
+    spawnFloatText(cx, cy - 16, `${def.icon} -${def.cost}`, '#ffd32a');
+    sfxBuild();
     updateUI();
 });
 
 function startGame() {
+    ensureAudioCtx();
     document.getElementById('start-modal').classList.add('hidden');
     resetState();
     beginLoop();
 }
 
 function restartGame() {
+    ensureAudioCtx();
     document.getElementById('gameover-modal').classList.add('hidden');
     resetState();
     beginLoop();
@@ -787,6 +953,9 @@ function beginLoop() {
 function resetState() {
     resizeCanvas();
     clearEventBanner();
+    const st = STATIONS[currentStationKey] || STATIONS.admiral;
+    document.getElementById('header-station-name').innerText = st.name;
+    syncOnlineStation();
     money = 160;
     transported = 0;
     towers = [];
@@ -802,7 +971,7 @@ function resetState() {
     spawnTimer = 0.25;
     waveTime = 0;
     animClock = 0;
-    nextEventTimer = 13.0;
+    nextEventTimer = st.eventIntervalBase;
     activeEvent = null;
     updateUI();
 }
@@ -810,28 +979,24 @@ function resetState() {
 function triggerRandomEvent() {
     const roll = Math.random();
     if (roll < 0.36) {
-        // 1. 信號故障（列車延誤）
         activeEvent = { type: 'signal_delay', timer: 5.0 };
-        if (trainState === 'waiting') {
-            trainTimer += 3.0;
-        }
+        if (trainState === 'waiting') trainTimer += 3.0;
         showEventBanner('⚠️ 突發：信號故障！列車延誤進站', 'alert', 3400);
         spawnFloatText(W / 2, trackHeight + 26, '⚠️ 信號故障！', '#ff6b81');
+        sfxAlert();
     } else if (roll < 0.68) {
-        // 2. 繁忙加班空車
         activeEvent = { type: 'extra_train', timer: 6.0 };
-        if (trainState === 'waiting') {
-            trainTimer = Math.max(1.2, trainTimer - 3.5);
-        }
+        if (trainState === 'waiting') trainTimer = Math.max(1.2, trainTimer - 3.5);
         showEventBanner('🚆 突發：繁忙加班空車！上車獎金提升', 'boost', 3400);
         spawnFloatText(W / 2, trackHeight + 26, '🚆 加班空車到站！', '#7bed9f');
+        playTone(620, 0.09, 'triangle', 0.08, 0, 920);
     } else {
-        // 3. 大媽團衝閘
         activeEvent = { type: 'auntie_rush', timer: 4.5 };
         showEventBanner('💃 突發：大媽團衝閘湧入月台！', 'alert', 3400);
-        const count = 5;
+        sfxAlert();
+        const count = currentStationKey === 'mongkok' ? 6 : 5;
         for (let k = 0; k < count; k++) {
-            spawnPassenger('auntie', (k - 2) * 14);
+            spawnPassenger('auntie', (k - (count - 1) / 2) * 14);
         }
     }
 }
@@ -850,7 +1015,6 @@ function spawnPassenger(forceKind = null, xJitter = 0) {
     const escRight = W * 0.78 + (Math.random() - 0.5) * 44;
     const startX = Math.max(20, Math.min(W - 20, (Math.random() < 0.5 ? escLeft : escRight) + xJitter));
     const startY = H - escalatorHeight + 12;
-
     const targetDoor = doorsX[Math.floor(Math.random() * doorsX.length)];
 
     let radius = 7.5;
@@ -907,31 +1071,29 @@ function spawnFloatText(x, y, text, color) {
 function update(dt) {
     waveTime += dt;
     animClock += dt;
+    const st = STATIONS[currentStationKey] || STATIONS.admiral;
 
-    // 突發事件排程
     if (activeEvent) {
         activeEvent.timer -= dt;
-        if (activeEvent.timer <= 0) {
-            activeEvent = null;
-        }
+        if (activeEvent.timer <= 0) activeEvent = null;
     } else {
         nextEventTimer -= dt;
         if (nextEventTimer <= 0) {
-            nextEventTimer = Math.max(11.0, 17.5 - waveTime * 0.04);
+            nextEventTimer = Math.max(10.0, st.eventIntervalBase - waveTime * 0.04);
             triggerRandomEvent();
         }
     }
 
-    // 1. 生成乘客
-    const spawnInterval = Math.max(0.24, 0.92 - waveTime * 0.008);
+    const spawnInterval = Math.max(0.20, st.spawnBase - waveTime * st.spawnDecay);
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
         spawnTimer = spawnInterval;
         spawnPassenger();
-        if (waveTime > 32 && Math.random() < 0.35) spawnPassenger();
+        if (waveTime > 28 && Math.random() < (currentStationKey === 'mongkok' ? 0.45 : 0.35)) {
+            spawnPassenger();
+        }
     }
 
-    // 2. 列車狀態機
     const bar = document.getElementById('train-bar');
     const barText = document.getElementById('train-text');
     const isDelayed = activeEvent && activeEvent.type === 'signal_delay';
@@ -960,6 +1122,7 @@ function update(dt) {
             trainTimer = TRAIN_OPEN_TIME;
             trainXOffset = 0;
             boardedThisTrain = 0;
+            sfxDoorOpen();
             spawnFloatText(W / 2, trackHeight + 22, '🚪 車門打開！快推人上車！', '#ffd32a');
         }
     } else if (trainState === 'boarding') {
@@ -998,7 +1161,6 @@ function update(dt) {
         }
     }
 
-    // 3. 設施邏輯與動畫
     towers.forEach(t => {
         if (t.animScale > 1) {
             t.animScale = Math.max(1, t.animScale - dt * 2.2);
@@ -1083,7 +1245,7 @@ function update(dt) {
             if (Math.random() < dt * 2.2) {
                 particles.push({
                     x: t.x + (Math.random() - 0.5) * 14,
-                    y: t.y - 12,
+                    y: t.y - 14,
                     vx: (Math.random() - 0.5) * 14,
                     vy: -24 - Math.random() * 14,
                     life: 0.7,
@@ -1101,14 +1263,13 @@ function update(dt) {
                         const earn = 4 + t.level * 2;
                         money += earn;
                         spawnBurst(t.x, t.y, '#ff6b81', 6);
-                        spawnFloatText(t.x, t.y - 16, `🧋 +$${earn}`, '#ff6b81');
+                        spawnFloatText(t.x, t.y - 18, `🧋 +$${earn}`, '#ff6b81');
                     }
                 }
             });
         }
     });
 
-    // 4. 更新乘客
     const stopLineY = trackHeight + 16;
 
     for (let i = passengers.length - 1; i >= 0; i--) {
@@ -1146,11 +1307,10 @@ function update(dt) {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
 
-        // 排隊膠帶分流
         towers.forEach(t => {
             if (t.type === 'tape') {
                 const barHalfW = gridRect.cellW * (0.42 + (t.level - 1) * 0.08);
-                const barHalfH = 8;
+                const barHalfH = 9;
                 const relX = p.x - t.x;
                 const relY = p.y - t.y;
                 if (Math.abs(relX) < barHalfW + p.radius && Math.abs(relY) < barHalfH + p.radius) {
@@ -1176,6 +1336,7 @@ function update(dt) {
                 const baseTicket = (p.kind === 'tourist' || p.kind === 'auntie') ? 6 : 3;
                 const ticket = isExtraTrain ? baseTicket * 2 : baseTicket;
                 money += ticket;
+                sfxBoard();
                 spawnBurst(p.x, trackHeight, '#2ed573', 6);
                 if (transported > bestScore) {
                     bestScore = transported;
@@ -1190,7 +1351,6 @@ function update(dt) {
         }
     }
 
-    // 5. 人潮推擠
     const maxPairs = 1400;
     let pairChecks = 0;
     for (let i = 0; i < passengers.length && pairChecks < maxPairs; i++) {
@@ -1215,7 +1375,6 @@ function update(dt) {
         }
     }
 
-    // 6. 衝擊波、粒子、飄字
     for (let i = shockwaves.length - 1; i >= 0; i--) {
         const sw = shockwaves[i];
         sw.life -= dt;
@@ -1265,34 +1424,64 @@ function triggerGameOver() {
     isPlaying = false;
     activeEvent = null;
     clearEventBanner();
+    sfxAlert();
     if (rafId !== null) {
         cancelAnimationFrame(rafId);
         rafId = null;
     }
+    const st = STATIONS[currentStationKey] || STATIONS.admiral;
+    document.getElementById('gameover-desc').innerText = `${st.name} 人數突破 100 人上限！`;
     document.getElementById('final-score').innerText = transported;
     document.getElementById('final-best').innerText = bestScore;
     document.getElementById('gameover-modal').classList.remove('hidden');
 }
 
+// 2.5D 立體繪製輔助函式
+function draw3DBox(x, y, w, h, depth, topColor, sideColor, strokeColor = null) {
+    // 側面深度（向上／向後擠壓視覺）
+    ctx.fillStyle = sideColor;
+    ctx.beginPath();
+    ctx.roundRect(x, y - depth, w, h, 5);
+    ctx.fill();
+
+    // 頂面
+    ctx.fillStyle = topColor;
+    ctx.beginPath();
+    ctx.roundRect(x, y - depth, w, h - depth * 0.35, 5);
+    ctx.fill();
+
+    if (strokeColor) {
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+}
+
 function draw() {
     ctx.clearRect(0, 0, W, H);
+    const st = STATIONS[currentStationKey] || STATIONS.admiral;
 
-    // 月台地板
-    ctx.fillStyle = '#0d1021';
+    // 1. 2.5D 立體月台地板漸變
+    const floorGrad = ctx.createLinearGradient(0, trackHeight, 0, H);
+    floorGrad.addColorStop(0, st.floorTop);
+    floorGrad.addColorStop(1, st.floorBottom);
+    ctx.fillStyle = floorGrad;
     ctx.fillRect(0, trackHeight, W, H - trackHeight);
 
-    // 黃色安全線動畫
+    // 月台邊緣立體台階（2.5D 深度感）
+    ctx.fillStyle = '#1f2544';
+    ctx.fillRect(0, trackHeight, W, 6);
     ctx.fillStyle = '#ffd32a';
-    ctx.fillRect(0, trackHeight + 2, W, 5);
-    const pulseAlpha = 0.1 + 0.08 * Math.sin(animClock * 5);
+    ctx.fillRect(0, trackHeight + 5, W, 4);
+    const pulseAlpha = 0.12 + 0.08 * Math.sin(animClock * 5);
     ctx.fillStyle = `rgba(255, 211, 42, ${pulseAlpha})`;
-    ctx.fillRect(0, trackHeight + 7, W, 12);
+    ctx.fillRect(0, trackHeight + 9, W, 12);
 
-    // 路軌區
-    ctx.fillStyle = '#05060c';
+    // 2. 路軌區（帶立體鋼軌與枕木）
+    ctx.fillStyle = '#04050a';
     ctx.fillRect(0, 0, W, trackHeight);
 
-    ctx.strokeStyle = '#1b1f38';
+    ctx.strokeStyle = '#202646';
     ctx.lineWidth = 3;
     const sleeperOffset = (animClock * 30) % 22;
     for (let x = -22 + sleeperOffset; x < W + 22; x += 22) {
@@ -1301,16 +1490,26 @@ function draw() {
         ctx.lineTo(x, trackHeight - 8);
         ctx.stroke();
     }
+    // 鋼軌線
+    ctx.strokeStyle = '#576574';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 16);
+    ctx.lineTo(W, 16);
+    ctx.moveTo(0, trackHeight - 14);
+    ctx.lineTo(W, trackHeight - 14);
+    ctx.stroke();
 
-    // 列車動畫
+    // 3. 立體列車車廂動畫
     if (trainState !== 'waiting' || trainXOffset > -1) {
         const trainX = trainXOffset * W;
         ctx.save();
-        ctx.translate(trainX, 6);
+        ctx.translate(trainX, 5);
         const carH = trackHeight - 10;
         const isExtra = activeEvent && activeEvent.type === 'extra_train';
 
-        ctx.fillStyle = isExtra ? '#162b2b' : '#1f2642';
+        // 車頂立體陰影與外殼
+        ctx.fillStyle = isExtra ? '#132a2a' : '#1b223d';
         ctx.strokeStyle = isExtra ? '#2ed573' : '#00d2d3';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1318,11 +1517,15 @@ function draw() {
         ctx.fill();
         ctx.stroke();
 
+        // 車頂高光條
+        ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.22)' : 'rgba(0, 210, 211, 0.18)';
+        ctx.fillRect(14, 3, W - 28, 6);
+
         for (let wx = 26; wx < W - 36; wx += 34) {
             const nearDoor = doorsX.some(dx => Math.abs(wx - dx) < 32);
             if (!nearDoor) {
-                ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.25)' : 'rgba(0, 210, 211, 0.22)';
-                ctx.fillRect(wx, 10, 20, carH * 0.26);
+                ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.28)' : 'rgba(0, 210, 211, 0.24)';
+                ctx.fillRect(wx, 12, 20, carH * 0.24);
             }
         }
 
@@ -1331,11 +1534,11 @@ function draw() {
 
         doorsX.forEach(dx => {
             const doorW = 46;
-            ctx.fillStyle = trainState === 'boarding' ? 'rgba(46, 213, 115, 0.35)' : '#101426';
+            ctx.fillStyle = trainState === 'boarding' ? 'rgba(46, 213, 115, 0.38)' : '#0f1324';
             ctx.fillRect(dx - doorW / 2, 6, doorW, carH - 8);
 
             const slide = (doorW / 2) * doorOpenRatio;
-            ctx.fillStyle = '#4a5578';
+            ctx.fillStyle = '#576574';
             ctx.fillRect(dx - doorW / 2, 6, doorW / 2 - slide, carH - 8);
             ctx.fillRect(dx + slide, 6, doorW / 2 - slide, carH - 8);
 
@@ -1350,43 +1553,39 @@ function draw() {
         ctx.restore();
     }
 
-    // 建造網格
-    ctx.strokeStyle = 'rgba(0, 210, 211, 0.13)';
-    ctx.lineWidth = 1;
+    // 4. 立體感建造網格（帶內凹邊框）
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const gx = gridRect.x + c * gridRect.cellW;
             const gy = gridRect.y + r * gridRect.cellH;
-            ctx.strokeRect(gx + 2, gy + 2, gridRect.cellW - 4, gridRect.cellH - 4);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+            ctx.fillRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
+            ctx.strokeStyle = 'rgba(0, 210, 211, 0.16)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
         }
     }
 
-    // 底部扶手電梯動畫
+    // 5. 底部立體扶手電梯動畫
     const escY = H - escalatorHeight;
-    ctx.fillStyle = 'rgba(255, 0, 85, 0.12)';
+    ctx.fillStyle = 'rgba(255, 0, 85, 0.14)';
     ctx.fillRect(0, escY, W, escalatorHeight);
-    ctx.strokeStyle = 'rgba(255, 0, 85, 0.45)';
+    ctx.strokeStyle = 'rgba(255, 0, 85, 0.5)';
     ctx.beginPath();
     ctx.moveTo(0, escY);
     ctx.lineTo(W, escY);
     ctx.stroke();
 
     [W * 0.22, W * 0.78].forEach(ex => {
-        const boxW = 74;
+        const boxW = 76;
         const boxH = escalatorHeight - 14;
         const boxY = escY + 8;
 
-        ctx.fillStyle = '#1c1f36';
-        ctx.strokeStyle = '#ff0055';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.roundRect(ex - boxW / 2, boxY, boxW, boxH, 8);
-        ctx.fill();
-        ctx.stroke();
+        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 5, '#252a4a', '#131629', '#ff0055');
 
-        ctx.strokeStyle = 'rgba(255, 107, 129, 0.28)';
+        ctx.strokeStyle = 'rgba(255, 107, 129, 0.34)';
         const stepShift = (animClock * 24) % 10;
-        for (let sy = boxY + 4 + stepShift; sy < boxY + boxH - 3; sy += 10) {
+        for (let sy = boxY + 1 + stepShift; sy < boxY + boxH - 6; sy += 10) {
             ctx.beginPath();
             ctx.moveTo(ex - boxW / 2 + 6, sy);
             ctx.lineTo(ex + boxW / 2 - 6, sy);
@@ -1396,140 +1595,123 @@ function draw() {
         ctx.fillStyle = '#ff6b81';
         ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.56);
+        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.48);
     });
 
-    // 衝擊波／聲波圈
+    // 6. 衝擊波／聲波圈
     shockwaves.forEach(sw => {
         ctx.save();
-        ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.75;
+        ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.8;
         ctx.strokeStyle = sw.color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
         ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
     });
 
-    // 設施動畫
+    // 7. 依 Y 軸排序繪製立體設施與立體乘客（正確前後遮擋）
+    const renderables = [];
+
     towers.forEach(t => {
-        const def = TOWER_DEFS[t.type];
-        const range = def.range * (1 + (t.level - 1) * 0.18);
-        const tx = t.x + t.dashX;
-        const ty = t.y + t.dashY;
-
-        if (t.type !== 'tape') {
-            ctx.beginPath();
-            ctx.arc(tx, ty, range, 0, Math.PI * 2);
-            ctx.fillStyle = def.color + '12';
-            ctx.fill();
-            ctx.strokeStyle = def.color + '3d';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-        }
-
-        ctx.save();
-        ctx.translate(tx, ty);
-        ctx.scale(t.animScale, t.animScale);
-
-        if (t.type === 'tape') {
-            const barW = gridRect.cellW * (0.84 + (t.level - 1) * 0.16);
-            ctx.fillStyle = '#ff9f43';
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(-barW / 2, -7, barW, 14, 5);
-            ctx.fill();
-            ctx.stroke();
-        } else {
-            ctx.fillStyle = '#161a30';
-            ctx.strokeStyle = def.color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, 17, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-        }
-
-        ctx.font = '18px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(def.icon, 0, 0);
-
-        ctx.fillStyle = '#ffd32a';
-        ctx.font = 'bold 9px Orbitron, sans-serif';
-        ctx.fillText(`LV.${t.level}`, 0, 20);
-        ctx.restore();
+        renderables.push({ kind: 'tower', y: t.y, data: t });
     });
 
-    // 乘客走路微擺動畫
     passengers.forEach(p => {
-        const speedNow = Math.hypot(p.vx, p.vy);
-        const bobY = speedNow > 6 ? Math.sin(p.phase) * 1.6 : 0;
+        renderables.push({ kind: 'passenger', y: p.y, data: p });
+    });
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y + bobY, p.radius, 0, Math.PI * 2);
+    renderables.sort((a, b) => a.y - b.y);
 
-        if (p.kind === 'auntie') ctx.fillStyle = '#ff477e';
-        else if (p.kind === 'tourist') ctx.fillStyle = '#ff9f43';
-        else if (p.kind === 'student') ctx.fillStyle = '#54a0ff';
-        else ctx.fillStyle = '#00d2d3';
+    renderables.forEach(item => {
+        if (item.kind === 'tower') {
+            const t = item.data;
+            const def = TOWER_DEFS[t.type];
+            const range = def.range * (1 + (t.level - 1) * 0.18);
+            const tx = t.x + t.dashX;
+            const ty = t.y + t.dashY;
 
-        if (p.pushAnim > 0) ctx.fillStyle = '#ffd32a';
-        else if (p.boostTimer > 0) ctx.fillStyle = '#7bed9f';
-        ctx.fill();
+            if (t.type !== 'tape') {
+                ctx.beginPath();
+                ctx.arc(tx, ty, range, 0, Math.PI * 2);
+                ctx.fillStyle = def.color + '11';
+                ctx.fill();
+                ctx.strokeStyle = def.color + '3a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
 
-        ctx.strokeStyle = '#070812';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.scale(t.animScale, t.animScale);
 
-        if (p.kind === 'tourist') {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(p.x + p.radius - 2, p.y + bobY - 3, 5, 6);
-        } else if (p.kind === 'auntie') {
-            ctx.fillStyle = '#ffd32a';
+            // 地面投影
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.beginPath();
-            ctx.arc(p.x, p.y + bobY - p.radius + 1, 3.5, Math.PI, 0);
+            ctx.ellipse(0, 8, t.type === 'tape' ? gridRect.cellW * 0.42 : 17, 7, 0, 0, Math.PI * 2);
             ctx.fill();
-        }
 
-        if (p.teaTimer > 0) {
-            ctx.font = '11px sans-serif';
+            if (t.type === 'tape') {
+                const barW = gridRect.cellW * (0.84 + (t.level - 1) * 0.16);
+                draw3DBox(-barW / 2, -2, barW, 13, 6, '#ff9f43', '#b35900', '#000');
+            } else {
+                // 立體圓柱底座
+                ctx.fillStyle = '#0d1021';
+                ctx.beginPath();
+                ctx.ellipse(0, 4, 17, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#1c2240';
+                ctx.strokeStyle = def.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(0, -3, 17, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            ctx.font = '18px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('🧋', p.x, p.y + bobY - p.radius - 7);
-        }
-    });
+            ctx.textBaseline = 'middle';
+            ctx.fillText(def.icon, 0, t.type === 'tape' ? -4 : -4);
 
-    // 粒子
-    particles.forEach(pt => {
-        ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
-        ctx.fillStyle = pt.color;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-    ctx.globalAlpha = 1;
+            ctx.fillStyle = '#ffd32a';
+            ctx.font = 'bold 9px Orbitron, sans-serif';
+            ctx.fillText(`LV.${t.level}`, 0, 18);
+            ctx.restore();
+        } else {
+            const p = item.data;
+            const speedNow = Math.hypot(p.vx, p.vy);
+            const bobY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -3.2 : 0;
 
-    // 飄字
-    floatingTexts.forEach(ft => {
-        ctx.globalAlpha = Math.max(0, ft.life);
-        ctx.fillStyle = ft.color;
-        ctx.font = '900 13px "Noto Sans HK", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(ft.text, ft.x, ft.y);
-    });
-    ctx.globalAlpha = 1;
-}
+            // 地面陰影
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y + 4, p.radius * 0.95, p.radius * 0.45, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-function loop(now) {
-    if (!isPlaying) return;
-    const rawDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
-    lastTime = now;
+            // 立體膠囊身體
+            let bodyColor = '#00d2d3';
+            if (p.kind === 'auntie') bodyColor = '#ff477e';
+            else if (p.kind === 'tourist') bodyColor = '#ff9f43';
+            else if (p.kind === 'student') bodyColor = '#54a0ff';
+            if (p.pushAnim > 0) bodyColor = '#ffd32a';
+            else if (p.boostTimer > 0) bodyColor = '#7bed9f';
 
-    update(rawDt * gameSpeed);
-    draw();
-    rafId = requestAnimationFrame(loop);
-}
-</script>
-</body>
-</html>
+            const py = p.y + bobY - 4;
+            ctx.fillStyle = bodyColor;
+            ctx.strokeStyle = '#070812';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(p.x - p.radius * 0.78, py - p.radius * 0.9, p.radius * 1.56, p.radius * 1.45, p.radius * 0.65);
+            ctx.fill();
+            ctx.stroke();
+
+            // 頂部高光
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.beginPath();
+            ctx.arc(p.x - p.radius * 0.22, py - p.radius * 0.45, p.radius * 0.32, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (p.kind === 'tourist') {
+                draw3DBox(p.x + p.radius * 0.5
