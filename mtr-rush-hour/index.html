@@ -547,20 +547,22 @@ const STATIONS = {
         spawnBase: 0.92,
         spawnDecay: 0.008,
         eventIntervalBase: 17.5,
-        floorTop: '#162042',
-        floorBottom: '#090d1f',
-        tileA: 'rgba(255,255,255,0.025)',
-        tileB: 'rgba(0,210,211,0.02)'
+        floorTop: '#1b2854',
+        floorBottom: '#0a0f24',
+        tileLight: 'rgba(255,255,255,0.045)',
+        tileDark: 'rgba(0,210,211,0.025)',
+        lampGlow: 'rgba(130, 204, 221, 0.14)'
     },
     mongkok: {
         name: '旺角轉車站',
         spawnBase: 0.72,
         spawnDecay: 0.011,
         eventIntervalBase: 13.5,
-        floorTop: '#241547',
-        floorBottom: '#0d0921',
-        tileA: 'rgba(255,255,255,0.025)',
-        tileB: 'rgba(255,0,85,0.025)'
+        floorTop: '#2c1859',
+        floorBottom: '#0e0a24',
+        tileLight: 'rgba(255,255,255,0.045)',
+        tileDark: 'rgba(255,0,85,0.03)',
+        lampGlow: 'rgba(255, 107, 129, 0.14)'
     }
 };
 
@@ -741,8 +743,8 @@ let bannerHideTimeout = null;
 const COLS = 6;
 const ROWS = 7;
 let gridRect = { x: 0, y: 0, w: 0, h: 0, cellW: 0, cellH: 0 };
-let trackHeight = 84;
-let escalatorHeight = 72;
+let trackHeight = 86;
+let escalatorHeight = 76;
 let doorsX = [];
 
 let towers = [];
@@ -770,14 +772,14 @@ function resizeCanvas() {
     canvas.height = Math.max(1, Math.round(H * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    trackHeight = Math.max(76, Math.min(96, H * 0.148));
-    escalatorHeight = Math.max(64, Math.min(82, H * 0.128));
+    trackHeight = Math.max(78, Math.min(98, H * 0.15));
+    escalatorHeight = Math.max(68, Math.min(86, H * 0.132));
 
     const padX = 14;
     gridRect.x = padX;
-    gridRect.y = trackHeight + 18;
+    gridRect.y = trackHeight + 20;
     gridRect.w = Math.max(120, W - padX * 2);
-    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 30);
+    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 32);
     gridRect.cellW = gridRect.w / COLS;
     gridRect.cellH = gridRect.h / ROWS;
 
@@ -1058,16 +1060,16 @@ function spawnPassenger(forceKind = null, xJitter = 0) {
     const startY = H - escalatorHeight + 12;
     const targetDoor = doorsX[Math.floor(Math.random() * doorsX.length)];
 
-    let radius = 8.5;
+    let radius = 9;
     let baseSpeed = 37;
     if (kind === 'tourist') {
-        radius = 10.5;
+        radius = 11;
         baseSpeed = 27;
     } else if (kind === 'student') {
-        radius = 7.5;
+        radius = 8;
         baseSpeed = 48;
     } else if (kind === 'auntie') {
-        radius = 11;
+        radius = 11.5;
         baseSpeed = 43;
     }
 
@@ -1508,10 +1510,10 @@ function drawRealisticMTRTrain(trainX, carY, carH, isExtra) {
     ctx.fill();
 
     const metalGrad = ctx.createLinearGradient(0, 0, 0, carH);
-    metalGrad.addColorStop(0.00, '#dfe6e9');
-    metalGrad.addColorStop(0.18, '#b2bec3');
-    metalGrad.addColorStop(0.55, isExtra ? '#55efc4' : '#7f8fa6');
-    metalGrad.addColorStop(0.88, '#535c68');
+    metalGrad.addColorStop(0.00, '#e8eef2');
+    metalGrad.addColorStop(0.18, '#b8c4cc');
+    metalGrad.addColorStop(0.55, isExtra ? '#55efc4' : '#8395a7');
+    metalGrad.addColorStop(0.88, '#576574');
     metalGrad.addColorStop(1.00, '#2f3640');
 
     ctx.fillStyle = metalGrad;
@@ -1532,7 +1534,7 @@ function drawRealisticMTRTrain(trainX, carY, carH, isExtra) {
         ctx.fill();
         ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.38)';
         ctx.lineWidth = 1;
         for (let gx = ax + 6; gx < ax + acW - 5; gx += 6) {
             ctx.beginPath();
@@ -1548,8 +1550,8 @@ function drawRealisticMTRTrain(trainX, carY, carH, isExtra) {
         const nearDoor = doorsX.some(dx => Math.abs(wx + 11 - dx) < 33);
         if (!nearDoor) {
             const winGrad = ctx.createLinearGradient(0, winY, 0, winY + winH);
-            winGrad.addColorStop(0, trainState === 'boarding' ? '#dff9fb' : '#485460');
-            winGrad.addColorStop(1, trainState === 'boarding' ? '#81ecec' : '#1e272e');
+            winGrad.addColorStop(0, trainState === 'boarding' ? '#dff9fb' : '#576574');
+            winGrad.addColorStop(1, trainState === 'boarding' ? '#81ecec' : '#222f3e');
             ctx.fillStyle = winGrad;
             ctx.strokeStyle = '#2f3640';
             ctx.lineWidth = 1.3;
@@ -1558,7 +1560,7 @@ function drawRealisticMTRTrain(trainX, carY, carH, isExtra) {
             ctx.fill();
             ctx.stroke();
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.34)';
             ctx.beginPath();
             ctx.moveTo(wx + 3, winY + 2);
             ctx.lineTo(wx + 11, winY + 2);
@@ -1570,9 +1572,9 @@ function drawRealisticMTRTrain(trainX, carY, carH, isExtra) {
     }
 
     const stripeY = carH * 0.45;
-    ctx.fillStyle = '#d63031';
+    ctx.fillStyle = '#e60012';
     ctx.fillRect(bodyX + 2, stripeY, bodyW - 4, 6);
-    ctx.fillStyle = isExtra ? '#00b894' : '#e17055';
+    ctx.fillStyle = isExtra ? '#00b894' : '#ff7675';
     ctx.fillRect(bodyX + 2, stripeY + 6, bodyW - 4, 2.5);
 
     ctx.fillStyle = 'rgba(15, 20, 30, 0.45)';
@@ -1620,43 +1622,58 @@ function draw() {
     ctx.clearRect(0, 0, W, H);
     const st = STATIONS[currentStationKey] || STATIONS.admiral;
 
+    // 1. 立體月台地板漸變與天花燈光光影
     const floorGrad = ctx.createLinearGradient(0, trackHeight, 0, H);
     floorGrad.addColorStop(0, st.floorTop);
     floorGrad.addColorStop(1, st.floorBottom);
     ctx.fillStyle = floorGrad;
     ctx.fillRect(0, trackHeight, W, H - trackHeight);
 
+    [W * 0.25, W * 0.75].forEach(lx => {
+        const spotGrad = ctx.createRadialGradient(lx, trackHeight + 55, 8, lx, trackHeight + 110, Math.max(120, W * 0.35));
+        spotGrad.addColorStop(0, st.lampGlow);
+        spotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = spotGrad;
+        ctx.fillRect(0, trackHeight, W, H - trackHeight);
+    });
+
+    // 2. 2.5D 立體瓷磚格仔
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const gx = gridRect.x + c * gridRect.cellW;
             const gy = gridRect.y + r * gridRect.cellH;
-            ctx.fillStyle = (r + c) % 2 === 0 ? st.tileA : st.tileB;
-            ctx.fillRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
-            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.fillStyle = (r + c) % 2 === 0 ? st.tileLight : st.tileDark;
+            ctx.beginPath();
+            ctx.roundRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6, 4);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
             ctx.lineWidth = 1;
-            ctx.strokeRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
+            ctx.stroke();
         }
     }
 
-    ctx.fillStyle = '#0c1021';
-    ctx.fillRect(0, trackHeight, W, 10);
-    ctx.fillStyle = '#2a335c';
+    // 3. 立體月台邊緣石壆與黃色警戒燈帶
+    ctx.fillStyle = '#090c1a';
+    ctx.fillRect(0, trackHeight, W, 11);
+    ctx.fillStyle = '#34406e';
     ctx.fillRect(0, trackHeight, W, 5);
     ctx.fillStyle = '#ffd32a';
     ctx.fillRect(0, trackHeight + 5, W, 4);
-    const pulseAlpha = 0.14 + 0.08 * Math.sin(animClock * 5);
+    const pulseAlpha = 0.16 + 0.09 * Math.sin(animClock * 5);
     ctx.fillStyle = `rgba(255, 211, 42, ${pulseAlpha})`;
     ctx.fillRect(0, trackHeight + 9, W, 14);
 
+    // 4. 立體路軌區
     ctx.fillStyle = '#05070e';
     ctx.fillRect(0, 0, W, trackHeight);
 
     const sleeperOffset = (animClock * 34) % 24;
     for (let x = -24 + sleeperOffset; x < W + 24; x += 24) {
-        draw3DBox(x, 12, 10, trackHeight - 22, 4, '#3b4566', '#171c2e');
+        draw3DBox(x, 12, 10, trackHeight - 22, 4, '#3e4a70', '#161b2e');
     }
 
-    ctx.strokeStyle = '#95a5a6';
+    ctx.strokeStyle = '#a5b1c2';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(0, 18);
@@ -1665,43 +1682,57 @@ function draw() {
     ctx.lineTo(W, trackHeight - 16);
     ctx.stroke();
 
+    // 5. 真實港鐵列車
     if (trainState !== 'waiting' || trainXOffset > -1) {
         const trainX = trainXOffset * W;
         const isExtra = activeEvent && activeEvent.type === 'extra_train';
         drawRealisticMTRTrain(trainX, 4, trackHeight - 8, isExtra);
     }
 
+    // 6. 底部立體扶手電梯斜坡動畫
     const escY = H - escalatorHeight;
-    ctx.fillStyle = 'rgba(255, 0, 85, 0.14)';
+    const escBg = ctx.createLinearGradient(0, escY, 0, H);
+    escBg.addColorStop(0, 'rgba(255, 0, 85, 0.18)');
+    escBg.addColorStop(1, 'rgba(12, 14, 26, 0.85)');
+    ctx.fillStyle = escBg;
     ctx.fillRect(0, escY, W, escalatorHeight);
-    ctx.strokeStyle = 'rgba(255, 0, 85, 0.5)';
+
+    ctx.strokeStyle = 'rgba(255, 0, 85, 0.55)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(0, escY);
     ctx.lineTo(W, escY);
     ctx.stroke();
 
     [W * 0.22, W * 0.78].forEach(ex => {
-        const boxW = 80;
-        const boxH = escalatorHeight - 12;
-        const boxY = escY + 8;
+        const boxW = 84;
+        const boxH = escalatorHeight - 10;
+        const boxY = escY + 6;
 
-        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 6, '#2b3159', '#121526', '#ff0055');
+        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 6, '#323a69', '#13172b', '#ff0055');
 
-        ctx.strokeStyle = 'rgba(255, 107, 129, 0.38)';
-        const stepShift = (animClock * 26) % 10;
-        for (let sy = boxY + stepShift; sy < boxY + boxH - 8; sy += 10) {
+        ctx.strokeStyle = 'rgba(255, 107, 129, 0.45)';
+        ctx.lineWidth = 1.2;
+        const stepShift = (animClock * 28) % 9;
+        for (let sy = boxY + 2 + stepShift; sy < boxY + boxH - 8; sy += 9) {
             ctx.beginPath();
             ctx.moveTo(ex - boxW / 2 + 7, sy);
             ctx.lineTo(ex + boxW / 2 - 7, sy);
             ctx.stroke();
         }
 
-        ctx.fillStyle = '#ff6b81';
+        // 左右立體扶手帶
+        ctx.fillStyle = '#ff477e';
+        ctx.fillRect(ex - boxW / 2 + 2, boxY - 2, 4, boxH);
+        ctx.fillRect(ex + boxW / 2 - 6, boxY - 2, 4, boxH);
+
+        ctx.fillStyle = '#ffd6e0';
         ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.45);
+        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.46);
     });
 
+    // 7. 衝擊波／聲波圈
     shockwaves.forEach(sw => {
         ctx.save();
         ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.85;
@@ -1713,6 +1744,7 @@ function draw() {
         ctx.restore();
     });
 
+    // 8. 依 Y 軸排序繪製立體設施與立體公仔乘客
     const renderables = [];
     towers.forEach(t => renderables.push({ kind: 'tower', y: t.y, data: t }));
     passengers.forEach(p => renderables.push({ kind: 'passenger', y: p.y, data: p }));
@@ -1729,9 +1761,9 @@ function draw() {
             if (t.type !== 'tape') {
                 ctx.beginPath();
                 ctx.arc(tx, ty, range, 0, Math.PI * 2);
-                ctx.fillStyle = def.color + '10';
+                ctx.fillStyle = def.color + '12';
                 ctx.fill();
-                ctx.strokeStyle = def.color + '3c';
+                ctx.strokeStyle = def.color + '44';
                 ctx.lineWidth = 1.2;
                 ctx.stroke();
             }
@@ -1740,27 +1772,30 @@ function draw() {
             ctx.translate(tx, ty);
             ctx.scale(t.animScale, t.animScale);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
             ctx.beginPath();
-            ctx.ellipse(0, 10, t.type === 'tape' ? gridRect.cellW * 0.44 : 19, 8, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 10, t.type === 'tape' ? gridRect.cellW * 0.44 : 20, 8.5, 0, 0, Math.PI * 2);
             ctx.fill();
 
             if (t.type === 'tape') {
                 const barW = gridRect.cellW * (0.86 + (t.level - 1) * 0.16);
-                draw3DBox(-barW / 2, 0, barW, 14, 7, '#ffa84c', '#b35900', '#000');
+                draw3DBox(-barW / 2, 0, barW, 14, 7, '#ffb15c', '#b35900', '#000');
                 draw3DBox(-barW / 2 - 4, -2, 8, 16, 8, '#ffd32a', '#b38600', '#000');
                 draw3DBox(barW / 2 - 4, -2, 8, 16, 8, '#ffd32a', '#b38600', '#000');
             } else {
-                ctx.fillStyle = '#0b0e1c';
+                ctx.fillStyle = '#090c1a';
                 ctx.beginPath();
-                ctx.ellipse(0, 6, 18, 11, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 6, 19, 11.5, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#1e2547';
+                const baseGrad = ctx.createLinearGradient(0, -14, 0, 10);
+                baseGrad.addColorStop(0, '#2b3666');
+                baseGrad.addColorStop(1, '#141933');
+                ctx.fillStyle = baseGrad;
                 ctx.strokeStyle = def.color;
                 ctx.lineWidth = 2.2;
                 ctx.beginPath();
-                ctx.ellipse(0, -2, 18, 12, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, -2, 18.5, 12.5, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
             }
@@ -1777,13 +1812,13 @@ function draw() {
         } else {
             const p = item.data;
             const speedNow = Math.hypot(p.vx, p.vy);
-            const hopY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -4.2 : 0;
+            const hopY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -4.5 : 0;
             const py = p.y + hopY;
 
             const shadowScale = 1 - Math.min(0.25, Math.abs(hopY) * 0.04);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
             ctx.beginPath();
-            ctx.ellipse(p.x, p.y + 5, p.radius * 0.9 * shadowScale, p.radius * 0.42 * shadowScale, 0, 0, Math.PI * 2);
+            ctx.ellipse(p.x, p.y + 5, p.radius * 0.92 * shadowScale, p.radius * 0.44 * shadowScale, 0, 0, Math.PI * 2);
             ctx.fill();
 
             let coatColor = '#00d2d3';
@@ -1797,28 +1832,28 @@ function draw() {
             ctx.strokeStyle = '#070812';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.roundRect(p.x - p.radius * 0.72, py - p.radius * 0.85, p.radius * 1.44, p.radius * 1.15, 5);
+            ctx.roundRect(p.x - p.radius * 0.74, py - p.radius * 0.88, p.radius * 1.48, p.radius * 1.18, 5);
             ctx.fill();
             ctx.stroke();
 
-            const headY = py - p.radius * 1.25;
+            const headY = py - p.radius * 1.28;
             ctx.fillStyle = '#ffeaa7';
             ctx.beginPath();
-            ctx.arc(p.x, headY, p.radius * 0.56, 0, Math.PI * 2);
+            ctx.arc(p.x, headY, p.radius * 0.58, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
             if (p.kind === 'tourist') {
-                draw3DBox(p.x + p.radius * 0.65, py + 2, 8, 8, 4, '#ffffff', '#95a5a6', '#070812');
+                draw3DBox(p.x + p.radius * 0.65, py + 2, 8.5, 8.5, 4, '#ffffff', '#95a5a6', '#070812');
             } else if (p.kind === 'auntie') {
                 ctx.fillStyle = '#ffd32a';
                 ctx.beginPath();
-                ctx.ellipse(p.x, headY - 3, p.radius * 0.72, 3.5, 0, 0, Math.PI * 2);
+                ctx.ellipse(p.x, headY - 3.5, p.radius * 0.75, 3.8, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
             } else if (p.kind === 'student') {
                 ctx.fillStyle = '#2e86de';
-                ctx.fillRect(p.x - p.radius * 0.45, py - p.radius * 0.65, p.radius * 0.9, p.radius * 0.6);
+                ctx.fillRect(p.x - p.radius * 0.46, py - p.radius * 0.66, p.radius * 0.92, p.radius * 0.62);
             }
 
             if (p.teaTimer > 0) {
@@ -1829,6 +1864,7 @@ function draw() {
         }
     });
 
+    // 9. 粒子與飄字
     particles.forEach(pt => {
         ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
         ctx.fillStyle = pt.color;
