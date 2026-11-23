@@ -490,7 +490,7 @@
 <div class="overlay" id="start-modal">
     <div class="modal-card">
         <h2>🚇 港鐵逼爆月台塔防 3D</h2>
-        <p>立體視角疏導人潮！每 <b>10 秒</b>一班車開門 <b>3.2 秒</b>，將乘客塞入車廂，月台超過 <b>100 人</b>即踩踏 Game Over！</p>
+        <p>2.5D 立體視角疏導人潮！每 <b>10 秒</b>一班車開門 <b>3.2 秒</b>，將乘客塞入車廂，月台超過 <b>100 人</b>即踩踏 Game Over！</p>
         <div class="station-picker">
             <button type="button" class="station-opt active" data-station="admiral" onclick="chooseStation('admiral', this)">
                 金鐘轉車站
@@ -502,10 +502,10 @@
             </button>
         </div>
         <div class="legend-list">
-            🦺 <b>月台助理</b>：開門時蓄力爆衝推人入車門<br>
-            📢 <b>廣播喇叭</b>：放出聲波催促乘客加快腳步<br>
+            🦺 <b>月台助理</b>：立體助理開門蓄力推人入車門<br>
+            📢 <b>廣播喇叭</b>：立體聲波催促乘客加快腳步<br>
             🚧 <b>排隊膠帶</b>：立體分流欄阻擋拖篋客塞死門口<br>
-            🧋 <b>奶茶檔</b>：吸引拖篋客停低買嘢飲兼賺外快
+            🧋 <b>奶茶檔</b>：立體檔口吸引拖篋客兼賺外快
         </div>
         <button type="button" class="primary-btn" id="start-btn" onclick="startGame()">開始疏導人潮</button>
     </div>
@@ -547,16 +547,20 @@ const STATIONS = {
         spawnBase: 0.92,
         spawnDecay: 0.008,
         eventIntervalBase: 17.5,
-        floorTop: '#121833',
-        floorBottom: '#090c1c'
+        floorTop: '#162042',
+        floorBottom: '#090d1f',
+        tileA: 'rgba(255,255,255,0.025)',
+        tileB: 'rgba(0,210,211,0.02)'
     },
     mongkok: {
         name: '旺角轉車站',
         spawnBase: 0.72,
         spawnDecay: 0.011,
         eventIntervalBase: 13.5,
-        floorTop: '#1b1236',
-        floorBottom: '#0d091d'
+        floorTop: '#241547',
+        floorBottom: '#0d0921',
+        tileA: 'rgba(255,255,255,0.025)',
+        tileB: 'rgba(255,0,85,0.025)'
     }
 };
 
@@ -737,8 +741,8 @@ let bannerHideTimeout = null;
 const COLS = 6;
 const ROWS = 7;
 let gridRect = { x: 0, y: 0, w: 0, h: 0, cellW: 0, cellH: 0 };
-let trackHeight = 78;
-let escalatorHeight = 68;
+let trackHeight = 82;
+let escalatorHeight = 72;
 let doorsX = [];
 
 let towers = [];
@@ -766,14 +770,14 @@ function resizeCanvas() {
     canvas.height = Math.max(1, Math.round(H * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    trackHeight = Math.max(68, Math.min(88, H * 0.138));
-    escalatorHeight = Math.max(60, Math.min(78, H * 0.122));
+    trackHeight = Math.max(74, Math.min(94, H * 0.145));
+    escalatorHeight = Math.max(64, Math.min(82, H * 0.128));
 
-    const padX = 12;
+    const padX = 14;
     gridRect.x = padX;
-    gridRect.y = trackHeight + 14;
+    gridRect.y = trackHeight + 18;
     gridRect.w = Math.max(120, W - padX * 2);
-    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 26);
+    gridRect.h = Math.max(160, H - trackHeight - escalatorHeight - 30);
     gridRect.cellW = gridRect.w / COLS;
     gridRect.cellH = gridRect.h / ROWS;
 
@@ -876,7 +880,7 @@ canvas.addEventListener('pointerup', (e) => {
             const refund = Math.floor(t.totalInvested * 0.7);
             money += refund;
             spawnBurst(t.x, t.y, '#ff6b81', 10);
-            spawnFloatText(t.x, t.y - 14, `+$${refund}`, '#2ed573');
+            spawnFloatText(t.x, t.y - 16, `+$${refund}`, '#2ed573');
             towers.splice(existingIdx, 1);
             playTone(390, 0.08, 'triangle', 0.06, 0, 260);
             updateUI();
@@ -887,21 +891,21 @@ canvas.addEventListener('pointerup', (e) => {
     if (existingIdx !== -1) {
         const t = towers[existingIdx];
         if (t.level >= 3) {
-            spawnFloatText(t.x, t.y - 16, '已達最高 LV.3', '#ccc');
+            spawnFloatText(t.x, t.y - 18, '已達最高 LV.3', '#ccc');
             return;
         }
         const upgCost = Math.round(TOWER_DEFS[t.type].cost * (t.level === 1 ? 1.2 : 1.6));
         if (money < upgCost) {
-            spawnFloatText(t.x, t.y - 16, `唔夠錢 ($${upgCost})`, '#ff0055');
+            spawnFloatText(t.x, t.y - 18, `唔夠錢 ($${upgCost})`, '#ff0055');
             return;
         }
         money -= upgCost;
         t.level++;
         t.totalInvested += upgCost;
         t.animScale = 1.35;
-        shockwaves.push({ x: t.x, y: t.y, r: 10, maxR: 42, color: TOWER_DEFS[t.type].color, life: 0.35, maxLife: 0.35 });
+        shockwaves.push({ x: t.x, y: t.y, r: 10, maxR: 44, color: TOWER_DEFS[t.type].color, life: 0.35, maxLife: 0.35 });
         spawnBurst(t.x, t.y, TOWER_DEFS[t.type].color, 14);
-        spawnFloatText(t.x, t.y - 20, `升級 LV.${t.level}!`, '#ffd32a');
+        spawnFloatText(t.x, t.y - 22, `升級 LV.${t.level}!`, '#ffd32a');
         sfxUpgrade();
         updateUI();
         return;
@@ -909,7 +913,7 @@ canvas.addEventListener('pointerup', (e) => {
 
     const def = TOWER_DEFS[selectedTowerType];
     if (money < def.cost) {
-        spawnFloatText(px, py - 14, `資金不足 ($${def.cost})`, '#ff0055');
+        spawnFloatText(px, py - 16, `資金不足 ($${def.cost})`, '#ff0055');
         return;
     }
 
@@ -930,9 +934,9 @@ canvas.addEventListener('pointerup', (e) => {
         dashY: 0,
         waveTimer: 0
     });
-    shockwaves.push({ x: cx, y: cy, r: 8, maxR: 36, color: def.color, life: 0.3, maxLife: 0.3 });
+    shockwaves.push({ x: cx, y: cy, r: 8, maxR: 38, color: def.color, life: 0.3, maxLife: 0.3 });
     spawnBurst(cx, cy, def.color, 12);
-    spawnFloatText(cx, cy - 16, `${def.icon} -${def.cost}`, '#ffd32a');
+    spawnFloatText(cx, cy - 18, `${def.icon} -${def.cost}`, '#ffd32a');
     sfxBuild();
     updateUI();
 });
@@ -1019,13 +1023,13 @@ function triggerRandomEvent() {
         activeEvent = { type: 'signal_delay', timer: 5.0 };
         if (trainState === 'waiting') trainTimer += 3.0;
         showEventBanner('⚠️ 突發：信號故障！列車延誤進站', 'alert', 3400);
-        spawnFloatText(W / 2, trackHeight + 26, '⚠️ 信號故障！', '#ff6b81');
+        spawnFloatText(W / 2, trackHeight + 28, '⚠️ 信號故障！', '#ff6b81');
         sfxAlert();
     } else if (roll < 0.68) {
         activeEvent = { type: 'extra_train', timer: 6.0 };
         if (trainState === 'waiting') trainTimer = Math.max(1.2, trainTimer - 3.5);
         showEventBanner('🚆 突發：繁忙加班空車！上車獎金提升', 'boost', 3400);
-        spawnFloatText(W / 2, trackHeight + 26, '🚆 加班空車到站！', '#7bed9f');
+        spawnFloatText(W / 2, trackHeight + 28, '🚆 加班空車到站！', '#7bed9f');
         playTone(620, 0.09, 'triangle', 0.08, 0, 920);
     } else {
         activeEvent = { type: 'auntie_rush', timer: 4.5 };
@@ -1054,16 +1058,16 @@ function spawnPassenger(forceKind = null, xJitter = 0) {
     const startY = H - escalatorHeight + 12;
     const targetDoor = doorsX[Math.floor(Math.random() * doorsX.length)];
 
-    let radius = 7.5;
+    let radius = 8.5;
     let baseSpeed = 37;
     if (kind === 'tourist') {
-        radius = 10;
+        radius = 10.5;
         baseSpeed = 27;
     } else if (kind === 'student') {
-        radius = 6.5;
+        radius = 7.5;
         baseSpeed = 48;
     } else if (kind === 'auntie') {
-        radius = 10.5;
+        radius = 11;
         baseSpeed = 43;
     }
 
@@ -1160,7 +1164,7 @@ function update(dt) {
             trainXOffset = 0;
             boardedThisTrain = 0;
             sfxDoorOpen();
-            spawnFloatText(W / 2, trackHeight + 22, '🚪 車門打開！快推人上車！', '#ffd32a');
+            spawnFloatText(W / 2, trackHeight + 24, '🚪 車門打開！快推人上車！', '#ffd32a');
         }
     } else if (trainState === 'boarding') {
         trainTimer -= dt;
@@ -1179,7 +1183,7 @@ function update(dt) {
                 const mult = isExtraTrain ? 2.2 : 1.5;
                 const bonus = Math.floor(boardedThisTrain * mult);
                 money += bonus;
-                spawnFloatText(W / 2, trackHeight + 24, `🔥 爆滿清場獎金 +$${bonus}!`, '#ffd32a');
+                spawnFloatText(W / 2, trackHeight + 26, `🔥 爆滿清場獎金 +$${bonus}!`, '#ffd32a');
             }
             updateUI();
         }
@@ -1250,8 +1254,8 @@ function update(dt) {
                 if (pushedCount > 0) {
                     if (targetP) {
                         const aimAng = Math.atan2(targetP.y - t.y, targetP.x - t.x);
-                        t.dashX = Math.cos(aimAng) * 9;
-                        t.dashY = Math.sin(aimAng) * 9;
+                        t.dashX = Math.cos(aimAng) * 10;
+                        t.dashY = Math.sin(aimAng) * 10;
                     }
                     shockwaves.push({
                         x: t.x, y: t.y, r: 10, maxR: baseRange * 0.65,
@@ -1259,7 +1263,7 @@ function update(dt) {
                     });
                     spawnBurst(t.x, t.y, '#ffd32a', isDoorOpen ? 9 : 4);
                     if (isDoorOpen && pushedCount >= 4) {
-                        spawnFloatText(t.x, t.y - 18, `大力推 x${pushedCount}!`, '#ffd32a');
+                        spawnFloatText(t.x, t.y - 20, `大力推 x${pushedCount}!`, '#ffd32a');
                     }
                 }
             }
@@ -1279,16 +1283,16 @@ function update(dt) {
                 }
             });
         } else if (t.type === 'tea') {
-            if (Math.random() < dt * 2.2) {
+            if (Math.random() < dt * 2.5) {
                 particles.push({
                     x: t.x + (Math.random() - 0.5) * 14,
-                    y: t.y - 14,
+                    y: t.y - 18,
                     vx: (Math.random() - 0.5) * 14,
-                    vy: -24 - Math.random() * 14,
-                    life: 0.7,
-                    maxLife: 0.7,
+                    vy: -26 - Math.random() * 14,
+                    life: 0.75,
+                    maxLife: 0.75,
                     color: '#ff9ff3',
-                    size: 2.2
+                    size: 2.5
                 });
             }
             passengers.forEach(p => {
@@ -1300,18 +1304,18 @@ function update(dt) {
                         const earn = 4 + t.level * 2;
                         money += earn;
                         spawnBurst(t.x, t.y, '#ff6b81', 6);
-                        spawnFloatText(t.x, t.y - 18, `🧋 +$${earn}`, '#ff6b81');
+                        spawnFloatText(t.x, t.y - 20, `🧋 +$${earn}`, '#ff6b81');
                     }
                 }
             });
         }
     });
 
-    const stopLineY = trackHeight + 16;
+    const stopLineY = trackHeight + 18;
 
     for (let i = passengers.length - 1; i >= 0; i--) {
         const p = passengers[i];
-        p.phase += dt * 11;
+        p.phase += dt * 12;
         if (p.pushAnim > 0) p.pushAnim -= dt;
 
         if (p.teaTimer > 0) {
@@ -1347,7 +1351,7 @@ function update(dt) {
         towers.forEach(t => {
             if (t.type === 'tape') {
                 const barHalfW = gridRect.cellW * (0.42 + (t.level - 1) * 0.08);
-                const barHalfH = 9;
+                const barHalfH = 10;
                 const relX = p.x - t.x;
                 const relY = p.y - t.y;
                 if (Math.abs(relX) < barHalfW + p.radius && Math.abs(relY) < barHalfH + p.radius) {
@@ -1476,12 +1480,12 @@ function triggerGameOver() {
 function draw3DBox(x, y, w, h, depth, topColor, sideColor, strokeColor = null) {
     ctx.fillStyle = sideColor;
     ctx.beginPath();
-    ctx.roundRect(x, y - depth, w, h, 5);
+    ctx.roundRect(x, y, w, h, 5);
     ctx.fill();
 
     ctx.fillStyle = topColor;
     ctx.beginPath();
-    ctx.roundRect(x, y - depth, w, h - depth * 0.35, 5);
+    ctx.roundRect(x, y - depth, w, Math.max(4, h - depth * 0.25), 5);
     ctx.fill();
 
     if (strokeColor) {
@@ -1495,49 +1499,75 @@ function draw() {
     ctx.clearRect(0, 0, W, H);
     const st = STATIONS[currentStationKey] || STATIONS.admiral;
 
+    // 1. 立體月台地板與 2.5D 瓷磚格紋
     const floorGrad = ctx.createLinearGradient(0, trackHeight, 0, H);
     floorGrad.addColorStop(0, st.floorTop);
     floorGrad.addColorStop(1, st.floorBottom);
     ctx.fillStyle = floorGrad;
     ctx.fillRect(0, trackHeight, W, H - trackHeight);
 
-    ctx.fillStyle = '#1f2544';
-    ctx.fillRect(0, trackHeight, W, 6);
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const gx = gridRect.x + c * gridRect.cellW;
+            const gy = gridRect.y + r * gridRect.cellH;
+            ctx.fillStyle = (r + c) % 2 === 0 ? st.tileA : st.tileB;
+            ctx.fillRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
+
+            // 立體內凹格線
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
+        }
+    }
+
+    // 2. 立體月台邊緣石壆與黃色安全燈帶
+    ctx.fillStyle = '#0c1021';
+    ctx.fillRect(0, trackHeight, W, 10);
+    ctx.fillStyle = '#2a335c';
+    ctx.fillRect(0, trackHeight, W, 5);
     ctx.fillStyle = '#ffd32a';
     ctx.fillRect(0, trackHeight + 5, W, 4);
-    const pulseAlpha = 0.12 + 0.08 * Math.sin(animClock * 5);
+    const pulseAlpha = 0.14 + 0.08 * Math.sin(animClock * 5);
     ctx.fillStyle = `rgba(255, 211, 42, ${pulseAlpha})`;
-    ctx.fillRect(0, trackHeight + 9, W, 12);
+    ctx.fillRect(0, trackHeight + 9, W, 14);
 
-    ctx.fillStyle = '#04050a';
+    // 3. 立體路軌區
+    ctx.fillStyle = '#04050b';
     ctx.fillRect(0, 0, W, trackHeight);
 
-    ctx.strokeStyle = '#202646';
-    ctx.lineWidth = 3;
-    const sleeperOffset = (animClock * 30) % 22;
-    for (let x = -22 + sleeperOffset; x < W + 22; x += 22) {
-        ctx.beginPath();
-        ctx.moveTo(x, 8);
-        ctx.lineTo(x, trackHeight - 8);
-        ctx.stroke();
+    const sleeperOffset = (animClock * 34) % 24;
+    for (let x = -24 + sleeperOffset; x < W + 24; x += 24) {
+        draw3DBox(x, 12, 10, trackHeight - 22, 4, '#2c355e', '#141930');
     }
-    ctx.strokeStyle = '#576574';
-    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = '#7f8fa6';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(0, 16);
-    ctx.lineTo(W, 16);
-    ctx.moveTo(0, trackHeight - 14);
-    ctx.lineTo(W, trackHeight - 14);
+    ctx.moveTo(0, 18);
+    ctx.lineTo(W, 18);
+    ctx.moveTo(0, trackHeight - 16);
+    ctx.lineTo(W, trackHeight - 16);
     ctx.stroke();
 
+    // 4. 立體港鐵列車動畫
     if (trainState !== 'waiting' || trainXOffset > -1) {
         const trainX = trainXOffset * W;
         ctx.save();
-        ctx.translate(trainX, 5);
-        const carH = trackHeight - 10;
+        ctx.translate(trainX, 4);
+        const carH = trackHeight - 8;
         const isExtra = activeEvent && activeEvent.type === 'extra_train';
 
-        ctx.fillStyle = isExtra ? '#132a2a' : '#1b223d';
+        // 車身立體陰影
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.beginPath();
+        ctx.roundRect(10, 4, W - 16, carH, 10);
+        ctx.fill();
+
+        // 車身主體
+        const bodyGrad = ctx.createLinearGradient(0, 0, 0, carH);
+        bodyGrad.addColorStop(0, isExtra ? '#1e4646' : '#28335c');
+        bodyGrad.addColorStop(1, isExtra ? '#0f2424' : '#13182e');
+        ctx.fillStyle = bodyGrad;
         ctx.strokeStyle = isExtra ? '#2ed573' : '#00d2d3';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1545,32 +1575,33 @@ function draw() {
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.22)' : 'rgba(0, 210, 211, 0.18)';
-        ctx.fillRect(14, 3, W - 28, 6);
+        // 車頂立體反光條
+        ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.28)' : 'rgba(255, 255, 255, 0.14)';
+        ctx.fillRect(16, 3, W - 32, 6);
 
         for (let wx = 26; wx < W - 36; wx += 34) {
             const nearDoor = doorsX.some(dx => Math.abs(wx - dx) < 32);
             if (!nearDoor) {
-                ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.28)' : 'rgba(0, 210, 211, 0.24)';
+                ctx.fillStyle = isExtra ? 'rgba(46, 213, 115, 0.35)' : 'rgba(0, 210, 211, 0.28)';
                 ctx.fillRect(wx, 12, 20, carH * 0.24);
             }
         }
 
         ctx.fillStyle = '#e60012';
-        ctx.fillRect(10, carH * 0.44, W - 20, 6);
+        ctx.fillRect(10, carH * 0.45, W - 20, 6);
 
         doorsX.forEach(dx => {
-            const doorW = 46;
-            ctx.fillStyle = trainState === 'boarding' ? 'rgba(46, 213, 115, 0.38)' : '#0f1324';
+            const doorW = 48;
+            ctx.fillStyle = trainState === 'boarding' ? 'rgba(46, 213, 115, 0.42)' : '#0d1020';
             ctx.fillRect(dx - doorW / 2, 6, doorW, carH - 8);
 
             const slide = (doorW / 2) * doorOpenRatio;
-            ctx.fillStyle = '#576574';
+            ctx.fillStyle = '#636e72';
             ctx.fillRect(dx - doorW / 2, 6, doorW / 2 - slide, carH - 8);
             ctx.fillRect(dx + slide, 6, doorW / 2 - slide, carH - 8);
 
             if (trainState === 'boarding') {
-                const bounce = Math.sin(animClock * 10) * 2;
+                const bounce = Math.sin(animClock * 10) * 2.5;
                 ctx.fillStyle = '#2ed573';
                 ctx.font = 'bold 13px sans-serif';
                 ctx.textAlign = 'center';
@@ -1580,18 +1611,7 @@ function draw() {
         ctx.restore();
     }
 
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const gx = gridRect.x + c * gridRect.cellW;
-            const gy = gridRect.y + r * gridRect.cellH;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
-            ctx.fillRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
-            ctx.strokeStyle = 'rgba(0, 210, 211, 0.16)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(gx + 3, gy + 3, gridRect.cellW - 6, gridRect.cellH - 6);
-        }
-    }
-
+    // 5. 底部立體扶手電梯動畫
     const escY = H - escalatorHeight;
     ctx.fillStyle = 'rgba(255, 0, 85, 0.14)';
     ctx.fillRect(0, escY, W, escalatorHeight);
@@ -1602,38 +1622,40 @@ function draw() {
     ctx.stroke();
 
     [W * 0.22, W * 0.78].forEach(ex => {
-        const boxW = 76;
-        const boxH = escalatorHeight - 14;
+        const boxW = 80;
+        const boxH = escalatorHeight - 12;
         const boxY = escY + 8;
 
-        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 5, '#252a4a', '#131629', '#ff0055');
+        draw3DBox(ex - boxW / 2, boxY, boxW, boxH, 6, '#2b3159', '#121526', '#ff0055');
 
-        ctx.strokeStyle = 'rgba(255, 107, 129, 0.34)';
-        const stepShift = (animClock * 24) % 10;
-        for (let sy = boxY + 1 + stepShift; sy < boxY + boxH - 6; sy += 10) {
+        ctx.strokeStyle = 'rgba(255, 107, 129, 0.38)';
+        const stepShift = (animClock * 26) % 10;
+        for (let sy = boxY + stepShift; sy < boxY + boxH - 8; sy += 10) {
             ctx.beginPath();
-            ctx.moveTo(ex - boxW / 2 + 6, sy);
-            ctx.lineTo(ex + boxW / 2 - 6, sy);
+            ctx.moveTo(ex - boxW / 2 + 7, sy);
+            ctx.lineTo(ex + boxW / 2 - 7, sy);
             ctx.stroke();
         }
 
         ctx.fillStyle = '#ff6b81';
         ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.48);
+        ctx.fillText('▲ 扶手電梯 ▲', ex, boxY + boxH * 0.45);
     });
 
+    // 6. 衝擊波／聲波圈
     shockwaves.forEach(sw => {
         ctx.save();
-        ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.8;
+        ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.85;
         ctx.strokeStyle = sw.color;
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2.4;
         ctx.beginPath();
         ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
     });
 
+    // 7. 依 Y 軸深度排序繪製立體設施與立體公仔乘客
     const renderables = [];
     towers.forEach(t => renderables.push({ kind: 'tower', y: t.y, data: t }));
     passengers.forEach(p => renderables.push({ kind: 'passenger', y: p.y, data: p }));
@@ -1650,10 +1672,10 @@ function draw() {
             if (t.type !== 'tape') {
                 ctx.beginPath();
                 ctx.arc(tx, ty, range, 0, Math.PI * 2);
-                ctx.fillStyle = def.color + '11';
+                ctx.fillStyle = def.color + '10';
                 ctx.fill();
-                ctx.strokeStyle = def.color + '3a';
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = def.color + '3c';
+                ctx.lineWidth = 1.2;
                 ctx.stroke();
             }
 
@@ -1661,86 +1683,105 @@ function draw() {
             ctx.translate(tx, ty);
             ctx.scale(t.animScale, t.animScale);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            // 地面投影
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.beginPath();
-            ctx.ellipse(0, 8, t.type === 'tape' ? gridRect.cellW * 0.42 : 17, 7, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 10, t.type === 'tape' ? gridRect.cellW * 0.44 : 19, 8, 0, 0, Math.PI * 2);
             ctx.fill();
 
             if (t.type === 'tape') {
-                const barW = gridRect.cellW * (0.84 + (t.level - 1) * 0.16);
-                draw3DBox(-barW / 2, -2, barW, 13, 6, '#ff9f43', '#b35900', '#000');
+                const barW = gridRect.cellW * (0.86 + (t.level - 1) * 0.16);
+                draw3DBox(-barW / 2, 0, barW, 14, 7, '#ffa84c', '#b35900', '#000');
+                // 左右立體柱座
+                draw3DBox(-barW / 2 - 4, -2, 8, 16, 8, '#ffd32a', '#b38600', '#000');
+                draw3DBox(barW / 2 - 4, -2, 8, 16, 8, '#ffd32a', '#b38600', '#000');
             } else {
-                ctx.fillStyle = '#0d1021';
+                // 立體底座台
+                ctx.fillStyle = '#0b0e1c';
                 ctx.beginPath();
-                ctx.ellipse(0, 4, 17, 12, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 6, 18, 11, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#1c2240';
+                ctx.fillStyle = '#1e2547';
                 ctx.strokeStyle = def.color;
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.2;
                 ctx.beginPath();
-                ctx.ellipse(0, -3, 17, 13, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, -2, 18, 12, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
             }
 
-            ctx.font = '18px sans-serif';
+            ctx.font = '20px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(def.icon, 0, -4);
+            ctx.fillText(def.icon, 0, -5);
 
             ctx.fillStyle = '#ffd32a';
             ctx.font = 'bold 9px Orbitron, sans-serif';
-            ctx.fillText(`LV.${t.level}`, 0, 18);
+            ctx.fillText(`LV.${t.level}`, 0, 20);
             ctx.restore();
         } else {
             const p = item.data;
             const speedNow = Math.hypot(p.vx, p.vy);
-            const bobY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -3.2 : 0;
+            const hopY = speedNow > 6 ? Math.abs(Math.sin(p.phase)) * -4.2 : 0;
+            const py = p.y + hopY;
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+            // 地面立體投影（隨跳起高度略縮細）
+            const shadowScale = 1 - Math.min(0.25, Math.abs(hopY) * 0.04);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
             ctx.beginPath();
-            ctx.ellipse(p.x, p.y + 4, p.radius * 0.95, p.radius * 0.45, 0, 0, Math.PI * 2);
+            ctx.ellipse(p.x, p.y + 5, p.radius * 0.9 * shadowScale, p.radius * 0.42 * shadowScale, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            let bodyColor = '#00d2d3';
-            if (p.kind === 'auntie') bodyColor = '#ff477e';
-            else if (p.kind === 'tourist') bodyColor = '#ff9f43';
-            else if (p.kind === 'student') bodyColor = '#54a0ff';
-            if (p.pushAnim > 0) bodyColor = '#ffd32a';
-            else if (p.boostTimer > 0) bodyColor = '#7bed9f';
+            let coatColor = '#00d2d3';
+            if (p.kind === 'auntie') coatColor = '#ff477e';
+            else if (p.kind === 'tourist') coatColor = '#ff9f43';
+            else if (p.kind === 'student') coatColor = '#54a0ff';
+            if (p.pushAnim > 0) coatColor = '#ffd32a';
+            else if (p.boostTimer > 0) coatColor = '#7bed9f';
 
-            const py = p.y + bobY - 4;
-            ctx.fillStyle = bodyColor;
+            // 立體身體（帶側邊陰影）
+            ctx.fillStyle = coatColor;
             ctx.strokeStyle = '#070812';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.roundRect(p.x - p.radius * 0.78, py - p.radius * 0.9, p.radius * 1.56, p.radius * 1.45, p.radius * 0.65);
+            ctx.roundRect(p.x - p.radius * 0.72, py - p.radius * 0.85, p.radius * 1.44, p.radius * 1.15, 5);
             ctx.fill();
             ctx.stroke();
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            // 立體頭仔
+            const headY = py - p.radius * 1.25;
+            ctx.fillStyle = '#ffeaa7';
             ctx.beginPath();
-            ctx.arc(p.x - p.radius * 0.22, py - p.radius * 0.45, p.radius * 0.32, 0, Math.PI * 2);
+            ctx.arc(p.x, headY, p.radius * 0.56, 0, Math.PI * 2);
             ctx.fill();
+            ctx.stroke();
 
             if (p.kind === 'tourist') {
-                draw3DBox(p.x + p.radius * 0.55, py + 2, 7, 7, 3, '#ffffff', '#95a5a6', '#070812');
+                // 立體行李箱
+                draw3DBox(p.x + p.radius * 0.65, py + 2, 8, 8, 4, '#ffffff', '#95a5a6', '#070812');
             } else if (p.kind === 'auntie') {
+                // 立體遮陽帽
                 ctx.fillStyle = '#ffd32a';
                 ctx.beginPath();
-                ctx.arc(p.x, py - p.radius * 0.75, 4, Math.PI, 0);
+                ctx.ellipse(p.x, headY - 3, p.radius * 0.72, 3.5, 0, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.stroke();
+            } else if (p.kind === 'student') {
+                // 立體書包
+                ctx.fillStyle = '#2e86de';
+                ctx.fillRect(p.x - p.radius * 0.45, py - p.radius * 0.65, p.radius * 0.9, p.radius * 0.6);
             }
 
             if (p.teaTimer > 0) {
-                ctx.font = '11px sans-serif';
+                ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('🧋', p.x, py - p.radius - 8);
+                ctx.fillText('🧋', p.x, headY - 12);
             }
         }
     });
 
+    // 8. 粒子與飄字
     particles.forEach(pt => {
         ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
         ctx.fillStyle = pt.color;
