@@ -32,16 +32,42 @@
         color: #fff;
         font-family: 'Noto Sans HK', sans-serif;
         height: 100dvh;
+        width: 100vw;
         display: flex;
         flex-direction: column;
         overflow: hidden;
         padding-bottom: env(safe-area-inset-bottom);
     }
 
+    /* 🛡️ 標準三件套 1：固定左上角返回大廳按鈕，z-index: 99999 */
+    #std-back-lobby-btn {
+        position: fixed;
+        top: calc(10px + env(safe-area-inset-top));
+        left: calc(10px + env(safe-area-inset-left));
+        z-index: 99999;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 11px;
+        border-radius: 9px;
+        background: rgba(20, 15, 12, 0.92);
+        border: 1.5px solid #feca57;
+        color: #fff3e0;
+        font-family: 'Noto Sans HK', sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+        cursor: pointer;
+    }
+    #std-back-lobby-btn:active {
+        transform: scale(0.95);
+    }
+
     header {
         background: var(--panel-bg);
         border-bottom: 2px solid #6f4e37;
-        padding: 9px 12px;
+        padding: calc(10px + env(safe-area-inset-top)) 12px 9px 96px;
         display: flex;
         flex-direction: column;
         gap: 7px;
@@ -155,6 +181,7 @@
         width: 100%;
         height: 100%;
         cursor: crosshair;
+        touch-action: none;
     }
 
     footer {
@@ -306,13 +333,20 @@
         cursor: pointer;
     }
 </style>
+
+<!-- 🛡️ 標準三件套 2：Firebase 8.10.1 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
+
+<a href="../" id="std-back-lobby-btn" aria-label="返回大廳">⬅️ 大廳</a>
 
 <header>
     <div class="top-row">
         <div class="title-box">
-            🔨 釘釘挑戰 <span class="badge-inch">1.00" 鋼釘</span>
+            <span>🔨 釘釘挑戰</span>
+            <span class="badge-inch">1.00" 鋼釘</span>
         </div>
         <div class="picker-group" id="diff-picker">
             <button type="button" class="chip-btn active" onclick="setDifficulty('normal', this)">普通</button>
@@ -380,6 +414,36 @@
 </div>
 
 <script>
+// 🛡️ 標準三件套 2：Firebase 8.10.1 在線統計 + global_device_id 永久裝置綁定
+(function initStandardOnlinePresence() {
+    const GAME_ID = 'nail-hammer';
+    const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+    try {
+        if (typeof firebase === 'undefined') return;
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let deviceId = '';
+        try {
+            deviceId = localStorage.getItem('global_device_id') || '';
+            if (!deviceId) {
+                deviceId = 'user_' + Math.random().toString(36).slice(2, 11);
+                localStorage.setItem('global_device_id', deviceId);
+            }
+        } catch (_) {
+            deviceId = 'user_' + Math.random().toString(36).slice(2, 11);
+        }
+
+        const presenceRef = db.ref(`online_status/${GAME_ID}/${deviceId}`);
+        presenceRef.set({ enteredAt: Date.now(), game: GAME_ID }).catch(() => {});
+        presenceRef.onDisconnect().remove().catch(() => {});
+
+        window.addEventListener('pagehide', () => {
+            presenceRef.remove().catch(() => {});
+        });
+    } catch (_) {}
+})();
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const wrap = document.getElementById('canvas-wrap');
