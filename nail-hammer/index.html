@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>🔨 木方釘釘挑戰 · 1吋鋼釘完整升級版</title>
+<title>🔨 木方釘釘挑戰 · 1吋鋼釘難度升級版</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
 
@@ -41,10 +41,10 @@
     header {
         background: var(--panel-bg);
         border-bottom: 2px solid #6f4e37;
-        padding: 10px 14px;
+        padding: 9px 12px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
         z-index: 10;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
     }
@@ -53,14 +53,15 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        flex-wrap: wrap;
     }
 
     .title-box {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 15px;
+        gap: 6px;
+        font-size: 14px;
         font-weight: 900;
         color: var(--accent-gold);
         white-space: nowrap;
@@ -71,21 +72,22 @@
         color: #fff3e0;
         font-family: 'Orbitron', sans-serif;
         font-size: 10px;
-        padding: 3px 7px;
+        padding: 2px 6px;
         border-radius: 5px;
         border: 1px solid #ddb892;
     }
 
-    .level-picker {
+    .picker-group {
         display: flex;
-        gap: 5px;
+        gap: 4px;
+        flex-wrap: wrap;
     }
 
-    .lvl-btn {
+    .chip-btn {
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid #7f5539;
         color: #e6ccb2;
-        padding: 4px 8px;
+        padding: 3px 8px;
         border-radius: 6px;
         font-size: 11px;
         font-weight: 900;
@@ -93,17 +95,29 @@
         transition: 0.15s;
     }
 
-    .lvl-btn.active {
+    .chip-btn.active {
         background: var(--accent-gold);
         border-color: var(--accent-gold);
         color: #1e1610;
-        box-shadow: 0 0 10px rgba(254, 202, 87, 0.35);
+    }
+
+    .chip-btn.diff-hard.active {
+        background: var(--accent-orange);
+        border-color: var(--accent-orange);
+        color: #1e1610;
+    }
+
+    .chip-btn.diff-hell.active {
+        background: var(--accent-red);
+        border-color: var(--accent-red);
+        color: #fff;
+        box-shadow: 0 0 10px rgba(255, 107, 107, 0.45);
     }
 
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        gap: 7px;
         text-align: center;
     }
 
@@ -111,7 +125,7 @@
         background: rgba(0, 0, 0, 0.38);
         border: 1px solid rgba(221, 184, 146, 0.22);
         border-radius: 8px;
-        padding: 5px 4px;
+        padding: 4px;
     }
 
     .stat-label {
@@ -122,7 +136,7 @@
 
     .stat-val {
         font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 900;
     }
 
@@ -146,10 +160,10 @@
     footer {
         background: var(--panel-bg);
         border-top: 2px solid #6f4e37;
-        padding: 10px 14px;
+        padding: 9px 12px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
         z-index: 10;
     }
 
@@ -157,7 +171,7 @@
         background: #1f1712;
         border: 1.5px solid #7f5539;
         border-radius: 8px;
-        height: 22px;
+        height: 21px;
         position: relative;
         overflow: hidden;
     }
@@ -166,9 +180,9 @@
         position: absolute;
         top: 0;
         bottom: 0;
-        left: 68%;
-        width: 22%;
-        background: rgba(29, 209, 161, 0.25);
+        left: 70%;
+        width: 18%;
+        background: rgba(29, 209, 161, 0.26);
         border-left: 1.5px dashed var(--accent-green);
         border-right: 1.5px dashed var(--accent-green);
     }
@@ -203,13 +217,12 @@
         color: #1b120c;
         border: none;
         border-radius: 10px;
-        padding: 12px;
+        padding: 11px;
         font-size: 15px;
         font-weight: 900;
         font-family: 'Noto Sans HK', sans-serif;
         cursor: pointer;
         box-shadow: 0 4px 0 #9c4a00;
-        transition: transform 0.08s ease;
     }
 
     .hit-btn.charging {
@@ -224,7 +237,7 @@
         border: 1.5px solid #9c6644;
         color: #fff;
         border-radius: 10px;
-        padding: 0 14px;
+        padding: 0 13px;
         font-size: 13px;
         font-weight: 900;
         cursor: pointer;
@@ -255,12 +268,11 @@
         max-width: 340px;
         text-align: center;
         box-shadow: 0 12px 34px rgba(0, 0, 0, 0.7);
-        animation: popIn 0.2s ease-out;
     }
 
     .modal-card h2 {
         color: var(--accent-gold);
-        font-size: 21px;
+        font-size: 20px;
         margin-bottom: 8px;
     }
 
@@ -293,11 +305,6 @@
         font-family: 'Noto Sans HK', sans-serif;
         cursor: pointer;
     }
-
-    @keyframes popIn {
-        from { transform: scale(0.92); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-    }
 </style>
 </head>
 <body>
@@ -305,14 +312,28 @@
 <header>
     <div class="top-row">
         <div class="title-box">
-            🔨 木方釘釘挑戰 <span class="badge-inch">1.00" 鋼釘</span>
+            🔨 釘釘挑戰 <span class="badge-inch">1.00" 鋼釘</span>
         </div>
-        <div class="level-picker">
-            <button type="button" class="lvl-btn active" onclick="setNailCount(4, this)">4 支釘</button>
-            <button type="button" class="lvl-btn" onclick="setNailCount(6, this)">6 支釘</button>
-            <button type="button" class="lvl-btn" onclick="setNailCount(8, this)">8 支釘</button>
+        <div class="picker-group" id="diff-picker">
+            <button type="button" class="chip-btn active" onclick="setDifficulty('normal', this)">普通</button>
+            <button type="button" class="chip-btn diff-hard" onclick="setDifficulty('hard', this)">困難</button>
+            <button type="button" class="chip-btn diff-hell" onclick="setDifficulty('hell', this)">地獄</button>
         </div>
     </div>
+
+    <div class="top-row">
+        <div class="picker-group" id="wood-picker">
+            <button type="button" class="chip-btn active" onclick="setWoodType('pine', this)">松木</button>
+            <button type="button" class="chip-btn" onclick="setWoodType('oak', this)">橡木</button>
+            <button type="button" class="chip-btn" onclick="setWoodType('mahogany', this)">紅木</button>
+        </div>
+        <div class="picker-group" id="count-picker">
+            <button type="button" class="chip-btn active" onclick="setNailCount(4, this)">4釘</button>
+            <button type="button" class="chip-btn" onclick="setNailCount(6, this)">6釘</button>
+            <button type="button" class="chip-btn" onclick="setNailCount(8, this)">8釘</button>
+        </div>
+    </div>
+
     <div class="stats-grid">
         <div class="stat-box">
             <span class="stat-label">已打鎚數</span>
@@ -323,7 +344,7 @@
             <span class="stat-val val-nails" id="ui-progress">0 / 4</span>
         </div>
         <div class="stat-box">
-            <span class="stat-label">最少鎚數紀錄</span>
+            <span class="stat-label">此難度最佳</span>
             <span class="stat-val val-best" id="ui-best">--</span>
         </div>
     </div>
@@ -335,7 +356,7 @@
 
 <footer>
     <div class="power-bar-wrap">
-        <div class="power-sweet-zone" title="最佳重擊區"></div>
+        <div class="power-sweet-zone"></div>
         <div class="power-fill" id="power-fill"></div>
         <div class="power-text" id="power-text">按住蓄力／放開重擊，或直接點釘頭上方敲打！</div>
     </div>
@@ -351,8 +372,8 @@
         <p id="win-rank">木工老師傅級手勢！</p>
         <div class="result-box">
             總共用咗：<b style="color:var(--accent-gold); font-size:20px;" id="final-hits">0</b> 鎚<br>
-            鋼釘規格：<b>1.00 吋（全部完全入木）</b><br>
-            此關最佳紀錄：<b style="color:var(--accent-orange);" id="final-best">--</b>
+            難度／木材：<b id="final-mode">普通 · 松木</b><br>
+            此難度最佳：<b style="color:var(--accent-orange);" id="final-best">--</b>
         </div>
         <button type="button" class="primary-btn" onclick="resetGame()">再挑戰一次</button>
     </div>
@@ -366,8 +387,67 @@ const hammerBtn = document.getElementById('hammer-btn');
 const powerFill = document.getElementById('power-fill');
 const powerText = document.getElementById('power-text');
 
+const DIFF_CONFIG = {
+    normal: {
+        label: '普通',
+        hitRadius: 30,
+        chargeSpeed: 1.25,
+        bendFactor: 0.11,
+        windDrift: 0,
+        powerScale: 1.0
+    },
+    hard: {
+        label: '困難',
+        hitRadius: 23,
+        chargeSpeed: 1.85,
+        bendFactor: 0.18,
+        windDrift: 14,
+        powerScale: 0.9
+    },
+    hell: {
+        label: '地獄',
+        hitRadius: 17,
+        chargeSpeed: 2.55,
+        bendFactor: 0.26,
+        windDrift: 28,
+        powerScale: 0.78
+    }
+};
+
+const WOOD_CONFIG = {
+    pine: {
+        label: '松木',
+        hardness: 1.0,
+        topColor: '#e6ccb2',
+        gradStart: '#c68b59',
+        gradMid: '#9c6644',
+        gradEnd: '#582f0e',
+        particleColor: '#ddb892'
+    },
+    oak: {
+        label: '橡木',
+        hardness: 1.28,
+        topColor: '#c9a66b',
+        gradStart: '#a47148',
+        gradMid: '#7f4f24',
+        gradEnd: '#432818',
+        particleColor: '#b08968'
+    },
+    mahogany: {
+        label: '紅木',
+        hardness: 1.58,
+        topColor: '#b5655d',
+        gradStart: '#8c3b36',
+        gradMid: '#642220',
+        gradEnd: '#330e0d',
+        particleColor: '#a44a3f'
+    }
+};
+
 let W = 360, H = 480;
 let nailCount = 4;
+let difficulty = 'normal';
+let woodType = 'pine';
 let hits = 0;
 let nails = [];
 let particles = [];
@@ -375,10 +455,10 @@ let shockwaves = [];
 let floatingTexts = [];
 let shakeTime = 0;
 let shakeIntensity = 0;
+let elapsedTime = 0;
 let isFinished = false;
 let winTimeout = null;
 
-// 鎚仔狀態機：idle / charging / swinging / recovering
 const hammer = {
     x: 180,
     targetX: 180,
@@ -387,17 +467,17 @@ const hammer = {
     power: 0,
     powerDir: 1,
     swingTimer: 0,
-    swingDuration: 0.14,
+    swingDuration: 0.13,
     recoverTimer: 0,
-    lastHitPower: 0.65
+    lastHitPower: 0.72
 };
 
-const INCH_LENGTH_PX = 92; // 1.00 吋鋼釘外露高度對應 92px
+const INCH_LENGTH_PX = 90;
 let woodTopY = 300;
-let woodHeight = 120;
+let woodHeight = 115;
 
 function getBestKey() {
-    return `woodNail_best_${nailCount}`;
+    return `woodNail_best_${difficulty}_${nailCount}`;
 }
 
 function loadBest() {
@@ -419,13 +499,13 @@ function resize() {
     const rect = wrap.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = rect.width > 40 ? rect.width : window.innerWidth;
-    H = rect.height > 40 ? rect.height : Math.max(240, window.innerHeight - 210);
+    H = rect.height > 40 ? rect.height : Math.max(220, window.innerHeight - 230);
     canvas.width = Math.max(1, Math.round(W * dpr));
     canvas.height = Math.max(1, Math.round(H * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    woodHeight = Math.max(92, Math.min(136, H * 0.25));
-    woodTopY = H - woodHeight - 26;
+    woodHeight = Math.max(88, Math.min(126, H * 0.24));
+    woodTopY = H - woodHeight - 24;
     layoutNails();
 }
 
@@ -433,7 +513,7 @@ window.addEventListener('resize', resize);
 
 function layoutNails() {
     if (!nails.length) return;
-    const margin = Math.max(48, W * 0.14);
+    const margin = Math.max(46, W * 0.13);
     const span = Math.max(60, W - margin * 2);
     nails.forEach((n, idx) => {
         n.x = nailCount === 1 ? W / 2 : margin + (span / (nailCount - 1)) * idx;
@@ -447,9 +527,23 @@ function layoutNails() {
     }
 }
 
+function setDifficulty(diff, btn) {
+    difficulty = diff;
+    document.querySelectorAll('#diff-picker .chip-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    resetGame();
+}
+
+function setWoodType(type, btn) {
+    woodType = type;
+    document.querySelectorAll('#wood-picker .chip-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    resetGame();
+}
+
 function setNailCount(count, btn) {
     nailCount = count;
-    document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#count-picker .chip-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     resetGame();
 }
@@ -518,19 +612,19 @@ function playHammerSound(type) {
 
         if (type === 'perfect') {
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(1240, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.11);
+            osc.frequency.setValueAtTime(1260, now);
+            osc.frequency.exponentialRampToValueAtTime(450, now + 0.11);
             gain.gain.setValueAtTime(0.16, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         } else if (type === 'hit') {
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(780, now);
-            osc.frequency.exponentialRampToValueAtTime(250, now + 0.09);
+            osc.frequency.setValueAtTime(760, now);
+            osc.frequency.exponentialRampToValueAtTime(240, now + 0.09);
             gain.gain.setValueAtTime(0.13, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
         } else {
             osc.type = 'square';
-            osc.frequency.setValueAtTime(165, now);
+            osc.frequency.setValueAtTime(160, now);
             osc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
             gain.gain.setValueAtTime(0.09, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
@@ -551,10 +645,10 @@ function spawnParticles(x, y, color, count, speedScale = 1) {
             x, y,
             vx: Math.cos(a) * spd,
             vy: Math.sin(a) * spd - 25,
-            life: 0.42 + Math.random() * 0.28,
-            maxLife: 0.7,
+            life: 0.42 + Math.random() * 0.25,
+            maxLife: 0.67,
             color,
-            size: 2.2 + Math.random() * 2.6
+            size: 2.2 + Math.random() * 2.5
         });
     }
 }
@@ -567,7 +661,7 @@ function beginCharge(clientX = null) {
     if (isFinished || hammer.state === 'swinging') return;
     if (clientX !== null) {
         const rect = canvas.getBoundingClientRect();
-        const clampedX = Math.max(28, Math.min(W - 28, clientX - rect.left));
+        const clampedX = Math.max(26, Math.min(W - 26, clientX - rect.left));
         hammer.targetX = clampedX;
         hammer.x = clampedX;
     }
@@ -579,8 +673,9 @@ function beginCharge(clientX = null) {
 
 function triggerSwingWithPower(pwr) {
     if (isFinished) return;
-    const aimX = hammer.targetX;
-    hammer.x = aimX;
+    const diffCfg = DIFF_CONFIG[difficulty];
+    const woodCfg = WOOD_CONFIG[woodType];
+    const aimX = hammer.x;
     hammer.lastHitPower = Math.max(0.2, Math.min(1, pwr));
     hammer.state = 'swinging';
     hammer.swingTimer = 0;
@@ -591,9 +686,8 @@ function triggerSwingWithPower(pwr) {
 
     hits++;
     shakeTime = 0.13;
-    shakeIntensity = 3 + hammer.lastHitPower * 5;
+    shakeIntensity = (3 + hammer.lastHitPower * 5) * Math.sqrt(woodCfg.hardness);
 
-    // 以實際 aimX 搵最接近嘅未完成 1 吋釘
     let closest = null;
     let minDist = Infinity;
     nails.forEach(n => {
@@ -606,45 +700,47 @@ function triggerSwingWithPower(pwr) {
         }
     });
 
-    if (closest && minDist <= 30) {
-        const accuracy = 1 - (minDist / 30);
-        const inSweetZone = hammer.lastHitPower >= 0.68 && hammer.lastHitPower <= 0.90;
+    if (closest && minDist <= diffCfg.hitRadius) {
+        const accuracy = 1 - (minDist / diffCfg.hitRadius);
+        const inSweetZone = hammer.lastHitPower >= 0.70 && hammer.lastHitPower <= 0.88;
         const headY = woodTopY - 6 - (1 - closest.drivenInch) * INCH_LENGTH_PX;
 
-        let driveAmount = (0.26 + hammer.lastHitPower * 0.52) * (0.68 + accuracy * 0.42);
-        if (inSweetZone && accuracy > 0.68) {
-            driveAmount = Math.max(driveAmount, 0.56);
-            closest.bendAngle *= 0.35;
+        let driveAmount = ((0.25 + hammer.lastHitPower * 0.50) * (0.65 + accuracy * 0.45) * diffCfg.powerScale) / woodCfg.hardness;
+
+        if (inSweetZone && accuracy > 0.72) {
+            driveAmount = Math.max(driveAmount, 0.54 / woodCfg.hardness);
+            closest.bendAngle *= 0.4;
             playHammerSound('perfect');
-            shockwaves.push({ x: closest.x, y: headY, r: 4, maxR: 26, color: '#1dd1a1', life: 0.25, maxLife: 0.25 });
-            spawnParticles(closest.x, headY, '#feca57', 14, 1.15);
-            spawnParticles(closest.x, headY, '#1dd1a1', 8, 0.9);
-            spawnFloat(closest.x, Math.max(36, headY - 26), `💥 完美重擊 -${driveAmount.toFixed(2)}"`, '#1dd1a1');
+            shockwaves.push({ x: closest.x, y: headY, r: 4, maxR: 26, color: '#1dd1a1', life: 0.24, maxLife: 0.24 });
+            spawnParticles(closest.x, headY, '#feca57', 12, 1.1);
+            spawnParticles(closest.x, headY, woodCfg.particleColor, 8, 1.0);
+            spawnFloat(closest.x, Math.max(36, headY - 26), `💥 完美 -${driveAmount.toFixed(2)}"`, '#1dd1a1');
         } else {
-            if (hammer.lastHitPower > 0.90 && accuracy < 0.72) {
-                closest.bendAngle += (aimX > closest.x ? -1 : 1) * 0.13;
-                driveAmount *= 0.58;
-                spawnFloat(closest.x, Math.max(36, headY - 26), `⚠️ 力猛微彎！`, '#ff9f43');
+            if (hammer.lastHitPower > 0.88 || accuracy < 0.65) {
+                closest.bendAngle += (aimX > closest.x ? -1 : 1) * diffCfg.bendFactor;
+                driveAmount *= 0.62;
+                spawnFloat(closest.x, Math.max(36, headY - 26), `⚠️ 釘身微彎！`, '#ff9f43');
             } else {
                 spawnFloat(closest.x, Math.max(36, headY - 26), `🔨 -${driveAmount.toFixed(2)}"`, '#feca57');
             }
             playHammerSound('hit');
             shockwaves.push({ x: closest.x, y: headY, r: 3, maxR: 18, color: '#feca57', life: 0.2, maxLife: 0.2 });
-            spawnParticles(closest.x, headY, '#f5f6fa', 9, 0.95);
+            spawnParticles(closest.x, headY, '#f5f6fa', 7, 0.9);
+            spawnParticles(closest.x, headY, woodCfg.particleColor, 6, 0.9);
         }
 
-        const bendPenalty = Math.max(0.55, 1 - Math.abs(closest.bendAngle) * 1.1);
+        const bendPenalty = Math.max(0.5, 1 - Math.abs(closest.bendAngle) * 1.25);
         closest.drivenInch = Math.min(1, closest.drivenInch + driveAmount * bendPenalty);
-        if (1 - closest.drivenInch <= 0.03) {
+        if (1 - closest.drivenInch <= 0.025) {
             closest.drivenInch = 1;
         }
-        closest.hitFlash = 0.28;
+        closest.hitFlash = 0.26;
         closest.bounceOffset = -4;
 
         if (closest.drivenInch >= 1) {
             closest.bendAngle = 0;
-            spawnParticles(closest.x, woodTopY - 6, '#1dd1a1', 18, 1.2);
-            spawnFloat(closest.x, woodTopY - 40, `✅ 1.00" 完成！`, '#1dd1a1');
+            spawnParticles(closest.x, woodTopY - 6, '#1dd1a1', 16, 1.15);
+            spawnFloat(closest.x, woodTopY - 38, `✅ 1.00" 完成！`, '#1dd1a1');
             const nextNail = nails.find(n => n.drivenInch < 1);
             if (nextNail) {
                 hammer.targetX = nextNail.x;
@@ -652,8 +748,8 @@ function triggerSwingWithPower(pwr) {
         }
     } else {
         playHammerSound('wood');
-        spawnParticles(aimX, woodTopY - 4, '#d4a373', 10, 0.9);
-        spawnFloat(aimX, woodTopY - 28, '💨 打中木方！(空鎚)', '#ff6b6b');
+        spawnParticles(aimX, woodTopY - 4, woodCfg.particleColor, 10, 0.95);
+        spawnFloat(aimX, woodTopY - 28, '💨 空鎚打木！', '#ff6b6b');
     }
 
     updateHUD();
@@ -678,11 +774,13 @@ function checkWin() {
         const bestNow = loadBest();
 
         let rank = '👍 穩陣木工！全部 1 吋釘齊平！';
-        if (hits <= nailCount * 2) rank = '🏆 神級鐵鎚王！平均 2 鎚一支 1 吋釘！';
+        if (difficulty === 'hell' && hits <= nailCount * 3) rank = '👑 地獄鐵鎚神！硬核全清！';
+        else if (hits <= nailCount * 2) rank = '🏆 神級鐵鎚王！極致精準！';
         else if (hits <= nailCount * 3) rank = '🔥 熟手木工師傅！手勢好準！';
 
         document.getElementById('win-rank').innerText = isNewRecord ? `🎊 破紀錄！${rank}` : rank;
         document.getElementById('final-hits').innerText = hits;
+        document.getElementById('final-mode').innerText = `${DIFF_CONFIG[difficulty].label} · ${WOOD_CONFIG[woodType].label}`;
         document.getElementById('final-best').innerText = bestNow ? `${bestNow} 鎚` : `${hits} 鎚`;
         winTimeout = setTimeout(() => {
             document.getElementById('win-modal').classList.remove('hidden');
@@ -704,16 +802,15 @@ window.addEventListener('pointerup', () => {
 canvas.addEventListener('pointermove', (e) => {
     if (isFinished) return;
     const rect = canvas.getBoundingClientRect();
-    hammer.targetX = Math.max(28, Math.min(W - 28, e.clientX - rect.left));
+    hammer.targetX = Math.max(26, Math.min(W - 26, e.clientX - rect.left));
 });
 
 canvas.addEventListener('pointerdown', (e) => {
     if (isFinished) return;
     const rect = canvas.getBoundingClientRect();
-    const px = Math.max(28, Math.min(W - 28, e.clientX - rect.left));
+    const px = Math.max(26, Math.min(W - 26, e.clientX - rect.left));
     hammer.targetX = px;
     hammer.x = px;
-    // 點擊畫布直接以爽快中力（0.76）敲擊，方便單手快速遊玩
     triggerSwingWithPower(0.76);
 });
 
@@ -722,9 +819,9 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
         beginCharge();
     } else if (e.code === 'ArrowLeft') {
-        hammer.targetX = Math.max(28, hammer.targetX - 28);
+        hammer.targetX = Math.max(26, hammer.targetX - 26);
     } else if (e.code === 'ArrowRight') {
-        hammer.targetX = Math.min(W - 28, hammer.targetX + 28);
+        hammer.targetX = Math.min(W - 26, hammer.targetX + 26);
     }
 });
 
@@ -736,14 +833,21 @@ window.addEventListener('keyup', (e) => {
 });
 
 function update(dt) {
+    elapsedTime += dt;
     if (shakeTime > 0) {
         shakeTime = Math.max(0, shakeTime - dt);
     }
 
-    hammer.x += (hammer.targetX - hammer.x) * Math.min(1, dt * 22);
+    const diffCfg = DIFF_CONFIG[difficulty];
+    const drift = (hammer.state === 'charging' && diffCfg.windDrift > 0)
+        ? Math.sin(elapsedTime * 6.5) * diffCfg.windDrift * dt * 3
+        : 0;
+
+    hammer.x += ((hammer.targetX + drift) - hammer.x) * Math.min(1, dt * 22);
+    hammer.x = Math.max(24, Math.min(W - 24, hammer.x));
 
     if (hammer.state === 'charging') {
-        hammer.power += dt * 1.25 * hammer.powerDir;
+        hammer.power += dt * diffCfg.chargeSpeed * hammer.powerDir;
         if (hammer.power >= 1) {
             hammer.power = 1;
             hammer.powerDir = -1;
@@ -753,7 +857,7 @@ function update(dt) {
         }
         hammer.angle = -0.35 - hammer.power * 0.95;
         powerFill.style.width = `${Math.round(hammer.power * 100)}%`;
-        powerText.innerText = `蓄力中 ${Math.round(hammer.power * 100)}%（68%–90% 綠區最強）`;
+        powerText.innerText = `蓄力 ${Math.round(hammer.power * 100)}%（70%–88% 綠區最強）`;
     } else if (hammer.state === 'swinging') {
         hammer.swingTimer += dt;
         const t = Math.min(1, hammer.swingTimer / hammer.swingDuration);
@@ -761,7 +865,7 @@ function update(dt) {
         hammer.angle = startAngle + (0.14 - startAngle) * (t * t);
         if (hammer.swingTimer >= hammer.swingDuration) {
             hammer.state = 'recovering';
-            hammer.recoverTimer = 0.16;
+            hammer.recoverTimer = 0.15;
         }
     } else if (hammer.state === 'recovering') {
         hammer.recoverTimer -= dt;
@@ -805,23 +909,15 @@ function update(dt) {
     }
 }
 
-function drawWorkshopBackground() {
+function drawBackground() {
     const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0, '#231b16');
+    bgGrad.addColorStop(0, difficulty === 'hell' ? '#261012' : '#231b16');
     bgGrad.addColorStop(0.65, '#17120e');
     bgGrad.addColorStop(1, '#0d0a08');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
-    // 工作燈暖光光暈
-    const lampGrad = ctx.createRadialGradient(W * 0.5, 45, 10, W * 0.5, woodTopY * 0.55, Math.max(180, W * 0.65));
-    lampGrad.addColorStop(0, 'rgba(255, 214, 153, 0.14)');
-    lampGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = lampGrad;
-    ctx.fillRect(0, 0, W, woodTopY);
-
-    // 左側 1.00 吋高度參考尺規
-    const rulerX = 16;
+    const rulerX = 14;
     const baseY = woodTopY - 6;
     const topMarkY = baseY - INCH_LENGTH_PX;
     ctx.strokeStyle = 'rgba(221, 184, 146, 0.28)';
@@ -831,36 +927,34 @@ function drawWorkshopBackground() {
     ctx.lineTo(rulerX, baseY);
     ctx.stroke();
 
-    [0, 0.25, 0.5, 0.75, 1].forEach(frac => {
+    [0, 0.5, 1].forEach(frac => {
         const ry = baseY - frac * INCH_LENGTH_PX;
         ctx.beginPath();
-        ctx.moveTo(rulerX - 4, ry);
-        ctx.lineTo(rulerX + 5, ry);
+        ctx.moveTo(rulerX - 3, ry);
+        ctx.lineTo(rulerX + 4, ry);
         ctx.stroke();
-
         if (frac === 1 || frac === 0.5) {
             ctx.fillStyle = 'rgba(221, 184, 146, 0.45)';
             ctx.font = 'bold 10px Orbitron, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(frac === 1 ? '1.00"' : '0.50"', rulerX + 8, ry + 3);
+            ctx.fillText(frac === 1 ? '1.00"' : '0.50"', rulerX + 7, ry + 3);
         }
     });
 }
 
 function drawWoodBlock() {
+    const woodCfg = WOOD_CONFIG[woodType];
     const woodX = 18;
     const woodW = W - 36;
-    const topDepth = 16;
+    const topDepth = 15;
 
-    // 底部陰影
     ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
     ctx.beginPath();
     ctx.roundRect(woodX + 4, woodTopY + 10, woodW, woodHeight, 10);
     ctx.fill();
 
-    // 立體頂面
-    ctx.fillStyle = '#ddb892';
-    ctx.strokeStyle = '#582f0e';
+    ctx.fillStyle = woodCfg.topColor;
+    ctx.strokeStyle = '#3d1f09';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(woodX + 10, woodTopY - topDepth);
@@ -871,51 +965,36 @@ function drawWoodBlock() {
     ctx.fill();
     ctx.stroke();
 
-    // 正面木方漸層
     const woodGrad = ctx.createLinearGradient(0, woodTopY, 0, woodTopY + woodHeight);
-    woodGrad.addColorStop(0, '#c68b59');
-    woodGrad.addColorStop(0.5, '#9c6644');
-    woodGrad.addColorStop(1, '#582f0e');
+    woodGrad.addColorStop(0, woodCfg.gradStart);
+    woodGrad.addColorStop(0.5, woodCfg.gradMid);
+    woodGrad.addColorStop(1, woodCfg.gradEnd);
 
     ctx.fillStyle = woodGrad;
-    ctx.strokeStyle = '#3d1f09';
+    ctx.strokeStyle = '#2d1506';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(woodX, woodTopY, woodW, woodHeight, 8);
     ctx.fill();
     ctx.stroke();
 
-    // 木紋曲線
-    ctx.strokeStyle = 'rgba(61, 31, 9, 0.32)';
-    ctx.lineWidth = 1.5;
-    for (let row = 1; row <= 4; row++) {
-        const wy = woodTopY + (woodHeight / 5) * row;
-        ctx.beginPath();
-        ctx.moveTo(woodX + 10, wy);
-        ctx.bezierCurveTo(
-            woodX + woodW * 0.3, wy - 4,
-            woodX + woodW * 0.7, wy + 4,
-            woodX + woodW - 10, wy
-        );
-        ctx.stroke();
-    }
-
-    ctx.fillStyle = 'rgba(255, 243, 224, 0.5)';
+    ctx.fillStyle = 'rgba(255, 243, 224, 0.55)';
     ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('實木方 · 1.00" 鋼釘測試台', woodX + woodW - 12, woodTopY + woodHeight - 10);
+    ctx.fillText(`${woodCfg.label}（硬度 ${woodCfg.hardness}x）· ${DIFF_CONFIG[difficulty].label}`, woodX + woodW - 12, woodTopY + woodHeight - 10);
 }
 
 function drawNails() {
+    const headHalfW = difficulty === 'hell' ? 7.5 : (difficulty === 'hard' ? 9 : 10.5);
+
     nails.forEach(n => {
         const remainInch = Math.max(0, 1 - n.drivenInch);
         const visibleH = remainInch * INCH_LENGTH_PX;
         const baseY = woodTopY - 6;
 
-        // 釘孔陰影
         ctx.fillStyle = 'rgba(25, 12, 4, 0.8)';
         ctx.beginPath();
-        ctx.ellipse(n.x, baseY, 8.5, 3.4, 0, 0, Math.PI * 2);
+        ctx.ellipse(n.x, baseY, headHalfW * 0.8, 3.2, 0, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.save();
@@ -923,39 +1002,25 @@ function drawNails() {
         ctx.rotate(n.bendAngle);
 
         if (visibleH > 1.2) {
-            const shaftW = 7;
+            const shaftW = difficulty === 'hell' ? 5.2 : 6.6;
             const shaftGrad = ctx.createLinearGradient(-shaftW / 2, 0, shaftW / 2, 0);
             shaftGrad.addColorStop(0, '#636e72');
-            shaftGrad.addColorStop(0.38, '#ffffff');
-            shaftGrad.addColorStop(0.75, '#b2bec3');
+            shaftGrad.addColorStop(0.4, '#ffffff');
             shaftGrad.addColorStop(1, '#2d3436');
 
             ctx.fillStyle = shaftGrad;
             ctx.strokeStyle = '#1e272e';
-            ctx.lineWidth = 1.3;
+            ctx.lineWidth = 1.2;
             ctx.fillRect(-shaftW / 2, -visibleH, shaftW, visibleH);
             ctx.strokeRect(-shaftW / 2, -visibleH, shaftW, visibleH);
-
-            // 鋼釘刻痕（每 0.25" 一格）
-            ctx.strokeStyle = 'rgba(30, 39, 46, 0.5)';
-            ctx.lineWidth = 1;
-            [0.25, 0.5, 0.75].forEach(mark => {
-                if (remainInch > mark) {
-                    const my = -(remainInch - mark) * INCH_LENGTH_PX;
-                    ctx.beginPath();
-                    ctx.moveTo(-shaftW / 2 + 0.5, my);
-                    ctx.lineTo(shaftW / 2 - 0.5, my);
-                    ctx.stroke();
-                }
-            });
         }
 
         const headY = -visibleH;
         ctx.fillStyle = n.drivenInch >= 1 ? '#1dd1a1' : (n.hitFlash > 0 ? '#feca57' : '#dfe6e9');
         ctx.strokeStyle = '#1e272e';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
-        ctx.roundRect(-10.5, headY - 4.5, 21, 5.5, 2.5);
+        ctx.roundRect(-headHalfW, headY - 4.5, headHalfW * 2, 5.5, 2.5);
         ctx.fill();
         ctx.stroke();
 
@@ -978,69 +1043,58 @@ function drawHammer() {
     if (isFinished) return;
 
     let aimY = woodTopY - 6;
-    let overActiveNail = false;
     nails.forEach(n => {
-        if (n.drivenInch < 1 && Math.abs(n.x - hammer.x) <= 30) {
+        if (n.drivenInch < 1 && Math.abs(n.x - hammer.x) <= DIFF_CONFIG[difficulty].hitRadius) {
             aimY = woodTopY - 6 - (1 - n.drivenInch) * INCH_LENGTH_PX;
-            overActiveNail = true;
         }
     });
 
-    // 瞄準虛線與落點圈
     ctx.save();
-    ctx.strokeStyle = hammer.state === 'charging'
-        ? 'rgba(254, 202, 87, 0.85)'
-        : (overActiveNail ? 'rgba(29, 209, 161, 0.55)' : 'rgba(255, 255, 255, 0.25)');
+    ctx.strokeStyle = hammer.state === 'charging' ? 'rgba(254, 202, 87, 0.85)' : 'rgba(255, 255, 255, 0.25)';
     ctx.setLineDash([4, 4]);
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(hammer.x, aimY - 56);
+    ctx.moveTo(hammer.x, aimY - 52);
     ctx.lineTo(hammer.x, aimY - 6);
     ctx.stroke();
     ctx.restore();
 
     ctx.save();
-    const pivotX = hammer.x + 70;
+    const pivotX = hammer.x + 68;
     const pivotY = aimY - 12;
-    const jitter = hammer.state === 'charging' ? (Math.random() - 0.5) * hammer.power * 3.5 : 0;
+    const jitter = hammer.state === 'charging' ? (Math.random() - 0.5) * hammer.power * 4 : 0;
     ctx.translate(pivotX + jitter, pivotY + jitter);
     ctx.rotate(hammer.angle);
 
-    // 木柄
-    const handleGrad = ctx.createLinearGradient(-74, -5, -74, 5);
+    const handleGrad = ctx.createLinearGradient(-72, -5, -72, 5);
     handleGrad.addColorStop(0, '#feca57');
     handleGrad.addColorStop(1, '#8c583a');
     ctx.fillStyle = handleGrad;
     ctx.strokeStyle = '#2b180a';
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(-74, -4.8, 78, 9.6, 4.5);
+    ctx.roundRect(-72, -4.5, 76, 9, 4);
     ctx.fill();
     ctx.stroke();
 
-    // 握把
     ctx.fillStyle = '#2f3640';
     ctx.beginPath();
-    ctx.roundRect(-24, -5.2, 28, 10.4, 4);
+    ctx.roundRect(-24, -5, 28, 10, 4);
     ctx.fill();
 
-    // 鋼鐵鎚頭（打擊面精準對準 hammer.x）
-    const headX = -70;
-    const steelGrad = ctx.createLinearGradient(headX - 12, -18, headX + 12, 16);
+    const headX = -68;
+    const steelGrad = ctx.createLinearGradient(headX - 12, -16, headX + 12, 16);
     steelGrad.addColorStop(0, '#ffffff');
     steelGrad.addColorStop(0.5, '#8395a7');
     steelGrad.addColorStop(1, '#222f3e');
 
     ctx.fillStyle = steelGrad;
     ctx.strokeStyle = '#1e272e';
-    ctx.lineWidth = 1.7;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.roundRect(headX - 11.5, -17, 23, 32, 4.5);
+    ctx.roundRect(headX - 11, -16, 22, 30, 4);
     ctx.fill();
     ctx.stroke();
-
-    ctx.fillStyle = '#f5f6fa';
-    ctx.fillRect(headX - 12.5, 11.5, 25, 4);
 
     ctx.restore();
 }
@@ -1052,7 +1106,7 @@ function draw() {
         ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
     }
 
-    drawWorkshopBackground();
+    drawBackground();
     drawWoodBlock();
     drawNails();
     drawHammer();
@@ -1061,7 +1115,7 @@ function draw() {
         ctx.save();
         ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.8;
         ctx.strokeStyle = sw.color;
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
         ctx.stroke();
