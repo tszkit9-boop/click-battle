@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>🏎️ 香港街頭霓虹夜賽 · AT/MT & 迫力完整版</title>
+<title>🏎️ 香港街頭賽車</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@500;700;900&display=swap');
 
     :root {
-        --bg-night: #080412;
+        --bg-night: #06070d;
         --neon-cyan: #00f3ff;
         --neon-magenta: #ff007f;
         --neon-gold: #ffd32a;
         --neon-green: #2ed573;
-        --neon-red: #ff4757;
-        --panel-glass: rgba(14, 8, 28, 0.94);
+        --neon-red: #ff3b30;
+        --panel-glass: rgba(11, 14, 24, 0.92);
     }
 
     * {
@@ -38,7 +38,7 @@
         padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* 🛡️ 標準三件套 1：固定左上角返回大廳按鈕，z-index: 99999 */
+    /* 固定左上角返回大廳按鈕 */
     #std-back-lobby-btn {
         position: fixed;
         top: calc(10px + env(safe-area-inset-top));
@@ -49,14 +49,14 @@
         gap: 4px;
         padding: 6px 11px;
         border-radius: 9px;
-        background: rgba(12, 6, 26, 0.94);
-        border: 1.5px solid var(--neon-cyan);
+        background: rgba(10, 13, 22, 0.92);
+        border: 1.5px solid rgba(0, 243, 255, 0.75);
         color: #fff;
         font-family: 'Noto Sans HK', sans-serif;
         font-size: 12px;
         font-weight: 900;
         text-decoration: none;
-        box-shadow: 0 0 14px rgba(0, 243, 255, 0.4);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.65);
         cursor: pointer;
     }
     #std-back-lobby-btn:active {
@@ -80,8 +80,8 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
-        pointer-events: none;
         z-index: 20;
+        pointer-events: none;
     }
 
     .hud-top {
@@ -93,8 +93,8 @@
     }
 
     .hud-pill {
-        background: rgba(10, 5, 22, 0.86);
-        border: 1px solid rgba(0, 243, 255, 0.35);
+        background: rgba(9, 12, 22, 0.84);
+        border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 10px;
         padding: 4px 8px;
         display: flex;
@@ -102,7 +102,25 @@
         gap: 4px;
         font-size: 11px;
         font-weight: 900;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    }
+
+    .cam-btn {
+        pointer-events: auto;
+        background: rgba(0, 243, 255, 0.14);
+        border: 1px solid rgba(0, 243, 255, 0.65);
+        color: #e0faff;
+        border-radius: 10px;
+        padding: 4px 9px;
+        font-size: 11px;
+        font-weight: 900;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+    }
+    .cam-btn:active {
+        transform: scale(0.94);
+        background: rgba(0, 243, 255, 0.3);
     }
 
     .hud-num {
@@ -126,28 +144,28 @@
 
     .bar-outer {
         height: 12px;
-        background: rgba(10, 5, 22, 0.88);
-        border: 1px solid rgba(0, 243, 255, 0.45);
+        background: rgba(9, 12, 22, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 999px;
         overflow: hidden;
         position: relative;
     }
 
     .bar-outer.brake-bar {
-        border-color: rgba(255, 71, 87, 0.55);
+        border-color: rgba(255, 59, 48, 0.55);
     }
 
     #nitro-fill {
         height: 100%;
         width: 75%;
-        background: linear-gradient(90deg, #00f3ff, #ff007f);
+        background: linear-gradient(90deg, #00d2ff, #ff007f);
         transition: width 0.05s linear;
     }
 
     #brake-fill {
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, #ffd32a, #ff4757);
+        background: linear-gradient(90deg, #ff9f0a, #ff3b30);
         transition: width 0.05s linear;
     }
 
@@ -160,7 +178,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        text-shadow: 0 1px 2px #000;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
     }
 
     /* 手機虛擬控制區 */
@@ -188,40 +206,39 @@
         width: 58px;
         height: 58px;
         border-radius: 15px;
-        background: rgba(16, 10, 34, 0.82);
-        border: 2px solid rgba(0, 243, 255, 0.55);
+        background: rgba(14, 18, 32, 0.84);
+        border: 1.5px solid rgba(255, 255, 255, 0.28);
         color: #fff;
         font-size: 20px;
         font-weight: 900;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
-        backdrop-filter: blur(4px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(6px);
     }
 
     .touch-btn:active, .touch-btn.pressed {
-        background: rgba(0, 243, 255, 0.35);
+        background: rgba(0, 243, 255, 0.28);
         border-color: var(--neon-cyan);
         transform: scale(0.93);
     }
 
     .touch-btn.brake-btn {
-        border-color: var(--neon-red);
-        color: #ffd6da;
+        border-color: rgba(255, 59, 48, 0.75);
+        color: #ffd6d4;
         font-size: 12px;
         flex-direction: column;
         gap: 1px;
     }
 
     .touch-btn.brake-btn:active, .touch-btn.brake-btn.pressed {
-        background: rgba(255, 71, 87, 0.42);
-        box-shadow: 0 0 16px rgba(255, 71, 87, 0.65);
+        background: rgba(255, 59, 48, 0.38);
     }
 
     .touch-btn.nitro-btn {
         width: 64px;
-        border-color: var(--neon-magenta);
+        border-color: rgba(255, 0, 127, 0.75);
         color: #ffd6eb;
         font-family: 'Orbitron', sans-serif;
         font-size: 11px;
@@ -230,8 +247,7 @@
     }
 
     .touch-btn.nitro-btn:active, .touch-btn.nitro-btn.pressed {
-        background: rgba(255, 0, 127, 0.42);
-        box-shadow: 0 0 16px rgba(255, 0, 127, 0.65);
+        background: rgba(255, 0, 127, 0.38);
     }
 
     .gear-pad {
@@ -248,8 +264,8 @@
         width: 48px;
         height: 36px;
         border-radius: 10px;
-        background: rgba(20, 14, 42, 0.88);
-        border: 1.5px solid var(--neon-green);
+        background: rgba(16, 22, 36, 0.9);
+        border: 1.5px solid rgba(46, 213, 115, 0.75);
         color: #d7ffea;
         font-size: 11px;
         font-weight: 900;
@@ -265,8 +281,8 @@
     .overlay {
         position: fixed;
         inset: 0;
-        background: radial-gradient(circle at top, rgba(35, 12, 65, 0.92), rgba(6, 3, 14, 0.96));
-        backdrop-filter: blur(8px);
+        background: radial-gradient(circle at 50% 15%, rgba(28, 36, 62, 0.85), rgba(5, 7, 14, 0.95));
+        backdrop-filter: blur(10px);
         z-index: 60;
         display: flex;
         align-items: center;
@@ -281,19 +297,19 @@
 
     .panel-card {
         background: var(--panel-glass);
-        border: 2px solid var(--neon-cyan);
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
         border-radius: 18px;
         padding: 18px 15px;
         width: 100%;
         max-width: 440px;
-        box-shadow: 0 0 30px rgba(0, 243, 255, 0.25);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
         text-align: center;
     }
 
     .game-logo {
         font-size: 22px;
         font-weight: 900;
-        background: linear-gradient(90deg, var(--neon-cyan), #fff, var(--neon-magenta));
+        background: linear-gradient(90deg, #ffffff, var(--neon-cyan), var(--neon-magenta));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 3px;
@@ -302,25 +318,32 @@
     .sub-logo {
         font-family: 'Orbitron', sans-serif;
         font-size: 10px;
-        color: #a89ec9;
+        color: #94a3b8;
         letter-spacing: 2px;
         margin-bottom: 12px;
+    }
+
+    .option-row-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
     }
 
     .mode-switch {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .mode-btn {
-        padding: 8px;
+        padding: 8px 6px;
         border-radius: 10px;
-        border: 1.5px solid rgba(255, 255, 255, 0.18);
-        background: rgba(255, 255, 255, 0.05);
-        color: #d6cff0;
-        font-size: 12px;
+        border: 1.5px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: #cbd5e1;
+        font-size: 11.5px;
         font-weight: 900;
         cursor: pointer;
     }
@@ -329,7 +352,12 @@
         border-color: var(--neon-green);
         background: rgba(46, 213, 115, 0.18);
         color: #fff;
-        box-shadow: 0 0 12px rgba(46, 213, 115, 0.3);
+    }
+
+    .mode-btn.cam-active {
+        border-color: var(--neon-cyan);
+        background: rgba(0, 243, 255, 0.16);
+        color: #fff;
     }
 
     .car-list {
@@ -340,8 +368,8 @@
     }
 
     .car-option {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1.5px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1.5px solid rgba(255, 255, 255, 0.14);
         border-radius: 12px;
         padding: 9px 6px;
         cursor: pointer;
@@ -353,16 +381,15 @@
     }
 
     .car-option.selected {
-        border-color: var(--neon-magenta);
-        background: rgba(255, 0, 127, 0.16);
-        box-shadow: 0 0 16px rgba(255, 0, 127, 0.35);
+        border-color: var(--neon-cyan);
+        background: rgba(0, 243, 255, 0.12);
     }
 
     .car-swatch {
         width: 34px;
         height: 15px;
         border-radius: 4px;
-        border: 1px solid #fff;
+        border: 1px solid rgba(255, 255, 255, 0.7);
     }
 
     .car-name {
@@ -372,17 +399,17 @@
 
     .car-stats {
         font-size: 10px;
-        color: #c5bce0;
+        color: #94a3b8;
         line-height: 1.4;
     }
 
     .tips-box {
-        background: rgba(0, 0, 0, 0.38);
-        border: 1px solid rgba(0, 243, 255, 0.22);
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 10px;
         padding: 9px 10px;
         font-size: 11.5px;
-        color: #d6cff0;
+        color: #cbd5e1;
         line-height: 1.6;
         margin-bottom: 12px;
         text-align: left;
@@ -393,13 +420,13 @@
         padding: 12px;
         border: none;
         border-radius: 12px;
-        background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
-        color: #070312;
+        background: linear-gradient(90deg, var(--neon-cyan), #38bdf8);
+        color: #050814;
         font-family: 'Noto Sans HK', sans-serif;
         font-size: 16px;
         font-weight: 900;
         cursor: pointer;
-        box-shadow: 0 0 20px rgba(0, 243, 255, 0.45);
+        box-shadow: 0 8px 24px rgba(0, 243, 255, 0.28);
     }
 
     .result-grid {
@@ -410,8 +437,8 @@
     }
 
     .res-item {
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 10px;
         padding: 10px;
     }
@@ -419,7 +446,7 @@
     .res-item span {
         display: block;
         font-size: 11px;
-        color: #a89ec9;
+        color: #94a3b8;
     }
 
     .res-item strong {
@@ -429,7 +456,7 @@
     }
 </style>
 
-<!-- 🛡️ 標準三件套 2：Firebase 8.10.1 -->
+<!-- Firebase 8.10.1 在線統計 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
@@ -437,7 +464,6 @@
 
 <a href="../" id="std-back-lobby-btn" aria-label="返回大廳">⬅️ 大廳</a>
 
-<!-- 遊戲中頂部 HUD -->
 <div id="hud">
     <div class="hud-top">
         <div class="hud-pill">⚡ <span class="hud-num" id="ui-speed">0</span> km/h</div>
@@ -445,6 +471,7 @@
         <div class="hud-pill">🏆 <span class="hud-num hud-score" id="ui-score">0</span></div>
         <div class="hud-pill">🔥 <span class="hud-num hud-combo" id="ui-combo">x1</span></div>
         <div class="hud-pill" id="ui-hearts">❤️❤️❤️</div>
+        <button type="button" class="cam-btn" id="hud-cam-btn" onclick="cycleCameraMode()">📷 追尾</button>
     </div>
     <div class="bars-row">
         <div class="bar-outer">
@@ -460,7 +487,6 @@
 
 <canvas id="raceCanvas"></canvas>
 
-<!-- 手機虛擬控制區（含轉向、迫力、氮氣及棍波升降波掣） -->
 <div id="mobile-controls">
     <div class="ctrl-group">
         <button type="button" class="touch-btn" id="btn-left" aria-label="左轉">◀</button>
@@ -477,47 +503,51 @@
     </div>
 </div>
 
-<!-- 開始選車與波箱畫面 -->
 <div class="overlay" id="start-overlay">
     <div class="panel-card">
         <div class="game-logo">🏎️ 香港街頭霓虹夜賽</div>
-        <div class="sub-logo">HK NEON NIGHT RACER · AT/MT & BRAKE</div>
+        <div class="sub-logo">HK NIGHT HIGHWAY · MULTI-CAMERA</div>
 
         <div class="mode-switch">
             <button type="button" class="mode-btn active" id="mode-at" onclick="setTransmission('AT')">🤖 自動波 (AT)</button>
             <button type="button" class="mode-btn" id="mode-mt" onclick="setTransmission('MT')">🕹️ 棍波 6MT (E升 / Q降)</button>
         </div>
 
+        <div class="option-row-3">
+            <button type="button" class="mode-btn cam-active" id="cam-opt-chase" onclick="setCameraMode('chase')">🎥 貼近追尾</button>
+            <button type="button" class="mode-btn" id="cam-opt-hood" onclick="setCameraMode('hood')">🚗 車頭視角</button>
+            <button type="button" class="mode-btn" id="cam-opt-top" onclick="setCameraMode('top')">🛰️ 俯視全覽</button>
+        </div>
+
         <div class="car-list" id="car-list">
             <div class="car-option selected" data-car="0" onclick="selectCar(0, this)">
-                <div class="car-swatch" style="background: linear-gradient(90deg, #fff, #111);"></div>
+                <div class="car-swatch" style="background: linear-gradient(135deg, #f8fafc, #64748b);"></div>
                 <div class="car-name">AE86 飄移王</div>
                 <div class="car-stats">極速 ★★★<br>操控 ★★★★★</div>
             </div>
             <div class="car-option" data-car="1" onclick="selectCar(1, this)">
-                <div class="car-swatch" style="background: linear-gradient(90deg, #00f3ff, #0051ff);"></div>
+                <div class="car-swatch" style="background: linear-gradient(135deg, #1d4ed8, #0f172a);"></div>
                 <div class="car-name">GT-R R34 戰神</div>
                 <div class="car-stats">極速 ★★★★★<br>操控 ★★★</div>
             </div>
             <div class="car-option" data-car="2" onclick="selectCar(2, this)">
-                <div class="car-swatch" style="background: linear-gradient(90deg, #ff007f, #ff9f43);"></div>
+                <div class="car-swatch" style="background: linear-gradient(135deg, #be123c, #450a0a);"></div>
                 <div class="car-name">RX-7 轉子魂</div>
                 <div class="car-stats">極速 ★★★★<br>操控 ★★★★</div>
             </div>
         </div>
 
         <div class="tips-box">
-            🎮 <b>控制</b>：<b>A/D 或 ◀▶</b> 轉向，<b>W/▲</b> 加速，<b>S/▼ 或 迫力掣</b> 踩迫力減速，<b>空白鍵 / NITRO</b> 噴氮氣。<br>
-            🕹️ <b>棍波 (MT)</b>：轉速高時按 <b>E / ▲升波</b> 換高波衝極速，遇慢車按 <b>Q / ▼降波</b> 提速；連續重踩迫力會升溫，注意散熱！
+            📷 <b>視角切換</b>：隨時按右上角 <b>📷 視角</b>（或鍵盤 <b>C 鍵</b>）切換 <b>貼近追尾 / 車頭視角 / 俯視全覽</b>。<br>
+            🎮 <b>控制</b>：<b>A/D 或 ◀▶</b> 轉向，<b>W/▲</b> 加速，<b>S/▼ 或 迫力掣</b> 踩迫力，<b>空白鍵 / NITRO</b> 噴氮氣。
         </div>
 
         <button type="button" class="primary-btn" onclick="startGame()">🔥 踩油起步 (START)</button>
     </div>
 </div>
 
-<!-- 結算畫面 -->
 <div class="overlay hidden" id="gameover-overlay">
-    <div class="panel-card" style="border-color: var(--neon-magenta);">
+    <div class="panel-card" style="border-color: rgba(255, 59, 48, 0.75);">
         <div class="game-logo">🏁 夜賽結算</div>
         <div class="sub-logo">戰車損毀 · 賽事結束</div>
 
@@ -545,7 +575,7 @@
 </div>
 
 <script>
-// 🛡️ 標準三件套 2：Firebase 8.10.1 在線統計 + global_device_id 永久裝置綁定
+// Firebase 在線統計 + 永久裝置 ID
 (function initStandardOnlinePresence() {
     const GAME_ID = 'hk-neon-racer';
     const firebaseConfig = { databaseURL: "https://maze-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app/" };
@@ -575,18 +605,35 @@
     } catch (_) {}
 })();
 
-// ==========================================
-// 1. 畫布與 JDM 車款／波箱齒比設定
-// ==========================================
 const canvas = document.getElementById('raceCanvas');
 const ctx = canvas.getContext('2d');
+
+let asphaltPattern = null;
+function createAsphaltPattern() {
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 64;
+    pCanvas.height = 64;
+    const pCtx = pCanvas.getContext('2d');
+    pCtx.fillStyle = '#191b22';
+    pCtx.fillRect(0, 0, 64, 64);
+
+    for (let i = 0; i < 420; i++) {
+        const x = Math.random() * 64;
+        const y = Math.random() * 64;
+        const v = 20 + Math.floor(Math.random() * 24);
+        pCtx.fillStyle = `rgb(${v},${v + 2},${v + 6})`;
+        pCtx.fillRect(x, y, 1.5, 1.5);
+    }
+    asphaltPattern = ctx.createPattern(pCanvas, 'repeat');
+}
 
 const JDM_CARS = [
     {
         name: 'AE86 飄移王',
-        bodyColor: '#f5f6fa',
-        stripeColor: '#1e272e',
-        neonColor: '#00f3ff',
+        bodyMain: '#f1f5f9',
+        bodyShade: '#94a3b8',
+        stripeColor: '#0f172a',
+        headlightTint: 'rgba(255, 248, 220, 0.25)',
         baseMaxSpeed: 650,
         nitroMaxSpeed: 980,
         accel: 430,
@@ -595,9 +642,10 @@ const JDM_CARS = [
     },
     {
         name: 'GT-R R34 戰神',
-        bodyColor: '#0984e3',
-        stripeColor: '#74b9ff',
-        neonColor: '#00f3ff',
+        bodyMain: '#1d4ed8',
+        bodyShade: '#1e3a8a',
+        stripeColor: '#e2e8f0',
+        headlightTint: 'rgba(219, 234, 254, 0.27)',
         baseMaxSpeed: 780,
         nitroMaxSpeed: 1140,
         accel: 490,
@@ -606,9 +654,10 @@ const JDM_CARS = [
     },
     {
         name: 'RX-7 轉子魂',
-        bodyColor: '#ff007f',
-        stripeColor: '#ffd32a',
-        neonColor: '#ff9f43',
+        bodyMain: '#be123c',
+        bodyShade: '#881337',
+        stripeColor: '#fbbf24',
+        headlightTint: 'rgba(255, 244, 214, 0.25)',
         baseMaxSpeed: 720,
         nitroMaxSpeed: 1060,
         accel: 460,
@@ -617,31 +666,32 @@ const JDM_CARS = [
     }
 ];
 
-// 6 前速波箱速度上限比例（1波至6波）
 const GEAR_MAX_RATIOS = [0.28, 0.44, 0.60, 0.76, 0.90, 1.00];
+const CAMERA_ORDER = ['chase', 'hood', 'top'];
+const CAMERA_LABELS = { chase: '追尾', hood: '車頭', top: '俯視' };
 
 const HK_NEON_SIGNS = [
-    { text: '旺角大押', color: '#ff007f' },
-    { text: '茶餐廳', color: '#00f3ff' },
-    { text: '夜總會', color: '#ffd32a' },
+    { text: '旺角大押', color: '#ff2a85' },
+    { text: '茶餐廳', color: '#00e5ff' },
+    { text: '夜總會', color: '#ffd43b' },
     { text: '海鮮酒家', color: '#ff5e57' },
     { text: '麻雀館', color: '#2ed573' },
     { text: '港式燒臘', color: '#ff9f43' },
-    { text: '涼茶舖', color: '#00f3ff' },
-    { text: '維港夜遊', color: '#ff007f' }
+    { text: '涼茶舖', color: '#00e5ff' },
+    { text: '維港夜遊', color: '#ff2a85' }
 ];
 
 let W = 360, H = 640;
 let roadLeft = 50, roadRight = 310, roadWidth = 260;
 const LANE_COUNT = 4;
 
-// 遊戲與波箱／迫力狀態
 let gameState = 'start';
 let selectedCarIndex = 0;
-let transmissionMode = 'AT'; // 'AT' | 'MT'
-let currentGear = 1; // 1..6
-let rpm = 0.25; // 0..1 引擎轉速比例
-let brakeHeat = 0; // 0..100 迫力溫度
+let transmissionMode = 'AT';
+let cameraMode = 'chase'; // 'chase' | 'hood' | 'top'
+let currentGear = 1;
+let rpm = 0.25;
+let brakeHeat = 0;
 
 let score = 0;
 let combo = 1;
@@ -661,8 +711,8 @@ let signSpawnTimer = 0;
 const player = {
     x: 180,
     y: 480,
-    w: 36,
-    h: 66,
+    w: 38,
+    h: 68,
     vx: 0,
     speed: 260,
     tilt: 0,
@@ -675,12 +725,11 @@ let neonSigns = [];
 let particles = [];
 let skidMarks = [];
 let floatingTexts = [];
+let cityWindows = [];
+let streetLamps = [];
 
 const input = { left: false, right: false, up: false, down: false, nitro: false };
 
-// ==========================================
-// 2. Web Audio API 合成引擎聲、換檔聲與迫力聲
-// ==========================================
 let audioCtx = null;
 let engineOsc = null;
 let engineGain = null;
@@ -713,9 +762,9 @@ function updateEngineSound(rpmRatio, isNitro) {
             engineGain.gain.setTargetAtTime(0, now, 0.08);
             return;
         }
-        const targetFreq = 46 + rpmRatio * 105 + (isNitro ? 36 : 0);
+        const targetFreq = 44 + rpmRatio * 98 + (isNitro ? 34 : 0);
         engineOsc.frequency.setTargetAtTime(targetFreq, now, 0.05);
-        engineGain.gain.setTargetAtTime(isNitro ? 0.048 : 0.026, now, 0.07);
+        engineGain.gain.setTargetAtTime(isNitro ? 0.045 : 0.024, now, 0.07);
     } catch (_) {}
 }
 
@@ -728,9 +777,9 @@ function playSfx(type) {
 
         if (type === 'shift') {
             osc.type = 'square';
-            osc.frequency.setValueAtTime(220, now);
-            osc.frequency.exponentialRampToValueAtTime(110, now + 0.07);
-            gain.gain.setValueAtTime(0.08, now);
+            osc.frequency.setValueAtTime(210, now);
+            osc.frequency.exponentialRampToValueAtTime(105, now + 0.07);
+            gain.gain.setValueAtTime(0.07, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.09);
@@ -738,7 +787,7 @@ function playSfx(type) {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(880, now);
             osc.frequency.setValueAtTime(1320, now + 0.06);
-            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.setValueAtTime(0.13, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.19);
@@ -746,7 +795,7 @@ function playSfx(type) {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(420, now);
             osc.frequency.exponentialRampToValueAtTime(980, now + 0.22);
-            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.setValueAtTime(0.14, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.25);
@@ -754,15 +803,15 @@ function playSfx(type) {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(620, now);
             osc.frequency.exponentialRampToValueAtTime(1180, now + 0.12);
-            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.setValueAtTime(0.11, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.15);
         } else if (type === 'crash') {
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(140, now);
-            osc.frequency.exponentialRampToValueAtTime(36, now + 0.32);
-            gain.gain.setValueAtTime(0.24, now);
+            osc.frequency.setValueAtTime(135, now);
+            osc.frequency.exponentialRampToValueAtTime(34, now + 0.32);
+            gain.gain.setValueAtTime(0.22, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.35);
@@ -770,9 +819,21 @@ function playSfx(type) {
     } catch (_) {}
 }
 
-// ==========================================
-// 3. 波箱切換與棍波升降檔邏輯
-// ==========================================
+function setCameraMode(mode) {
+    if (!CAMERA_ORDER.includes(mode)) return;
+    cameraMode = mode;
+    document.getElementById('cam-opt-chase').classList.toggle('cam-active', mode === 'chase');
+    document.getElementById('cam-opt-hood').classList.toggle('cam-active', mode === 'hood');
+    document.getElementById('cam-opt-top').classList.toggle('cam-active', mode === 'top');
+    document.getElementById('hud-cam-btn').innerText = `📷 ${CAMERA_LABELS[mode]}`;
+}
+
+function cycleCameraMode() {
+    const idx = CAMERA_ORDER.indexOf(cameraMode);
+    const next = CAMERA_ORDER[(idx + 1) % CAMERA_ORDER.length];
+    setCameraMode(next);
+}
+
 function setTransmission(mode) {
     transmissionMode = mode;
     document.getElementById('mode-at').classList.toggle('active', mode === 'AT');
@@ -790,7 +851,6 @@ function shiftGear(delta) {
     currentGear = nextGear;
     playSfx('shift');
 
-    // 升波時若轉速處於中高區間，給予短暫換檔 Boost 推力
     if (nextGear > prevGear && rpm >= 0.58) {
         player.speed += 55;
         nitro = Math.min(100, nitro + 5);
@@ -799,16 +859,34 @@ function shiftGear(delta) {
         addFloatText(player.x, player.y - 40, `⚙️ ${nextGear}波`, '#00f3ff');
     }
 
-    // 換波後重新計算轉速比例
     const car = JDM_CARS[selectedCarIndex];
     const gearTopSpeed = car.baseMaxSpeed * GEAR_MAX_RATIOS[currentGear - 1];
     rpm = Math.max(0.22, Math.min(0.95, player.speed / gearTopSpeed));
     updateHUD();
 }
 
-// ==========================================
-// 4. 視窗尺寸與控制事件
-// ==========================================
+function buildCityAndLamps() {
+    cityWindows = [];
+    for (let i = 0; i < 80; i++) {
+        cityWindows.push({
+            side: i % 2 === 0 ? 'left' : 'right',
+            col: Math.floor(Math.random() * 4),
+            y: Math.random() * 900,
+            color: Math.random() < 0.55 ? 'rgba(255, 224, 150, 0.38)' : 'rgba(148, 210, 255, 0.25)',
+            w: 5 + Math.random() * 4,
+            h: 8 + Math.random() * 6
+        });
+    }
+
+    streetLamps = [];
+    for (let i = 0; i < 5; i++) {
+        streetLamps.push({
+            side: i % 2 === 0 ? 'left' : 'right',
+            y: i * 180
+        });
+    }
+}
+
 function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
@@ -817,12 +895,15 @@ function resize() {
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    if (!asphaltPattern) createAsphaltPattern();
+
     roadWidth = Math.min(440, Math.max(240, W * 0.74));
     roadLeft = (W - roadWidth) / 2;
     roadRight = roadLeft + roadWidth;
 
     player.y = H - Math.max(158, H * 0.23);
     player.x = Math.max(roadLeft + 24, Math.min(roadRight - 24, player.x));
+    buildCityAndLamps();
 }
 window.addEventListener('resize', resize);
 resize();
@@ -836,6 +917,7 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
         input.nitro = true;
     }
+    if (!e.repeat && e.code === 'KeyC') cycleCameraMode();
     if (!e.repeat && e.code === 'KeyE') shiftGear(1);
     if (!e.repeat && e.code === 'KeyQ') shiftGear(-1);
 });
@@ -872,9 +954,6 @@ bindTouchButton('btn-right', 'right');
 bindTouchButton('btn-brake', 'down');
 bindTouchButton('btn-nitro', 'nitro');
 
-// ==========================================
-// 5. 遊戲流程與紀錄
-// ==========================================
 function selectCar(idx, el) {
     selectedCarIndex = idx;
     document.querySelectorAll('.car-option').forEach(c => c.classList.remove('selected'));
@@ -966,9 +1045,6 @@ function updateHUD() {
     document.getElementById('brake-label').innerText = brakeHeat >= 85 ? 'BRAKE 過熱!' : 'BRAKE 迫力';
 }
 
-// ==========================================
-// 6. 生成障礙物與道具
-// ==========================================
 function getLaneCenter(laneIdx) {
     const laneW = roadWidth / LANE_COUNT;
     return roadLeft + laneW * (laneIdx + 0.5);
@@ -984,7 +1060,7 @@ function spawnObstacle() {
         obstacles.push({
             type: 'taxi',
             x, y: -80,
-            w: 36, h: 66,
+            w: 38, h: 68,
             speed: 230 + Math.random() * 90,
             nearMissed: false
         });
@@ -992,7 +1068,7 @@ function spawnObstacle() {
         obstacles.push({
             type: 'bus',
             x, y: -130,
-            w: 42, h: 112,
+            w: 44, h: 116,
             speed: 185 + Math.random() * 65,
             nearMissed: false
         });
@@ -1050,9 +1126,6 @@ function spawnParticles(x, y, color, count, speedScale = 1) {
     }
 }
 
-// ==========================================
-// 7. 核心物理（棍波、迫力、擦邊超車與碰撞）
-// ==========================================
 function update(dt) {
     if (gameState !== 'playing') return;
 
@@ -1069,26 +1142,23 @@ function update(dt) {
         if (comboTimer <= 0) combo = 1;
     }
 
-    // 迫力運作與熱度管理
     if (player.isBraking) {
-        // 迫力過熱時減效能（0.58x），正常時全力減速
         const efficiency = brakeHeat >= 85 ? 0.58 : 1.0;
         player.speed -= car.brakePower * efficiency * dt;
         brakeHeat = Math.min(100, brakeHeat + 38 * dt);
 
         if (player.speed > 340) {
             skidMarks.push({
-                x1: player.x - 12,
-                x2: player.x + 12,
+                x1: player.x - 13,
+                x2: player.x + 13,
                 y: player.y + player.h * 0.38,
-                alpha: 0.38
+                alpha: 0.42
             });
         }
     } else {
         brakeHeat = Math.max(0, brakeHeat - 24 * dt);
     }
 
-    // 波箱速度上限與加速邏輯
     if (transmissionMode === 'AT') {
         const ratio = player.speed / car.nitroMaxSpeed;
         currentGear = Math.max(1, Math.min(6, Math.ceil(ratio * 6) || 1));
@@ -1108,7 +1178,7 @@ function update(dt) {
             vx: (Math.random() - 0.5) * 30,
             vy: 180 + Math.random() * 120,
             life: 0.22, maxLife: 0.22,
-            color: Math.random() < 0.5 ? '#00f3ff' : '#ff007f',
+            color: Math.random() < 0.5 ? '#38bdf8' : '#ff2a85',
             size: 4 + Math.random() * 3
         });
     } else if (!player.isBraking) {
@@ -1117,7 +1187,6 @@ function update(dt) {
         if (input.up) {
             player.speed += car.accel * gearTorqueBoost * dt;
         } else {
-            // 鬆油門時有自然引擎煞車阻力
             player.speed += (effectiveMax * 0.72 - player.speed) * Math.min(1, dt * 1.8);
         }
     }
@@ -1129,30 +1198,40 @@ function update(dt) {
     rpm = Math.max(0.18, Math.min(1.0, player.speed / gearTop));
     updateEngineSound(rpm, isNitroActive);
 
-    // 左右轉向與飄移輪胎痕
     let steerDir = 0;
     if (input.left) steerDir -= 1;
     if (input.right) steerDir += 1;
 
     player.vx += (steerDir * car.steerSpeed - player.vx) * Math.min(1, dt * 14);
     player.x += player.vx * dt;
-    player.tilt = (player.vx / car.steerSpeed) * 0.22;
+    player.tilt = (player.vx / car.steerSpeed) * 0.2;
 
     if (Math.abs(player.vx) > car.steerSpeed * 0.52) {
         skidMarks.push({
-            x1: player.x - 12,
-            x2: player.x + 12,
+            x1: player.x - 13,
+            x2: player.x + 13,
             y: player.y + player.h * 0.36,
             alpha: 0.45
         });
     }
 
-    const minX = roadLeft + player.w * 0.5 + 4;
-    const maxX = roadRight - player.w * 0.5 - 4;
+    const minX = roadLeft + player.w * 0.5 + 5;
+    const maxX = roadRight - player.w * 0.5 - 5;
     if (player.x < minX) { player.x = minX; player.vx = 0; }
     if (player.x > maxX) { player.x = maxX; player.vx = 0; }
 
     roadOffset = (roadOffset + player.speed * dt) % 60;
+
+    cityWindows.forEach(w => {
+        w.y += player.speed * 0.45 * dt;
+        if (w.y > H + 20) w.y = -20;
+    });
+
+    streetLamps.forEach(l => {
+        l.y += player.speed * dt;
+        if (l.y > H + 120) l.y = -120;
+    });
+
     const gearBonusMult = transmissionMode === 'MT' ? (1 + (currentGear - 1) * 0.06) : 1;
     score += (player.speed * dt * 0.08 * gearBonusMult) * combo;
 
@@ -1212,7 +1291,7 @@ function update(dt) {
                 shakeTime = 0.32;
                 player.speed *= 0.55;
                 playSfx('crash');
-                spawnParticles(player.x, player.y, '#ff5e57', 26, 1.4);
+                spawnParticles(player.x, player.y, '#ff3b30', 26, 1.4);
                 addFloatText(player.x, player.y - 46, '💥 撞車！-1 生命', '#ff5e57');
                 obstacles.splice(i, 1);
                 if (lives <= 0) {
@@ -1289,37 +1368,75 @@ function update(dt) {
     updateHUD();
 }
 
-// ==========================================
-// 8. 繪製賽道、霓虹招牌、車輛與迫力燈
-// ==========================================
+function getCameraTransform() {
+    if (cameraMode === 'chase') {
+        // 貼近追尾：放大 1.24x 並跟隨玩家水平偏移
+        const scale = 1.24;
+        const tx = W / 2 - player.x * scale;
+        const ty = H * 0.62 - player.y * scale;
+        return { scale, tx, ty };
+    }
+    if (cameraMode === 'hood') {
+        // 車頭視角：放大 1.48x 並將鏡頭推前到車頭位置
+        const scale = 1.48;
+        const hoodY = player.y - player.h * 0.45;
+        const tx = W / 2 - player.x * scale;
+        const ty = H * 0.78 - hoodY * scale;
+        return { scale, tx, ty };
+    }
+    // 俯視全覽
+    return { scale: 1, tx: 0, ty: 0 };
+}
+
 function drawRoadAndCity() {
     const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-    skyGrad.addColorStop(0, '#090314');
-    skyGrad.addColorStop(1, '#16092b');
+    skyGrad.addColorStop(0, '#05070e');
+    skyGrad.addColorStop(0.5, '#0c1020');
+    skyGrad.addColorStop(1, '#070912');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = '#0c061c';
-    ctx.fillRect(0, 0, roadLeft - 10, H);
-    ctx.fillRect(roadRight + 10, 0, W - roadRight - 10, H);
+    ctx.fillStyle = '#090c18';
+    ctx.fillRect(0, 0, roadLeft - 8, H);
+    ctx.fillRect(roadRight + 8, 0, W - roadRight - 8, H);
 
-    ctx.fillStyle = '#141224';
+    cityWindows.forEach(w => {
+        const baseX = w.side === 'left'
+            ? Math.max(8, roadLeft - 78 + w.col * 15)
+            : Math.min(W - 16, roadRight + 16 + w.col * 15);
+        if (baseX < 0 || baseX > W) return;
+        ctx.fillStyle = w.color;
+        ctx.fillRect(baseX, w.y, w.w, w.h);
+    });
+
+    streetLamps.forEach(l => {
+        const lx = l.side === 'left' ? roadLeft - 6 : roadRight + 6;
+        const glow = ctx.createRadialGradient(lx, l.y, 2, lx, l.y, 70);
+        glow.addColorStop(0, 'rgba(255, 200, 110, 0.24)');
+        glow.addColorStop(1, 'rgba(255, 200, 110, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(lx, l.y, 70, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.fillStyle = asphaltPattern || '#181a22';
     ctx.fillRect(roadLeft, 0, roadWidth, H);
 
-    ctx.strokeStyle = '#00f3ff';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#00f3ff';
-    ctx.shadowBlur = 12;
-    ctx.beginPath();
-    ctx.moveTo(roadLeft, 0); ctx.lineTo(roadLeft, H);
-    ctx.moveTo(roadRight, 0); ctx.lineTo(roadRight, H);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    const edgeGrad = ctx.createLinearGradient(roadLeft, 0, roadLeft + 18, 0);
+    edgeGrad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+    edgeGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = edgeGrad;
+    ctx.fillRect(roadLeft, 0, 18, H);
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(roadLeft - 5, 0, 5, H);
+    ctx.fillRect(roadRight, 0, 5, H);
 
     const laneW = roadWidth / LANE_COUNT;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+    ctx.strokeStyle = 'rgba(241, 245, 249, 0.34)';
     ctx.lineWidth = 2;
-    ctx.setLineDash([28, 32]);
+    ctx.setLineDash([24, 36]);
     ctx.lineDashOffset = -roadOffset;
     for (let i = 1; i < LANE_COUNT; i++) {
         const lx = roadLeft + laneW * i;
@@ -1331,21 +1448,22 @@ function drawRoadAndCity() {
     ctx.setLineDash([]);
 
     neonSigns.forEach(s => {
-        const sx = s.side === 'left' ? roadLeft - s.w - 10 : roadRight + 10;
-        if (sx < -20 || sx > W + 20) return;
+        const sx = s.side === 'left' ? roadLeft - s.w - 12 : roadRight + 12;
+        if (sx < -24 || sx > W + 24) return;
 
         ctx.save();
         ctx.strokeStyle = s.color;
-        ctx.fillStyle = 'rgba(10, 5, 24, 0.92)';
+        ctx.fillStyle = 'rgba(8, 11, 20, 0.92)';
         ctx.shadowColor = s.color;
-        ctx.shadowBlur = 14;
-        ctx.lineWidth = 2;
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.roundRect(sx, s.y, s.w, s.h, 5);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#fff';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#f8fafc';
         ctx.font = '900 11px "Noto Sans HK", sans-serif';
         ctx.textAlign = 'center';
         s.text.split('').forEach((ch, idx) => {
@@ -1362,76 +1480,126 @@ function drawJdmCar(x, y, w, h, tilt, carCfg, hasShield, blink, isBraking) {
     ctx.translate(x, y);
     ctx.rotate(tilt);
 
-    ctx.shadowColor = carCfg.neonColor;
-    ctx.shadowBlur = 18;
-
-    ctx.fillStyle = carCfg.bodyColor;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
     ctx.beginPath();
-    ctx.roundRect(-w / 2, -h / 2, w, h, 8);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    ctx.fillStyle = carCfg.stripeColor;
-    ctx.fillRect(-w * 0.16, -h / 2 + 2, w * 0.32, h - 4);
-
-    ctx.fillStyle = '#0c1021';
-    ctx.beginPath();
-    ctx.roundRect(-w * 0.36, -h * 0.24, w * 0.72, h * 0.22, 4);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.roundRect(-w * 0.32, h * 0.12, w * 0.64, h * 0.16, 3);
+    ctx.roundRect(-w / 2 + 2, -h / 2 + 4, w, h, 9);
     ctx.fill();
 
-    ctx.fillStyle = '#111';
-    ctx.fillRect(-w * 0.52, h * 0.38, w * 1.04, 6);
-
-    // 迫力尾燈（踩迫力時高亮紅光）
-    ctx.save();
-    ctx.fillStyle = isBraking ? '#ff2e4c' : '#991b2b';
-    if (isBraking) {
-        ctx.shadowColor = '#ff2e4c';
-        ctx.shadowBlur = 16;
-    }
-    ctx.fillRect(-w * 0.44, h * 0.44, 9, 4);
-    ctx.fillRect(w * 0.44 - 9, h * 0.44, 9, 4);
-    ctx.restore();
-
-    const beamGrad = ctx.createLinearGradient(0, -h / 2, 0, -h / 2 - 75);
-    beamGrad.addColorStop(0, 'rgba(0, 243, 255, 0.36)');
-    beamGrad.addColorStop(1, 'rgba(0, 243, 255, 0)');
+    const beamGrad = ctx.createLinearGradient(0, -h / 2, 0, -h / 2 - 95);
+    beamGrad.addColorStop(0, carCfg.headlightTint);
+    beamGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = beamGrad;
     ctx.beginPath();
-    ctx.moveTo(-w * 0.35, -h / 2);
-    ctx.lineTo(-w * 0.75, -h / 2 - 75);
-    ctx.lineTo(w * 0.75, -h / 2 - 75);
-    ctx.lineTo(w * 0.35, -h / 2);
+    ctx.moveTo(-w * 0.34, -h / 2);
+    ctx.lineTo(-w * 0.85, -h / 2 - 95);
+    ctx.lineTo(w * 0.85, -h / 2 - 95);
+    ctx.lineTo(w * 0.34, -h / 2);
     ctx.closePath();
     ctx.fill();
 
+    const bodyGrad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+    bodyGrad.addColorStop(0, carCfg.bodyShade);
+    bodyGrad.addColorStop(0.5, carCfg.bodyMain);
+    bodyGrad.addColorStop(1, carCfg.bodyShade);
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.roundRect(-w / 2, -h / 2, w, h, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = carCfg.stripeColor;
+    ctx.fillRect(-w * 0.14, -h / 2 + 3, w * 0.28, h - 6);
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(-w * 0.22, -h * 0.38, w * 0.44, 4);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.roundRect(-w * 0.37, -h * 0.22, w * 0.74, h * 0.22, 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(-w * 0.33, h * 0.12, w * 0.66, h * 0.16, 3);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.28)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.25, -h * 0.2);
+    ctx.lineTo(-w * 0.08, -h * 0.02);
+    ctx.stroke();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-w * 0.26, h * 0.35, 3, 7);
+    ctx.fillRect(w * 0.26 - 3, h * 0.35, 3, 7);
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(-w * 0.54, h * 0.39, w * 1.08, 6);
+
+    ctx.save();
+    ctx.fillStyle = isBraking ? '#ff2d20' : '#7f1d1d';
+    if (isBraking) {
+        ctx.shadowColor = '#ff2d20';
+        ctx.shadowBlur = 18;
+    }
+    ctx.fillRect(-w * 0.43, h * 0.44, 9, 4);
+    ctx.fillRect(w * 0.43 - 9, h * 0.44, 9, 4);
+    ctx.restore();
+
     if (hasShield) {
-        ctx.strokeStyle = '#00f3ff';
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#00f3ff';
-        ctx.shadowBlur = 15;
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.85)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, h * 0.64, 0, Math.PI * 2);
+        ctx.arc(0, 0, h * 0.63, 0, Math.PI * 2);
         ctx.stroke();
     }
 
     ctx.restore();
 }
 
+function drawHoodOverlay(carCfg, isBraking) {
+    // 車頭視角（第一身）前方引擎蓋與擋風玻璃下緣框景
+    ctx.save();
+    const hoodTop = H * 0.83;
+    const hoodGrad = ctx.createLinearGradient(0, hoodTop, 0, H);
+    hoodGrad.addColorStop(0, carCfg.bodyShade);
+    hoodGrad.addColorStop(0.35, carCfg.bodyMain);
+    hoodGrad.addColorStop(1, '#070910');
+
+    ctx.fillStyle = hoodGrad;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.14, hoodTop);
+    ctx.lineTo(W * 0.86, hoodTop);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    // 引擎蓋中央隆起線與進氣口
+    ctx.fillStyle = carCfg.stripeColor;
+    ctx.fillRect(W * 0.43, hoodTop + 4, W * 0.14, H - hoodTop);
+
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(W * 0.38, hoodTop + 14, W * 0.24, 7);
+
+    // 踩迫力時畫面邊緣微紅提示
+    if (isBraking) {
+        ctx.strokeStyle = 'rgba(255, 45, 32, 0.45)';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, W - 6, H - 6);
+    }
+    ctx.restore();
+}
+
 function drawObstaclesAndItems() {
     items.forEach(it => {
-        const scale = 1 + Math.sin(it.pulse) * 0.12;
+        const scale = 1 + Math.sin(it.pulse) * 0.08;
         ctx.save();
         ctx.translate(it.x, it.y);
         ctx.scale(scale, scale);
 
         const glow = it.type === 'coin' ? '#ffd32a' : (it.type === 'nitro' ? '#ff007f' : '#00f3ff');
-        ctx.shadowColor = glow;
-        ctx.shadowBlur = 14;
-        ctx.fillStyle = 'rgba(14, 8, 28, 0.9)';
+        ctx.fillStyle = 'rgba(10, 14, 26, 0.9)';
         ctx.strokeStyle = glow;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1439,7 +1607,6 @@ function drawObstaclesAndItems() {
         ctx.fill();
         ctx.stroke();
 
-        ctx.shadowBlur = 0;
         ctx.font = '15px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1451,46 +1618,67 @@ function drawObstaclesAndItems() {
         ctx.save();
         ctx.translate(obs.x, obs.y);
 
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        ctx.beginPath();
+        ctx.roundRect(-obs.w / 2 + 2, -obs.h / 2 + 4, obs.w, obs.h, 7);
+        ctx.fill();
+
         if (obs.type === 'taxi') {
-            ctx.fillStyle = '#e84118';
+            ctx.fillStyle = '#dc2626';
             ctx.beginPath();
             ctx.roundRect(-obs.w / 2, -obs.h / 2, obs.w, obs.h, 7);
             ctx.fill();
 
-            ctx.fillStyle = '#dcdde1';
-            ctx.fillRect(-obs.w * 0.36, -obs.h * 0.16, obs.w * 0.72, obs.h * 0.34);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.roundRect(-obs.w * 0.38, -obs.h * 0.22, obs.w * 0.76, obs.h * 0.44, 4);
+            ctx.fill();
 
-            ctx.fillStyle = '#ffd32a';
-            ctx.fillRect(-8, -4, 16, 6);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(-obs.w * 0.34, -obs.h * 0.16, obs.w * 0.68, obs.h * 0.32);
 
-            ctx.fillStyle = '#ff3f34';
-            ctx.fillRect(-obs.w * 0.42, obs.h * 0.42, 8, 4);
-            ctx.fillRect(obs.w * 0.42 - 8, obs.h * 0.42, 8, 4);
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(-8, -3, 16, 6);
+
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-obs.w * 0.42, obs.h * 0.43, 8, 4);
+            ctx.fillRect(obs.w * 0.42 - 8, obs.h * 0.43, 8, 4);
         } else if (obs.type === 'bus') {
-            ctx.fillStyle = '#c23616';
+            ctx.fillStyle = '#b91c1c';
             ctx.beginPath();
             ctx.roundRect(-obs.w / 2, -obs.h / 2, obs.w, obs.h, 6);
             ctx.fill();
 
-            ctx.strokeStyle = '#fbc531';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)';
+            ctx.lineWidth = 1.5;
             ctx.strokeRect(-obs.w / 2 + 2, -obs.h / 2 + 2, obs.w - 4, obs.h - 4);
 
-            ctx.fillStyle = '#2f3640';
-            ctx.fillRect(-obs.w * 0.34, -obs.h * 0.25, obs.w * 0.68, obs.h * 0.5);
-            ctx.fillStyle = '#ffd32a';
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(-obs.w * 0.36, -obs.h * 0.34, obs.w * 0.72, obs.h * 0.66);
+
+            ctx.strokeStyle = '#991b1b';
+            ctx.lineWidth = 2;
+            for (let wy = -obs.h * 0.2; wy <= obs.h * 0.18; wy += obs.h * 0.18) {
+                ctx.beginPath();
+                ctx.moveTo(-obs.w * 0.36, wy);
+                ctx.lineTo(obs.w * 0.36, wy);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#fde047';
             ctx.font = 'bold 9px Orbitron, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('968', 0, obs.h * 0.38);
+            ctx.fillText('968', 0, obs.h * 0.41);
         } else {
-            ctx.fillStyle = '#ff793f';
+            ctx.fillStyle = '#f97316';
             ctx.beginPath();
             ctx.arc(0, 0, 11, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#f8fafc';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(0, 0, 6, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
+            ctx.stroke();
         }
 
         ctx.restore();
@@ -1504,21 +1692,28 @@ function draw() {
         ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
     }
 
+    const cam = getCameraTransform();
+    ctx.save();
+    ctx.translate(cam.tx, cam.ty);
+    ctx.scale(cam.scale, cam.scale);
+
     drawRoadAndCity();
 
     skidMarks.forEach(s => {
-        ctx.strokeStyle = `rgba(0, 243, 255, ${s.alpha * 0.45})`;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = `rgba(15, 23, 42, ${s.alpha * 0.85})`;
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.moveTo(s.x1, s.y); ctx.lineTo(s.x1, s.y + 10);
-        ctx.moveTo(s.x2, s.y); ctx.lineTo(s.x2, s.y + 10);
+        ctx.moveTo(s.x1, s.y); ctx.lineTo(s.x1, s.y + 11);
+        ctx.moveTo(s.x2, s.y); ctx.lineTo(s.x2, s.y + 11);
         ctx.stroke();
     });
 
     drawObstaclesAndItems();
 
     const car = JDM_CARS[selectedCarIndex];
-    drawJdmCar(player.x, player.y, player.w, player.h, player.tilt, car, shieldTimer > 0, invulnTimer > 0, player.isBraking);
+    if (cameraMode !== 'hood') {
+        drawJdmCar(player.x, player.y, player.w, player.h, player.tilt, car, shieldTimer > 0, invulnTimer > 0, player.isBraking);
+    }
 
     particles.forEach(pt => {
         ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
@@ -1539,11 +1734,14 @@ function draw() {
     ctx.globalAlpha = 1;
 
     ctx.restore();
+
+    if (cameraMode === 'hood') {
+        drawHoodOverlay(car, player.isBraking);
+    }
+
+    ctx.restore();
 }
 
-// ==========================================
-// 9. 主遊戲迴圈
-// ==========================================
 let lastTime = performance.now();
 function loop(now) {
     const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
@@ -1551,6 +1749,14 @@ function loop(now) {
 
     if (gameState === 'start') {
         roadOffset = (roadOffset + 220 * dt) % 60;
+        cityWindows.forEach(w => {
+            w.y += 95 * dt;
+            if (w.y > H + 20) w.y = -20;
+        });
+        streetLamps.forEach(l => {
+            l.y += 220 * dt;
+            if (l.y > H + 120) l.y = -120;
+        });
         signSpawnTimer -= dt;
         if (signSpawnTimer <= 0) {
             spawnNeonSign(-90);
