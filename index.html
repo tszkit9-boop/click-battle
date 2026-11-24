@@ -16,7 +16,7 @@
         --text-light: #fff;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
     
     body {
         background: var(--bg-dark); color: var(--text-light); font-family: 'Noto Sans HK', sans-serif;
@@ -43,6 +43,19 @@
     .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 14px; cursor: pointer; transition: 0.2s; }
     .icon-btn:hover { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); }
     .icon-btn.admin-btn:hover { background: var(--neon-pink); color: #fff; border-color: var(--neon-pink); }
+
+    .broadcast-banner {
+        display: none;
+        background: rgba(255, 0, 85, 0.16);
+        border: 1px solid var(--neon-pink);
+        color: #ffd6e4;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 900;
+        text-align: center;
+    }
+    .broadcast-banner.active { display: block; }
 
     .search-row { display: flex; gap: 10px; }
     .search-input {
@@ -134,13 +147,13 @@
     .admin-section h3 { font-size: 16px; margin-bottom: 15px; }
     
     .feedback-msg { color: #fff; font-size: 13px; line-height: 1.5; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 4px; }
+    .error-msg { color: #ff7675; font-size: 12px; line-height: 1.4; word-break: break-all; }
     .btn-delete { background: #e74c3c; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
     .btn-delete:hover { background: #c0392b; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
 
-<!-- 將 Firebase 引入放喺最頂，保證加載完成 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
@@ -158,6 +171,7 @@
                 <button class="icon-btn admin-btn" onclick="promptAdmin()">⚙️ 管理</button>
             </div>
         </div>
+        <div class="broadcast-banner" id="broadcast-banner"></div>
         <div class="search-row" id="search-area">
             <input type="text" class="search-input" id="search-input" placeholder="🔍 搜尋遊戲名稱...">
         </div>
@@ -301,7 +315,9 @@
             { id: 'time-loan-shark', name: '時間高利貸', category: '策略', desc: '借時間定還時間？自己揀！', icon: '⏳', bestKey: 'loan_best', unit: '' },
             { id: 'cyber-judge', name: '賽博判官', category: '策略', desc: '審判賽博罪犯，決定生死。', icon: '⚖️', bestKey: 'judge_best', unit: '' },
             { id: 'grudge-game', name: '會記仇的遊戲', category: '動作', desc: '你打敵人一鎚，佢會記住你。', icon: '😡', bestKey: 'grudge_best', unit: '' },
-            { id: 'deep-miner', name: '深淵礦工', category: '休閒', desc: '向下挖掘，尋找稀有礦石。', icon: '⛏️', bestKey: 'miner_best', unit: 'm' }
+            { id: 'deep-miner', name: '深淵礦工', category: '休閒', desc: '向下挖掘，尋找稀有礦石。', icon: '⛏️', bestKey: 'miner_best', unit: 'm' },
+            { id: 'mtr-rush-hour', name: '港鐵逼爆月台塔防 3D', category: '策略', desc: '疏導繁忙轉車站人潮，準時送上車！', icon: '🚇', bestKey: 'mtrRushHour_best', unit: '人' },
+            { id: 'nail-hammer', name: '木方釘釘挑戰 · 1" 鋼釘', category: '休閒', desc: '控制羊角鎚蓄力揮擊，將 1 吋釘打平！', icon: '🔨', bestKey: 'woodNail_best_4', unit: '鎚' }
         ];
 
         let currentCategory = '全部';
@@ -324,6 +340,21 @@
                 userId = 'user_' + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('global_device_id', userId);
             }
+
+            // 監聽全服廣播
+            db.ref('global_broadcast').on('value', (snap) => {
+                const banner = document.getElementById('broadcast-banner');
+                if (!banner) return;
+                const val = snap.val();
+                const msg = typeof val === 'string' ? val.trim() : (val && val.msg ? String(val.msg).trim() : '');
+                if (msg) {
+                    banner.innerText = `📢 全服廣播：${msg}`;
+                    banner.classList.add('active');
+                } else {
+                    banner.innerText = '';
+                    banner.classList.remove('active');
+                }
+            });
 
             // 監聽數據
             db.ref('game_stats').on('value', (snap) => {
@@ -417,6 +448,7 @@
                 if (best !== null) {
                     if (g.unit === '$') bestText = '$' + parseInt(best).toLocaleString();
                     else if (g.unit === 'm') bestText = best + 'm';
+                    else if (g.unit) bestText = best + g.unit;
                     else bestText = best;
                 }
                 let plays = gameStats[g.id] || 0;
