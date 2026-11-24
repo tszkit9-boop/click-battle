@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🔨 木方釘釘挑戰 · 1吋鋼釘完整升級版</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+HK:wght@700;900&display=swap');
+
+    :root {
+        --bg-dark: #120e0c;
+        --panel-bg: rgba(30, 23, 18, 0.96);
+        --accent-gold: #feca57;
+        --accent-orange: #ff9f43;
+        --accent-green: #1dd1a1;
+        --accent-red: #ff6b6b;
+        --accent-blue: #54a0ff;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    body {
+        background: var(--bg-dark);
+        color: #fff;
+        font-family: 'Noto Sans HK', sans-serif;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    header {
+        background: var(--panel-bg);
+        border-bottom: 2px solid #6f4e37;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    .top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .title-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 900;
+        color: var(--accent-gold);
+        white-space: nowrap;
+    }
+
+    .badge-inch {
+        background: linear-gradient(135deg, #9c6644, #6f4518);
+        color: #fff3e0;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        padding: 3px 7px;
+        border-radius: 5px;
+        border: 1px solid #ddb892;
+    }
+
+    .level-picker {
+        display: flex;
+        gap: 5px;
+    }
+
+    .lvl-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid #7f5539;
+        color: #e6ccb2;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+
+    .lvl-btn.active {
+        background: var(--accent-gold);
+        border-color: var(--accent-gold);
+        color: #1e1610;
+        box-shadow: 0 0 10px rgba(254, 202, 87, 0.35);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        text-align: center;
+    }
+
+    .stat-box {
+        background: rgba(0, 0, 0, 0.38);
+        border: 1px solid rgba(221, 184, 146, 0.22);
+        border-radius: 8px;
+        padding: 5px 4px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+        color: #cbbba0;
+        display: block;
+    }
+
+    .stat-val {
+        font-family: 'Orbitron', 'Noto Sans HK', sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .val-hits { color: var(--accent-gold); }
+    .val-nails { color: var(--accent-green); }
+    .val-best { color: var(--accent-orange); }
+
+    .canvas-wrap {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+    }
+
+    footer {
+        background: var(--panel-bg);
+        border-top: 2px solid #6f4e37;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+    }
+
+    .power-bar-wrap {
+        background: #1f1712;
+        border: 1.5px solid #7f5539;
+        border-radius: 8px;
+        height: 22px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .power-sweet-zone {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 68%;
+        width: 22%;
+        background: rgba(29, 209, 161, 0.25);
+        border-left: 1.5px dashed var(--accent-green);
+        border-right: 1.5px dashed var(--accent-green);
+    }
+
+    .power-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-gold), var(--accent-green), var(--accent-red));
+        transition: width 0.03s linear;
+    }
+
+    .power-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 900;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        pointer-events: none;
+    }
+
+    .controls-row {
+        display: flex;
+        gap: 8px;
+    }
+
+    .hit-btn {
+        flex: 1;
+        background: linear-gradient(180deg, #ffd166, #f77f00);
+        color: #1b120c;
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 900;
+        font-family: 'Noto Sans HK', sans-serif;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #9c4a00;
+        transition: transform 0.08s ease;
+    }
+
+    .hit-btn.charging {
+        background: linear-gradient(180deg, #1dd1a1, #10ac84);
+        color: #071a14;
+        box-shadow: 0 2px 0 #0a6e54;
+        transform: translateY(2px);
+    }
+
+    .reset-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1.5px solid #9c6644;
+        color: #fff;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 13px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 6, 5, 0.86);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 50;
+    }
+
+    .modal-overlay.hidden {
+        display: none;
+    }
+
+    .modal-card {
+        background: #231a14;
+        border: 2px solid var(--accent-gold);
+        border-radius: 16px;
+        padding: 22px 18px;
+        width: 100%;
+        max-width: 340px;
+        text-align: center;
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.7);
+        animation: popIn 0.2s ease-out;
+    }
+
+    .modal-card h2 {
+        color: var(--accent-gold);
+        font-size: 21px;
+        margin-bottom: 8px;
+    }
+
+    .modal-card p {
+        color: #e6ccb2;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-bottom: 14px;
+    }
+
+    .result-box {
+        background: rgba(0, 0, 0, 0.38);
+        border: 1px solid rgba(221, 184, 146, 0.2);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        line-height: 1.85;
+    }
+
+    .primary-btn {
+        width: 100%;
+        padding: 12px;
+        background: var(--accent-green);
+        color: #081c16;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 900;
+        font-family: 'Noto Sans HK', sans-serif;
+        cursor: pointer;
+    }
+
+    @keyframes popIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="top-row">
+        <div class="title-box">
+            🔨 木方釘釘挑戰 <span class="badge-inch">1.00" 鋼釘</span>
+        </div>
+        <div class="level-picker">
+            <button type="button" class="lvl-btn active" onclick="setNailCount(4, this)">4 支釘</button>
+            <button type="button" class="lvl-btn" onclick="setNailCount(6, this)">6 支釘</button>
+            <button type="button" class="lvl-btn" onclick="setNailCount(8, this)">8 支釘</button>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-label">已打鎚數</span>
+            <span class="stat-val val-hits" id="ui-hits">0 鎚</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">完成進度</span>
+            <span class="stat-val val-nails" id="ui-progress">0 / 4</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">最少鎚數紀錄</span>
+            <span class="stat-val val-best" id="ui-best">--</span>
+        </div>
+    </div>
+</header>
+
+<div class="canvas-wrap" id="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<footer>
+    <div class="power-bar-wrap">
+        <div class="power-sweet-zone" title="最佳重擊區"></div>
+        <div class="power-fill" id="power-fill"></div>
+        <div class="power-text" id="power-text">按住蓄力／放開重擊，或直接點釘頭上方敲打！</div>
+    </div>
+    <div class="controls-row">
+        <button type="button" class="hit-btn" id="hammer-btn">🔨 按住蓄力 · 放開重擊</button>
+        <button type="button" class="reset-btn" onclick="resetGame()">🔄 重來</button>
+    </div>
+</footer>
+
+<div class="modal-overlay hidden" id="win-modal">
+    <div class="modal-card">
+        <h2>🎉 全部 1 吋釘打平晒！</h2>
+        <p id="win-rank">木工老師傅級手勢！</p>
+        <div class="result-box">
+            總共用咗：<b style="color:var(--accent-gold); font-size:20px;" id="final-hits">0</b> 鎚<br>
+            鋼釘規格：<b>1.00 吋（全部完全入木）</b><br>
+            此關最佳紀錄：<b style="color:var(--accent-orange);" id="final-best">--</b>
+        </div>
+        <button type="button" class="primary-btn" onclick="resetGame()">再挑戰一次</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('canvas-wrap');
+const hammerBtn = document.getElementById('hammer-btn');
+const powerFill = document.getElementById('power-fill');
+const powerText = document.getElementById('power-text');
+
+let W = 360, H = 480;
+let nailCount = 4;
+let hits = 0;
+let nails = [];
+let particles = [];
+let shockwaves = [];
+let floatingTexts = [];
+let shakeTime = 0;
+let shakeIntensity = 0;
+let isFinished = false;
+let winTimeout = null;
+
+// 鎚仔狀態機：idle / charging / swinging / recovering
+const hammer = {
+    x: 180,
+    targetX: 180,
+    angle: -0.35,
+    state: 'idle',
+    power: 0,
+    powerDir: 1,
+    swingTimer: 0,
+    swingDuration: 0.14,
+    recoverTimer: 0,
+    lastHitPower: 0.65
+};
+
+const INCH_LENGTH_PX = 92; // 1.00 吋鋼釘外露高度對應 92px
+let woodTopY = 300;
+let woodHeight = 120;
+
+function getBestKey() {
+    return `woodNail_best_${nailCount}`;
+}
+
+function loadBest() {
+    let val = null;
+    try {
+        val = localStorage.getItem(getBestKey());
+    } catch (_) {}
+    document.getElementById('ui-best').innerText = val ? `${val} 鎚` : '--';
+    return val ? parseInt(val, 10) : null;
+}
+
+function saveBest(newHits) {
+    try {
+        localStorage.setItem(getBestKey(), String(newHits));
+    } catch (_) {}
+}
+
+function resize() {
+    const rect = wrap.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width > 40 ? rect.width : window.innerWidth;
+    H = rect.height > 40 ? rect.height : Math.max(240, window.innerHeight - 210);
+    canvas.width = Math.max(1, Math.round(W * dpr));
+    canvas.height = Math.max(1, Math.round(H * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    woodHeight = Math.max(92, Math.min(136, H * 0.25));
+    woodTopY = H - woodHeight - 26;
+    layoutNails();
+}
+
+window.addEventListener('resize', resize);
+
+function layoutNails() {
+    if (!nails.length) return;
+    const margin = Math.max(48, W * 0.14);
+    const span = Math.max(60, W - margin * 2);
+    nails.forEach((n, idx) => {
+        n.x = nailCount === 1 ? W / 2 : margin + (span / (nailCount - 1)) * idx;
+    });
+    if (hammer.state === 'idle') {
+        const activeNail = nails.find(n => n.drivenInch < 1);
+        if (activeNail) {
+            hammer.targetX = activeNail.x;
+            hammer.x = activeNail.x;
+        }
+    }
+}
+
+function setNailCount(count, btn) {
+    nailCount = count;
+    document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    resetGame();
+}
+
+function resetGame() {
+    if (winTimeout) {
+        clearTimeout(winTimeout);
+        winTimeout = null;
+    }
+    document.getElementById('win-modal').classList.add('hidden');
+    hits = 0;
+    isFinished = false;
+    particles = [];
+    shockwaves = [];
+    floatingTexts = [];
+    shakeTime = 0;
+    shakeIntensity = 0;
+
+    hammer.state = 'idle';
+    hammer.power = 0;
+    hammer.powerDir = 1;
+    hammer.swingTimer = 0;
+    hammer.recoverTimer = 0;
+    hammer.angle = -0.35;
+    hammerBtn.classList.remove('charging');
+    powerFill.style.width = '0%';
+    powerText.innerText = '按住蓄力／放開重擊，或直接點釘頭上方敲打！';
+
+    nails = [];
+    for (let i = 0; i < nailCount; i++) {
+        nails.push({
+            x: 0,
+            drivenInch: 0,
+            bendAngle: 0,
+            hitFlash: 0,
+            bounceOffset: 0
+        });
+    }
+
+    resize();
+    if (nails.length > 0) {
+        hammer.x = nails[0].x;
+        hammer.targetX = nails[0].x;
+    }
+    loadBest();
+    updateHUD();
+}
+
+function updateHUD() {
+    document.getElementById('ui-hits').innerText = `${hits} 鎚`;
+    const doneCount = nails.filter(n => n.drivenInch >= 1).length;
+    document.getElementById('ui-progress').innerText = `${doneCount} / ${nailCount}`;
+}
+
+let audioCtx = null;
+function playHammerSound(type) {
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        if (type === 'perfect') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1240, now);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.11);
+            gain.gain.setValueAtTime(0.16, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        } else if (type === 'hit') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(780, now);
+            osc.frequency.exponentialRampToValueAtTime(250, now + 0.09);
+            gain.gain.setValueAtTime(0.13, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
+        } else {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(165, now);
+            osc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
+            gain.gain.setValueAtTime(0.09, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        }
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+    } catch (_) {}
+}
+
+function spawnParticles(x, y, color, count, speedScale = 1) {
+    for (let i = 0; i < count; i++) {
+        const a = -Math.PI + Math.random() * Math.PI;
+        const spd = (55 + Math.random() * 115) * speedScale;
+        particles.push({
+            x, y,
+            vx: Math.cos(a) * spd,
+            vy: Math.sin(a) * spd - 25,
+            life: 0.42 + Math.random() * 0.28,
+            maxLife: 0.7,
+            color,
+            size: 2.2 + Math.random() * 2.6
+        });
+    }
+}
+
+function spawnFloat(x, y, text, color) {
+    floatingTexts.push({ x, y, text, color, life: 1.0 });
+}
+
+function beginCharge(clientX = null) {
+    if (isFinished || hammer.state === 'swinging') return;
+    if (clientX !== null) {
+        const rect = canvas.getBoundingClientRect();
+        const clampedX = Math.max(28, Math.min(W - 28, clientX - rect.left));
+        hammer.targetX = clampedX;
+        hammer.x = clampedX;
+    }
+    hammer.state = 'charging';
+    hammer.power = Math.max(0.2, hammer.power);
+    hammer.powerDir = 1;
+    hammerBtn.classList.add('charging');
+}
+
+function triggerSwingWithPower(pwr) {
+    if (isFinished) return;
+    const aimX = hammer.targetX;
+    hammer.x = aimX;
+    hammer.lastHitPower = Math.max(0.2, Math.min(1, pwr));
+    hammer.state = 'swinging';
+    hammer.swingTimer = 0;
+    hammer.swingDuration = 0.13;
+    hammerBtn.classList.remove('charging');
+    powerFill.style.width = '0%';
+    powerText.innerText = '按住蓄力／放開重擊，或直接點釘頭上方敲打！';
+
+    hits++;
+    shakeTime = 0.13;
+    shakeIntensity = 3 + hammer.lastHitPower * 5;
+
+    // 以實際 aimX 搵最接近嘅未完成 1 吋釘
+    let closest = null;
+    let minDist = Infinity;
+    nails.forEach(n => {
+        if (n.drivenInch < 1) {
+            const d = Math.abs(n.x - aimX);
+            if (d < minDist) {
+                minDist = d;
+                closest = n;
+            }
+        }
+    });
+
+    if (closest && minDist <= 30) {
+        const accuracy = 1 - (minDist / 30);
+        const inSweetZone = hammer.lastHitPower >= 0.68 && hammer.lastHitPower <= 0.90;
+        const headY = woodTopY - 6 - (1 - closest.drivenInch) * INCH_LENGTH_PX;
+
+        let driveAmount = (0.26 + hammer.lastHitPower * 0.52) * (0.68 + accuracy * 0.42);
+        if (inSweetZone && accuracy > 0.68) {
+            driveAmount = Math.max(driveAmount, 0.56);
+            closest.bendAngle *= 0.35;
+            playHammerSound('perfect');
+            shockwaves.push({ x: closest.x, y: headY, r: 4, maxR: 26, color: '#1dd1a1', life: 0.25, maxLife: 0.25 });
+            spawnParticles(closest.x, headY, '#feca57', 14, 1.15);
+            spawnParticles(closest.x, headY, '#1dd1a1', 8, 0.9);
+            spawnFloat(closest.x, Math.max(36, headY - 26), `💥 完美重擊 -${driveAmount.toFixed(2)}"`, '#1dd1a1');
+        } else {
+            if (hammer.lastHitPower > 0.90 && accuracy < 0.72) {
+                closest.bendAngle += (aimX > closest.x ? -1 : 1) * 0.13;
+                driveAmount *= 0.58;
+                spawnFloat(closest.x, Math.max(36, headY - 26), `⚠️ 力猛微彎！`, '#ff9f43');
+            } else {
+                spawnFloat(closest.x, Math.max(36, headY - 26), `🔨 -${driveAmount.toFixed(2)}"`, '#feca57');
+            }
+            playHammerSound('hit');
+            shockwaves.push({ x: closest.x, y: headY, r: 3, maxR: 18, color: '#feca57', life: 0.2, maxLife: 0.2 });
+            spawnParticles(closest.x, headY, '#f5f6fa', 9, 0.95);
+        }
+
+        const bendPenalty = Math.max(0.55, 1 - Math.abs(closest.bendAngle) * 1.1);
+        closest.drivenInch = Math.min(1, closest.drivenInch + driveAmount * bendPenalty);
+        if (1 - closest.drivenInch <= 0.03) {
+            closest.drivenInch = 1;
+        }
+        closest.hitFlash = 0.28;
+        closest.bounceOffset = -4;
+
+        if (closest.drivenInch >= 1) {
+            closest.bendAngle = 0;
+            spawnParticles(closest.x, woodTopY - 6, '#1dd1a1', 18, 1.2);
+            spawnFloat(closest.x, woodTopY - 40, `✅ 1.00" 完成！`, '#1dd1a1');
+            const nextNail = nails.find(n => n.drivenInch < 1);
+            if (nextNail) {
+                hammer.targetX = nextNail.x;
+            }
+        }
+    } else {
+        playHammerSound('wood');
+        spawnParticles(aimX, woodTopY - 4, '#d4a373', 10, 0.9);
+        spawnFloat(aimX, woodTopY - 28, '💨 打中木方！(空鎚)', '#ff6b6b');
+    }
+
+    updateHUD();
+    checkWin();
+}
+
+function releaseCharge() {
+    if (hammer.state !== 'charging' || isFinished) return;
+    triggerSwingWithPower(hammer.power);
+    hammer.power = 0;
+}
+
+function checkWin() {
+    if (nails.every(n => n.drivenInch >= 1)) {
+        isFinished = true;
+        const prevBest = loadBest();
+        let isNewRecord = false;
+        if (!prevBest || hits < prevBest) {
+            saveBest(hits);
+            isNewRecord = true;
+        }
+        const bestNow = loadBest();
+
+        let rank = '👍 穩陣木工！全部 1 吋釘齊平！';
+        if (hits <= nailCount * 2) rank = '🏆 神級鐵鎚王！平均 2 鎚一支 1 吋釘！';
+        else if (hits <= nailCount * 3) rank = '🔥 熟手木工師傅！手勢好準！';
+
+        document.getElementById('win-rank').innerText = isNewRecord ? `🎊 破紀錄！${rank}` : rank;
+        document.getElementById('final-hits').innerText = hits;
+        document.getElementById('final-best').innerText = bestNow ? `${bestNow} 鎚` : `${hits} 鎚`;
+        winTimeout = setTimeout(() => {
+            document.getElementById('win-modal').classList.remove('hidden');
+        }, 420);
+    }
+}
+
+hammerBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    beginCharge();
+});
+
+window.addEventListener('pointerup', () => {
+    if (hammer.state === 'charging') {
+        releaseCharge();
+    }
+});
+
+canvas.addEventListener('pointermove', (e) => {
+    if (isFinished) return;
+    const rect = canvas.getBoundingClientRect();
+    hammer.targetX = Math.max(28, Math.min(W - 28, e.clientX - rect.left));
+});
+
+canvas.addEventListener('pointerdown', (e) => {
+    if (isFinished) return;
+    const rect = canvas.getBoundingClientRect();
+    const px = Math.max(28, Math.min(W - 28, e.clientX - rect.left));
+    hammer.targetX = px;
+    hammer.x = px;
+    // 點擊畫布直接以爽快中力（0.76）敲擊，方便單手快速遊玩
+    triggerSwingWithPower(0.76);
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        beginCharge();
+    } else if (e.code === 'ArrowLeft') {
+        hammer.targetX = Math.max(28, hammer.targetX - 28);
+    } else if (e.code === 'ArrowRight') {
+        hammer.targetX = Math.min(W - 28, hammer.targetX + 28);
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        releaseCharge();
+    }
+});
+
+function update(dt) {
+    if (shakeTime > 0) {
+        shakeTime = Math.max(0, shakeTime - dt);
+    }
+
+    hammer.x += (hammer.targetX - hammer.x) * Math.min(1, dt * 22);
+
+    if (hammer.state === 'charging') {
+        hammer.power += dt * 1.25 * hammer.powerDir;
+        if (hammer.power >= 1) {
+            hammer.power = 1;
+            hammer.powerDir = -1;
+        } else if (hammer.power <= 0.2) {
+            hammer.power = 0.2;
+            hammer.powerDir = 1;
+        }
+        hammer.angle = -0.35 - hammer.power * 0.95;
+        powerFill.style.width = `${Math.round(hammer.power * 100)}%`;
+        powerText.innerText = `蓄力中 ${Math.round(hammer.power * 100)}%（68%–90% 綠區最強）`;
+    } else if (hammer.state === 'swinging') {
+        hammer.swingTimer += dt;
+        const t = Math.min(1, hammer.swingTimer / hammer.swingDuration);
+        const startAngle = -0.35 - hammer.lastHitPower * 0.95;
+        hammer.angle = startAngle + (0.14 - startAngle) * (t * t);
+        if (hammer.swingTimer >= hammer.swingDuration) {
+            hammer.state = 'recovering';
+            hammer.recoverTimer = 0.16;
+        }
+    } else if (hammer.state === 'recovering') {
+        hammer.recoverTimer -= dt;
+        hammer.angle += (-0.35 - hammer.angle) * Math.min(1, dt * 14);
+        if (hammer.recoverTimer <= 0) {
+            hammer.state = 'idle';
+        }
+    } else {
+        hammer.angle += (-0.35 - hammer.angle) * Math.min(1, dt * 12);
+    }
+
+    nails.forEach(n => {
+        if (n.hitFlash > 0) n.hitFlash = Math.max(0, n.hitFlash - dt);
+        if (n.bounceOffset < 0) {
+            n.bounceOffset = Math.min(0, n.bounceOffset + dt * 24);
+        }
+    });
+
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.life -= dt;
+        const p = 1 - Math.max(0, sw.life / sw.maxLife);
+        sw.r = 4 + (sw.maxR - 4) * p;
+        if (sw.life <= 0) shockwaves.splice(i, 1);
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.vy += 320 * dt;
+        pt.life -= dt;
+        if (pt.life <= 0) particles.splice(i, 1);
+    }
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y -= 34 * dt;
+        ft.life -= dt;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
+    }
+}
+
+function drawWorkshopBackground() {
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#231b16');
+    bgGrad.addColorStop(0.65, '#17120e');
+    bgGrad.addColorStop(1, '#0d0a08');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // 工作燈暖光光暈
+    const lampGrad = ctx.createRadialGradient(W * 0.5, 45, 10, W * 0.5, woodTopY * 0.55, Math.max(180, W * 0.65));
+    lampGrad.addColorStop(0, 'rgba(255, 214, 153, 0.14)');
+    lampGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = lampGrad;
+    ctx.fillRect(0, 0, W, woodTopY);
+
+    // 左側 1.00 吋高度參考尺規
+    const rulerX = 16;
+    const baseY = woodTopY - 6;
+    const topMarkY = baseY - INCH_LENGTH_PX;
+    ctx.strokeStyle = 'rgba(221, 184, 146, 0.28)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(rulerX, topMarkY);
+    ctx.lineTo(rulerX, baseY);
+    ctx.stroke();
+
+    [0, 0.25, 0.5, 0.75, 1].forEach(frac => {
+        const ry = baseY - frac * INCH_LENGTH_PX;
+        ctx.beginPath();
+        ctx.moveTo(rulerX - 4, ry);
+        ctx.lineTo(rulerX + 5, ry);
+        ctx.stroke();
+
+        if (frac === 1 || frac === 0.5) {
+            ctx.fillStyle = 'rgba(221, 184, 146, 0.45)';
+            ctx.font = 'bold 10px Orbitron, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(frac === 1 ? '1.00"' : '0.50"', rulerX + 8, ry + 3);
+        }
+    });
+}
+
+function drawWoodBlock() {
+    const woodX = 18;
+    const woodW = W - 36;
+    const topDepth = 16;
+
+    // 底部陰影
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.beginPath();
+    ctx.roundRect(woodX + 4, woodTopY + 10, woodW, woodHeight, 10);
+    ctx.fill();
+
+    // 立體頂面
+    ctx.fillStyle = '#ddb892';
+    ctx.strokeStyle = '#582f0e';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(woodX + 10, woodTopY - topDepth);
+    ctx.lineTo(woodX + woodW - 10, woodTopY - topDepth);
+    ctx.lineTo(woodX + woodW, woodTopY);
+    ctx.lineTo(woodX, woodTopY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 正面木方漸層
+    const woodGrad = ctx.createLinearGradient(0, woodTopY, 0, woodTopY + woodHeight);
+    woodGrad.addColorStop(0, '#c68b59');
+    woodGrad.addColorStop(0.5, '#9c6644');
+    woodGrad.addColorStop(1, '#582f0e');
+
+    ctx.fillStyle = woodGrad;
+    ctx.strokeStyle = '#3d1f09';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(woodX, woodTopY, woodW, woodHeight, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // 木紋曲線
+    ctx.strokeStyle = 'rgba(61, 31, 9, 0.32)';
+    ctx.lineWidth = 1.5;
+    for (let row = 1; row <= 4; row++) {
+        const wy = woodTopY + (woodHeight / 5) * row;
+        ctx.beginPath();
+        ctx.moveTo(woodX + 10, wy);
+        ctx.bezierCurveTo(
+            woodX + woodW * 0.3, wy - 4,
+            woodX + woodW * 0.7, wy + 4,
+            woodX + woodW - 10, wy
+        );
+        ctx.stroke();
+    }
+
+    ctx.fillStyle = 'rgba(255, 243, 224, 0.5)';
+    ctx.font = 'bold 11px "Noto Sans HK", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('實木方 · 1.00" 鋼釘測試台', woodX + woodW - 12, woodTopY + woodHeight - 10);
+}
+
+function drawNails() {
+    nails.forEach(n => {
+        const remainInch = Math.max(0, 1 - n.drivenInch);
+        const visibleH = remainInch * INCH_LENGTH_PX;
+        const baseY = woodTopY - 6;
+
+        // 釘孔陰影
+        ctx.fillStyle = 'rgba(25, 12, 4, 0.8)';
+        ctx.beginPath();
+        ctx.ellipse(n.x, baseY, 8.5, 3.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(n.x, baseY + n.bounceOffset);
+        ctx.rotate(n.bendAngle);
+
+        if (visibleH > 1.2) {
+            const shaftW = 7;
+            const shaftGrad = ctx.createLinearGradient(-shaftW / 2, 0, shaftW / 2, 0);
+            shaftGrad.addColorStop(0, '#636e72');
+            shaftGrad.addColorStop(0.38, '#ffffff');
+            shaftGrad.addColorStop(0.75, '#b2bec3');
+            shaftGrad.addColorStop(1, '#2d3436');
+
+            ctx.fillStyle = shaftGrad;
+            ctx.strokeStyle = '#1e272e';
+            ctx.lineWidth = 1.3;
+            ctx.fillRect(-shaftW / 2, -visibleH, shaftW, visibleH);
+            ctx.strokeRect(-shaftW / 2, -visibleH, shaftW, visibleH);
+
+            // 鋼釘刻痕（每 0.25" 一格）
+            ctx.strokeStyle = 'rgba(30, 39, 46, 0.5)';
+            ctx.lineWidth = 1;
+            [0.25, 0.5, 0.75].forEach(mark => {
+                if (remainInch > mark) {
+                    const my = -(remainInch - mark) * INCH_LENGTH_PX;
+                    ctx.beginPath();
+                    ctx.moveTo(-shaftW / 2 + 0.5, my);
+                    ctx.lineTo(shaftW / 2 - 0.5, my);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        const headY = -visibleH;
+        ctx.fillStyle = n.drivenInch >= 1 ? '#1dd1a1' : (n.hitFlash > 0 ? '#feca57' : '#dfe6e9');
+        ctx.strokeStyle = '#1e272e';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(-10.5, headY - 4.5, 21, 5.5, 2.5);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+
+        ctx.textAlign = 'center';
+        if (n.drivenInch >= 1) {
+            ctx.fillStyle = '#1dd1a1';
+            ctx.font = 'bold 11px Orbitron, sans-serif';
+            ctx.fillText('1.00" OK', n.x, woodTopY + 18);
+        } else {
+            ctx.fillStyle = '#ffeaa7';
+            ctx.font = 'bold 11px Orbitron, sans-serif';
+            ctx.fillText(`余 ${remainInch.toFixed(2)}"`, n.x, woodTopY + 18);
+        }
+    });
+}
+
+function drawHammer() {
+    if (isFinished) return;
+
+    let aimY = woodTopY - 6;
+    let overActiveNail = false;
+    nails.forEach(n => {
+        if (n.drivenInch < 1 && Math.abs(n.x - hammer.x) <= 30) {
+            aimY = woodTopY - 6 - (1 - n.drivenInch) * INCH_LENGTH_PX;
+            overActiveNail = true;
+        }
+    });
+
+    // 瞄準虛線與落點圈
+    ctx.save();
+    ctx.strokeStyle = hammer.state === 'charging'
+        ? 'rgba(254, 202, 87, 0.85)'
+        : (overActiveNail ? 'rgba(29, 209, 161, 0.55)' : 'rgba(255, 255, 255, 0.25)');
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(hammer.x, aimY - 56);
+    ctx.lineTo(hammer.x, aimY - 6);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    const pivotX = hammer.x + 70;
+    const pivotY = aimY - 12;
+    const jitter = hammer.state === 'charging' ? (Math.random() - 0.5) * hammer.power * 3.5 : 0;
+    ctx.translate(pivotX + jitter, pivotY + jitter);
+    ctx.rotate(hammer.angle);
+
+    // 木柄
+    const handleGrad = ctx.createLinearGradient(-74, -5, -74, 5);
+    handleGrad.addColorStop(0, '#feca57');
+    handleGrad.addColorStop(1, '#8c583a');
+    ctx.fillStyle = handleGrad;
+    ctx.strokeStyle = '#2b180a';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(-74, -4.8, 78, 9.6, 4.5);
+    ctx.fill();
+    ctx.stroke();
+
+    // 握把
+    ctx.fillStyle = '#2f3640';
+    ctx.beginPath();
+    ctx.roundRect(-24, -5.2, 28, 10.4, 4);
+    ctx.fill();
+
+    // 鋼鐵鎚頭（打擊面精準對準 hammer.x）
+    const headX = -70;
+    const steelGrad = ctx.createLinearGradient(headX - 12, -18, headX + 12, 16);
+    steelGrad.addColorStop(0, '#ffffff');
+    steelGrad.addColorStop(0.5, '#8395a7');
+    steelGrad.addColorStop(1, '#222f3e');
+
+    ctx.fillStyle = steelGrad;
+    ctx.strokeStyle = '#1e272e';
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.roundRect(headX - 11.5, -17, 23, 32, 4.5);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#f5f6fa';
+    ctx.fillRect(headX - 12.5, 11.5, 25, 4);
+
+    ctx.restore();
+}
+
+function draw() {
+    ctx.save();
+    if (shakeTime > 0) {
+        const mag = (shakeTime / 0.13) * shakeIntensity;
+        ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+    }
+
+    drawWorkshopBackground();
+    drawWoodBlock();
+    drawNails();
+    drawHammer();
+
+    shockwaves.forEach(sw => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife) * 0.8;
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    particles.forEach(pt => {
+        ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    floatingTexts.forEach(ft => {
+        ctx.globalAlpha = Math.max(0, ft.life);
+        ctx.fillStyle = ft.color;
+        ctx.font = '900 13px "Noto Sans HK", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(ft.text, ft.x, ft.y);
+    });
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+}
+
+let lastTime = performance.now();
+function loop(now) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    lastTime = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+}
+
+resetGame();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
